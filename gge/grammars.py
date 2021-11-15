@@ -178,7 +178,7 @@ def extract_rule_lhs(trimmed_line: str) -> tuple[NonTerminal, str]:
     """
     returns the symbol on the left-hand side of a rule and the raw right-hand side of the rule
     """
-    match = re.search(pattern="^\s*(\w+)\s*:", string=trimmed_line)
+    match = re.search(pattern=r"^\s*(\w+)\s*:", string=trimmed_line)
     if not match:
         raise ValueError("unable to find lhs of rule")
 
@@ -209,7 +209,10 @@ def try_extract_terminal(trimmed_rhs: str) -> Optional[tuple[Terminal, str]]:
     text_pattern = r"\w+"
     int_pattern = r"[-+]?\d+"
     float_pattern = r"[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?"
-    terminal_pattern = f'^\s*"({text_pattern}|{float_pattern}|{int_pattern})"'
+    spaces_pattern = r"^\s*"
+    terminal_pattern = (
+        f'{spaces_pattern}"({text_pattern}|{float_pattern}|{int_pattern})"'
+    )
     match = re.search(pattern=terminal_pattern, string=trimmed_rhs)
     if not match:
         return None
@@ -251,13 +254,13 @@ def extract_repetition_range(text: str) -> tuple[int, int, str]:
         rest = text[1:].lstrip()
         return inclusive_min, inclusive_max, rest
 
-    elif match := re.search(pattern="^~(\d+)\.\.(\d+)", string=text):
+    elif match := re.search(pattern=r"^~(\d+)\.\.(\d+)", string=text):
         inclusive_min = int(match.group(1))
         inclusive_max = int(match.group(2))
         rest = text[match.end(0) :]
         return inclusive_min, inclusive_max, rest
 
-    elif match := re.search(pattern="^~(\d+)", string=text):
+    elif match := re.search(pattern=r"^~(\d+)", string=text):
         inclusive_min = int(match.group(1))
         inclusive_max = inclusive_min
         rest = text[match.end(0) :]
@@ -290,7 +293,7 @@ def extract_rule_options(trimmed_rule_rhs: str) -> Iterable[ExpandableRuleOption
     if _RULE_SIDE_DELIMITER in trimmed_rule_rhs:
         raise ValueError(f"unexpected symbol `{_RULE_SIDE_DELIMITER}`")
     if "\n" in trimmed_rule_rhs:
-        raise ValueError(f"expected single line as argument")
+        raise ValueError("expected single line as argument")
 
     for option in trimmed_rule_rhs.split(_RULE_OPTION_DELIMITER):
         quantified_symbols = tuple(extract_quantified_symbols(option))
