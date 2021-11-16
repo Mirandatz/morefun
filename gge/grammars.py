@@ -121,7 +121,7 @@ class Grammar:
         return self._rules
 
     @property
-    def start_symbol(self) -> Symbol:
+    def start_symbol(self) -> NonTerminal:
         return self._start_symbol
 
     @property
