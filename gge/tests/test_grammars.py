@@ -137,7 +137,7 @@ class TestGrammar:
         assert expected == actual
 
 
-class Test_compatibility_with_lark:
+class TestCompatibilityWithLark:
     def test_terminals(
         self,
         sample_grammar: Grammar,

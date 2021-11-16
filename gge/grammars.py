@@ -4,13 +4,13 @@ import re
 from dataclasses import dataclass
 from typing import Iterable, Optional, Union
 
-_RULE_SIDE_DELIMITER = ":"
-_RULE_OPTION_DELIMITER = "|"
+RULE_SIDE_DELIMITER = ":"
+RULE_OPTION_DELIMITER = "|"
 
 
 def _can_be_parsed_as_float(value: str) -> bool:
     try:
-        float(value)
+        _ = float(value)
         return True
     except ValueError:
         return False
@@ -271,10 +271,10 @@ def extract_repetition_range(text: str) -> tuple[int, int, str]:
 
 
 def extract_quantified_symbols(raw_rule_option: str) -> Iterable[QuantifiedSymbol]:
-    if _RULE_SIDE_DELIMITER in raw_rule_option:
-        raise ValueError(f"unexpected symbol `{_RULE_SIDE_DELIMITER}`")
-    if _RULE_OPTION_DELIMITER in raw_rule_option:
-        raise ValueError(f"unexpected symbol `{_RULE_OPTION_DELIMITER}`")
+    if RULE_SIDE_DELIMITER in raw_rule_option:
+        raise ValueError(f"unexpected symbol `{RULE_SIDE_DELIMITER}`")
+    if RULE_OPTION_DELIMITER in raw_rule_option:
+        raise ValueError(f"unexpected symbol `{RULE_OPTION_DELIMITER}`")
 
     while raw_rule_option:
         symbol, raw_rule_option = extract_symbol(raw_rule_option)
@@ -290,12 +290,12 @@ def extract_quantified_symbols(raw_rule_option: str) -> Iterable[QuantifiedSymbo
 
 
 def extract_rule_options(trimmed_rule_rhs: str) -> Iterable[ExpandableRuleOption]:
-    if _RULE_SIDE_DELIMITER in trimmed_rule_rhs:
-        raise ValueError(f"unexpected symbol `{_RULE_SIDE_DELIMITER}`")
+    if RULE_SIDE_DELIMITER in trimmed_rule_rhs:
+        raise ValueError(f"unexpected symbol `{RULE_SIDE_DELIMITER}`")
     if "\n" in trimmed_rule_rhs:
         raise ValueError("expected single line as argument")
 
-    for option in trimmed_rule_rhs.split(_RULE_OPTION_DELIMITER):
+    for option in trimmed_rule_rhs.split(RULE_OPTION_DELIMITER):
         quantified_symbols = tuple(extract_quantified_symbols(option))
         parsed_option = ExpandableRuleOption(quantified_symbols)
         yield parsed_option

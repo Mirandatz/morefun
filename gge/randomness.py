@@ -15,17 +15,3 @@ def create_rng(seed: Optional[int] = None) -> RNG:
 
     bit_gen = np.random.SFC64(seed=seed)
     return RNG(np.random.Generator(bit_gen))
-
-
-def main() -> None:
-    rng = create_rng()
-    print(rng.integers(low=0, high=10, size=10))
-    print(rng.integers(low=0, high=10, size=10))
-
-    rng = create_rng()
-    print(rng.integers(low=0, high=10, size=10))
-    print(rng.integers(low=0, high=10, size=10))
-
-
-if __name__ == "__main__":
-    main()

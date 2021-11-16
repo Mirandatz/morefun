@@ -2,7 +2,7 @@ from gge import structured_grammatical_evolution as sge
 from gge.grammars import Grammar, NonTerminal
 
 
-class Test_can_expand:
+class TestCanExpand:
     def test_nonrecursive_grammar(self) -> None:
         grammar = Grammar(
             """
@@ -114,7 +114,7 @@ class Test_can_expand:
         assert not sge.can_expand(c, c, grammar)
 
 
-class Test_grammar_is_recursive:
+class TestGrammarIsRecursive:
     def test_nonrecursive_grammar(self) -> None:
         grammar = Grammar(
             """
@@ -163,7 +163,7 @@ class Test_grammar_is_recursive:
         assert sge.grammar_is_recursive(grammar)
 
 
-class Test_max_nr_of_times_nonterminal_can_be_expanded:
+class TestMaxNrOfTimesNonterminalCanBeExpanded:
     def test_simple_grammar(self) -> None:
         grammar = Grammar(
             """
@@ -250,12 +250,9 @@ class Test_max_nr_of_times_nonterminal_can_be_expanded:
 
         a, b, c = [NonTerminal(text) for text in ["a", "b", "c"]]
 
-        # shorter alias
-        test_func = sge.max_nr_of_times_nonterminal_can_be_expanded
-
-        assert 1 == test_func(a, grammar)
-        assert 2 == test_func(b, grammar)
-        assert 7 == test_func(c, grammar)
+        assert 1 == sge.max_nr_of_times_nonterminal_can_be_expanded(a, grammar)
+        assert 2 == sge.max_nr_of_times_nonterminal_can_be_expanded(b, grammar)
+        assert 7 == sge.max_nr_of_times_nonterminal_can_be_expanded(c, grammar)
 
     def test_ranged_inside_ranged(self) -> None:
         grammar = Grammar(
