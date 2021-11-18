@@ -234,7 +234,7 @@ def extract_symbol(text: str) -> tuple[Symbol, str]:
         nonterminal, rest = maybe_nonterminal
         return nonterminal, rest
 
-    raise ValueError("unable to extract a symbol")
+    raise ValueError(f"unable to extract a symbol from text: {text}")
 
 
 def extract_repetition_range(text: str) -> tuple[int, int, str]:
