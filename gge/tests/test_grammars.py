@@ -38,7 +38,7 @@ class TestGrammar:
         for text in invalid_types:
             with pytest.raises(TypeError):
                 # noinspection PyTypeChecker
-                Terminal(text)
+                _ = Terminal(text)
 
     def test_start_symbol(self, sample_grammar: Grammar) -> None:
         expected = NonTerminal("startberg")
@@ -114,7 +114,7 @@ class TestGrammar:
         """
 
         with pytest.raises(ValueError):
-            Grammar(raw)
+            _ = Grammar(raw)
 
     def test_repeated_symbol_expansion(self, sample_grammar: Grammar) -> None:
         actual = sample_grammar.expansions(NonTerminal("repeaters"))
