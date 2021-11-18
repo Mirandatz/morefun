@@ -43,7 +43,7 @@ Symbol = Union[Terminal, NonTerminal]
 @dataclass(order=True, frozen=True)
 class QuantifiedSymbol:
     """
-    represents a combination of a `symbol` with a `repetition quantifier`, such as
+    Represents a combination of a `symbol` with a "repetition quantifier", such as
     `symbol~2..5` -> min = 2, max = 5
     `symbol~1000` -> min = 1000, max = 1000
     `symbol?`     -> min = 0, max = 1
@@ -288,9 +288,9 @@ def extract_quantified_symbols(raw_rule_option: str) -> Iterable[QuantifiedSymbo
 
 def extract_rule_options(trimmed_rule_rhs: str) -> Iterable[ExpandableRuleOption]:
     if RULE_SIDE_DELIMITER in trimmed_rule_rhs:
-        raise ValueError(f"unexpected symbol `{RULE_SIDE_DELIMITER}`")
+        raise ValueError(f"Unexpected symbol `{RULE_SIDE_DELIMITER}`")
     if "\n" in trimmed_rule_rhs:
-        raise ValueError("expected single line as argument")
+        raise ValueError("Expected single line as argument")
 
     for option in trimmed_rule_rhs.split(RULE_OPTION_DELIMITER):
         quantified_symbols = tuple(extract_quantified_symbols(option))
@@ -309,9 +309,9 @@ def create_rules(
 
 def parse_grammar_line(line: str) -> Iterable[ProductionRule]:
     if not line:
-        raise ValueError("line can not be empty")
+        raise ValueError("Line can not be empty")
     if "\n" in line:
-        raise ValueError("expected single line as argument")
+        raise ValueError("Expected single line as argument")
 
     trimmed = line.strip()
     lhs, trimmed_rhs = extract_rule_lhs(trimmed)
@@ -360,7 +360,7 @@ def extract_grammar_components(
             elif isinstance(symbol, Terminal):
                 unique_terminals[symbol] = None
             else:
-                raise ValueError(f"unknown symbol type `{type(symbol)}`")
+                raise ValueError(f"Unknown symbol type `{type(symbol)}`")
 
     nonterminals = tuple(unique_nonterminals.keys())
     terminals = tuple(unique_terminals.keys())
@@ -398,13 +398,12 @@ def validate_grammar_components(
     for nt in nonterminals:
         if not any((nt == r.lhs for r in rules)):
             raise ValueError(
-                "all nonterminals must appear at least once in the lhs of a rule"
+                "All nonterminals must appear at least once in the lhs of a rule"
             )
 
         if nt == start_symbol:
             continue
 
-        # flat_list = [item for sublist in t for item in sublist]
         nts_on_rhss = (s for r in rules for s in r.rhs if isinstance(s, NonTerminal))
         if nt not in nts_on_rhss:
             raise ValueError(
@@ -418,7 +417,7 @@ def validate_grammar_components(
 
     for r in rules:
         if r.lhs not in nonterminals:
-            raise ValueError("all rule.lhs must be contained in nonterminals")
+            raise ValueError("All rule.lhs must be contained in nonterminals")
 
         for symbol in r.rhs:
             if isinstance(symbol, Terminal):
@@ -426,17 +425,17 @@ def validate_grammar_components(
                     continue
                 else:
                     raise ValueError(
-                        "all terminals on the rhs of a rule must be contained in terminals"
+                        "All terminals on the rhs of a rule must be contained in terminals"
                     )
             elif isinstance(symbol, NonTerminal):
                 if symbol in nonterminals:
                     continue
                 else:
                     raise ValueError(
-                        "all nonterminals on the rhs of ar ule must be contained in nonterminals"
+                        "All nonterminals on the rhs of a rule must be contained in nonterminals"
                     )
             else:
-                raise ValueError(f"uknown symbol type `{type(symbol)}`")
+                raise ValueError(f"Unknown symbol type `{type(symbol)}`")
 
 
 if __name__ == "__main__":
