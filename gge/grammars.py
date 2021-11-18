@@ -78,7 +78,7 @@ class RuleOption:
 @dataclass(order=True, frozen=True)
 class ExpandableRuleOption:
     """
-    almost the same thing as RuleOption, but contains QuantifiedSymbols, instead of raw symbols, e.g.:
+    Almost the same thing as `RuleOption`, but contains `QuantifiedSymbols`, instead of raw symbols, e.g.:
     thousand_bs_or_maybe_c = b~1000 | c?
     expandable_option0 = b~1000
     expandable_option1 = c?
