@@ -97,6 +97,15 @@ class Genemancer:
         return Genotype(tuple(genes))
 
     def map_to_tokens(self, genotype: Genotype) -> tuple[str, ...]:
+        """
+        This function implements the "genotype mapping" procedure of the GE literature.
+        Partially. Because the mapping process usually translates a phenotype to a genotype in a
+        complex monolithic process, but in this project, we adopt a "multi-stage mapping approach":
+        first we generate a sequence of tokens from the genotype (using this function),
+        then we generate a tree from the tokens (using the Lark library);
+        finally, we visit the nodes of the tree and synthesize the phenotype.
+        """
+
         terminals: collections.deque[Terminal] = collections.deque()
 
         gene_consumption_tracker = {g: 0 for g in genotype.genes}
