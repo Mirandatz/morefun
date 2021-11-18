@@ -55,8 +55,7 @@ class Genotype:
         return self.genes == other.genes
 
     def __str__(self) -> str:
-        gene_strs = (str(g) for g in self.genes)
-        return "\n".join(gene_strs)
+        return "\n".join(map(str, self.genes))
 
     def __repr__(self) -> str:
         return self.__str__()
