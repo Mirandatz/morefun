@@ -46,11 +46,11 @@ class Genotype:
         return self._hash
 
     def __eq__(self, other: object) -> bool:
+        if id(self) == id(other):
+            return True
+
         if not isinstance(other, Genotype):
             return NotImplemented
-
-        if self.id == other.id:
-            return True
 
         return self.genes == other.genes
 
