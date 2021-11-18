@@ -264,7 +264,7 @@ def extract_repetition_range(text: str) -> tuple[int, int, str]:
         return inclusive_min, inclusive_max, rest
 
     else:
-        raise ValueError(f"unable to parse repetition range `{text}`")
+        raise ValueError(f"Unable to parse repetition range `{text}`")
 
 
 def extract_quantified_symbols(raw_rule_option: str) -> Iterable[QuantifiedSymbol]:
