@@ -167,10 +167,7 @@ def expand_rule_option(option: ExpandableRuleOption) -> Iterable[RuleOption]:
         expand_quantified_symbol(u) for u in option.quantified_symbols
     ]
     for current_expansions in itertools.product(*all_symbols_expansions):
-        symbols = []
-        for ce in current_expansions:
-            symbols.extend(ce)
-
+        symbols = itertools.chain(*current_expansions)
         yield RuleOption(symbols=tuple(symbols))
 
 
