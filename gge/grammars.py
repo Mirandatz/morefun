@@ -173,7 +173,7 @@ def expand_rule_option(option: ExpandableRuleOption) -> Iterable[RuleOption]:
 
 def extract_rule_lhs(trimmed_line: str) -> tuple[NonTerminal, str]:
     """
-    returns the symbol on the left-hand side of a rule and the raw right-hand side of the rule
+    Returns the symbol on the left-hand side of a rule and the raw right-hand side of the rule
     """
     match = re.search(pattern=r"^\s*(\w+)\s*:", string=trimmed_line)
     if not match:
