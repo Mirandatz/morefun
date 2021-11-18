@@ -122,7 +122,7 @@ class Genemancer:
                     terminals.appendleft(symbol)
 
                 else:
-                    raise TypeError(f"unknown symbol type `{type(symbol)}`")
+                    raise TypeError(f"Unknown symbol type `{type(symbol)}`")
 
         return tuple(t.text for t in terminals)
 
@@ -132,7 +132,6 @@ def max_nr_of_times_nonterminal_can_be_expanded(
     grammar: Grammar,
 ) -> int:
     assert not grammar_is_recursive(grammar)
-    assert target not in grammar.terminals  # type: ignore
 
     if target == grammar.start_symbol:
         return 1
