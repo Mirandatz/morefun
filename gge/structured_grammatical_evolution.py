@@ -138,7 +138,7 @@ def max_nr_of_times_nonterminal_can_be_expanded(
     if target == grammar.start_symbol:
         return 1
 
-    max_expansions: dict[NonTerminal, int] = {}
+    max_expansions: collections.Counter[NonTerminal] = collections.Counter()
 
     for rule in grammar.rules:
         if target not in rule.rhs:
