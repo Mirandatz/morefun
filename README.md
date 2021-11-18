@@ -1,5 +1,11 @@
 # GGE
 
+## Testing
+
+Tests can be run using Docker.
+Run `docker build -t gge .` to build an image called `gge` from the local Dockerfile.
+Then `docker run gge` will run the test suite in the container environment.
+
 ## Development
 
 GGE uses `pip-compile-multi` for dependency management.
