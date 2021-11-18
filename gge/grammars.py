@@ -177,7 +177,7 @@ def extract_rule_lhs(trimmed_line: str) -> tuple[NonTerminal, str]:
     """
     match = re.search(pattern=r"^\s*(\w+)\s*:", string=trimmed_line)
     if not match:
-        raise ValueError("unable to find lhs of rule")
+        raise ValueError(f"Unable to find lhs of rule: {trimmed_line}")
 
     non_terminal_text = match.group(1)
     non_terminal = NonTerminal(text=non_terminal_text)
