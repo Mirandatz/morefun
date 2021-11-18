@@ -269,7 +269,7 @@ def extract_repetition_range(text: str) -> tuple[int, int, str]:
 
 def extract_quantified_symbols(raw_rule_option: str) -> Iterable[QuantifiedSymbol]:
     if RULE_SIDE_DELIMITER in raw_rule_option:
-        raise ValueError(f"unexpected symbol `{RULE_SIDE_DELIMITER}`")
+        raise ValueError(f"Unexpected symbol `{RULE_SIDE_DELIMITER}`")
     if RULE_OPTION_DELIMITER in raw_rule_option:
         raise ValueError(f"unexpected symbol `{RULE_OPTION_DELIMITER}`")
 
