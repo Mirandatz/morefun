@@ -30,16 +30,6 @@ def sample_parser(raw_grammar: str) -> lark.lark:  # type: ignore
 
 
 class TestGrammar:
-    @pytest.mark.skipif(
-        "typeguard" not in sys.modules, reason="requires the Pandas library"
-    )
-    def test_terminal_constructor_invalid_types(self) -> None:
-        invalid_types: list[Any] = [None, 2, 2.3, [], ["a"], tuple(), tuple("l")]
-        for text in invalid_types:
-            with pytest.raises(TypeError):
-                # noinspection PyTypeChecker
-                _ = Terminal(text)
-
     def test_start_symbol(self, sample_grammar: Grammar) -> None:
         expected = NonTerminal("startberg")
         actual = sample_grammar.start_symbol

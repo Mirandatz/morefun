@@ -5,3 +5,6 @@
 # caches
 __pycache__/
 
+
+# pyenv
+.python-version
