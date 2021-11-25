@@ -1,6 +1,3 @@
-import sys
-from typing import Any
-
 import lark
 import pytest
 
