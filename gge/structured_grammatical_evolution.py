@@ -123,7 +123,7 @@ class Genemancer:
 
             chosen_exp = expansions[exp_choice]
 
-            for symbol in chosen_exp:
+            for symbol in chosen_exp.symbols:
                 if type(symbol) == NonTerminal:
                     to_process.append(symbol)
 
@@ -148,13 +148,13 @@ def max_nr_of_times_nonterminal_can_be_expanded(
     max_expansions: collections.Counter[NonTerminal] = collections.Counter()
 
     for rule in grammar.rules:
-        if target not in rule.rhs:
+        if target not in rule.rhs.symbols:
             continue
 
         lhs = rule.lhs
         rhs = rule.rhs
 
-        times_on_rhs = rhs.count(target)
+        times_on_rhs = rhs.symbols.count(target)
         previous_max = max_expansions.get(lhs, 0)
         new_max = max(previous_max, times_on_rhs)
         max_expansions[lhs] = new_max
@@ -191,7 +191,7 @@ def can_expand(
         current_target = targets_to_explore.pop()
         explored.add(current_target)
 
-        relevant_rules = [r for r in grammar.rules if current_target in r.rhs]
+        relevant_rules = [r for r in grammar.rules if current_target in r.rhs.symbols]
         relevant_lhss = [r.lhs for r in relevant_rules]
 
         if any(lhs == source for lhs in relevant_lhss):
