@@ -5,6 +5,8 @@
 # caches
 __pycache__/
 
-
 # pyenv
 .python-version
+
+# playground
+gge/playground.py
