@@ -300,11 +300,13 @@ def _symbol_range(node: _LarkTreeNode) -> Iterable[list[NonTerminal]]:
         start = int(a.value)
         stop = int(b.value)
     elif a is not None and b is None:
-        start = 1
+        start = int(a.value)
         stop = int(a.value)
-    else:
+    elif a is None and b is None:
         start = 1
         stop = 1
+    else:
+        raise ValueError(f"unexpected symbol_range configuration: {node}")
 
     assert start >= 0
     assert stop >= start
