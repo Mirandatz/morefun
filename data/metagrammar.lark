@@ -1,10 +1,13 @@
 start : _NL* rule+
-rule  : NAME ":" (layer | block)
+rule  : NONTERMINAL ":" (layer | block)
+
+NONTERMINAL  : NAME
 
 block        : block_option ("|" block_option)*
 block_option : symbol_range+ _NL*
 
-symbol_range : NAME ["~" INT [".." INT]]
+symbol_range : NONTERMINAL ["~" RANGE_BOUND [".." RANGE_BOUND]]
+RANGE_BOUND  : INT
 
 layer        : (conv_layer | dense_layer | dropout_layer) _NL*
 
@@ -24,8 +27,11 @@ DENSE       : /\"dense\"/
 dropout_layer : DROPOUT _float_args
 DROPOUT       : /\"dropout\"/
 
-_int_args    : "(" INT ("|" INT)* ")"
-_float_args  : "(" FLOAT ("|" FLOAT)* ")"
+_int_args : "(" INT_ARG ("|" INT_ARG)* ")"
+INT_ARG   : INT
+
+_float_args : "(" FLOAT_ARG ("|" FLOAT_ARG)* ")"
+FLOAT_ARG   : FLOAT
 
 %import common.NEWLINE -> _NL
 %import common.INT

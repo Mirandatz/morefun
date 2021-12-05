@@ -1,7 +1,8 @@
 import functools
 import itertools
 from dataclasses import dataclass
-from typing import Iterable, Union
+from pathlib import Path
+from typing import Any, Iterable, Optional, Union
 
 import lark
 
@@ -16,9 +17,15 @@ def _can_be_parsed_as_float(value: str) -> bool:
         return False
 
 
-def _can_be_stored_as_text(value: str) -> bool:
-    chars_are_valid = (c.isalnum() or c == "_" for c in value)
-    return len(value) > 0 and all(chars_are_valid)
+def _is_valid_name(value: str) -> bool:
+    assert len(value) >= 1
+
+    first = value[0]
+    if not (first == "_" or first.isalpha()):
+        return False
+
+    chars_are_valid = (c == "_" or c.isalnum() for c in value[1:])
+    return all(chars_are_valid)
 
 
 @dataclass(order=True, frozen=True)
@@ -26,7 +33,26 @@ class NonTerminal:
     text: str
 
     def __post_init__(self) -> None:
-        assert _can_be_stored_as_text(self.text)
+        error_msg = (
+            "text must be non empty, "
+            "can only contain lowercase alphanum and underscores, "
+            "and the first character must be an underscore or alpha. "
+            f"invalid text: {self.text}"
+        )
+
+        if len(self.text) == 0:
+            raise ValueError(error_msg)
+
+        if not self.text.islower():
+            raise ValueError(error_msg)
+
+        first = self.text[0]
+        if not (first == "_" or first.isalpha()):
+            raise ValueError(error_msg)
+
+        core_is_valid = all(c.isalnum() or c == "_" for c in self.text[1:])
+        if not core_is_valid:
+            raise ValueError(error_msg)
 
 
 @dataclass(order=True, frozen=True)
@@ -34,7 +60,30 @@ class Terminal:
     text: str
 
     def __post_init__(self) -> None:
-        assert _can_be_parsed_as_float(self.text) or _can_be_stored_as_text(self.text)
+        if _can_be_parsed_as_float(self.text):
+            return
+
+        if _is_valid_name(self.text):
+            return
+
+        error_msg = (
+            "text must be non empty, "
+            "can only contain lowercase alphanum and underscores, "
+            "and the first character must be an underscore or alpha "
+            "(unless the entire text is surround by double quotes). "
+            f"invalid text: {self.text}"
+        )
+
+        # the rest of the code checks if a text is a quoted "valid name"
+        if len(self.text) <= 2:
+            raise ValueError(error_msg)
+
+        if not (self.text[0] == self.text[-1] == '"'):
+            raise ValueError(error_msg)
+
+        core_is_valid = all(c.isalnum() or c == "_" for c in self.text[1:-2])
+        if not core_is_valid:
+            raise ValueError(error_msg)
 
 
 Symbol = Union[Terminal, NonTerminal]
@@ -384,19 +433,41 @@ def extract_nonterminals(tree: lark.Tree) -> set[NonTerminal]:
     return nonterminals
 
 
+_TERMINAL_TOKEN_TYPES = {
+    "CONV2D",
+    "FILTER_COUNT",
+    "KERNEL_SIZE",
+    "STRIDE",
+    "DENSE",
+    "DROPOUT",
+    "INT",
+    "FLOAT",
+}
+
+
+def _is_terminal_token(node: _LarkTreeNode) -> bool:
+    if not isinstance(node, lark.Token):
+        return False
+
+    return node.type in _TERMINAL_TOKEN_TYPES
+
+
 def extract_terminals(
     tree: lark.Tree,
     nonterminals: set[NonTerminal],
 ) -> set[Terminal]:
     assert tree.data == "start"
 
-    nonterminals_texts = set(nt.text for nt in nonterminals)
     terminals: set[Terminal] = set()
+    for node in tree.scan_values(pred=_is_terminal_token):
+        token_text = node.replace('"', "")
+        terminals.add(Terminal(token_text))
 
-    for node in tree.scan_values(pred=lambda n: isinstance(n, lark.Token)):
-        token = node.replace('"', "")
-        if token not in nonterminals_texts:
-            terminals.add(Terminal(token))
+    # sanity check
+    nonterminals_texts = set(nt.text for nt in nonterminals)
+    for term in terminals:
+        if term.text in nonterminals_texts:
+            raise ValueError(f"text is both a terminal and a nonterminal: {term.text}")
 
     return terminals
 
@@ -467,17 +538,16 @@ def _all_nonterminals_are_used(
     return nts_set.issubset(all_rhs_nonterminals)
 
 
-def _all_terminals_are_used(
+def _assert_all_terminals_are_used(
     terminals: tuple[Terminal, ...],
     rules: tuple[ProductionRule, ...],
-) -> bool:
+) -> None:
     all_rhs_options = (r.rhs.symbols for r in rules)
     all_rhs_symbols = itertools.chain(*all_rhs_options)
-    all_rhs_terminals = set(nt for nt in all_rhs_symbols if isinstance(nt, Terminal))
+    used_terminals = set(nt for nt in all_rhs_symbols if isinstance(nt, Terminal))
 
-    terms_set = set(terminals)
-
-    return terms_set.issubset(all_rhs_terminals)
+    for t in terminals:
+        assert t in used_terminals, t
 
 
 def _all_terminals_were_found(
@@ -523,7 +593,269 @@ def validate_grammar_components(
     assert _all_nonterminals_are_used(N, P, S)
     assert _all_lhs_are_on_nonterminals(N, P)
 
-    assert _all_terminals_are_used(T, P)
+    _assert_all_terminals_are_used(T, P)
     assert _all_terminals_were_found(T, P)
 
     assert _all_symbols_on_rhs_are_terminal_or_nonterminal(P)
+
+
+class GrammarTransformer(lark.Transformer[list[ProductionRule]]):
+    def __init__(self) -> None:
+        super().__init__()
+
+        self._frozen = True
+
+        self._terminals: Optional[list[Terminal]] = None
+        self._nonterminals: Optional[list[NonTerminal]] = None
+        self._rules: Optional[list[ProductionRule]] = None
+        self._start: Optional[NonTerminal] = None
+
+    def __default__(
+        self,
+        data: str,
+        children: list[Any],
+        meta: lark.tree.Meta,
+    ) -> None:
+        raise NotImplementedError(f"method not implemented for tree.data: {data}")
+
+    def __default_token__(
+        self,
+        token_text: str,
+    ) -> None:
+        raise NotImplementedError(
+            f"method not implemented for token with text: {token_text}"
+        )
+
+    def get_nonterminals(self) -> tuple[NonTerminal, ...]:
+        assert self._frozen
+        assert self._nonterminals is not None
+
+        return tuple(self._nonterminals)
+
+    def get_terminals(self) -> tuple[Terminal, ...]:
+        assert self._frozen
+        assert self._terminals is not None
+
+        return tuple(self._terminals)
+
+    def get_rules(self) -> tuple[ProductionRule, ...]:
+        assert self._frozen
+        assert self._rules is not None
+
+        return tuple(self._rules)
+
+    def get_start_symbol(self) -> NonTerminal:
+        assert self._frozen
+        assert self._start is not None
+
+        return self._start
+
+    def transform(self, tree: lark.Tree) -> list[ProductionRule]:
+        assert self._frozen
+
+        self._frozen = False
+
+        self._terminals = []
+        self._nonterminals = []
+        self._rules = []
+
+        ret = super().transform(tree)
+        self._frozen = True
+
+        return ret
+
+    def _register_terminal(self, text: str) -> Terminal:
+        assert not self._frozen
+        assert self._terminals is not None
+
+        term = Terminal(text)
+
+        if term not in self._terminals:
+            self._terminals.append(term)
+
+        return term
+
+    def _register_nonterminal(self, text: str) -> NonTerminal:
+        assert not self._frozen
+        assert self._nonterminals is not None
+
+        nonterm = NonTerminal(text)
+
+        if nonterm not in self._nonterminals:
+            self._nonterminals.append(nonterm)
+
+        return nonterm
+
+    def start(self, rules: list[ProductionRule]) -> list[ProductionRule]:
+        assert not self._frozen
+        assert self._start is None
+
+        self._start = NonTerminal("start")
+        self._rules = rules
+
+        return rules
+
+    def rule(
+        self,
+        rule_parts: tuple[NonTerminal, list[RuleOption]],
+    ) -> list[ProductionRule]:
+        assert not self._frozen
+
+        lhs, options = rule_parts
+        return [ProductionRule(lhs=lhs, rhs=opt) for opt in options]
+
+    def block(self, block_options: list[RuleOption]) -> list[RuleOption]:
+        return block_options
+
+    def block_option(
+        self,
+        repeated_symbols: list[Iterable[Symbol]],
+    ) -> list[RuleOption]:
+        return [
+            RuleOption(tuple(symbols))
+            for symbols in itertools.product(*repeated_symbols)
+        ]
+
+    def symbol_range(
+        self, parts: tuple[NonTerminal, Optional[int], Optional[int]]
+    ) -> list[list[NonTerminal]]:
+        name, a, b = parts
+
+        if a is not None and b is not None:
+            start = a
+            stop = b
+
+        elif a is not None and b is None:
+            start = a
+            stop = a
+
+        elif a is None and b is None:
+            start = 1
+            stop = 1
+
+        else:
+            raise ValueError(f"unexpected symbol_range configuration: {parts}")
+
+        assert start >= 0
+        assert stop >= start
+
+        return [[name] * count for count in range(start, stop + 1)]
+
+    def layer(self, options: list[RuleOption]) -> list[RuleOption]:
+        return options
+
+    def conv_layer(self, parts: Any) -> list[RuleOption]:
+        assert not self._frozen
+
+        marker, filter_counts, kernel_sizes, strides = parts
+        option_data = itertools.product(filter_counts, kernel_sizes, strides)
+        return [RuleOption((marker, *fc, *ks, *st)) for fc, ks, st in option_data]
+
+    def filter_count(self, parts: list[Terminal]) -> list[tuple[Terminal, Terminal]]:
+        assert not self._frozen
+
+        marker, *counts = parts
+        return [(marker, c) for c in counts]
+
+    def kernel_size(self, parts: list[Terminal]) -> list[tuple[Terminal, Terminal]]:
+        assert not self._frozen
+
+        marker, *sizes = parts
+        return [(marker, s) for s in sizes]
+
+    def stride(self, parts: list[Terminal]) -> list[tuple[Terminal, Terminal]]:
+        assert not self._frozen
+
+        marker, *strides = parts
+        return [(marker, s) for s in strides]
+
+    def dense_layer(self, parts: list[Terminal]) -> list[RuleOption]:
+        assert not self._frozen
+
+        marker, *units = parts
+        return [RuleOption((marker, ut)) for ut in units]
+
+    def dropout_layer(self, parts: list[Terminal]) -> list[RuleOption]:
+        assert not self._frozen
+
+        marker, *rates = parts
+        return [RuleOption((marker, rt)) for rt in rates]
+
+    def NONTERMINAL(self, token: lark.Token) -> NonTerminal:
+        assert not self._frozen
+        return self._register_nonterminal(token.value)
+
+    def CONV2D(self, token: lark.Token) -> Terminal:
+        assert not self._frozen
+        return self._register_terminal(token.value)
+
+    def FILTER_COUNT(self, token: lark.Token) -> Terminal:
+        assert not self._frozen
+        return self._register_terminal(token.value)
+
+    def KERNEL_SIZE(self, token: lark.Token) -> Terminal:
+        assert not self._frozen
+        return self._register_terminal(token.value)
+
+    def STRIDE(self, token: lark.Token) -> Terminal:
+        assert not self._frozen
+        return self._register_terminal(token.value)
+
+    def DENSE(self, token: lark.Token) -> Terminal:
+        assert not self._frozen
+        return self._register_terminal(token.value)
+
+    def DROPOUT(self, token: lark.Token) -> Terminal:
+        assert not self._frozen
+        return self._register_terminal(token.value)
+
+    def RANGE_BOUND(self, token: lark.Token) -> int:
+        assert not self._frozen
+        return int(token.value)
+
+    def INT_ARG(self, token: lark.Token) -> Terminal:
+        assert not self._frozen
+        return self._register_terminal(token.value)
+
+    def FLOAT_ARG(self, token: lark.Token) -> Terminal:
+        assert not self._frozen
+        return self._register_terminal(token.value)
+
+
+def main() -> None:
+    data_dir = Path(__file__).parent.parent / "data"
+    metagrammar = (data_dir / "metagrammar.lark").read_text()
+    # grammar = (data_dir / "simple_grammar.lark").read_text()
+    grammar = r"""
+        start: simple_block complex_block simple_dense
+
+        simple_block : simple_conv simple_dense
+        simple_conv  : "conv2d" "filter_count" (4) "kernel_size" (3) "stride" (1)
+        simple_dense : "dense" (16)
+
+        complex_block : complex_conv~2 complex_dense_block~1..3
+                    | simple_conv complex_dense_block~2..2 simple_conv
+                    | simple_conv
+
+        complex_conv  : "conv2d" "filter_count" (4 | 8 | 6) "kernel_size" (3 | 5) "stride" (1 | 2)
+
+        complex_dense_block : complex_dense_layer~3..5 _droperino
+        complex_dense_layer : "dense" (16 | 32 | 64)
+        _droperino          : "dropout" (0.3 | 0.5 | 0.7)
+    """
+
+    parser = lark.Lark(metagrammar)
+    tree = parser.parse(grammar)
+
+    extractor = GrammarTransformer()
+    rules = extractor.transform(tree)
+
+    for r in rules:
+        print(r)
+
+    for t in extractor.get_terminals():
+        print(t)
+
+
+if __name__ == "__main__":
+    main()
