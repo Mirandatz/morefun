@@ -35,35 +35,6 @@ def test_simple_grammar(raw_metagrammar: str) -> None:
     assert 1 == test_func(c, grammar)
 
 
-@pytest.mark.xfail()
-def test_optional(raw_metagrammar: str) -> None:
-    grammar = Grammar(
-        raw_grammar=r"""
-        start : a
-        a : b? c b?
-        b : "b"
-        c : "c"
-        """,
-        raw_metagrammar=raw_metagrammar,
-    )
-
-    a, b, c = [
-        NonTerminal(text)
-        for text in [
-            "a",
-            "b",
-            "c",
-        ]
-    ]
-
-    # shorter alias
-    test_func = sge.max_nr_of_times_nonterminal_can_be_expanded
-
-    assert 1 == test_func(a, grammar)
-    assert 2 == test_func(b, grammar)
-    assert 1 == test_func(c, grammar)
-
-
 def test_simple_repetition(raw_metagrammar: str) -> None:
     grammar = Grammar(
         raw_grammar=r"""
