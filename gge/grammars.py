@@ -1,13 +1,10 @@
 import functools
 import itertools
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any, Iterable, Optional, Union
 
 import lark
 import typeguard
-
-_LarkTreeNode = Union[lark.Tree, str]
 
 
 def _can_be_parsed_as_float(value: str) -> bool:
@@ -202,29 +199,33 @@ class Grammar:
         return self._as_tuple == other._as_tuple
 
 
-def _all_nonterminals_are_defined(
+def _nonterminals_and_lhss_are_consistent(
     nonterminals: tuple[NonTerminal, ...],
     rules: tuple[ProductionRule, ...],
-) -> bool:
+) -> None:
     nts_set = set(nonterminals)
     lhss_set = set(r.lhs for r in rules)
-    return nts_set.issubset(lhss_set)
+
+    only_on_nts = nts_set.difference(lhss_set)
+    if only_on_nts:
+        raise ValueError(
+            "all nonterminals must appear on the lhs of a rule at least once, "
+            f"but the following do not: {only_on_nts}"
+        )
+
+    only_on_lhss = lhss_set.difference(only_on_nts)
+    if only_on_lhss:
+        raise ValueError(
+            "all symbols that appear on the lhs of a rule must be registered "
+            f"as a nonterminal, but the following are not: {only_on_lhss}"
+        )
 
 
-def _all_lhs_are_on_nonterminals(
-    nonterminals: tuple[NonTerminal, ...],
-    rules: tuple[ProductionRule, ...],
-) -> bool:
-    nts_set = set(nonterminals)
-    lhss_set = set(r.lhs for r in rules)
-    return lhss_set.issubset(nts_set)
-
-
-def _all_nonterminals_are_used(
+def _nonterminals_and_rhss_are_consistent(
     nonterminals: tuple[NonTerminal, ...],
     rules: tuple[ProductionRule, ...],
     start: NonTerminal,
-) -> bool:
+) -> None:
     all_rhs_options = (r.rhs.symbols for r in rules)
     all_rhs_symbols = itertools.chain(*all_rhs_options)
     all_rhs_nonterminals = set(
@@ -235,42 +236,50 @@ def _all_nonterminals_are_used(
     nts_set = set(nonterminals)
     nts_set.remove(start)
 
-    return nts_set.issubset(all_rhs_nonterminals)
+    only_on_nts = nts_set.difference(all_rhs_nonterminals)
+    if only_on_nts:
+        raise ValueError(
+            "all nonterminals must be used "
+            "(i.e. appear on the rhs of a rule) "
+            f"at least once, but the following do not: {only_on_nts}"
+        )
+
+    only_on_rhss = all_rhs_nonterminals.difference(nts_set)
+    if only_on_rhss:
+        raise ValueError(
+            "all nonterminals that appear on the rhs of a rule must be "
+            "registered as a nonterminal, "
+            f"but the following are not: {only_on_rhss}"
+        )
 
 
-def _assert_all_terminals_are_used(
+def _terminals_and_rhss_are_consistent(
     terminals: tuple[Terminal, ...],
     rules: tuple[ProductionRule, ...],
 ) -> None:
-    all_rhs_options = (r.rhs.symbols for r in rules)
-    all_rhs_symbols = itertools.chain(*all_rhs_options)
-    used_terminals = set(nt for nt in all_rhs_symbols if isinstance(nt, Terminal))
-
-    for t in terminals:
-        assert t in used_terminals, t
-
-
-def _all_terminals_were_found(
-    terminals: tuple[Terminal, ...],
-    rules: tuple[ProductionRule, ...],
-) -> bool:
     all_rhs_options = (r.rhs.symbols for r in rules)
     all_rhs_symbols = itertools.chain(*all_rhs_options)
     all_rhs_terminals = set(nt for nt in all_rhs_symbols if isinstance(nt, Terminal))
 
     terms_set = set(terminals)
 
-    return all_rhs_terminals.issubset(terms_set)
+    only_on_terms = terms_set.difference(all_rhs_terminals)
+    if only_on_terms:
+        raise ValueError(
+            "all terminals must appear on the rhs of a rule "
+            f"at least once, but the following do not: {only_on_terms}"
+        )
+
+    only_on_rhss = all_rhs_terminals.difference(terms_set)
+    if only_on_rhss:
+        raise ValueError(
+            "all terminals that appear on the rhs of a rule "
+            "must be registered as a terminal, "
+            f"but the following are not: {only_on_rhss}"
+        )
 
 
-def _all_symbols_on_rhs_are_terminal_or_nonterminal(
-    rules: tuple[ProductionRule, ...]
-) -> bool:
-    all_rhs_options = (r.rhs.symbols for r in rules)
-    all_rhs_symbols = itertools.chain(*all_rhs_options)
-    return all(isinstance(s, (Terminal, NonTerminal)) for s in all_rhs_symbols)
-
-
+@typeguard.typechecked
 def validate_grammar_components(
     N: tuple[NonTerminal, ...],
     T: tuple[Terminal, ...],
@@ -285,18 +294,11 @@ def validate_grammar_components(
     assert len(T) == len(set(T))
     assert len(P) == len(set(P))
 
-    assert all(isinstance(nt, NonTerminal) for nt in N)
-    assert all(isinstance(t, Terminal) for t in T)
     assert S in N
 
-    assert _all_nonterminals_are_defined(N, P)
-    assert _all_nonterminals_are_used(N, P, S)
-    assert _all_lhs_are_on_nonterminals(N, P)
-
-    _assert_all_terminals_are_used(T, P)
-    assert _all_terminals_were_found(T, P)
-
-    assert _all_symbols_on_rhs_are_terminal_or_nonterminal(P)
+    _nonterminals_and_lhss_are_consistent(N, P)
+    _nonterminals_and_rhss_are_consistent(N, P, S)
+    _terminals_and_rhss_are_consistent(T, P)
 
 
 class GrammarTransformer(lark.Transformer[list[ProductionRule]]):
@@ -541,38 +543,3 @@ class GrammarTransformer(lark.Transformer[list[ProductionRule]]):
     def FLOAT_ARG(self, token: lark.Token) -> Terminal:
         assert not self._frozen
         return self._register_terminal(token.value)
-
-
-def main() -> None:
-    data_dir = Path(__file__).parent.parent / "data"
-    metagrammar = (data_dir / "metagrammar.lark").read_text()
-    grammar = r"""
-        start: simple_block complex_block simple_dense
-
-        simple_block : simple_conv simple_dense
-        simple_conv  : "conv2d" "filter_count" (4) "kernel_size" (3) "stride" (1)
-        simple_dense : "dense" (16)
-
-        complex_block : complex_conv~2 complex_dense_block~1..3
-                    | simple_conv complex_dense_block~2..2 simple_conv
-                    | simple_conv
-
-        complex_conv  : "conv2d" "filter_count" (4 | 8 | 6) "kernel_size" (3 | 5) "stride" (1 | 2)
-
-        complex_dense_block : complex_dense_layer~3..5 _droperino
-        complex_dense_layer : "dense" (16 | 32 | 64)
-        _droperino          : "dropout" (0.3 | 0.5 | 0.7)
-    """
-
-    parser = lark.Lark(metagrammar)
-    tree = parser.parse(grammar)
-
-    extractor = GrammarTransformer()
-    rules = extractor.transform(tree)
-
-    for r in rules:
-        print(r)
-
-
-if __name__ == "__main__":
-    main()
