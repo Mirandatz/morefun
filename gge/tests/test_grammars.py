@@ -51,14 +51,14 @@ def test_start_symbol(sample_grammar: Grammar) -> None:
 
 def test_terminals(sample_grammar: Grammar) -> None:
     terminals = [
-        "conv2d",
-        "filter_count",
+        '"conv2d"',
+        '"filter_count"',
         "4",
-        "kernel_size",
+        '"kernel_size"',
         "3",
-        "stride",
+        '"stride"',
         "1",
-        "dense",
+        '"dense"',
         "16",
         "8",
         "6",
@@ -66,7 +66,7 @@ def test_terminals(sample_grammar: Grammar) -> None:
         "2",
         "32",
         "64",
-        "dropout",
+        '"dropout"',
         "0.3",
         "0.5",
         "0.7",
@@ -136,6 +136,6 @@ def test_non_terminal_with_single_expansion(sample_grammar: Grammar) -> None:
     assert len(exps) == 1
 
     actual = exps[0]
-    expected = RuleOption((Terminal("dense"), Terminal("16")))
+    expected = RuleOption((Terminal('"dense"'), Terminal("16")))
 
     assert actual == expected
