@@ -93,22 +93,76 @@ def test_non_terminals(sample_grammar: Grammar) -> None:
     assert expected == actual
 
 
-def test_start_symbol_expansion(sample_grammar: Grammar) -> None:
-    start = NonTerminal("start")
+def test_start_trivial_expansion(raw_metagrammar: str) -> None:
+    grammar = Grammar(
+        raw_grammar=r"""
+        start : a
+        a     : "dense" (3)
+        """,
+        raw_metagrammar=raw_metagrammar,
+    )
 
-    expansions = sample_grammar.expansions(start)
+    start = NonTerminal("start")
+    expansions = grammar.expansions(start)
+    assert len(expansions) == 1
+
+    actual = expansions[0]
+    expected = RuleOption((NonTerminal("a"),))
+
+    assert expected == actual
+
+
+def test_start_simple_expansion(raw_metagrammar: str) -> None:
+    grammar = Grammar(
+        raw_grammar=r"""
+        start : a b
+        a     : "dense" (3)
+        b     : "dropout" (0.1)
+        """,
+        raw_metagrammar=raw_metagrammar,
+    )
+
+    start = NonTerminal("start")
+    expansions = grammar.expansions(start)
     assert len(expansions) == 1
 
     actual = expansions[0]
     expected = RuleOption(
         (
-            NonTerminal("simple_block"),
-            NonTerminal("complex_block"),
-            NonTerminal("simple_dense"),
+            NonTerminal("a"),
+            NonTerminal("b"),
         )
     )
 
     assert expected == actual
+
+
+def test_start_complex_expansion(raw_metagrammar: str) -> None:
+    grammar = Grammar(
+        raw_grammar=r"""
+        start : a b | c | c a
+        a     : "dense" (3)
+        b     : "dropout" (0.1)
+        c     : "conv2d" "filter_count" (4) "kernel_size" (3) "stride" (1)
+        """,
+        raw_metagrammar=raw_metagrammar,
+    )
+
+    start = NonTerminal("start")
+    expansions = grammar.expansions(start)
+    assert len(expansions) == 3
+
+    a = NonTerminal("a")
+    b = NonTerminal("b")
+    c = NonTerminal("c")
+
+    expected = (
+        RuleOption((a, b)),
+        RuleOption((c,)),
+        RuleOption((c, a)),
+    )
+
+    assert expected == expansions
 
 
 def test_complex_symbol_expansion(sample_grammar: Grammar) -> None:
