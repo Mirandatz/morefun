@@ -1,6 +1,7 @@
 # ide
 .idea/
-.vscode/
+.vscode/**/*
+!.vscode/settings.json.default
 
 # caches
 __pycache__/
