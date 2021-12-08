@@ -39,7 +39,7 @@ class NonTerminal:
             f"invalid text: {self.text}"
         )
 
-        if not _is_valid_name(self.text)
+        if not _is_valid_name(self.text):
             raise ValueError(error_msg)
 
         if not self.text.islower():

@@ -1,5 +1,3 @@
-import pytest
-
 from gge import structured_grammatical_evolution as sge
 from gge.grammars import Grammar, NonTerminal
 from gge.tests.grammar_fixtures import raw_metagrammar
@@ -63,18 +61,18 @@ def test_simple_repetition(raw_metagrammar: str) -> None:
     assert 5 == test_func(c, grammar)
 
 
-@pytest.mark.xfail
 def test_ranged_repetion(raw_metagrammar: str) -> None:
     grammar = Grammar(
         raw_grammar=r"""
-        a : c~5..7
-        c : "c"
+        start : a
+        a : b~5..7
+        b : "dense" (37)
         """,
         raw_metagrammar=raw_metagrammar,
     )
 
-    a, b, c = [NonTerminal(text) for text in ["a", "b", "c"]]
+    start, a, b = [NonTerminal(text) for text in ["start", "a", "b"]]
 
+    assert 1 == sge.max_nr_of_times_nonterminal_can_be_expanded(start, grammar)
     assert 1 == sge.max_nr_of_times_nonterminal_can_be_expanded(a, grammar)
-    assert 2 == sge.max_nr_of_times_nonterminal_can_be_expanded(b, grammar)
-    assert 7 == sge.max_nr_of_times_nonterminal_can_be_expanded(c, grammar)
+    assert 7 == sge.max_nr_of_times_nonterminal_can_be_expanded(b, grammar)
