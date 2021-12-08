@@ -39,18 +39,10 @@ class NonTerminal:
             f"invalid text: {self.text}"
         )
 
-        if len(self.text) == 0:
+        if not _is_valid_name(self.text)
             raise ValueError(error_msg)
 
         if not self.text.islower():
-            raise ValueError(error_msg)
-
-        first = self.text[0]
-        if not (first == "_" or first.isalpha()):
-            raise ValueError(error_msg)
-
-        core_is_valid = all(c.isalnum() or c == "_" for c in self.text[1:])
-        if not core_is_valid:
             raise ValueError(error_msg)
 
     def __repr__(self) -> str:
