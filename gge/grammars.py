@@ -106,7 +106,8 @@ class RuleOption:
         assert len(self.symbols) >= 1
 
     def __repr__(self) -> str:
-        return "RuleOption(" + ", ".join((repr(s) for s in self.symbols)) + ")"
+        all_options = ",".join(repr(s) for s in self.symbols)
+        return f"RuleOption({all_options})"
 
 
 @typeguard.typechecked
