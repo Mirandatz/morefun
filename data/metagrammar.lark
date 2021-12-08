@@ -1,0 +1,42 @@
+start : _NL* rule+
+rule  : NONTERMINAL ":" (layer | block)
+
+NONTERMINAL  : NAME
+
+block        : block_option ("|" block_option)*
+block_option : symbol_range+ _NL*
+
+symbol_range : NONTERMINAL ["~" RANGE_BOUND [".." RANGE_BOUND]]
+RANGE_BOUND  : INT
+
+layer        : (conv_layer | dense_layer | dropout_layer) _NL*
+
+conv_layer   : CONV2D filter_count kernel_size stride
+filter_count : FILTER_COUNT _int_args
+kernel_size  : KERNEL_SIZE _int_args
+stride       : STRIDE _int_args
+
+CONV2D       : /\"conv2d\"/
+FILTER_COUNT : /\"filter_count\"/
+KERNEL_SIZE  : /\"kernel_size\"/
+STRIDE       : /\"stride\"/ 
+
+dense_layer : DENSE _int_args
+DENSE       : /\"dense\"/ 
+
+dropout_layer : DROPOUT _float_args
+DROPOUT       : /\"dropout\"/
+
+_int_args : "(" INT_ARG ("|" INT_ARG)* ")"
+INT_ARG   : INT
+
+_float_args : "(" FLOAT_ARG ("|" FLOAT_ARG)* ")"
+FLOAT_ARG   : FLOAT
+
+%import common.NEWLINE -> _NL
+%import common.INT
+%import common.FLOAT
+%import common.CNAME -> NAME
+%import common.WS_INLINE
+
+%ignore WS_INLINE

@@ -1,149 +1,195 @@
-import sys
-from typing import Any
+from pathlib import Path
 
-import lark
 import pytest
 
-from gge.grammars import Grammar, NonTerminal, Terminal
+from gge.grammars import Grammar, NonTerminal, RuleOption, Terminal
+
+DATA_DIR = Path(__file__).parent.parent.parent / "data"
 
 
 @pytest.fixture
 def raw_grammar() -> str:
     return """
-    startberg : simple "0.3" complex "1e-07"
-    simple    : "another_terminal"
-    complex   : simple? "maybe_text"? repeaters
-    repeaters : a~1..3 b~5
-    a         : "a"
-    b         : "b"
+    start: simple_block complex_block simple_dense
+
+    simple_block : simple_conv simple_dense
+    simple_conv  : "conv2d" "filter_count" (4) "kernel_size" (3) "stride" (1)
+    simple_dense : "dense" (16)
+
+    complex_block : complex_conv~2 complex_dense_block~1..3
+                  | simple_conv complex_dense_block~2..2 simple_conv
+                  | simple_conv
+
+    complex_conv  : "conv2d" "filter_count" (4 | 8 | 6) "kernel_size" (3 | 5) "stride" (1 | 2)
+
+    complex_dense_block : complex_dense_layer~3..5 _droperino
+    complex_dense_layer : "dense" (16 | 32 | 64)
+    _droperino          : "dropout" (0.3 | 0.5 | 0.7)
     """
 
 
 @pytest.fixture
-def sample_grammar(raw_grammar: str) -> Grammar:
-    return Grammar(raw_grammar)
+def raw_metagrammar() -> str:
+    metagrammar_path = DATA_DIR / "metagrammar.lark"
+    return metagrammar_path.read_text()
 
 
 @pytest.fixture
-def sample_parser(raw_grammar: str) -> lark.lark:  # type: ignore
-    return lark.Lark(raw_grammar, start="startberg", keep_all_tokens=True)
+def sample_grammar(raw_grammar: str, raw_metagrammar: str) -> Grammar:
+    return Grammar(
+        raw_grammar=raw_grammar,
+        raw_metagrammar=raw_metagrammar,
+    )
 
 
-class TestGrammar:
-    def test_start_symbol(self, sample_grammar: Grammar) -> None:
-        expected = NonTerminal("startberg")
-        actual = sample_grammar.start_symbol
+def test_start_symbol(sample_grammar: Grammar) -> None:
+    expected = NonTerminal("start")
+    actual = sample_grammar.start_symbol
 
-        assert expected == actual
+    assert expected == actual
 
-    def test_terminals(self, sample_grammar: Grammar) -> None:
-        texts = ["0.3", "1e-07", "another_terminal", "maybe_text", "a", "b"]
-        expected = {Terminal(t) for t in texts}
-        assert expected == set(sample_grammar.terminals)
 
-    def test_non_terminals(self, sample_grammar: Grammar) -> None:
-        texts = ["startberg", "simple", "complex", "repeaters", "a", "b"]
-        expected = {NonTerminal(t) for t in texts}
-        actual = set(sample_grammar.nonterminals)
+def test_terminals(sample_grammar: Grammar) -> None:
+    terminals = [
+        '"conv2d"',
+        '"filter_count"',
+        "4",
+        '"kernel_size"',
+        "3",
+        '"stride"',
+        "1",
+        '"dense"',
+        "16",
+        "8",
+        "6",
+        "5",
+        "2",
+        "32",
+        "64",
+        '"dropout"',
+        "0.3",
+        "0.5",
+        "0.7",
+    ]
+    expected = {Terminal(t) for t in terminals}
+    assert expected == set(sample_grammar.terminals)
 
-        assert expected == actual
 
-    def test_start_symbol_expansion(self, sample_grammar: Grammar) -> None:
-        start = NonTerminal("startberg")
+def test_non_terminals(sample_grammar: Grammar) -> None:
+    texts = [
+        "start",
+        "simple_block",
+        "complex_block",
+        "simple_dense",
+        "simple_conv",
+        "complex_conv",
+        "complex_dense_block",
+        "complex_dense_layer",
+        "_droperino",
+    ]
+    expected = {NonTerminal(t) for t in texts}
+    actual = set(sample_grammar.nonterminals)
 
-        expansions = sample_grammar.expansions(start)
-        assert len(expansions) == 1
+    assert expected == actual
 
-        actual = expansions[0]
 
-        expected = (
-            NonTerminal("simple"),
-            Terminal("0.3"),
-            NonTerminal("complex"),
-            Terminal("1e-07"),
+def test_start_trivial_expansion(raw_metagrammar: str) -> None:
+    grammar = Grammar(
+        raw_grammar=r"""
+        start : a
+        a     : "dense" (3)
+        """,
+        raw_metagrammar=raw_metagrammar,
+    )
+
+    start = NonTerminal("start")
+    expansions = grammar.expansions(start)
+    assert len(expansions) == 1
+
+    actual = expansions[0]
+    expected = RuleOption((NonTerminal("a"),))
+
+    assert expected == actual
+
+
+def test_start_simple_expansion(raw_metagrammar: str) -> None:
+    grammar = Grammar(
+        raw_grammar=r"""
+        start : a b
+        a     : "dense" (3)
+        b     : "dropout" (0.1)
+        """,
+        raw_metagrammar=raw_metagrammar,
+    )
+
+    start = NonTerminal("start")
+    expansions = grammar.expansions(start)
+    assert len(expansions) == 1
+
+    actual = expansions[0]
+    expected = RuleOption(
+        (
+            NonTerminal("a"),
+            NonTerminal("b"),
         )
+    )
 
-        assert expected == actual
-
-    def test_complex_symbol_expansion(self, sample_grammar: Grammar) -> None:
-        nt = NonTerminal("complex")
-        actual = sample_grammar.expansions(nt)
-
-        s = NonTerminal("simple")
-        mt = Terminal("maybe_text")
-        r = NonTerminal("repeaters")
-
-        expected = (
-            (r,),
-            (mt, r),
-            (s, r),
-            (s, mt, r),
-        )
-
-        assert expected == actual
-
-    def test_non_terminal_with_single_expansion(
-        self,
-        sample_grammar: Grammar,
-    ) -> None:
-        nt = NonTerminal("a")
-        exps = sample_grammar.expansions(nt)
-        assert len(exps) == 1
-
-        actual = exps[0]
-        expected = (Terminal("a"),)
-
-        assert actual == expected
-
-    def test_raise_if_non_terminal_not_used(self) -> None:
-        raw = """
-        a : b c
-        b : "B"
-        c : "C"
-        d : "D"
-        """
-
-        with pytest.raises(ValueError):
-            _ = Grammar(raw)
-
-    def test_repeated_symbol_expansion(self, sample_grammar: Grammar) -> None:
-        actual = sample_grammar.expansions(NonTerminal("repeaters"))
-
-        a = NonTerminal("a")
-        b = NonTerminal("b")
-        expected = (
-            (
-                a,
-                b,
-                b,
-                b,
-                b,
-                b,
-            ),
-            (a, a, b, b, b, b, b),
-            (a, a, a, b, b, b, b, b),
-        )
-
-        assert expected == actual
+    assert expected == actual
 
 
-class TestCompatibilityWithLark:
-    def test_terminals(
-        self,
-        sample_grammar: Grammar,
-        sample_parser: lark.Lark,
-    ) -> None:
-        expected = set(t.pattern.value for t in sample_parser.terminals)
-        actual = set(t.text for t in sample_grammar.terminals)
+def test_start_complex_expansion(raw_metagrammar: str) -> None:
+    grammar = Grammar(
+        raw_grammar=r"""
+        start : a b | c | c a
+        a     : "dense" (3)
+        b     : "dropout" (0.1)
+        c     : "conv2d" "filter_count" (4) "kernel_size" (3) "stride" (1)
+        """,
+        raw_metagrammar=raw_metagrammar,
+    )
 
-        assert expected == actual
+    start = NonTerminal("start")
+    expansions = grammar.expansions(start)
+    assert len(expansions) == 3
 
-    def test_nonterminals(
-        self,
-        sample_grammar: Grammar,
-        sample_parser: lark.Lark,
-    ) -> None:
-        expected = set(rule.origin.name for rule in sample_parser.rules)  # type: ignore
-        actual = set(t.text for t in sample_grammar.nonterminals)
+    a = NonTerminal("a")
+    b = NonTerminal("b")
+    c = NonTerminal("c")
 
-        assert expected == actual
+    expected = (
+        RuleOption((a, b)),
+        RuleOption((c,)),
+        RuleOption((c, a)),
+    )
+
+    assert expected == expansions
+
+
+def test_complex_symbol_expansion(sample_grammar: Grammar) -> None:
+    nt = NonTerminal("complex_block")
+    actual = sample_grammar.expansions(nt)
+
+    cc = NonTerminal("complex_conv")
+    cdb = NonTerminal("complex_dense_block")
+    sc = NonTerminal("simple_conv")
+
+    expected = (
+        RuleOption((cc, cc, cdb)),
+        RuleOption((cc, cc, cdb, cdb)),
+        RuleOption((cc, cc, cdb, cdb, cdb)),
+        RuleOption((sc, cdb, cdb, sc)),
+        RuleOption((sc,)),
+    )
+
+    assert expected == actual
+
+
+def test_non_terminal_with_single_expansion(sample_grammar: Grammar) -> None:
+    nt = NonTerminal("simple_dense")
+    exps = sample_grammar.expansions(nt)
+    assert len(exps) == 1
+
+    actual = exps[0]
+    expected = RuleOption((Terminal('"dense"'), Terminal("16")))
+
+    assert actual == expected

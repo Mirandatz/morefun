@@ -1,11 +1,10 @@
 import functools
 import itertools
-import re
 from dataclasses import dataclass
-from typing import Iterable, Optional, Union
+from typing import Any, Iterable, Optional, Union
 
-RULE_SIDE_DELIMITER = ":"
-RULE_OPTION_DELIMITER = "|"
+import lark
+import typeguard
 
 
 def _can_be_parsed_as_float(value: str) -> bool:
@@ -16,50 +15,79 @@ def _can_be_parsed_as_float(value: str) -> bool:
         return False
 
 
-def _can_be_stored_as_text(value: str) -> bool:
-    chars_are_valid = (c.isalnum() or c == "_" for c in value)
-    return len(value) > 0 and all(chars_are_valid)
+def _is_valid_name(value: str) -> bool:
+    assert len(value) >= 1
+
+    first = value[0]
+    if not (first == "_" or first.isalpha()):
+        return False
+
+    chars_are_valid = (c == "_" or c.isalnum() for c in value[1:])
+    return all(chars_are_valid)
 
 
+@typeguard.typechecked
 @dataclass(order=True, frozen=True)
 class NonTerminal:
     text: str
 
     def __post_init__(self) -> None:
-        assert _can_be_stored_as_text(self.text)
+        error_msg = (
+            "text must be non empty, "
+            "can only contain lowercase alphanum and underscores, "
+            "and the first character must be an underscore or alpha. "
+            f"invalid text: {self.text}"
+        )
+
+        if not _is_valid_name(self.text):
+            raise ValueError(error_msg)
+
+        if not self.text.islower():
+            raise ValueError(error_msg)
+
+    def __repr__(self) -> str:
+        return f"NT({self.text})"
 
 
+@typeguard.typechecked
 @dataclass(order=True, frozen=True)
 class Terminal:
     text: str
 
     def __post_init__(self) -> None:
-        assert _can_be_parsed_as_float(self.text) or _can_be_stored_as_text(self.text)
+        if _can_be_parsed_as_float(self.text):
+            return
+
+        if _is_valid_name(self.text):
+            return
+
+        error_msg = (
+            "text must be non empty, "
+            "can only contain lowercase alphanum and underscores, "
+            "and the first character must be an underscore or alpha "
+            "(unless the entire text is surround by double quotes). "
+            f"invalid text: {self.text}"
+        )
+
+        # the rest of the code checks if a text is a quoted "valid name"
+        if len(self.text) <= 2:
+            raise ValueError(error_msg)
+
+        if not (self.text[0] == self.text[-1] == '"'):
+            raise ValueError(error_msg)
+
+        core_is_valid = all(c.isalnum() or c == "_" for c in self.text[1:-2])
+        if not core_is_valid:
+            raise ValueError(error_msg)
+
+    def __repr__(self) -> str:
+        return f"T({self.text})"
 
 
 Symbol = Union[Terminal, NonTerminal]
 
 
-@dataclass(order=True, frozen=True)
-class QuantifiedSymbol:
-    """
-    Represents a combination of a `symbol` with a "repetition quantifier", such as
-    `symbol~2..5` -> min = 2, max = 5
-    `symbol~1000` -> min = 1000, max = 1000
-    `symbol?`     -> min = 0, max = 1
-    `symbol`      -> min = 1, max = 1
-    """
-
-    symbol: Symbol
-    min_count_inclusive: int
-    max_count_inclusive: int
-
-    def __post_init__(self) -> None:
-        assert self.min_count_inclusive >= 0
-        assert self.max_count_inclusive >= 0
-        assert self.max_count_inclusive >= self.min_count_inclusive
-
-
+@typeguard.typechecked
 @dataclass(order=True, frozen=True)
 class RuleOption:
     """
@@ -74,38 +102,49 @@ class RuleOption:
 
     symbols: tuple[Symbol, ...]
 
+    def __post_init__(self) -> None:
+        assert len(self.symbols) >= 1
 
-@dataclass(order=True, frozen=True)
-class ExpandableRuleOption:
-    """
-    Almost the same thing as `RuleOption`, but contains `QuantifiedSymbols`, instead of raw symbols, e.g.:
-    thousand_bs_or_maybe_c = b~1000 | c?
-    expandable_option0 = b~1000
-    expandable_option1 = c?
-    """
-
-    quantified_symbols: tuple[QuantifiedSymbol, ...]
+    def __repr__(self) -> str:
+        all_options = ",".join(repr(s) for s in self.symbols)
+        return f"RuleOption({all_options})"
 
 
+@typeguard.typechecked
 @dataclass(order=True, frozen=True)
 class ProductionRule:
     lhs: NonTerminal
-    rhs: tuple[Symbol, ...]
+    rhs: RuleOption
+
+    def __repr__(self) -> str:
+        return f"Rule({self.lhs}->{self.rhs})"
 
 
 class Grammar:
-    def __init__(self, raw_grammar: str) -> None:
-        n, t, p, s = extract_grammar_components(raw_grammar)
-        validate_grammar_components(n, t, p, s)
+    def __init__(
+        self,
+        raw_grammar: str,
+        raw_metagrammar: str,
+    ) -> None:
+        parser = lark.Lark(raw_metagrammar, parser="lalr")
+        tree = parser.parse(raw_grammar)
+        transformer = GrammarTransformer()
+        transformer.transform(tree)
 
         self._raw_grammar = raw_grammar
 
-        self._nonterminals = n
-        self._terminals = t
-        self._rules = p
-        self._start_symbol = s
+        self._nonterminals = transformer.get_nonterminals()
+        self._terminals = transformer.get_terminals()
+        self._rules = transformer.get_rules()
+        self._start_symbol = transformer.get_start_symbol()
 
-        self._as_tuple = (n, t, p, s)
+        self._as_tuple = (
+            self._nonterminals,
+            self._terminals,
+            self._rules,
+            self._start_symbol,
+        )
+
         self._hash = hash(self._as_tuple)
 
     @property
@@ -129,7 +168,7 @@ class Grammar:
         return self._raw_grammar
 
     @functools.cache
-    def expansions(self, nt: NonTerminal) -> tuple[tuple[Symbol, ...], ...]:
+    def expansions(self, nt: NonTerminal) -> tuple[RuleOption, ...]:
         if nt not in self.nonterminals:
             raise ValueError("nt is not contained in the nonterminals of the grammar")
 
@@ -153,286 +192,347 @@ class Grammar:
         return self._as_tuple == other._as_tuple
 
 
-def expand_quantified_symbol(unit: QuantifiedSymbol) -> Iterable[tuple[Symbol, ...]]:
-    for i in range(
-        unit.min_count_inclusive,
-        unit.max_count_inclusive + 1,
-    ):
-        expansion = tuple(itertools.repeat(unit.symbol, i))
-        yield expansion
-
-
-def expand_rule_option(option: ExpandableRuleOption) -> Iterable[RuleOption]:
-    all_symbols_expansions = [
-        expand_quantified_symbol(u) for u in option.quantified_symbols
-    ]
-    for current_expansions in itertools.product(*all_symbols_expansions):
-        symbols = itertools.chain(*current_expansions)
-        yield RuleOption(symbols=tuple(symbols))
-
-
-def extract_rule_lhs(trimmed_line: str) -> tuple[NonTerminal, str]:
-    """
-    Returns the symbol on the left-hand side of a rule and the raw right-hand side of the rule
-    """
-    match = re.search(pattern=r"^\s*(\w+)\s*:", string=trimmed_line)
-    if not match:
-        raise ValueError(f"Unable to find lhs of rule: {trimmed_line}")
-
-    non_terminal_text = match.group(1)
-    non_terminal = NonTerminal(text=non_terminal_text)
-
-    match_end = match.end(0)
-    rest = trimmed_line[match_end:]
-
-    return non_terminal, rest
-
-
-def try_extract_nonterminal(trimmed_rhs: str) -> Optional[tuple[NonTerminal, str]]:
-    match = re.match(pattern=r"^\s*(\w+)", string=trimmed_rhs)
-    if not match:
-        return None
-
-    non_terminal_text = match.group(1)
-    non_terminal = NonTerminal(non_terminal_text)
-
-    match_end = match.end(0)
-    rest = trimmed_rhs[match_end:]
-
-    return non_terminal, rest
-
-
-def try_extract_terminal(trimmed_rhs: str) -> Optional[tuple[Terminal, str]]:
-    text_pattern = r"\w+"
-    int_pattern = r"[-+]?\d+"
-    float_pattern = r"[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?"
-    spaces_pattern = r"^\s*"
-    terminal_pattern = (
-        f'{spaces_pattern}"({text_pattern}|{float_pattern}|{int_pattern})"'
-    )
-    match = re.search(pattern=terminal_pattern, string=trimmed_rhs)
-    if not match:
-        return None
-
-    terminal_text = match.group(1)
-    terminal = Terminal(terminal_text)
-
-    match_end = match.end(0)
-    rest = trimmed_rhs[match_end:]
-
-    return terminal, rest
-
-
-def extract_symbol(text: str) -> tuple[Symbol, str]:
-    maybe_terminal = try_extract_terminal(text)
-    if maybe_terminal:
-        terminal, rest = maybe_terminal
-        return terminal, rest
-
-    maybe_nonterminal = try_extract_nonterminal(text)
-    if maybe_nonterminal:
-        nonterminal, rest = maybe_nonterminal
-        return nonterminal, rest
-
-    raise ValueError(f"unable to extract a symbol from text: {text}")
-
-
-def extract_repetition_range(text: str) -> tuple[int, int, str]:
-    if len(text) == 0 or text[0].isspace():
-        # if there is no repetition range, the symbol must appear exactly once
-        inclusive_min = 1
-        inclusive_max = 1
-        rest = text.lstrip()
-        return inclusive_min, inclusive_max, rest
-
-    elif text[0] == "?":
-        inclusive_min = 0
-        inclusive_max = 1
-        rest = text[1:].lstrip()
-        return inclusive_min, inclusive_max, rest
-
-    elif match := re.search(pattern=r"^~(\d+)\.\.(\d+)", string=text):
-        inclusive_min = int(match.group(1))
-        inclusive_max = int(match.group(2))
-        rest = text[match.end(0) :]
-        return inclusive_min, inclusive_max, rest
-
-    elif match := re.search(pattern=r"^~(\d+)", string=text):
-        inclusive_min = int(match.group(1))
-        inclusive_max = inclusive_min
-        rest = text[match.end(0) :]
-        return inclusive_min, inclusive_max, rest
-
-    else:
-        raise ValueError(f"Unable to parse repetition range `{text}`")
-
-
-def extract_quantified_symbols(raw_rule_option: str) -> Iterable[QuantifiedSymbol]:
-    if RULE_SIDE_DELIMITER in raw_rule_option:
-        raise ValueError(f"Unexpected symbol `{RULE_SIDE_DELIMITER}`")
-    if RULE_OPTION_DELIMITER in raw_rule_option:
-        raise ValueError(f"unexpected symbol `{RULE_OPTION_DELIMITER}`")
-
-    while raw_rule_option:
-        symbol, raw_rule_option = extract_symbol(raw_rule_option)
-        inclusive_min, inclusive_max, raw_rule_option = extract_repetition_range(
-            raw_rule_option
-        )
-        qf = QuantifiedSymbol(
-            symbol=symbol,
-            min_count_inclusive=inclusive_min,
-            max_count_inclusive=inclusive_max,
-        )
-        yield qf
-
-
-def extract_rule_options(trimmed_rule_rhs: str) -> Iterable[ExpandableRuleOption]:
-    if RULE_SIDE_DELIMITER in trimmed_rule_rhs:
-        raise ValueError(f"Unexpected symbol `{RULE_SIDE_DELIMITER}`")
-    if "\n" in trimmed_rule_rhs:
-        raise ValueError("Expected single line as argument")
-
-    for option in trimmed_rule_rhs.split(RULE_OPTION_DELIMITER):
-        quantified_symbols = tuple(extract_quantified_symbols(option))
-        parsed_option = ExpandableRuleOption(quantified_symbols)
-        yield parsed_option
-
-
-def create_rules(
-    lhs: NonTerminal, expandable_options: Iterable[ExpandableRuleOption]
-) -> Iterable[ProductionRule]:
-    for exp_opt in expandable_options:
-        for expansion in expand_rule_option(exp_opt):
-            r = ProductionRule(lhs=lhs, rhs=tuple(expansion.symbols))
-            yield r
-
-
-def parse_grammar_line(line: str) -> Iterable[ProductionRule]:
-    if not line:
-        raise ValueError("Line can not be empty")
-    if "\n" in line:
-        raise ValueError("Expected single line as argument")
-
-    trimmed = line.strip()
-    lhs, trimmed_rhs = extract_rule_lhs(trimmed)
-    expandable_rule_options = extract_rule_options(trimmed_rhs)
-    return create_rules(lhs, expandable_rule_options)
-
-
-def extract_grammar_components(
-    raw_grammar: str,
-) -> tuple[
-    tuple[NonTerminal, ...],
-    tuple[Terminal, ...],
-    tuple[ProductionRule, ...],
-    NonTerminal,
-]:
-    """
-    Returns the standard components of a grammar = (N, T, P, S)
-    N = Nonterminals
-    T = Terminals
-    P = Production rules
-    S = Start symbol
-    """
-    if not raw_grammar:
-        raise ValueError("raw_grammar can not be empty")
-
-    lines = raw_grammar.splitlines()
-    stripped_lines = [ln.strip() for ln in lines]
-    relevant_lines = [ln for ln in stripped_lines if ln]
-
-    rules: list[ProductionRule] = []
-
-    for line in relevant_lines:
-        extracted_rules = parse_grammar_line(line)
-        rules.extend(extracted_rules)
-
-    # we are using dicts instead of sets because the order of insertion in dicts is preserved
-    unique_nonterminals: dict[NonTerminal, None] = {}
-    unique_terminals: dict[Terminal, None] = {}
-
-    for rule in rules:
-        unique_nonterminals[rule.lhs] = None
-
-        for symbol in rule.rhs:
-            if isinstance(symbol, NonTerminal):
-                unique_nonterminals[symbol] = None
-            elif isinstance(symbol, Terminal):
-                unique_terminals[symbol] = None
-            else:
-                raise ValueError(f"Unknown symbol type `{type(symbol)}`")
-
-    nonterminals = tuple(unique_nonterminals.keys())
-    terminals = tuple(unique_terminals.keys())
-    rules_tuple = tuple(rules)
-    start_symbol = rules_tuple[0].lhs
-
-    return nonterminals, terminals, rules_tuple, start_symbol
-
-
-def validate_grammar_components(
+def _nonterminals_and_lhss_are_consistent(
     nonterminals: tuple[NonTerminal, ...],
+    rules: tuple[ProductionRule, ...],
+) -> None:
+    nts_set = set(nonterminals)
+    lhss_set = set(r.lhs for r in rules)
+
+    only_on_nts = nts_set.difference(lhss_set)
+    if only_on_nts:
+        raise ValueError(
+            "all nonterminals must appear on the lhs of a rule at least once, "
+            f"but the following do not: {only_on_nts}"
+        )
+
+    only_on_lhss = lhss_set.difference(only_on_nts)
+    if only_on_lhss:
+        raise ValueError(
+            "all symbols that appear on the lhs of a rule must be registered "
+            f"as a nonterminal, but the following are not: {only_on_lhss}"
+        )
+
+
+def _nonterminals_and_rhss_are_consistent(
+    nonterminals: tuple[NonTerminal, ...],
+    rules: tuple[ProductionRule, ...],
+    start: NonTerminal,
+) -> None:
+    all_rhs_options = (r.rhs.symbols for r in rules)
+    all_rhs_symbols = itertools.chain(*all_rhs_options)
+    all_rhs_nonterminals = set(
+        nt for nt in all_rhs_symbols if isinstance(nt, NonTerminal)
+    )
+
+    # start is always used therefore should not be checked
+    nts_set = set(nonterminals)
+    nts_set.remove(start)
+
+    only_on_nts = nts_set.difference(all_rhs_nonterminals)
+    if only_on_nts:
+        raise ValueError(
+            "all nonterminals must be used "
+            "(i.e. appear on the rhs of a rule) "
+            f"at least once, but the following do not: {only_on_nts}"
+        )
+
+    only_on_rhss = all_rhs_nonterminals.difference(nts_set)
+    if only_on_rhss:
+        raise ValueError(
+            "all nonterminals that appear on the rhs of a rule must be "
+            "registered as a nonterminal, "
+            f"but the following are not: {only_on_rhss}"
+        )
+
+
+def _terminals_and_rhss_are_consistent(
     terminals: tuple[Terminal, ...],
     rules: tuple[ProductionRule, ...],
-    start_symbol: NonTerminal,
 ) -> None:
-    if not nonterminals:
-        raise ValueError("nonterminals can not be empty")
-    if len(nonterminals) != len(set(nonterminals)):
-        raise ValueError("nonterminals can not contain duplicates")
+    all_rhs_options = (r.rhs.symbols for r in rules)
+    all_rhs_symbols = itertools.chain(*all_rhs_options)
+    all_rhs_terminals = set(nt for nt in all_rhs_symbols if isinstance(nt, Terminal))
 
-    if not terminals:
-        raise ValueError("terminals can not be empty")
-    if len(terminals) != len(set(terminals)):
-        raise ValueError("terminals can not contain duplicates")
+    terms_set = set(terminals)
 
-    # no need to check if terminals and nonterminals are disjoint because they have different types
-    if not all((isinstance(nt, NonTerminal) for nt in nonterminals)):
-        raise ValueError("nonterminals must contain only objects of type NonTerminal")
-    if not all((isinstance(t, Terminal) for t in terminals)):
-        raise ValueError("terminals must contain only objects of type Terminal")
+    only_on_terms = terms_set.difference(all_rhs_terminals)
+    if only_on_terms:
+        raise ValueError(
+            "all terminals must appear on the rhs of a rule "
+            f"at least once, but the following do not: {only_on_terms}"
+        )
 
-    if start_symbol not in nonterminals:
-        raise ValueError("start_symbol must be contained in nonterminals")
+    only_on_rhss = all_rhs_terminals.difference(terms_set)
+    if only_on_rhss:
+        raise ValueError(
+            "all terminals that appear on the rhs of a rule "
+            "must be registered as a terminal, "
+            f"but the following are not: {only_on_rhss}"
+        )
 
-    for nt in nonterminals:
-        if not any((nt == r.lhs for r in rules)):
-            raise ValueError(
-                "All nonterminals must appear at least once in the lhs of a rule"
-            )
 
-        if nt == start_symbol:
-            continue
+@typeguard.typechecked
+def validate_grammar_components(
+    N: tuple[NonTerminal, ...],
+    T: tuple[Terminal, ...],
+    P: tuple[ProductionRule, ...],
+    S: NonTerminal,
+) -> None:
+    assert len(N) > 0
+    assert len(T) > 0
+    assert len(P) > 0
 
-        nts_on_rhss = (s for r in rules for s in r.rhs if isinstance(s, NonTerminal))
-        if nt not in nts_on_rhss:
-            raise ValueError(
-                "all nonterminals (except the start symbol) must appear at least once "
-                "on the rhs of a rule"
-            )
+    assert len(N) == len(set(N))
+    assert len(T) == len(set(T))
+    assert len(P) == len(set(P))
 
-    for nt in nonterminals:
-        if nt == start_symbol:
-            continue
+    assert S in N
 
-    for r in rules:
-        if r.lhs not in nonterminals:
-            raise ValueError("All rule.lhs must be contained in nonterminals")
+    _nonterminals_and_lhss_are_consistent(N, P)
+    _nonterminals_and_rhss_are_consistent(N, P, S)
+    _terminals_and_rhss_are_consistent(T, P)
 
-        for symbol in r.rhs:
-            if isinstance(symbol, Terminal):
-                if symbol in terminals:
-                    continue
-                else:
-                    raise ValueError(
-                        "All terminals on the rhs of a rule must be contained in terminals"
-                    )
-            elif isinstance(symbol, NonTerminal):
-                if symbol in nonterminals:
-                    continue
-                else:
-                    raise ValueError(
-                        "All nonterminals on the rhs of a rule must be contained in nonterminals"
-                    )
-            else:
-                raise ValueError(f"Unknown symbol type `{type(symbol)}`")
+
+class GrammarTransformer(lark.Transformer[list[ProductionRule]]):
+    def __init__(self) -> None:
+        super().__init__()
+
+        self._frozen = True
+
+        self._terminals: Optional[list[Terminal]] = None
+        self._nonterminals: Optional[list[NonTerminal]] = None
+        self._rules: Optional[list[ProductionRule]] = None
+        self._start: Optional[NonTerminal] = None
+
+    def __default__(
+        self,
+        data: str,
+        children: list[Any],
+        meta: lark.tree.Meta,
+    ) -> None:
+        raise NotImplementedError(f"method not implemented for tree.data: {data}")
+
+    def __default_token__(
+        self,
+        token_text: str,
+    ) -> None:
+        raise NotImplementedError(
+            f"method not implemented for token with text: {token_text}"
+        )
+
+    def get_nonterminals(self) -> tuple[NonTerminal, ...]:
+        assert self._frozen
+        assert self._nonterminals is not None
+
+        return tuple(self._nonterminals)
+
+    def get_terminals(self) -> tuple[Terminal, ...]:
+        assert self._frozen
+        assert self._terminals is not None
+
+        return tuple(self._terminals)
+
+    def get_rules(self) -> tuple[ProductionRule, ...]:
+        assert self._frozen
+        assert self._rules is not None
+
+        return tuple(self._rules)
+
+    def get_start_symbol(self) -> NonTerminal:
+        assert self._frozen
+        assert self._start is not None
+
+        return self._start
+
+    def transform(self, tree: lark.Tree) -> list[ProductionRule]:
+        assert self._frozen
+
+        self._frozen = False
+
+        self._terminals = []
+        self._nonterminals = []
+        self._rules = []
+
+        ret = super().transform(tree)
+        self._frozen = True
+
+        return ret
+
+    def _register_terminal(self, text: str) -> Terminal:
+        assert not self._frozen
+        assert self._terminals is not None
+
+        term = Terminal(text)
+
+        if term not in self._terminals:
+            self._terminals.append(term)
+
+        return term
+
+    def _register_nonterminal(self, text: str) -> NonTerminal:
+        assert not self._frozen
+        assert self._nonterminals is not None
+
+        nonterm = NonTerminal(text)
+
+        if nonterm not in self._nonterminals:
+            self._nonterminals.append(nonterm)
+
+        return nonterm
+
+    def start(self, list_of_list_of_rules: Any) -> list[ProductionRule]:
+        assert not self._frozen
+        assert self._start is None
+
+        self._start = NonTerminal("start")
+
+        flattened = [
+            rule for list_of_rules in list_of_list_of_rules for rule in list_of_rules
+        ]
+        self._rules = flattened
+
+        return flattened
+
+    def rule(self, rule_parts: Any) -> list[ProductionRule]:
+        assert not self._frozen
+
+        lhs, *list_of_list_of_options = rule_parts
+
+        return [
+            ProductionRule(lhs, rhs)
+            for list_of_options in list_of_list_of_options
+            for rhs in list_of_options
+        ]
+
+    def block(self, list_of_list_of_options: Any) -> list[RuleOption]:
+        assert not self._frozen
+
+        return [
+            option
+            for list_of_options in list_of_list_of_options
+            for option in list_of_options
+        ]
+
+    def block_option(
+        self,
+        repeated_symbols: list[Iterable[Symbol]],
+    ) -> list[RuleOption]:
+        assert not self._frozen
+
+        combinations = itertools.product(*repeated_symbols)
+        unpacked = [itertools.chain(*inner) for inner in combinations]
+        return [RuleOption(tuple(symbols)) for symbols in unpacked]
+
+    def symbol_range(
+        self, parts: tuple[NonTerminal, Optional[int], Optional[int]]
+    ) -> list[list[NonTerminal]]:
+        assert not self._frozen
+
+        name, a, b = parts
+
+        if a is not None and b is not None:
+            start = a
+            stop = b
+
+        elif a is not None and b is None:
+            start = a
+            stop = a
+
+        elif a is None and b is None:
+            start = 1
+            stop = 1
+
+        else:
+            raise ValueError(f"unexpected symbol_range configuration: {parts}")
+
+        assert start >= 0
+        assert stop >= start
+
+        return [[name] * count for count in range(start, stop + 1)]
+
+    def layer(self, list_of_lists_of_options: Any) -> list[RuleOption]:
+        assert not self._frozen
+
+        return [
+            opt
+            for list_of_options in list_of_lists_of_options
+            for opt in list_of_options
+        ]
+
+    def conv_layer(self, parts: Any) -> list[RuleOption]:
+        assert not self._frozen
+
+        marker, filter_counts, kernel_sizes, strides = parts
+        option_data = itertools.product(filter_counts, kernel_sizes, strides)
+        return [RuleOption((marker, *fc, *ks, *st)) for fc, ks, st in option_data]
+
+    def filter_count(self, parts: list[Terminal]) -> list[tuple[Terminal, Terminal]]:
+        assert not self._frozen
+
+        marker, *counts = parts
+        return [(marker, c) for c in counts]
+
+    def kernel_size(self, parts: list[Terminal]) -> list[tuple[Terminal, Terminal]]:
+        assert not self._frozen
+
+        marker, *sizes = parts
+        return [(marker, s) for s in sizes]
+
+    def stride(self, parts: list[Terminal]) -> list[tuple[Terminal, Terminal]]:
+        assert not self._frozen
+
+        marker, *strides = parts
+        return [(marker, s) for s in strides]
+
+    def dense_layer(self, parts: list[Terminal]) -> list[RuleOption]:
+        assert not self._frozen
+
+        marker, *units = parts
+        return [RuleOption((marker, ut)) for ut in units]
+
+    def dropout_layer(self, parts: list[Terminal]) -> list[RuleOption]:
+        assert not self._frozen
+
+        marker, *rates = parts
+        return [RuleOption((marker, rt)) for rt in rates]
+
+    def NONTERMINAL(self, token: lark.Token) -> NonTerminal:
+        assert not self._frozen
+        return self._register_nonterminal(token.value)
+
+    def CONV2D(self, token: lark.Token) -> Terminal:
+        assert not self._frozen
+        return self._register_terminal(token.value)
+
+    def FILTER_COUNT(self, token: lark.Token) -> Terminal:
+        assert not self._frozen
+        return self._register_terminal(token.value)
+
+    def KERNEL_SIZE(self, token: lark.Token) -> Terminal:
+        assert not self._frozen
+        return self._register_terminal(token.value)
+
+    def STRIDE(self, token: lark.Token) -> Terminal:
+        assert not self._frozen
+        return self._register_terminal(token.value)
+
+    def DENSE(self, token: lark.Token) -> Terminal:
+        assert not self._frozen
+        return self._register_terminal(token.value)
+
+    def DROPOUT(self, token: lark.Token) -> Terminal:
+        assert not self._frozen
+        return self._register_terminal(token.value)
+
+    def RANGE_BOUND(self, token: lark.Token) -> int:
+        assert not self._frozen
+        return int(token.value)
+
+    def INT_ARG(self, token: lark.Token) -> Terminal:
+        assert not self._frozen
+        return self._register_terminal(token.value)
+
+    def FLOAT_ARG(self, token: lark.Token) -> Terminal:
+        assert not self._frozen
+        return self._register_terminal(token.value)
