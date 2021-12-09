@@ -1,19 +1,15 @@
 from gge import structured_grammatical_evolution as sge
 from gge.grammars import Grammar, NonTerminal
-from gge.tests.grammar_fixtures import raw_metagrammar
-
-assert raw_metagrammar is not None
 
 
-def test_simple_grammar(raw_metagrammar: str) -> None:
+def test_simple_grammar() -> None:
     grammar = Grammar(
         raw_grammar=r"""
         start : a
         a : b c
         b : "dense" (2)
         c : "dense" (4)
-        """,
-        raw_metagrammar=raw_metagrammar,
+        """
     )
 
     a, b, c = [
@@ -33,15 +29,14 @@ def test_simple_grammar(raw_metagrammar: str) -> None:
     assert 1 == test_func(c, grammar)
 
 
-def test_simple_repetition(raw_metagrammar: str) -> None:
+def test_simple_repetition() -> None:
     grammar = Grammar(
         raw_grammar=r"""
         start : a
         a : b c~5 b
         b : "dense" (4)
         c : "dense" (9)
-        """,
-        raw_metagrammar=raw_metagrammar,
+        """
     )
 
     a, b, c = [
@@ -61,14 +56,13 @@ def test_simple_repetition(raw_metagrammar: str) -> None:
     assert 5 == test_func(c, grammar)
 
 
-def test_ranged_repetion(raw_metagrammar: str) -> None:
+def test_ranged_repetion() -> None:
     grammar = Grammar(
         raw_grammar=r"""
         start : a
         a : b~5..7
         b : "dense" (37)
-        """,
-        raw_metagrammar=raw_metagrammar,
+        """
     )
 
     start, a, b = [NonTerminal(text) for text in ["start", "a", "b"]]

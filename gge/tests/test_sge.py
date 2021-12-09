@@ -1,19 +1,15 @@
 from gge import structured_grammatical_evolution as sge
 from gge.grammars import Grammar, NonTerminal
-from gge.tests.grammar_fixtures import raw_metagrammar
-
-assert raw_metagrammar is not None
 
 
-def test_nonrecursive_grammar(raw_metagrammar: str) -> None:
+def test_nonrecursive_grammar() -> None:
     grammar = Grammar(
         raw_grammar=r"""
         start : a
         a : b c
         b : "dense" (3)
         c : "dense" (8)
-        """,
-        raw_metagrammar=raw_metagrammar,
+        """
     )
 
     a = NonTerminal("a")
@@ -33,15 +29,14 @@ def test_nonrecursive_grammar(raw_metagrammar: str) -> None:
     assert not sge.can_expand(c, c, grammar)
 
 
-def test_simple_recursive_grammar(raw_metagrammar: str) -> None:
+def test_simple_recursive_grammar() -> None:
     grammar = Grammar(
         raw_grammar=r"""
         start : a
         a : b c | a
         b : b | c
         c : "dropout" (0.3)
-        """,
-        raw_metagrammar=raw_metagrammar,
+        """
     )
 
     a = NonTerminal("a")
@@ -61,16 +56,15 @@ def test_simple_recursive_grammar(raw_metagrammar: str) -> None:
     assert not sge.can_expand(c, c, grammar)
 
 
-def test_complex_recursive_grammar(raw_metagrammar: str) -> None:
+def test_complex_recursive_grammar() -> None:
     grammar = Grammar(
         raw_grammar=r"""
-    start : a
-    a : b c d
-    b : c d
-    c : d a
-    d : "conv2d" "filter_count" (2) "kernel_size" (1) "stride" (2)
-    """,
-        raw_metagrammar=raw_metagrammar,
+        start : a
+        a : b c d
+        b : c d
+        c : d a
+        d : "conv2d" "filter_count" (2) "kernel_size" (1) "stride" (2)
+        """
     )
 
     a = NonTerminal("a")
@@ -99,18 +93,16 @@ def test_complex_recursive_grammar(raw_metagrammar: str) -> None:
     assert not sge.can_expand(d, b, grammar)
 
 
-def test_nasty_recursive_grammar(raw_metagrammar: str) -> None:
+def test_nasty_recursive_grammar() -> None:
     grammar = Grammar(
         raw_grammar=r"""
-    start : a
-    a : b | c a | k
-    b : c | k
-    c : k
-    k : "dropout" (0.0)
-    """,
-        raw_metagrammar=raw_metagrammar,
+        start : a
+        a : b | c a | k
+        b : c | k
+        c : k
+        k : "dropout" (0.0)
+        """
     )
-
     a = NonTerminal("a")
     b = NonTerminal("b")
     c = NonTerminal("c")
