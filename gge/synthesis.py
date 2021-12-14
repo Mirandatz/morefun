@@ -3,13 +3,16 @@ from dataclasses import dataclass
 from typing import Any, Union
 
 import lark
+import typeguard
 
 
+@typeguard.typechecked
 @dataclass(frozen=True)
 class Input:
     pass
 
 
+@typeguard.typechecked
 @dataclass(frozen=True)
 class Conv2d:
     filter_count: int
@@ -22,6 +25,7 @@ class Conv2d:
         assert self.stride > 0
 
 
+@typeguard.typechecked
 @dataclass(frozen=True)
 class Dense:
     units: int
@@ -30,6 +34,7 @@ class Dense:
         assert self.units > 0
 
 
+@typeguard.typechecked
 @dataclass(frozen=True)
 class Dropout:
     rate: float
