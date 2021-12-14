@@ -136,7 +136,7 @@ def main() -> None:
     )
     tree = parser.parse(
         r"""
-        "conv2d" "filter_count" 2 "kernel_size" 4 "stride" 2 "dense" 4 "dropout" 0.2 "dense" 10 "dropout" 0.6
+        conv2d filter_count 2 kernel_size 4 stride 2 dense 4 dropout 0.2 dense 10 dropout 0.6
     """
     )
 
