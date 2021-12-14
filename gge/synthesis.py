@@ -1,4 +1,3 @@
-import itertools
 import typing
 from dataclasses import dataclass
 from typing import Any, Union
@@ -55,52 +54,91 @@ class Synthetizer(lark.Transformer[MainPath]):
             f"method not implemented for token with text: {token_text}"
         )
 
-    def start(self, layers: list[Layer]) -> Network:
+    def start(self, layers: list[Layer]) -> MainPath:
         return tuple(layers)
 
-    def filter_count(self, data: Any) -> list[int]:
-        marker, *counts = data
-        return typing.cast(list[int], counts)
+    @lark.v_args(inline=True)
+    def layer(self, layer: Layer) -> Layer:
+        return layer
 
-    def kernel_size(self, data: Any) -> list[int]:
-        marker, *sizes = data
-        return typing.cast(list[int], sizes)
+    @lark.v_args(inline=True)
+    def conv_layer(self, filter_count: int, kernel_size: int, stride: int) -> Conv2d:
+        return Conv2d(
+            filter_count=filter_count,
+            kernel_size=kernel_size,
+            stride=stride,
+        )
 
-    def stride(self, data: Any) -> list[int]:
-        marker, *strides = data
-        return typing.cast(list[int], strides)
-
-    def conv_layer(self, data: Any) -> list[Conv2d]:
-        marker, filter_sizes, kernel_sizes, strides = data
-
-        conv_layers = []
-        params = itertools.product(filter_sizes, kernel_sizes, strides)
-        conv_layers = [
-            Conv2d(
-                filter_count=fs,
-                kernel_size=ks,
-                stride=st,
+    @lark.v_args(inline=True, meta=True)
+    def filter_count(self, meta: lark.tree.Meta, count: int) -> int:
+        if count < 0:
+            raise ValueError(
+                f"count must be >= 0. line, column=[{meta.line},{meta.column}]"
             )
-            for (fs, ks, st) in params
-        ]
 
-        return conv_layers
+        return count
 
-    def dense_layer(self, data: tuple[str, str]) -> DenseLayer:
-        marker, arg = data
-        return DenseLayer(LayerSize(int(arg)))
+    @lark.v_args(inline=True, meta=True)
+    def kernel_size(self, meta: lark.tree.Meta, stride: int) -> int:
+        if stride < 0:
+            raise ValueError(
+                f"stride must be >= 0. line, column=[{meta.line},{meta.column}]"
+            )
 
-    def dropout_layer(self, data: tuple[str, str]) -> DropoutLayer:
-        marker, arg = data
-        return DropoutLayer(Probability(float(arg)))
+        return stride
 
-    def layer(self, layer: tuple[NetworkNode, ...]) -> NetworkNode:
-        # layer always has exactly one node children
-        return layer[0]
+    @lark.v_args(inline=True, meta=True)
+    def stride(self, meta: lark.tree.Meta, size: int) -> int:
+        if size < 0:
+            raise ValueError(
+                f"size must be >= 0. line, column=[{meta.line},{meta.column}]"
+            )
+
+        return size
+
+    @lark.v_args(inline=True, meta=True)
+    def dense_layer(self, meta: lark.tree.Meta, units: int) -> Dense:
+        if units < 0:
+            raise ValueError(
+                f"units must be >= 0. line, column=[{meta.line},{meta.column}]"
+            )
+
+        return Dense(units)
+
+    @lark.v_args(inline=True, meta=True)
+    def dropout_layer(self, meta: lark.tree.Meta, rate: float) -> Dropout:
+        if not (0 <= rate <= 1):
+            raise ValueError(
+                f"rate must be >= 0 and <= 1. line, column=[{meta.line},{meta.column}]"
+            )
+
+        return Dropout(rate)
+
+    def INT(self, token: lark.Token) -> int:
+        return int(token.value)
+
+    def FLOAT(self, token: lark.Token) -> float:
+        return float(token.value)
 
 
 def main() -> None:
-    pass
+    from pathlib import Path
+
+    DATA_DIR = Path(__file__).parent.parent / "data"
+    parser = lark.Lark.open(
+        grammar_filename=str(DATA_DIR / "mesagrammar.lark"),
+        parser="lalr",
+    )
+    tree = parser.parse(
+        r"""
+        "conv2d" "filter_count" 2 "kernel_size" 4 "stride" 2 "dense" 4 "dropout" 0.2 "dense" 10 "dropout" 0.6
+    """
+    )
+
+    mainpath = Synthetizer().transform(tree)
+    print(mainpath)
+
+    # print(tree.pretty())
 
 
 if __name__ == "__main__":

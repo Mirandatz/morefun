@@ -1,6 +1,6 @@
 start: layer+
 
-layer        : (conv_layer | dense_layer | dropout_layer) _NL*
+layer        : (conv_layer | dense_layer | dropout_layer)
 
 conv_layer   : _CONV2D filter_count kernel_size stride
 filter_count : _FILTER_COUNT INT
@@ -17,8 +17,9 @@ dropout_layer : _DROPOUT FLOAT
 %import .markers.DENSE -> _DENSE
 %import .markers.DROPOUT -> _DROPOUT
 
-%import common.NEWLINE -> _NL
-%import common.INT
+%import common (INT, FLOAT)
+%import common.NEWLINE
 %import common.WS_INLINE
 
 %ignore WS_INLINE
+%ignore NEWLINE
