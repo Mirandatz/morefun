@@ -311,18 +311,10 @@ class GrammarTransformer(lark.Transformer[list[ProductionRule]]):
         self._rules: Optional[list[ProductionRule]] = None
         self._start: Optional[NonTerminal] = None
 
-    def __default__(
-        self,
-        data: str,
-        children: list[Any],
-        meta: lark.tree.Meta,
-    ) -> None:
+    def __default__(self, data: Any, children: Any, meta: Any) -> None:
         raise NotImplementedError(f"method not implemented for tree.data: {data}")
 
-    def __default_token__(
-        self,
-        token_text: str,
-    ) -> None:
+    def __default_token__(self, token_text: Any) -> None:
         raise NotImplementedError(
             f"method not implemented for token with text: {token_text}"
         )

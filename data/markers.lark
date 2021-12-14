@@ -1,0 +1,6 @@
+CONV2D       : /\"conv2d\"/
+FILTER_COUNT : /\"filter_count\"/
+KERNEL_SIZE  : /\"kernel_size\"/
+STRIDE       : /\"stride\"/ 
+DENSE        : /\"dense\"/ 
+DROPOUT      : /\"dropout\"/

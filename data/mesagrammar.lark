@@ -1,0 +1,24 @@
+start: layer+
+
+layer        : (conv_layer | dense_layer | dropout_layer) _NL*
+
+conv_layer   : _CONV2D filter_count kernel_size stride
+filter_count : _FILTER_COUNT INT
+kernel_size  : _KERNEL_SIZE INT
+stride       : _STRIDE INT
+
+dense_layer   : _DENSE INT
+dropout_layer : _DROPOUT FLOAT
+
+%import .markers.CONV2D -> _CONV2D
+%import .markers.FILTER_COUNT -> _FILTER_COUNT
+%import .markers.KERNEL_SIZE -> _KERNEL_SIZE
+%import .markers.STRIDE -> _STRIDE
+%import .markers.DENSE -> _DENSE
+%import .markers.DROPOUT -> _DROPOUT
+
+%import common.NEWLINE -> _NL
+%import common.INT
+%import common.WS_INLINE
+
+%ignore WS_INLINE

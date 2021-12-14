@@ -1,9 +1,0 @@
-start: layer+
-
-%import .metagrammar_layers.layer
-%import .metagrammar_layers (conv_layer, filter_count, kernel_size, stride)
-%import .metagrammar_layers (dense_layer)
-%import .metagrammar_layers (dropout_layer)
-
-%import common.WS_INLINE
-%ignore WS_INLINE

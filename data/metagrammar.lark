@@ -9,16 +9,27 @@ block_option : symbol_range+ _NL*
 symbol_range : NONTERMINAL ["~" RANGE_BOUND [".." RANGE_BOUND]]
 RANGE_BOUND  : INT
 
-%import .metagrammar_layers.layer
-%import .metagrammar_layers (conv_layer, filter_count, kernel_size, stride)
-%import .metagrammar_layers (CONV2D, FILTER_COUNT, KERNEL_SIZE, STRIDE)
-%import .metagrammar_layers (dense_layer, DENSE)
-%import .metagrammar_layers(dropout_layer, DROPOUT)
+layer        : (conv_layer | dense_layer | dropout_layer) _NL*
 
-%import .metagrammar_layers (INT_ARG, FLOAT_ARG)
+conv_layer   : CONV2D filter_count kernel_size stride
+filter_count : FILTER_COUNT _int_args
+kernel_size  : KERNEL_SIZE _int_args
+stride       : STRIDE _int_args
 
+dense_layer   : DENSE _int_args
+dropout_layer : DROPOUT _float_args
+
+_int_args : "(" INT_ARG ("|" INT_ARG)* ")"
+INT_ARG   : INT
+
+_float_args : "(" FLOAT_ARG ("|" FLOAT_ARG)* ")"
+FLOAT_ARG   : FLOAT
+
+%import .markers (CONV2D, FILTER_COUNT, KERNEL_SIZE, STRIDE)
+%import .markers (DENSE, DROPOUT)
+
+%import common (INT, FLOAT)
 %import common.NEWLINE -> _NL
-%import common.INT
 %import common.CNAME -> NAME
 %import common.WS_INLINE
 
