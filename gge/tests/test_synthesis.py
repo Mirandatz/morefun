@@ -29,7 +29,7 @@ def test_conv2d(parser: lark.Lark, synthetizer: syn.Synthetizer) -> None:
     tree = parser.parse(tokenstream)
     actual = synthetizer.transform(tree)
 
-    expected = (syn.Conv2dNode(filter_count=1, kernel_size=2, stride=3),)
+    expected = (syn.Conv2DLayer(filter_count=1, kernel_size=2, stride=3),)
     assert expected == actual
 
 
@@ -41,7 +41,7 @@ def test_dense(parser: lark.Lark, synthetizer: syn.Synthetizer) -> None:
     tree = parser.parse(tokenstream)
     actual = synthetizer.transform(tree)
 
-    expected = (syn.DenseNode(5),)
+    expected = (syn.DenseLayer(5),)
     assert expected == actual
 
 
@@ -53,7 +53,7 @@ def test_dropout(parser: lark.Lark, synthetizer: syn.Synthetizer) -> None:
     tree = parser.parse(tokenstream)
     actual = synthetizer.transform(tree)
 
-    expected = (syn.DropoutNode(0.7),)
+    expected = (syn.DropoutLayer(0.7),)
     assert expected == actual
 
 
@@ -71,12 +71,12 @@ def test_backbone(parser: lark.Lark, synthetizer: syn.Synthetizer) -> None:
     actual = synthetizer.transform(tree)
 
     expected = (
-        syn.Conv2dNode(1, 2, 3),
-        syn.Conv2dNode(4, 5, 6),
-        syn.DenseNode(7),
-        syn.DropoutNode(0.8),
-        syn.DenseNode(9),
-        syn.DropoutNode(0.10),
+        syn.Conv2DLayer(1, 2, 3),
+        syn.Conv2DLayer(4, 5, 6),
+        syn.DenseLayer(7),
+        syn.DropoutLayer(0.8),
+        syn.DenseLayer(9),
+        syn.DropoutLayer(0.10),
     )
 
     assert expected == actual

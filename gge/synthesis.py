@@ -8,13 +8,7 @@ import typeguard
 
 @typeguard.typechecked
 @dataclass(frozen=True)
-class InputNode:
-    pass
-
-
-@typeguard.typechecked
-@dataclass(frozen=True)
-class Conv2dNode:
+class Conv2DLayer:
     filter_count: int
     kernel_size: int
     stride: int
@@ -27,7 +21,7 @@ class Conv2dNode:
 
 @typeguard.typechecked
 @dataclass(frozen=True)
-class DenseNode:
+class DenseLayer:
     units: int
 
     def __post_init__(self) -> None:
@@ -36,15 +30,15 @@ class DenseNode:
 
 @typeguard.typechecked
 @dataclass(frozen=True)
-class DropoutNode:
+class DropoutLayer:
     rate: float
 
     def __post_init__(self) -> None:
         assert 0 <= self.rate <= 1
 
 
-Node = Union[InputNode, Conv2dNode, DenseNode, DropoutNode]
-Backbone = typing.Tuple[Node, ...]
+Layer = Union[Conv2DLayer, DenseLayer, DropoutLayer]
+Backbone = typing.Tuple[Layer, ...]
 
 
 class Synthetizer(lark.Transformer[Backbone]):
@@ -59,18 +53,18 @@ class Synthetizer(lark.Transformer[Backbone]):
             f"method not implemented for token with text: {token_text}"
         )
 
-    def start(self, layers: list[Node]) -> Backbone:
+    def start(self, layers: list[Layer]) -> Backbone:
         return tuple(layers)
 
     @lark.v_args(inline=True)
-    def layer(self, layer: Node) -> Node:
+    def layer(self, layer: Layer) -> Layer:
         return layer
 
     @lark.v_args(inline=True)
     def conv_layer(
         self, filter_count: int, kernel_size: int, stride: int
-    ) -> Conv2dNode:
-        return Conv2dNode(
+    ) -> Conv2DLayer:
+        return Conv2DLayer(
             filter_count=filter_count,
             kernel_size=kernel_size,
             stride=stride,
@@ -104,22 +98,22 @@ class Synthetizer(lark.Transformer[Backbone]):
         return size
 
     @lark.v_args(inline=True, meta=True)
-    def dense_layer(self, meta: lark.tree.Meta, units: int) -> DenseNode:
+    def dense_layer(self, meta: lark.tree.Meta, units: int) -> DenseLayer:
         if units < 0:
             raise ValueError(
                 f"units must be >= 0. line, column=[{meta.line},{meta.column}]"
             )
 
-        return DenseNode(units)
+        return DenseLayer(units)
 
     @lark.v_args(inline=True, meta=True)
-    def dropout_layer(self, meta: lark.tree.Meta, rate: float) -> DropoutNode:
+    def dropout_layer(self, meta: lark.tree.Meta, rate: float) -> DropoutLayer:
         if not (0 <= rate <= 1):
             raise ValueError(
                 f"rate must be >= 0 and <= 1. line, column=[{meta.line},{meta.column}]"
             )
 
-        return DropoutNode(rate)
+        return DropoutLayer(rate)
 
     def INT(self, token: lark.Token) -> int:
         return int(token.value)
