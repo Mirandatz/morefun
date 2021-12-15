@@ -1,2 +1,4 @@
 lark
 numpy
+typeguard
+networkx

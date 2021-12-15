@@ -29,17 +29,8 @@ def raw_grammar() -> str:
 
 
 @pytest.fixture
-def raw_metagrammar() -> str:
-    metagrammar_path = DATA_DIR / "metagrammar.lark"
-    return metagrammar_path.read_text()
-
-
-@pytest.fixture
-def sample_grammar(raw_grammar: str, raw_metagrammar: str) -> Grammar:
-    return Grammar(
-        raw_grammar=raw_grammar,
-        raw_metagrammar=raw_metagrammar,
-    )
+def sample_grammar(raw_grammar: str) -> Grammar:
+    return Grammar(raw_grammar=raw_grammar)
 
 
 def test_start_symbol(sample_grammar: Grammar) -> None:
@@ -93,13 +84,12 @@ def test_non_terminals(sample_grammar: Grammar) -> None:
     assert expected == actual
 
 
-def test_start_trivial_expansion(raw_metagrammar: str) -> None:
+def test_start_trivial_expansion() -> None:
     grammar = Grammar(
         raw_grammar=r"""
         start : a
         a     : "dense" (3)
-        """,
-        raw_metagrammar=raw_metagrammar,
+        """
     )
 
     start = NonTerminal("start")
@@ -112,14 +102,13 @@ def test_start_trivial_expansion(raw_metagrammar: str) -> None:
     assert expected == actual
 
 
-def test_start_simple_expansion(raw_metagrammar: str) -> None:
+def test_start_simple_expansion() -> None:
     grammar = Grammar(
         raw_grammar=r"""
         start : a b
         a     : "dense" (3)
         b     : "dropout" (0.1)
-        """,
-        raw_metagrammar=raw_metagrammar,
+        """
     )
 
     start = NonTerminal("start")
@@ -137,15 +126,14 @@ def test_start_simple_expansion(raw_metagrammar: str) -> None:
     assert expected == actual
 
 
-def test_start_complex_expansion(raw_metagrammar: str) -> None:
+def test_start_complex_expansion() -> None:
     grammar = Grammar(
         raw_grammar=r"""
         start : a b | c | c a
         a     : "dense" (3)
         b     : "dropout" (0.1)
         c     : "conv2d" "filter_count" (4) "kernel_size" (3) "stride" (1)
-        """,
-        raw_metagrammar=raw_metagrammar,
+        """
     )
 
     start = NonTerminal("start")

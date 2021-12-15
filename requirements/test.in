@@ -1,5 +1,6 @@
 -r base.in
 
 black
+mypy
 flake8
 pytest

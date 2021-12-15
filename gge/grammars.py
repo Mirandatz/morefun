@@ -1,10 +1,13 @@
 import functools
 import itertools
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Iterable, Optional, Union
 
 import lark
 import typeguard
+
+METAGRAMMAR_PATH = Path(__file__).parent.parent / "data" / "metagrammar.lark"
 
 
 def _can_be_parsed_as_float(value: str) -> bool:
@@ -124,9 +127,12 @@ class Grammar:
     def __init__(
         self,
         raw_grammar: str,
-        raw_metagrammar: str,
+        *,
+        metagrammar_path: Path = METAGRAMMAR_PATH,
     ) -> None:
-        parser = lark.Lark(raw_metagrammar, parser="lalr")
+        assert metagrammar_path.is_file()
+
+        parser = lark.Lark.open(str(metagrammar_path), parser="lalr")
         tree = parser.parse(raw_grammar)
         transformer = GrammarTransformer()
         transformer.transform(tree)
@@ -305,18 +311,10 @@ class GrammarTransformer(lark.Transformer[list[ProductionRule]]):
         self._rules: Optional[list[ProductionRule]] = None
         self._start: Optional[NonTerminal] = None
 
-    def __default__(
-        self,
-        data: str,
-        children: list[Any],
-        meta: lark.tree.Meta,
-    ) -> None:
+    def __default__(self, data: Any, children: Any, meta: Any) -> None:
         raise NotImplementedError(f"method not implemented for tree.data: {data}")
 
-    def __default_token__(
-        self,
-        token_text: str,
-    ) -> None:
+    def __default_token__(self, token_text: Any) -> None:
         raise NotImplementedError(
             f"method not implemented for token with text: {token_text}"
         )
