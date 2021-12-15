@@ -124,27 +124,3 @@ class Synthetizer(lark.Transformer[MainPath]):
 
     def FLOAT(self, token: lark.Token) -> float:
         return float(token.value)
-
-
-def main() -> None:
-    from pathlib import Path
-
-    DATA_DIR = Path(__file__).parent.parent / "data"
-    parser = lark.Lark.open(
-        grammar_filename=str(DATA_DIR / "mesagrammar.lark"),
-        parser="lalr",
-    )
-    tree = parser.parse(
-        r"""
-        conv2d filter_count 2 kernel_size 4 stride 2 dense 4 dropout 0.2 dense 10 dropout 0.6
-    """
-    )
-
-    mainpath = Synthetizer().transform(tree)
-    print(mainpath)
-
-    # print(tree.pretty())
-
-
-if __name__ == "__main__":
-    main()
