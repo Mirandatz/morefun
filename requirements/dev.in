@@ -1,3 +1,8 @@
--r test.in
+-r base.in
+
+black
+mypy
+flake8
+pytest
 
 pip-compile-multi
