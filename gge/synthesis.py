@@ -41,7 +41,7 @@ Layer = Union[Conv2DLayer, DenseLayer, DropoutLayer]
 Backbone = typing.Tuple[Layer, ...]
 
 
-class Synthetizer(lark.Transformer[Backbone]):
+class BackboneSynthetizer(lark.Transformer[typing.Tuple[Layer, ...]]):
     def __init__(self) -> None:
         super().__init__()
 

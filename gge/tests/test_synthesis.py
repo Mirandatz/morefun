@@ -17,11 +17,11 @@ def parser() -> lark.Lark:
 
 
 @pytest.fixture
-def synthetizer() -> syn.Synthetizer:
-    return syn.Synthetizer()
+def synthetizer() -> syn.BackBoneSynthetizer:
+    return syn.BackBoneSynthetizer()
 
 
-def test_conv2d(parser: lark.Lark, synthetizer: syn.Synthetizer) -> None:
+def test_conv2d(parser: lark.Lark, synthetizer: syn.BackBoneSynthetizer) -> None:
     tokenstream = """
     conv2d filter_count 1 kernel_size 2 stride 3
     """
@@ -33,7 +33,7 @@ def test_conv2d(parser: lark.Lark, synthetizer: syn.Synthetizer) -> None:
     assert expected == actual
 
 
-def test_dense(parser: lark.Lark, synthetizer: syn.Synthetizer) -> None:
+def test_dense(parser: lark.Lark, synthetizer: syn.BackBoneSynthetizer) -> None:
     tokenstream = """
     dense 5
     """
@@ -45,7 +45,7 @@ def test_dense(parser: lark.Lark, synthetizer: syn.Synthetizer) -> None:
     assert expected == actual
 
 
-def test_dropout(parser: lark.Lark, synthetizer: syn.Synthetizer) -> None:
+def test_dropout(parser: lark.Lark, synthetizer: syn.BackBoneSynthetizer) -> None:
     tokenstream = """
     dropout 0.7
     """
@@ -57,7 +57,7 @@ def test_dropout(parser: lark.Lark, synthetizer: syn.Synthetizer) -> None:
     assert expected == actual
 
 
-def test_backbone(parser: lark.Lark, synthetizer: syn.Synthetizer) -> None:
+def test_backbone(parser: lark.Lark, synthetizer: syn.BackBoneSynthetizer) -> None:
     tokenstream = """
     conv2d filter_count 1 kernel_size 2 stride 3
     conv2d filter_count 4 kernel_size 5 stride 6
