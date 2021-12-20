@@ -7,11 +7,9 @@ import typeguard
 
 from gge.randomness import RNG
 
+# We could allow backbones with a single node,
+# but forcing the minimum to 2 simplifies the code a lot.
 MIN_NODE_COUNT = 2
-"""
-We could allow backbones with a single node,
-but forcing the minimum to 2 simplifies the code a lot.
-"""
 
 
 AdjacencyMatrix = typing.NewType("AdjacencyMatrix", npt.NDArray[np.bool8])
