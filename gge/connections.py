@@ -116,23 +116,5 @@ def create_reshape_methods(node_count: int, rng: RNG) -> tuple[ReshapeMethod, ..
     return tuple(chosen)
 
 
-def create_adjacency_matrix(size: int, rng: RNG) -> AdjacencyMatrix:
-    if size < 2:
-        raise ValueError(f"size must be >= 2. value={size}")
-
-    backbone_connections = np.eye(N=size, k=1)
-
-    random_connections = rng.integers(
-        low=0,
-        high=1,
-        endpoint=True,
-        size=(size, size),
-    )
-
-    # k=2 removes self-loops (k=1) and preserves the backbone connections
-    ribcage_connections = np.triu(random_connections, k=2)  # type: ignore
-
-    matrix = np.logical_or(backbone_connections, ribcage_connections)
-    matrix.flags.writeable = False
-
-    return AdjacencyMatrix(matrix)
+class LayerConnectionsGenes:
+    pass

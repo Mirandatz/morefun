@@ -1,7 +1,3 @@
 -r test.in
 
-black
-mypy
-flake8
-
 pip-compile-multi
