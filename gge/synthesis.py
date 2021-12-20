@@ -1,4 +1,3 @@
-import typing
 from dataclasses import dataclass
 from typing import Any, Union
 
@@ -48,11 +47,10 @@ class DropoutLayer:
 
 
 Layer = Union[Conv2DLayer, DenseLayer, DropoutLayer, ForkLayer, MergeLayer]
-Backbone = typing.Tuple[Layer, ...]
 
 
 @lark.v_args(inline=True)
-class BackboneSynthetizer(lark.Transformer[typing.Tuple[Layer, ...]]):
+class BackboneSynthetizer(lark.Transformer[tuple[Layer, ...]]):
     def __init__(self) -> None:
         super().__init__()
 
