@@ -41,6 +41,7 @@ Layer = Union[Conv2DLayer, DenseLayer, DropoutLayer]
 Backbone = typing.Tuple[Layer, ...]
 
 
+@lark.v_args(inline=True)
 class BackboneSynthetizer(lark.Transformer[typing.Tuple[Layer, ...]]):
     def __init__(self) -> None:
         super().__init__()
@@ -53,14 +54,12 @@ class BackboneSynthetizer(lark.Transformer[typing.Tuple[Layer, ...]]):
             f"method not implemented for token with text: {token_text}"
         )
 
-    def start(self, layers: list[Layer]) -> Backbone:
+    def start(self, *layers: Layer) -> tuple[Layer, ...]:
         return tuple(layers)
 
-    @lark.v_args(inline=True)
     def layer(self, layer: Layer) -> Layer:
         return layer
 
-    @lark.v_args(inline=True)
     def conv_layer(
         self, filter_count: int, kernel_size: int, stride: int
     ) -> Conv2DLayer:
@@ -70,49 +69,24 @@ class BackboneSynthetizer(lark.Transformer[typing.Tuple[Layer, ...]]):
             stride=stride,
         )
 
-    @lark.v_args(inline=True, meta=True)
-    def filter_count(self, meta: lark.tree.Meta, count: int) -> int:
-        if count < 0:
-            raise ValueError(
-                f"count must be >= 0. line, column=[{meta.line},{meta.column}]"
-            )
-
+    def filter_count(self, count: int) -> int:
+        assert count >= 1
         return count
 
-    @lark.v_args(inline=True, meta=True)
-    def kernel_size(self, meta: lark.tree.Meta, stride: int) -> int:
-        if stride < 0:
-            raise ValueError(
-                f"stride must be >= 0. line, column=[{meta.line},{meta.column}]"
-            )
-
+    def kernel_size(self, stride: int) -> int:
+        assert stride >= 1
         return stride
 
-    @lark.v_args(inline=True, meta=True)
-    def stride(self, meta: lark.tree.Meta, size: int) -> int:
-        if size < 0:
-            raise ValueError(
-                f"size must be >= 0. line, column=[{meta.line},{meta.column}]"
-            )
-
+    def stride(self, size: int) -> int:
+        assert size >= 1
         return size
 
-    @lark.v_args(inline=True, meta=True)
-    def dense_layer(self, meta: lark.tree.Meta, units: int) -> DenseLayer:
-        if units < 0:
-            raise ValueError(
-                f"units must be >= 0. line, column=[{meta.line},{meta.column}]"
-            )
-
+    def dense_layer(self, units: int) -> DenseLayer:
+        assert units >= 1
         return DenseLayer(units)
 
-    @lark.v_args(inline=True, meta=True)
-    def dropout_layer(self, meta: lark.tree.Meta, rate: float) -> DropoutLayer:
-        if not (0 <= rate <= 1):
-            raise ValueError(
-                f"rate must be >= 0 and <= 1. line, column=[{meta.line},{meta.column}]"
-            )
-
+    def dropout_layer(self, rate: float) -> DropoutLayer:
+        assert 0 < rate < 1
         return DropoutLayer(rate)
 
     def INT(self, token: lark.Token) -> int:

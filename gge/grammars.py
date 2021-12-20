@@ -499,6 +499,14 @@ class GrammarTransformer(lark.Transformer[list[ProductionRule]]):
         assert not self._frozen
         return self._register_nonterminal(token.value)
 
+    def MERGE(self, token: lark.Token) -> Terminal:
+        assert not self._frozen
+        return self._register_terminal(token.value)
+
+    def FORK(self, token: lark.Token) -> Terminal:
+        assert not self._frozen
+        return self._register_terminal(token.value)
+
     def CONV2D(self, token: lark.Token) -> Terminal:
         assert not self._frozen
         return self._register_terminal(token.value)

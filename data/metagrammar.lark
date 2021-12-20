@@ -3,7 +3,9 @@ rule        : NONTERMINAL ":" (layer | block)
 NONTERMINAL : NAME
 
 block        : block_option ("|" block_option)*
-block_option : symbol_range+ _NL*
+block_option : MERGE? symbol_range+ FORK? _NL*
+MERGE        : /"merge"/
+FORK         : /"fork"/
 
 symbol_range : NONTERMINAL ["~" RANGE_BOUND [".." RANGE_BOUND]]
 RANGE_BOUND  : INT
