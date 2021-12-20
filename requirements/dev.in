@@ -1,8 +1,7 @@
--r base.in
+-r test.in
 
 black
 mypy
 flake8
-pytest
 
 pip-compile-multi
