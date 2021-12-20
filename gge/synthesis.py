@@ -6,6 +6,16 @@ import lark
 import typeguard
 
 
+@dataclass(frozen=True)
+class ForkLayer:
+    pass
+
+
+@dataclass(frozen=True)
+class MergeLayer:
+    pass
+
+
 @typeguard.typechecked
 @dataclass(frozen=True)
 class Conv2DLayer:
@@ -37,7 +47,7 @@ class DropoutLayer:
         assert 0 <= self.rate <= 1
 
 
-Layer = Union[Conv2DLayer, DenseLayer, DropoutLayer]
+Layer = Union[Conv2DLayer, DenseLayer, DropoutLayer, ForkLayer, MergeLayer]
 Backbone = typing.Tuple[Layer, ...]
 
 
@@ -54,11 +64,27 @@ class BackboneSynthetizer(lark.Transformer[typing.Tuple[Layer, ...]]):
             f"method not implemented for token with text: {token_text}"
         )
 
-    def start(self, *layers: Layer) -> tuple[Layer, ...]:
-        return tuple(layers)
+    def start(self, *lists_of_layers: list[Layer]) -> tuple[Layer, ...]:
+        return tuple((layer for sublist in lists_of_layers for layer in sublist))
 
-    def layer(self, layer: Layer) -> Layer:
-        return layer
+    def layer(self, merge: bool, layer: Layer, fork: bool) -> list[Layer]:
+        layers: list[Layer] = []
+
+        if merge:
+            layers.append(MergeLayer())
+
+        layers.append(layer)
+
+        if fork:
+            layers.append(ForkLayer())
+
+        return layers
+
+    def maybe_merge(self, token: lark.Token | None = None) -> bool:
+        return token is not None
+
+    def maybe_fork(self, token: lark.Token | None = None) -> bool:
+        return token is not None
 
     def conv_layer(
         self, filter_count: int, kernel_size: int, stride: int

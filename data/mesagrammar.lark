@@ -1,9 +1,10 @@
 start: layer+
 
-layer : MERGE? (conv_layer | dense_layer | dropout_layer) FORK?
-MERGE : "merge"
-FORK  : "fork"
-
+layer       : maybe_merge (conv_layer | dense_layer | dropout_layer) maybe_fork
+maybe_merge : "merge"?
+maybe_fork  : "fork"?
+ 
+ 
 conv_layer   : "conv2d" filter_count kernel_size stride
 filter_count : "filter_count" INT
 kernel_size  : "kernel_size" INT
