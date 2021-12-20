@@ -6,12 +6,12 @@ import typeguard
 
 
 @dataclass(frozen=True)
-class ForkLayer:
+class Fork:
     pass
 
 
 @dataclass(frozen=True)
-class MergeLayer:
+class Merge:
     pass
 
 
@@ -46,7 +46,7 @@ class DropoutLayer:
         assert 0 <= self.rate <= 1
 
 
-Layer = Union[Conv2DLayer, DenseLayer, DropoutLayer, ForkLayer, MergeLayer]
+Layer = Union[Conv2DLayer, DenseLayer, DropoutLayer, Fork, Merge]
 
 
 @lark.v_args(inline=True)
@@ -62,27 +62,27 @@ class BackboneSynthetizer(lark.Transformer[tuple[Layer, ...]]):
             f"method not implemented for token with text: {token_text}"
         )
 
-    def start(self, *lists_of_layers: list[Layer]) -> tuple[Layer, ...]:
-        return tuple((layer for sublist in lists_of_layers for layer in sublist))
+    def start(self, *blocks: list[Layer]) -> tuple[Layer, ...]:
+        return tuple(layer for list_of_layers in blocks for layer in list_of_layers)
 
-    def layer(self, merge: bool, layer: Layer, fork: bool) -> list[Layer]:
-        layers: list[Layer] = []
+    @lark.v_args(inline=False)
+    def block(self, parts: Any) -> list[Layer]:
+        return [x for x in parts if x is not None]
 
-        if merge:
-            layers.append(MergeLayer())
+    def MERGE(self, token: lark.Token | None = None) -> Merge | None:
+        if token is not None:
+            return Merge()
+        else:
+            return None
 
-        layers.append(layer)
+    def FORK(self, token: lark.Token | None = None) -> Fork | None:
+        if token is not None:
+            return Fork()
+        else:
+            return None
 
-        if fork:
-            layers.append(ForkLayer())
-
-        return layers
-
-    def maybe_merge(self, token: lark.Token | None = None) -> bool:
-        return token is not None
-
-    def maybe_fork(self, token: lark.Token | None = None) -> bool:
-        return token is not None
+    def layer(self, layer: Layer) -> Layer:
+        return layer
 
     def conv_layer(
         self, filter_count: int, kernel_size: int, stride: int
