@@ -1,22 +1,22 @@
-from dataclasses import dataclass
-from typing import Any, Union
+import dataclasses
+import typing
 
 import lark
 import typeguard
 
 
-@dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True)
 class Fork:
     pass
 
 
-@dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True)
 class Merge:
     pass
 
 
 @typeguard.typechecked
-@dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True)
 class Conv2DLayer:
     filter_count: int
     kernel_size: int
@@ -29,7 +29,7 @@ class Conv2DLayer:
 
 
 @typeguard.typechecked
-@dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True)
 class DenseLayer:
     units: int
 
@@ -38,7 +38,7 @@ class DenseLayer:
 
 
 @typeguard.typechecked
-@dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True)
 class DropoutLayer:
     rate: float
 
@@ -46,15 +46,23 @@ class DropoutLayer:
         assert 0 <= self.rate <= 1
 
 
-Layer = Union[Conv2DLayer, DenseLayer, DropoutLayer, Fork, Merge]
+Layer = Conv2DLayer | DenseLayer | DropoutLayer | Fork | Merge
+
+
+@typeguard.typechecked
+@dataclasses.dataclass(frozen=True)
+class Backbone:
+    layers: tuple[Layer, ...]
 
 
 @lark.v_args(inline=True)
-class BackboneSynthetizer(lark.Transformer[tuple[Layer, ...]]):
+class BackboneSynthetizer(lark.Transformer[Backbone]):
     def __init__(self) -> None:
         super().__init__()
 
-    def __default__(self, data: Any, children: Any, meta: Any) -> None:
+    def __default__(
+        self, data: typing.Any, children: typing.Any, meta: typing.Any
+    ) -> None:
         raise NotImplementedError(f"method not implemented for tree.data: {data}")
 
     def __default_token__(self, token_text: str) -> None:
@@ -63,11 +71,12 @@ class BackboneSynthetizer(lark.Transformer[tuple[Layer, ...]]):
         )
 
     @lark.v_args(inline=False)
-    def start(self, blocks: list[list[Layer]]) -> tuple[Layer, ...]:
-        return tuple(layer for list_of_layers in blocks for layer in list_of_layers)
+    def start(self, blocks: list[list[Layer]]) -> Backbone:
+        layers = tuple(layer for list_of_layers in blocks for layer in list_of_layers)
+        return Backbone(layers)
 
     @lark.v_args(inline=False)
-    def block(self, parts: Any) -> list[Layer]:
+    def block(self, parts: typing.Any) -> list[Layer]:
         return [x for x in parts if x is not None]
 
     def MERGE(self, token: lark.Token | None = None) -> Merge | None:

@@ -30,7 +30,8 @@ def test_conv2d(parser: lark.Lark, synthetizer: syn.BackboneSynthetizer) -> None
     tree = parser.parse(tokenstream)
     actual = synthetizer.transform(tree)
 
-    expected = (syn.Conv2DLayer(filter_count=1, kernel_size=2, stride=3),)
+    layers = (syn.Conv2DLayer(filter_count=1, kernel_size=2, stride=3),)
+    expected = syn.Backbone(layers)
     assert expected == actual
 
 
@@ -42,7 +43,8 @@ def test_dense(parser: lark.Lark, synthetizer: syn.BackboneSynthetizer) -> None:
     tree = parser.parse(tokenstream)
     actual = synthetizer.transform(tree)
 
-    expected = (syn.DenseLayer(5),)
+    layers = (syn.DenseLayer(5),)
+    expected = syn.Backbone(layers)
     assert expected == actual
 
 
@@ -54,7 +56,8 @@ def test_dropout(parser: lark.Lark, synthetizer: syn.BackboneSynthetizer) -> Non
     tree = parser.parse(tokenstream)
     actual = synthetizer.transform(tree)
 
-    expected = (syn.DropoutLayer(0.7),)
+    layers = (syn.DropoutLayer(0.7),)
+    expected = syn.Backbone(layers)
     assert expected == actual
 
 
@@ -66,7 +69,8 @@ def test_merge_(parser: lark.Lark, synthetizer: syn.BackboneSynthetizer) -> None
     tree = parser.parse(tokenstream)
     actual = synthetizer.transform(tree)
 
-    expected = (syn.Merge(), syn.DenseLayer(2))
+    layers = (syn.Merge(), syn.DenseLayer(2))
+    expected = syn.Backbone(layers)
     assert expected == actual
 
 
@@ -78,7 +82,8 @@ def test_fork(parser: lark.Lark, synthetizer: syn.BackboneSynthetizer) -> None:
     tree = parser.parse(tokenstream)
     actual = synthetizer.transform(tree)
 
-    expected = (syn.DenseLayer(1), syn.Fork())
+    layers = (syn.DenseLayer(1), syn.Fork())
+    expected = syn.Backbone(layers)
     assert expected == actual
 
 
@@ -92,7 +97,8 @@ def test_merge_and_fork(
     tree = parser.parse(tokenstream)
     actual = synthetizer.transform(tree)
 
-    expected = (syn.Merge(), syn.DenseLayer(5), syn.Fork())
+    layers = (syn.Merge(), syn.DenseLayer(5), syn.Fork())
+    expected = syn.Backbone(layers)
     assert expected == actual
 
 
@@ -111,7 +117,7 @@ def test_simple_backbone(
     tree = parser.parse(tokenstream)
     actual = synthetizer.transform(tree)
 
-    expected = (
+    layers = (
         syn.Conv2DLayer(1, 2, 3),
         syn.Conv2DLayer(4, 5, 6),
         syn.DenseLayer(7),
@@ -119,6 +125,7 @@ def test_simple_backbone(
         syn.DenseLayer(9),
         syn.DropoutLayer(0.10),
     )
+    expected = syn.Backbone(layers)
 
     assert expected == actual
 
@@ -145,13 +152,14 @@ def test_complex_backbone(
     tree = parser.parse(tokenstream)
     actual = synthetizer.transform(tree)
 
-    a = [syn.Conv2DLayer(1, 2, 3), syn.Fork()]
-    b = [syn.Merge(), syn.Conv2DLayer(4, 5, 6), syn.Fork()]
-    c = [syn.Merge(), syn.Conv2DLayer(7, 8, 9)]
-    d = [syn.DenseLayer(10), syn.DropoutLayer(0.11), syn.Fork()]
-    e = [syn.DenseLayer(12), syn.DropoutLayer(0.13), syn.Fork()]
-    f = [syn.Merge(), syn.DenseLayer(14), syn.DropoutLayer(0.15)]
+    a: list[syn.Layer] = [syn.Conv2DLayer(1, 2, 3), syn.Fork()]
+    b: list[syn.Layer] = [syn.Merge(), syn.Conv2DLayer(4, 5, 6), syn.Fork()]
+    c: list[syn.Layer] = [syn.Merge(), syn.Conv2DLayer(7, 8, 9)]
+    d: list[syn.Layer] = [syn.DenseLayer(10), syn.DropoutLayer(0.11), syn.Fork()]
+    e: list[syn.Layer] = [syn.DenseLayer(12), syn.DropoutLayer(0.13), syn.Fork()]
+    f: list[syn.Layer] = [syn.Merge(), syn.DenseLayer(14), syn.DropoutLayer(0.15)]
 
-    expected = tuple([*a, *b, *c, *d, *e, *f])
+    layers = tuple([*a, *b, *c, *d, *e, *f])
+    expected = syn.Backbone(layers)
 
     assert expected == actual
