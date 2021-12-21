@@ -62,7 +62,8 @@ class BackboneSynthetizer(lark.Transformer[tuple[Layer, ...]]):
             f"method not implemented for token with text: {token_text}"
         )
 
-    def start(self, *blocks: list[Layer]) -> tuple[Layer, ...]:
+    @lark.v_args(inline=False)
+    def start(self, blocks: list[list[Layer]]) -> tuple[Layer, ...]:
         return tuple(layer for list_of_layers in blocks for layer in list_of_layers)
 
     @lark.v_args(inline=False)
