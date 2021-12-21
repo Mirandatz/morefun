@@ -1,120 +1,81 @@
+import dataclasses
 import enum
-import typing
 
-import numpy as np
-import numpy.typing as npt
 import typeguard
 
-from gge.randomness import RNG
-
-# We could allow backbones with a single node,
-# but forcing the minimum to 2 simplifies the code a lot.
-MIN_NODE_COUNT = 2
-
-
-AdjacencyMatrix = typing.NewType("AdjacencyMatrix", npt.NDArray[np.bool8])
+import gge.randomness as rand
+import gge.synthesis as syn
 
 
 @enum.unique
-class MergeMethod(enum.Enum):
+class MergeStrategy(enum.Enum):
 
     # effectively disable "multiconnections", keeping only the backbone
     NO_MERGE = enum.auto()
-
     ADD = enum.auto()
     MULTIPLY = enum.auto()
     CONCAT = enum.auto()
 
 
 @enum.unique
-class ReshapeMethod(enum.Enum):
+class ReshapeStrategy(enum.Enum):
     DOWNSAMPLE = enum.auto()
     UPSAMPLE = enum.auto()
 
 
 @typeguard.typechecked
-class ConnectionsBlueprint:
-    def __init__(self, node_count: int, rng: RNG) -> None:
-        if node_count < MIN_NODE_COUNT:
-            raise ValueError(
-                f"node_count must be >= {MIN_NODE_COUNT}. value was {node_count}"
-            )
-
-        self._matrix = create_adjacency_matrix(node_count, rng)
-        self._merge_methods = create_merge_methods(node_count, rng)
-        self._reshape_methods = create_reshape_methods(node_count, rng)
-
-        self._hash = hash(
-            (
-                tuple(self._matrix.flatten()),
-                self._merge_methods,
-                self._reshape_methods,
-            ),
-        )
-
-    @property
-    def matrix(self) -> AdjacencyMatrix:
-        copy = self._matrix.copy()
-        return AdjacencyMatrix(copy)
-
-    @property
-    def merge_methods(self) -> tuple[MergeMethod, ...]:
-        return self._merge_methods
-
-    @property
-    def reshape_methods(self) -> tuple[ReshapeMethod, ...]:
-        return self._reshape_methods
-
-    def __hash__(self) -> int:
-        return self._hash
-
-    def __eq__(self, other: object) -> bool:
-        if id(self) == id(other):
-            return True
-
-        if not isinstance(other, ConnectionsBlueprint):
-            return NotImplemented
-
-        if self._reshape_methods != other._reshape_methods:
-            return False
-
-        if self._merge_methods != other._merge_methods:
-            return False
-
-        return np.array_equal(self._matrix, other._matrix)
+@dataclasses.dataclass(frozen=True)
+class MergeLayer:
+    forks_mask: tuple[bool, ...]
+    merge_strategy: MergeStrategy
+    reshape_strategy: ReshapeStrategy
 
 
-def create_merge_methods(node_count: int, rng: RNG) -> tuple[MergeMethod, ...]:
-    if node_count < MIN_NODE_COUNT:
-        raise ValueError(
-            f"node_count must be >= {MIN_NODE_COUNT}. value was {node_count}"
-        )
+@typeguard.typechecked
+@dataclasses.dataclass(frozen=True)
+class ConnectionsSchema:
+    merge_layers: tuple[MergeLayer, ...]
 
-    valid_values = np.asarray(MergeMethod)
-    chosen = rng.choice(
-        a=valid_values,
-        size=node_count,
-        replace=True,
+
+def extract_forks_masks_lengths(backbone: syn.Backbone) -> tuple[int, ...]:
+    lengths = []
+
+    fork_count = 0
+
+    for layer in backbone.layers:
+        if isinstance(layer, syn.Fork):
+            fork_count += 1
+
+        if isinstance(layer, syn.Merge):
+            lengths.append(fork_count)
+
+    return tuple(lengths)
+
+
+def create_inputs_merger(mask_len: int, rng: rand.RNG) -> MergeLayer:
+    assert mask_len >= 0
+
+    mask = rng.integers(
+        low=0,
+        high=1,
+        endpoint=True,
+        size=mask_len,
+        dtype=bool,
     )
 
-    return tuple(chosen)
+    merge_strat = rng.choice(list(MergeStrategy))  # type: ignore
+    reshape_strat = rng.choice(list(ReshapeStrategy))  # type: ignore
 
-
-def create_reshape_methods(node_count: int, rng: RNG) -> tuple[ReshapeMethod, ...]:
-    if node_count < MIN_NODE_COUNT:
-        raise ValueError(
-            f"node_count must be >= {MIN_NODE_COUNT}. value was {node_count}"
-        )
-
-    valid_values = np.asarray(ReshapeMethod)
-    chosen = rng.choice(
-        a=valid_values,
-        size=node_count,
-        replace=True,
+    return MergeLayer(
+        forks_mask=tuple(mask),
+        merge_strategy=merge_strat,
+        reshape_strategy=reshape_strat,
     )
 
-    return tuple(chosen)
 
-
-class LayerConnectionsGenes:
-    pass
+def create_connections_schema(
+    backbone: syn.Backbone, rng: rand.RNG
+) -> ConnectionsSchema:
+    masks_lens = extract_forks_masks_lengths(backbone)
+    merge_layers = (create_inputs_merger(ml, rng) for ml in masks_lens)
+    return ConnectionsSchema(tuple(merge_layers))
