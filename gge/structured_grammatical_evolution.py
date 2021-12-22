@@ -1,15 +1,18 @@
 import collections
-import itertools
-from dataclasses import dataclass
+import dataclasses
+import functools
 
-from gge.grammars import Grammar, NonTerminal, Terminal
-from gge.randomness import RNG
+import typeguard
+
+import gge.grammars as gg
+import gge.randomness as rand
 
 
 # order=True because we want to store genes in a consistent order
-@dataclass(order=True, frozen=True)
+@typeguard.typechecked
+@dataclasses.dataclass(frozen=True, order=True)
 class Gene:
-    nonterminal: NonTerminal
+    nonterminal: gg.NonTerminal
     expansions_indices: tuple[int, ...]
 
     def __post_init__(self) -> None:
@@ -17,52 +20,29 @@ class Gene:
         assert all(i >= 0 for i in self.expansions_indices)
 
 
+@typeguard.typechecked
+@dataclasses.dataclass(frozen=True)
 class Genotype:
-    _instances_created = itertools.count()
+    genes: tuple[Gene, ...]
 
-    def __init__(self, genes: tuple[Gene, ...]):
-        assert genes == tuple(sorted(genes))
+    def __post_init__(self) -> None:
+        sorted_genes = tuple(sorted(self.genes))
+        if sorted_genes != self.genes:
+            raise ValueError("genes must be sorted")
 
-        nonterminals_map = {g.nonterminal: g for g in genes}
-        assert len(nonterminals_map) == len(genes)
+        if len(self._nonterminals_map) != len(sorted_genes):
+            raise ValueError("can not have two genes associated with same nonterminal")
 
-        self._id = next(Genotype._instances_created)
-        self._genes = genes
-        self._nonterminals_map = nonterminals_map
-        self._hash = hash(self._genes)
+    @functools.cached_property
+    def _nonterminals_map(self) -> dict[gg.NonTerminal, Gene]:
+        return {g.nonterminal: g for g in self.genes}
 
-    @property
-    def id(self) -> int:
-        return self._id
-
-    @property
-    def genes(self) -> tuple[Gene, ...]:
-        return self._genes
-
-    def get_associated_gene(self, non_terminal: NonTerminal) -> Gene:
+    def get_associated_gene(self, non_terminal: gg.NonTerminal) -> Gene:
         return self._nonterminals_map[non_terminal]
-
-    def __hash__(self) -> int:
-        return self._hash
-
-    def __eq__(self, other: object) -> bool:
-        if id(self) == id(other):
-            return True
-
-        if not isinstance(other, Genotype):
-            return NotImplemented
-
-        return self.genes == other.genes
-
-    def __str__(self) -> str:
-        return "\n".join(map(str, self.genes))
-
-    def __repr__(self) -> str:
-        return self.__str__()
 
 
 class Genemancer:
-    def __init__(self, grammar: Grammar):
+    def __init__(self, grammar: gg.Grammar):
         assert not grammar_is_recursive(grammar)
 
         sizes_of_genes_lists = {
@@ -79,10 +59,10 @@ class Genemancer:
         self._max_values_in_genes_lists = max_values_in_genes_lists
 
     @property
-    def grammar(self) -> Grammar:
+    def grammar(self) -> gg.Grammar:
         return self._grammar
 
-    def create_gene(self, nt: NonTerminal, rng: RNG) -> Gene:
+    def create_gene(self, nt: gg.NonTerminal, rng: rand.RNG) -> Gene:
         rules_indices = rng.integers(
             low=0,
             high=self._max_values_in_genes_lists[nt],
@@ -92,7 +72,7 @@ class Genemancer:
         indices_as_tuple = tuple(int(i) for i in rules_indices)
         return Gene(nt, indices_as_tuple)
 
-    def create_genotype(self, rng: RNG) -> Genotype:
+    def create_genotype(self, rng: rand.RNG) -> Genotype:
         genes = [self.create_gene(nt, rng) for nt in self.grammar.nonterminals]
         return Genotype(tuple(genes))
 
@@ -106,7 +86,7 @@ class Genemancer:
         finally, we visit the nodes of the tree and synthesize the phenotype.
         """
 
-        terminals: collections.deque[Terminal] = collections.deque()
+        terminals: collections.deque[gg.Terminal] = collections.deque()
 
         gene_consumption_tracker = {g: 0 for g in genotype.genes}
         to_process = [self.grammar.start_symbol]
@@ -124,10 +104,10 @@ class Genemancer:
             chosen_exp = expansions[exp_choice]
 
             for symbol in chosen_exp.symbols:
-                if type(symbol) == NonTerminal:
+                if type(symbol) == gg.NonTerminal:
                     to_process.append(symbol)
 
-                elif type(symbol) == Terminal:
+                elif type(symbol) == gg.Terminal:
                     terminals.appendleft(symbol)
 
                 else:
@@ -137,15 +117,15 @@ class Genemancer:
 
 
 def max_nr_of_times_nonterminal_can_be_expanded(
-    target: NonTerminal,
-    grammar: Grammar,
+    target: gg.NonTerminal,
+    grammar: gg.Grammar,
 ) -> int:
     assert not grammar_is_recursive(grammar)
 
     if target == grammar.start_symbol:
         return 1
 
-    max_expansions: collections.Counter[NonTerminal] = collections.Counter()
+    max_expansions: collections.Counter[gg.NonTerminal] = collections.Counter()
 
     for rule in grammar.rules:
         if target not in rule.rhs.symbols:
@@ -168,7 +148,7 @@ def max_nr_of_times_nonterminal_can_be_expanded(
     return sum(max_expansions.values())
 
 
-def grammar_is_recursive(grammar: Grammar) -> bool:
+def grammar_is_recursive(grammar: gg.Grammar) -> bool:
     return any(
         can_expand(
             source=nt,
@@ -180,11 +160,11 @@ def grammar_is_recursive(grammar: Grammar) -> bool:
 
 
 def can_expand(
-    source: NonTerminal,
-    target: NonTerminal,
-    grammar: Grammar,
+    source: gg.NonTerminal,
+    target: gg.NonTerminal,
+    grammar: gg.Grammar,
 ) -> bool:
-    explored: set[NonTerminal] = set()
+    explored: set[gg.NonTerminal] = set()
     targets_to_explore = [target]
 
     while targets_to_explore:
