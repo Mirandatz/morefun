@@ -8,6 +8,7 @@ import lark
 import typeguard
 
 METAGRAMMAR_PATH = Path(__file__).parent.parent / "data" / "metagrammar.lark"
+METAGRAMMAR = METAGRAMMAR_PATH.read_text()
 
 
 def _can_be_parsed_as_float(value: str) -> bool:
@@ -124,15 +125,8 @@ class ProductionRule:
 
 
 class Grammar:
-    def __init__(
-        self,
-        raw_grammar: str,
-        *,
-        metagrammar_path: Path = METAGRAMMAR_PATH,
-    ) -> None:
-        assert metagrammar_path.is_file()
-
-        parser = lark.Lark.open(str(metagrammar_path), parser="lalr")
+    def __init__(self, raw_grammar: str) -> None:
+        parser = lark.Lark(METAGRAMMAR, parser="lalr")
         tree = parser.parse(raw_grammar)
         transformer = GrammarTransformer()
         transformer.transform(tree)
@@ -212,14 +206,14 @@ def _nonterminals_and_lhss_are_consistent(
     nts_set = set(nonterminals)
     lhss_set = set(r.lhs for r in rules)
 
-    only_on_nts = nts_set.difference(lhss_set)
+    only_on_nts = set.difference(nts_set, lhss_set)
     if only_on_nts:
         raise ValueError(
             "all nonterminals must appear on the lhs of a rule at least once, "
             f"but the following do not: {only_on_nts}"
         )
 
-    only_on_lhss = lhss_set.difference(only_on_nts)
+    only_on_lhss = set.difference(lhss_set, nts_set)
     if only_on_lhss:
         raise ValueError(
             "all symbols that appear on the lhs of a rule must be registered "
@@ -242,7 +236,7 @@ def _nonterminals_and_rhss_are_consistent(
     nts_set = set(nonterminals)
     nts_set.remove(start)
 
-    only_on_nts = nts_set.difference(all_rhs_nonterminals)
+    only_on_nts = set.difference(nts_set, all_rhs_nonterminals)
     if only_on_nts:
         raise ValueError(
             "all nonterminals must be used "
@@ -250,7 +244,7 @@ def _nonterminals_and_rhss_are_consistent(
             f"at least once, but the following do not: {only_on_nts}"
         )
 
-    only_on_rhss = all_rhs_nonterminals.difference(nts_set)
+    only_on_rhss = set.difference(all_rhs_nonterminals, nts_set)
     if only_on_rhss:
         raise ValueError(
             "all nonterminals that appear on the rhs of a rule must be "
@@ -269,14 +263,14 @@ def _terminals_and_rhss_are_consistent(
 
     terms_set = set(terminals)
 
-    only_on_terms = terms_set.difference(all_rhs_terminals)
+    only_on_terms = set.difference(terms_set, all_rhs_terminals)
     if only_on_terms:
         raise ValueError(
             "all terminals must appear on the rhs of a rule "
             f"at least once, but the following do not: {only_on_terms}"
         )
 
-    only_on_rhss = all_rhs_terminals.difference(terms_set)
+    only_on_rhss = set.difference(all_rhs_terminals, terms_set)
     if only_on_rhss:
         raise ValueError(
             "all terminals that appear on the rhs of a rule "
