@@ -153,6 +153,13 @@ class Grammar:
 
         self._hash = hash(self._as_tuple)
 
+        validate_grammar_components(
+            N=self.nonterminals,
+            T=self.terminals,
+            P=self.rules,
+            S=self.start_symbol,
+        )
+
     @property
     def nonterminals(self) -> tuple[NonTerminal, ...]:
         return self._nonterminals
