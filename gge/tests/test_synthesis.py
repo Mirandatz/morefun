@@ -1,110 +1,78 @@
-from pathlib import Path
-
-import lark
-import pytest
-
 import gge.synthesis as syn
 
-DATA_DIR = Path(__file__).parent.parent.parent / "data"
 
-
-@pytest.fixture
-def parser() -> lark.Lark:
-    return lark.Lark(
-        grammar=(DATA_DIR / "mesagrammar.lark").read_text(),
-        parser="lalr",
-        maybe_placeholders=True,
-    )
-
-
-@pytest.fixture
-def synthetizer() -> syn.BackboneSynthetizer:
-    return syn.BackboneSynthetizer()
-
-
-def test_conv2d(parser: lark.Lark, synthetizer: syn.BackboneSynthetizer) -> None:
+def test_conv2d() -> None:
     tokenstream = """
     conv2d filter_count 1 kernel_size 2 stride 3
     """
 
-    tree = parser.parse(tokenstream)
-    actual = synthetizer.transform(tree)
-
+    actual = syn.parse_tokenstream(tokenstream)
     layers = (syn.Conv2DLayer(filter_count=1, kernel_size=2, stride=3),)
     expected = syn.Backbone(layers)
     assert expected == actual
 
 
-def test_dense(parser: lark.Lark, synthetizer: syn.BackboneSynthetizer) -> None:
+def test_dense() -> None:
     tokenstream = """
     dense 5
     """
 
-    tree = parser.parse(tokenstream)
-    actual = synthetizer.transform(tree)
+    actual = syn.parse_tokenstream(tokenstream)
 
     layers = (syn.DenseLayer(5),)
     expected = syn.Backbone(layers)
     assert expected == actual
 
 
-def test_dropout(parser: lark.Lark, synthetizer: syn.BackboneSynthetizer) -> None:
+def test_dropout() -> None:
     tokenstream = """
     dropout 0.7
     """
 
-    tree = parser.parse(tokenstream)
-    actual = synthetizer.transform(tree)
+    actual = syn.parse_tokenstream(tokenstream)
 
     layers = (syn.DropoutLayer(0.7),)
     expected = syn.Backbone(layers)
     assert expected == actual
 
 
-def test_merge_(parser: lark.Lark, synthetizer: syn.BackboneSynthetizer) -> None:
+def test_merge_() -> None:
     tokenstream = """
     merge dense 2
     """
 
-    tree = parser.parse(tokenstream)
-    actual = synthetizer.transform(tree)
+    actual = syn.parse_tokenstream(tokenstream)
 
     layers = (syn.Merge(), syn.DenseLayer(2))
     expected = syn.Backbone(layers)
     assert expected == actual
 
 
-def test_fork(parser: lark.Lark, synthetizer: syn.BackboneSynthetizer) -> None:
+def test_fork() -> None:
     tokenstream = """
     dense 1 fork
     """
 
-    tree = parser.parse(tokenstream)
-    actual = synthetizer.transform(tree)
+    actual = syn.parse_tokenstream(tokenstream)
 
     layers = (syn.DenseLayer(1), syn.Fork())
     expected = syn.Backbone(layers)
     assert expected == actual
 
 
-def test_merge_and_fork(
-    parser: lark.Lark, synthetizer: syn.BackboneSynthetizer
-) -> None:
+def test_merge_and_fork() -> None:
     tokenstream = """
     merge dense 5 fork
     """
 
-    tree = parser.parse(tokenstream)
-    actual = synthetizer.transform(tree)
+    actual = syn.parse_tokenstream(tokenstream)
 
     layers = (syn.Merge(), syn.DenseLayer(5), syn.Fork())
     expected = syn.Backbone(layers)
     assert expected == actual
 
 
-def test_simple_backbone(
-    parser: lark.Lark, synthetizer: syn.BackboneSynthetizer
-) -> None:
+def test_simple_backbone() -> None:
     tokenstream = """
     conv2d filter_count 1 kernel_size 2 stride 3
     conv2d filter_count 4 kernel_size 5 stride 6
@@ -114,8 +82,7 @@ def test_simple_backbone(
     dropout 0.10
     """
 
-    tree = parser.parse(tokenstream)
-    actual = synthetizer.transform(tree)
+    actual = syn.parse_tokenstream(tokenstream)
 
     layers = (
         syn.Conv2DLayer(1, 2, 3),
@@ -130,9 +97,7 @@ def test_simple_backbone(
     assert expected == actual
 
 
-def test_complex_backbone(
-    parser: lark.Lark, synthetizer: syn.BackboneSynthetizer
-) -> None:
+def test_complex_backbone() -> None:
     tokenstream = """
     conv2d filter_count 1 kernel_size 2 stride 3 fork
     merge conv2d filter_count 4 kernel_size 5 stride 6 fork
@@ -149,8 +114,7 @@ def test_complex_backbone(
 
     """
 
-    tree = parser.parse(tokenstream)
-    actual = synthetizer.transform(tree)
+    actual = syn.parse_tokenstream(tokenstream)
 
     a: list[syn.Layer] = [syn.Conv2DLayer(1, 2, 3), syn.Fork()]
     b: list[syn.Layer] = [syn.Merge(), syn.Conv2DLayer(4, 5, 6), syn.Fork()]

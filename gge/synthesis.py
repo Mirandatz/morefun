@@ -1,8 +1,12 @@
 import dataclasses
+import pathlib
 import typing
 
 import lark
 import typeguard
+
+MESAGRAMMAR_PATH = pathlib.Path(__file__).parent.parent / "data" / "mesagrammar.lark"
+MESAGRAMMAR = MESAGRAMMAR_PATH.read_text()
 
 
 @dataclasses.dataclass(frozen=True)
@@ -128,3 +132,9 @@ class BackboneSynthetizer(lark.Transformer[Backbone]):
 
     def FLOAT(self, token: lark.Token) -> float:
         return float(token.value)
+
+
+def parse_tokenstream(string: str) -> Backbone:
+    parser = lark.Lark(grammar=MESAGRAMMAR, parser="lalr")
+    tree = parser.parse(string)
+    return BackboneSynthetizer().transform(tree)
