@@ -134,7 +134,14 @@ class BackboneSynthetizer(lark.Transformer[Backbone]):
         return float(token.value)
 
 
-def parse_tokenstream(string: str) -> Backbone:
+def parse(string: str) -> Backbone:
+    """
+    This is not a "string deserialization function";
+    the input string is expected to be a "token stream"
+    that can be translated into an abstract syntax tree that can
+    be visited/transformed into a `Backbone`.
+    """
+
     parser = lark.Lark(grammar=MESAGRAMMAR, parser="lalr")
     tree = parser.parse(string)
     return BackboneSynthetizer().transform(tree)

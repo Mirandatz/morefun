@@ -3,8 +3,8 @@ import enum
 
 import typeguard
 
+import gge.backbones as bb
 import gge.randomness as rand
-import gge.synthesis as syn
 
 
 @enum.unique
@@ -37,16 +37,16 @@ class ConnectionsSchema:
     merge_layers: tuple[MergeLayer, ...]
 
 
-def extract_forks_masks_lengths(backbone: syn.Backbone) -> tuple[int, ...]:
+def extract_forks_masks_lengths(backbone: bb.Backbone) -> tuple[int, ...]:
     lengths = []
 
     fork_count = 0
 
     for layer in backbone.layers:
-        if isinstance(layer, syn.Fork):
+        if isinstance(layer, bb.Fork):
             fork_count += 1
 
-        if isinstance(layer, syn.Merge):
+        if isinstance(layer, bb.Merge):
             lengths.append(fork_count)
 
     return tuple(lengths)
@@ -74,7 +74,7 @@ def create_inputs_merger(mask_len: int, rng: rand.RNG) -> MergeLayer:
 
 
 def create_connections_schema(
-    backbone: syn.Backbone, rng: rand.RNG
+    backbone: bb.Backbone, rng: rand.RNG
 ) -> ConnectionsSchema:
     masks_lens = extract_forks_masks_lengths(backbone)
     merge_layers = (create_inputs_merger(ml, rng) for ml in masks_lens)
