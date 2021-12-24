@@ -62,12 +62,12 @@ def create_inputs_merger(mask_len: int, rng: rand.RNG) -> MergeLayer:
         size=mask_len,
         dtype=bool,
     )
-
+    mask_as_bools = tuple(bool(b) for b in mask)
     merge_strat = rng.choice(list(MergeStrategy))  # type: ignore
     reshape_strat = rng.choice(list(ReshapeStrategy))  # type: ignore
 
     return MergeLayer(
-        forks_mask=tuple(mask),
+        forks_mask=mask_as_bools,
         merge_strategy=merge_strat,
         reshape_strategy=reshape_strat,
     )

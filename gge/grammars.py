@@ -126,7 +126,7 @@ class ProductionRule:
 
 class Grammar:
     def __init__(self, raw_grammar: str) -> None:
-        parser = lark.Lark(METAGRAMMAR, parser="lalr")
+        parser = lark.Lark(METAGRAMMAR, parser="lalr", maybe_placeholders=True)
         tree = parser.parse(raw_grammar)
         transformer = GrammarTransformer()
         transformer.transform(tree)
@@ -422,6 +422,20 @@ class GrammarTransformer(lark.Transformer[list[ProductionRule]]):
         combinations = itertools.product(*repeated_symbols)
         unpacked = [itertools.chain(*inner) for inner in combinations]
         return [RuleOption(tuple(symbols)) for symbols in unpacked]
+
+    @lark.v_args(inline=True)
+    def maybe_merge(self, term: Terminal | None) -> list[list[Terminal]]:
+        if term is None:
+            return [[]]
+        else:
+            return [[term]]
+
+    @lark.v_args(inline=True)
+    def maybe_fork(self, term: Terminal | None) -> list[list[Terminal]]:
+        if term is None:
+            return [[]]
+        else:
+            return [[term]]
 
     def symbol_range(
         self, parts: tuple[NonTerminal, Optional[int], Optional[int]]

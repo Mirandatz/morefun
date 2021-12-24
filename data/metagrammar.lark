@@ -2,9 +2,12 @@ start       : _NL* rule+
 rule        : NONTERMINAL ":" (layer | block)
 NONTERMINAL : NAME
 
+
 block        : block_option ("|" block_option)*
-block_option : MERGE? symbol_range+ FORK? _NL*
+block_option : maybe_merge symbol_range+ maybe_fork _NL*
+maybe_merge  : [MERGE]
 MERGE        : /"merge"/
+maybe_fork   : [FORK]
 FORK         : /"fork"/
 
 symbol_range : NONTERMINAL ["~" RANGE_BOUND [".." RANGE_BOUND]]
