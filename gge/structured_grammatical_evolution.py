@@ -73,10 +73,13 @@ class Genemancer:
         return Gene(nt, indices_as_tuple)
 
     def create_genotype(self, rng: rand.RNG) -> Genotype:
-        genes = [self.create_gene(nt, rng) for nt in self.grammar.nonterminals]
-        return Genotype(tuple(genes))
+        genes = (self.create_gene(nt, rng) for nt in self.grammar.nonterminals)
+        sorted_genes = sorted(genes)
 
-    def map_to_tokens(self, genotype: Genotype) -> tuple[str, ...]:
+        return Genotype(tuple(sorted_genes))
+
+    def map_to_tokenstream(self, genotype: Genotype) -> str:
+
         """
         This function implements the "genotype mapping" procedure of the GE literature.
         Partially. Because the mapping process usually translates a phenotype to a genotype in a
@@ -86,16 +89,25 @@ class Genemancer:
         finally, we visit the nodes of the tree and synthesize the phenotype.
         """
 
-        terminals: collections.deque[gg.Terminal] = collections.deque()
+        tokenstream = ""
 
         gene_consumption_tracker = {g: 0 for g in genotype.genes}
-        to_process = [self.grammar.start_symbol]
+
+        to_process: collections.deque[gg.Symbol] = collections.deque()
+        to_process.append(self.grammar.start_symbol)
 
         while to_process:
-            nt = to_process.pop()
+            symbol = to_process.popleft()
 
-            gene = genotype.get_associated_gene(nt)
-            expansions = self.grammar.expansions(nt)
+            # sanity check
+            assert isinstance(symbol, gg.Terminal | gg.NonTerminal)
+
+            if isinstance(symbol, gg.Terminal):
+                tokenstream += symbol.text
+                continue
+
+            gene = genotype.get_associated_gene(symbol)
+            expansions = self.grammar.expansions(symbol)
 
             gene_pos = gene_consumption_tracker[gene]
             gene_consumption_tracker[gene] += 1
@@ -103,17 +115,10 @@ class Genemancer:
 
             chosen_exp = expansions[exp_choice]
 
-            for symbol in chosen_exp.symbols:
-                if type(symbol) == gg.NonTerminal:
-                    to_process.append(symbol)
+            for s in reversed(chosen_exp.symbols):
+                to_process.appendleft(s)
 
-                elif type(symbol) == gg.Terminal:
-                    terminals.appendleft(symbol)
-
-                else:
-                    raise TypeError(f"Unknown symbol type `{type(symbol)}`")
-
-        return tuple(t.text for t in terminals)
+        return tokenstream
 
 
 def max_nr_of_times_nonterminal_can_be_expanded(
