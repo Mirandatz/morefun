@@ -164,74 +164,6 @@ class GrammarComponents:
         _terminals_and_rhss_are_consistent(T, P)
 
 
-@typeguard.typechecked
-class Grammar:
-    def __init__(self, raw_grammar: str) -> None:
-        tree = extract_ast(raw_grammar)
-        transformer = GrammarTransformer()
-        components = transformer.transform(tree)
-
-        self._raw_grammar = raw_grammar
-
-        self._nonterminals = components.nonterminals
-        self._terminals = components.terminals
-        self._rules = components.rules
-        self._start_symbol = components.start_symbol
-
-        self._as_tuple = (
-            self._nonterminals,
-            self._terminals,
-            self._rules,
-            self._start_symbol,
-        )
-
-        self._hash = hash(self._as_tuple)
-
-    @property
-    def nonterminals(self) -> tuple[NonTerminal, ...]:
-        return self._nonterminals
-
-    @property
-    def terminals(self) -> tuple[Terminal, ...]:
-        return self._terminals
-
-    @property
-    def rules(self) -> tuple[ProductionRule, ...]:
-        return self._rules
-
-    @property
-    def start_symbol(self) -> NonTerminal:
-        return self._start_symbol
-
-    @property
-    def raw_grammar(self) -> str:
-        return self._raw_grammar
-
-    @functools.cache
-    def expansions(self, nt: NonTerminal) -> tuple[RuleOption, ...]:
-        if nt not in self.nonterminals:
-            raise ValueError("nt is not contained in the nonterminals of the grammar")
-
-        relevant_rhss = (r.rhs for r in self.rules if r.lhs == nt)
-        rhss_as_tuple = tuple(relevant_rhss)
-
-        assert len(rhss_as_tuple) >= 1
-
-        return rhss_as_tuple
-
-    def __hash__(self) -> int:
-        return self._hash
-
-    def __eq__(self, other: object) -> bool:
-        if id(self) == id(other):
-            return True
-
-        if not isinstance(other, Grammar):
-            return NotImplemented
-
-        return self._as_tuple == other._as_tuple
-
-
 def _nonterminals_and_lhss_are_consistent(
     nonterminals: tuple[NonTerminal, ...],
     rules: tuple[ProductionRule, ...],
@@ -310,6 +242,72 @@ def _terminals_and_rhss_are_consistent(
             "must be registered as a terminal, "
             f"but the following are not: {only_on_rhss}"
         )
+
+
+class Grammar:
+    def __init__(self, raw_grammar: str) -> None:
+        tree = extract_ast(raw_grammar)
+        components = GrammarTransformer().transform(tree)
+
+        self._raw_grammar = raw_grammar
+
+        self._nonterminals = components.nonterminals
+        self._terminals = components.terminals
+        self._rules = components.rules
+        self._start_symbol = components.start_symbol
+
+        self._as_tuple = (
+            self._nonterminals,
+            self._terminals,
+            self._rules,
+            self._start_symbol,
+        )
+
+        self._hash = hash(self._as_tuple)
+
+    @property
+    def nonterminals(self) -> tuple[NonTerminal, ...]:
+        return self._nonterminals
+
+    @property
+    def terminals(self) -> tuple[Terminal, ...]:
+        return self._terminals
+
+    @property
+    def rules(self) -> tuple[ProductionRule, ...]:
+        return self._rules
+
+    @property
+    def start_symbol(self) -> NonTerminal:
+        return self._start_symbol
+
+    @property
+    def raw_grammar(self) -> str:
+        return self._raw_grammar
+
+    @functools.cache
+    def expansions(self, nt: NonTerminal) -> tuple[RuleOption, ...]:
+        if nt not in self.nonterminals:
+            raise ValueError("nt is not contained in the nonterminals of the grammar")
+
+        relevant_rhss = (r.rhs for r in self.rules if r.lhs == nt)
+        rhss_as_tuple = tuple(relevant_rhss)
+
+        assert len(rhss_as_tuple) >= 1
+
+        return rhss_as_tuple
+
+    def __hash__(self) -> int:
+        return self._hash
+
+    def __eq__(self, other: object) -> bool:
+        if id(self) == id(other):
+            return True
+
+        if not isinstance(other, Grammar):
+            return NotImplemented
+
+        return self._as_tuple == other._as_tuple
 
 
 class GrammarTransformer(gge_transformers.DisposableTransformer[GrammarComponents]):
