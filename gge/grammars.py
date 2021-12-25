@@ -312,7 +312,7 @@ class Grammar:
 
 class GrammarTransformer(gge_transformers.DisposableTransformer[GrammarComponents]):
     def __init__(self) -> None:
-        super().__init__(visit_tokens=True)
+        super().__init__()
 
         self._terminals: list[Terminal] = []
         self._nonterminals: list[NonTerminal] = []

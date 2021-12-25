@@ -13,10 +13,9 @@ class State(enum.Enum):
 
 
 class DisposableTransformer(lark.Transformer[_T]):
-    def __init__(self, visit_tokens: bool = True) -> None:
+    def __init__(self) -> None:
         self._state = State.READY_TO_RUN
-
-        super().__init__(visit_tokens=visit_tokens)
+        super().__init__(visit_tokens=True)
 
     def __default__(
         self,
