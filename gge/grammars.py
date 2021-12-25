@@ -7,6 +7,8 @@ import typing
 import lark
 import typeguard
 
+import gge.transformers as gge_transformers
+
 METAGRAMMAR_PATH = pathlib.Path(__file__).parent.parent / "data" / "metagrammar.lark"
 METAGRAMMAR = METAGRAMMAR_PATH.read_text()
 
@@ -133,18 +135,48 @@ class ProductionRule:
         return f"Rule({self.lhs}->{self.rhs})"
 
 
+@typeguard.typechecked
+@dataclasses.dataclass(frozen=True)
+class GrammarComponents:
+    nonterminals: tuple[NonTerminal, ...]
+    terminals: tuple[Terminal, ...]
+    rules: tuple[ProductionRule, ...]
+    start_symbol: NonTerminal
+
+    def __post_init__(self) -> None:
+        N = self.nonterminals
+        T = self.terminals
+        P = self.rules
+        S = self.start_symbol
+
+        assert len(N) > 0
+        assert len(T) > 0
+        assert len(P) > 0
+
+        assert len(N) == len(set(N))
+        assert len(T) == len(set(T))
+        assert len(P) == len(set(P))
+
+        assert S in N
+
+        _nonterminals_and_lhss_are_consistent(N, P)
+        _nonterminals_and_rhss_are_consistent(N, P, S)
+        _terminals_and_rhss_are_consistent(T, P)
+
+
+@typeguard.typechecked
 class Grammar:
     def __init__(self, raw_grammar: str) -> None:
         tree = extract_ast(raw_grammar)
         transformer = GrammarTransformer()
-        transformer.transform(tree)
+        components = transformer.transform(tree)
 
         self._raw_grammar = raw_grammar
 
-        self._nonterminals = transformer.get_nonterminals()
-        self._terminals = transformer.get_terminals()
-        self._rules = transformer.get_rules()
-        self._start_symbol = transformer.get_start_symbol()
+        self._nonterminals = components.nonterminals
+        self._terminals = components.terminals
+        self._rules = components.rules
+        self._start_symbol = components.start_symbol
 
         self._as_tuple = (
             self._nonterminals,
@@ -154,13 +186,6 @@ class Grammar:
         )
 
         self._hash = hash(self._as_tuple)
-
-        validate_grammar_components(
-            N=self.nonterminals,
-            T=self.terminals,
-            P=self.rules,
-            S=self.start_symbol,
-        )
 
     @property
     def nonterminals(self) -> tuple[NonTerminal, ...]:
@@ -287,90 +312,27 @@ def _terminals_and_rhss_are_consistent(
         )
 
 
-@typeguard.typechecked
-def validate_grammar_components(
-    N: tuple[NonTerminal, ...],
-    T: tuple[Terminal, ...],
-    P: tuple[ProductionRule, ...],
-    S: NonTerminal,
-) -> None:
-    assert len(N) > 0
-    assert len(T) > 0
-    assert len(P) > 0
-
-    assert len(N) == len(set(N))
-    assert len(T) == len(set(T))
-    assert len(P) == len(set(P))
-
-    assert S in N
-
-    _nonterminals_and_lhss_are_consistent(N, P)
-    _nonterminals_and_rhss_are_consistent(N, P, S)
-    _terminals_and_rhss_are_consistent(T, P)
-
-
-class GrammarTransformer(lark.Transformer[list[ProductionRule]]):
+class GrammarTransformer(gge_transformers.DisposableTransformer[GrammarComponents]):
     def __init__(self) -> None:
-        super().__init__()
+        super().__init__(visit_tokens=True)
 
-        self._frozen = True
+        self._terminals: list[Terminal] = []
+        self._nonterminals: list[NonTerminal] = []
+        self._rules: list[ProductionRule] = []
+        self._start: NonTerminal = NonTerminal("start")
 
-        self._terminals: typing.Optional[list[Terminal]] = None
-        self._nonterminals: typing.Optional[list[NonTerminal]] = None
-        self._rules: typing.Optional[list[ProductionRule]] = None
-        self._start: typing.Optional[NonTerminal] = None
+    def transform(self, tree: lark.Tree) -> GrammarComponents:
+        super().transform(tree)
 
-    def __default__(
-        self, data: typing.Any, children: typing.Any, meta: typing.Any
-    ) -> None:
-        raise NotImplementedError(f"method not implemented for tree.data: {data}")
-
-    def __default_token__(self, token_text: typing.Any) -> None:
-        raise NotImplementedError(
-            f"method not implemented for token with text: {token_text}"
+        return GrammarComponents(
+            nonterminals=tuple(self._nonterminals),
+            terminals=tuple(self._terminals),
+            rules=tuple(self._rules),
+            start_symbol=self._start,
         )
 
-    def get_nonterminals(self) -> tuple[NonTerminal, ...]:
-        assert self._frozen
-        assert self._nonterminals is not None
-
-        return tuple(self._nonterminals)
-
-    def get_terminals(self) -> tuple[Terminal, ...]:
-        assert self._frozen
-        assert self._terminals is not None
-
-        return tuple(self._terminals)
-
-    def get_rules(self) -> tuple[ProductionRule, ...]:
-        assert self._frozen
-        assert self._rules is not None
-
-        return tuple(self._rules)
-
-    def get_start_symbol(self) -> NonTerminal:
-        assert self._frozen
-        assert self._start is not None
-
-        return self._start
-
-    def transform(self, tree: lark.Tree) -> list[ProductionRule]:
-        assert self._frozen
-
-        self._frozen = False
-
-        self._terminals = []
-        self._nonterminals = []
-        self._rules = []
-
-        ret = super().transform(tree)
-        self._frozen = True
-
-        return ret
-
     def _register_terminal(self, text: str) -> Terminal:
-        assert not self._frozen
-        assert self._terminals is not None
+        self._raise_if_not_running()
 
         term = Terminal(text)
 
@@ -380,8 +342,7 @@ class GrammarTransformer(lark.Transformer[list[ProductionRule]]):
         return term
 
     def _register_nonterminal(self, text: str) -> NonTerminal:
-        assert not self._frozen
-        assert self._nonterminals is not None
+        self._raise_if_not_running()
 
         nonterm = NonTerminal(text)
 
@@ -391,20 +352,17 @@ class GrammarTransformer(lark.Transformer[list[ProductionRule]]):
         return nonterm
 
     def start(self, list_of_list_of_rules: typing.Any) -> list[ProductionRule]:
-        assert not self._frozen
-        assert self._start is None
-
-        self._start = NonTerminal("start")
+        self._raise_if_not_running()
 
         flattened = [
             rule for list_of_rules in list_of_list_of_rules for rule in list_of_rules
         ]
-        self._rules = flattened
+        self._rules.extend(flattened)
 
         return flattened
 
     def rule(self, rule_parts: typing.Any) -> list[ProductionRule]:
-        assert not self._frozen
+        self._raise_if_not_running()
 
         lhs, *list_of_list_of_options = rule_parts
 
@@ -415,7 +373,7 @@ class GrammarTransformer(lark.Transformer[list[ProductionRule]]):
         ]
 
     def block(self, list_of_list_of_options: typing.Any) -> list[RuleOption]:
-        assert not self._frozen
+        self._raise_if_not_running()
 
         return [
             option
@@ -427,7 +385,7 @@ class GrammarTransformer(lark.Transformer[list[ProductionRule]]):
         self,
         repeated_symbols: list[typing.Iterable[Symbol]],
     ) -> list[RuleOption]:
-        assert not self._frozen
+        self._raise_if_not_running()
 
         combinations = itertools.product(*repeated_symbols)
         unpacked = [itertools.chain(*inner) for inner in combinations]
@@ -435,6 +393,8 @@ class GrammarTransformer(lark.Transformer[list[ProductionRule]]):
 
     @lark.v_args(inline=True)
     def maybe_merge(self, term: Terminal | None) -> list[list[Terminal]]:
+        self._raise_if_not_running()
+
         if term is None:
             return [[]]
         else:
@@ -442,6 +402,8 @@ class GrammarTransformer(lark.Transformer[list[ProductionRule]]):
 
     @lark.v_args(inline=True)
     def maybe_fork(self, term: Terminal | None) -> list[list[Terminal]]:
+        self._raise_if_not_running()
+
         if term is None:
             return [[]]
         else:
@@ -450,7 +412,7 @@ class GrammarTransformer(lark.Transformer[list[ProductionRule]]):
     def symbol_range(
         self, parts: tuple[NonTerminal, typing.Optional[int], typing.Optional[int]]
     ) -> list[list[NonTerminal]]:
-        assert not self._frozen
+        self._raise_if_not_running()
 
         name, a, b = parts
 
@@ -475,7 +437,7 @@ class GrammarTransformer(lark.Transformer[list[ProductionRule]]):
         return [[name] * count for count in range(start, stop + 1)]
 
     def layer(self, list_of_lists_of_options: typing.Any) -> list[RuleOption]:
-        assert not self._frozen
+        self._raise_if_not_running()
 
         return [
             opt
@@ -484,86 +446,86 @@ class GrammarTransformer(lark.Transformer[list[ProductionRule]]):
         ]
 
     def conv_layer(self, parts: typing.Any) -> list[RuleOption]:
-        assert not self._frozen
+        self._raise_if_not_running()
 
         marker, filter_counts, kernel_sizes, strides = parts
         option_data = itertools.product(filter_counts, kernel_sizes, strides)
         return [RuleOption((marker, *fc, *ks, *st)) for fc, ks, st in option_data]
 
     def filter_count(self, parts: list[Terminal]) -> list[tuple[Terminal, Terminal]]:
-        assert not self._frozen
+        self._raise_if_not_running()
 
         marker, *counts = parts
         return [(marker, c) for c in counts]
 
     def kernel_size(self, parts: list[Terminal]) -> list[tuple[Terminal, Terminal]]:
-        assert not self._frozen
+        self._raise_if_not_running()
 
         marker, *sizes = parts
         return [(marker, s) for s in sizes]
 
     def stride(self, parts: list[Terminal]) -> list[tuple[Terminal, Terminal]]:
-        assert not self._frozen
+        self._raise_if_not_running()
 
         marker, *strides = parts
         return [(marker, s) for s in strides]
 
     def dense_layer(self, parts: list[Terminal]) -> list[RuleOption]:
-        assert not self._frozen
+        self._raise_if_not_running()
 
         marker, *units = parts
         return [RuleOption((marker, ut)) for ut in units]
 
     def dropout_layer(self, parts: list[Terminal]) -> list[RuleOption]:
-        assert not self._frozen
+        self._raise_if_not_running()
 
         marker, *rates = parts
         return [RuleOption((marker, rt)) for rt in rates]
 
     def NONTERMINAL(self, token: lark.Token) -> NonTerminal:
-        assert not self._frozen
+        self._raise_if_not_running()
         return self._register_nonterminal(token.value)
 
     def MERGE(self, token: lark.Token) -> Terminal:
-        assert not self._frozen
+        self._raise_if_not_running()
         return self._register_terminal(token.value)
 
     def FORK(self, token: lark.Token) -> Terminal:
-        assert not self._frozen
+        self._raise_if_not_running()
         return self._register_terminal(token.value)
 
     def CONV2D(self, token: lark.Token) -> Terminal:
-        assert not self._frozen
+        self._raise_if_not_running()
         return self._register_terminal(token.value)
 
     def FILTER_COUNT(self, token: lark.Token) -> Terminal:
-        assert not self._frozen
+        self._raise_if_not_running()
         return self._register_terminal(token.value)
 
     def KERNEL_SIZE(self, token: lark.Token) -> Terminal:
-        assert not self._frozen
+        self._raise_if_not_running()
         return self._register_terminal(token.value)
 
     def STRIDE(self, token: lark.Token) -> Terminal:
-        assert not self._frozen
+        self._raise_if_not_running()
         return self._register_terminal(token.value)
 
     def DENSE(self, token: lark.Token) -> Terminal:
-        assert not self._frozen
+        self._raise_if_not_running()
         return self._register_terminal(token.value)
 
     def DROPOUT(self, token: lark.Token) -> Terminal:
-        assert not self._frozen
+        self._raise_if_not_running()
         return self._register_terminal(token.value)
 
     def RANGE_BOUND(self, token: lark.Token) -> int:
-        assert not self._frozen
+        self._raise_if_not_running()
         return int(token.value)
 
     def INT_ARG(self, token: lark.Token) -> Terminal:
-        assert not self._frozen
+        self._raise_if_not_running()
         return self._register_terminal(token.value)
 
     def FLOAT_ARG(self, token: lark.Token) -> Terminal:
-        assert not self._frozen
+        self._raise_if_not_running()
         return self._register_terminal(token.value)
