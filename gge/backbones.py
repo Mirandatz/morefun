@@ -6,6 +6,8 @@ import typing
 import lark
 import typeguard
 
+import gge.transformers as gge_transformers
+
 MESAGRAMMAR_PATH = pathlib.Path(__file__).parent.parent / "data" / "mesagrammar.lark"
 MESAGRAMMAR = MESAGRAMMAR_PATH.read_text()
 
@@ -83,37 +85,13 @@ class Backbone:
 
 
 @lark.v_args(inline=True)
-class BackboneSynthetizer(lark.Transformer[Backbone]):
+class BackboneSynthetizer(gge_transformers.DisposableTransformer[Backbone]):
     def __init__(self) -> None:
-        super().__init__()
-
+        super().__init__(visit_tokens=True)
         self._layer_counter: collections.Counter[str] = collections.Counter()
-        self._is_running = False
-
-    def transform(self, tree: lark.Tree) -> Backbone:
-        assert not self._is_running
-
-        self._is_running = True
-        self._layer_counter.clear()
-
-        ret = super().transform(tree)
-
-        self._is_running = False
-
-        return ret
-
-    def __default__(
-        self, data: typing.Any, children: typing.Any, meta: typing.Any
-    ) -> None:
-        raise NotImplementedError(f"method not implemented for tree.data: {data}")
-
-    def __default_token__(self, token_text: str) -> None:
-        raise NotImplementedError(
-            f"method not implemented for token with text: {token_text}"
-        )
 
     def _create_layer_name(self, suffix: str) -> str:
-        assert self._is_running
+        self._raise_if_not_running()
 
         instance_id = self._layer_counter[suffix]
         self._layer_counter[suffix] += 1
@@ -121,19 +99,19 @@ class BackboneSynthetizer(lark.Transformer[Backbone]):
 
     @lark.v_args(inline=False)
     def start(self, blocks: list[list[Layer]]) -> Backbone:
-        assert self._is_running
+        self._raise_if_not_running()
 
         layers = tuple(layer for list_of_layers in blocks for layer in list_of_layers)
         return Backbone(layers)
 
     @lark.v_args(inline=False)
     def block(self, parts: typing.Any) -> list[Layer]:
-        assert self._is_running
+        self._raise_if_not_running()
 
         return [x for x in parts if x is not None]
 
     def MERGE(self, token: lark.Token | None = None) -> Merge | None:
-        assert self._is_running
+        self._raise_if_not_running()
 
         if token is not None:
             return Merge(self._create_layer_name("merge"))
@@ -141,7 +119,7 @@ class BackboneSynthetizer(lark.Transformer[Backbone]):
             return None
 
     def FORK(self, token: lark.Token | None = None) -> Fork | None:
-        assert self._is_running
+        self._raise_if_not_running()
 
         if token is not None:
             return Fork(self._create_layer_name("fork"))
@@ -149,14 +127,14 @@ class BackboneSynthetizer(lark.Transformer[Backbone]):
             return None
 
     def layer(self, layer: Layer) -> Layer:
-        assert self._is_running
+        self._raise_if_not_running()
 
         return layer
 
     def conv_layer(
         self, filter_count: int, kernel_size: int, stride: int
     ) -> Conv2DLayer:
-        assert self._is_running
+        self._raise_if_not_running()
 
         return Conv2DLayer(
             name=self._create_layer_name("conv2d"),
@@ -166,25 +144,25 @@ class BackboneSynthetizer(lark.Transformer[Backbone]):
         )
 
     def filter_count(self, count: int) -> int:
-        assert self._is_running
+        self._raise_if_not_running()
         assert count >= 1
 
         return count
 
     def kernel_size(self, stride: int) -> int:
-        assert self._is_running
+        self._raise_if_not_running()
         assert stride >= 1
 
         return stride
 
     def stride(self, size: int) -> int:
-        assert self._is_running
+        self._raise_if_not_running()
         assert size >= 1
 
         return size
 
     def dense_layer(self, units: int) -> DenseLayer:
-        assert self._is_running
+        self._raise_if_not_running()
         assert units >= 1
 
         return DenseLayer(
@@ -193,7 +171,7 @@ class BackboneSynthetizer(lark.Transformer[Backbone]):
         )
 
     def dropout_layer(self, rate: float) -> DropoutLayer:
-        assert self._is_running
+        self._raise_if_not_running()
         assert 0 < rate < 1
 
         return DropoutLayer(
@@ -202,12 +180,12 @@ class BackboneSynthetizer(lark.Transformer[Backbone]):
         )
 
     def INT(self, token: lark.Token) -> int:
-        assert self._is_running
+        self._raise_if_not_running()
 
         return int(token.value)
 
     def FLOAT(self, token: lark.Token) -> float:
-        assert self._is_running
+        self._raise_if_not_running()
 
         return float(token.value)
 
