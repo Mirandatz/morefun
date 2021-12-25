@@ -159,7 +159,7 @@ class BackboneSynthetizer(lark.Transformer[Backbone]):
         assert self._is_running
 
         return Conv2DLayer(
-            name=self._create_layer_name("conv"),
+            name=self._create_layer_name("conv2d"),
             filter_count=filter_count,
             kernel_size=kernel_size,
             stride=stride,

@@ -1,13 +1,13 @@
+import dataclasses
 import functools
 import itertools
-from dataclasses import dataclass
-from pathlib import Path
-from typing import Any, Iterable, Optional, Union
+import pathlib
+import typing
 
 import lark
 import typeguard
 
-METAGRAMMAR_PATH = Path(__file__).parent.parent / "data" / "metagrammar.lark"
+METAGRAMMAR_PATH = pathlib.Path(__file__).parent.parent / "data" / "metagrammar.lark"
 METAGRAMMAR = METAGRAMMAR_PATH.read_text()
 
 
@@ -31,7 +31,7 @@ def _is_valid_name(value: str) -> bool:
 
 
 @typeguard.typechecked
-@dataclass(order=True, frozen=True)
+@dataclasses.dataclass(order=True, frozen=True)
 class NonTerminal:
     text: str
 
@@ -54,7 +54,7 @@ class NonTerminal:
 
 
 @typeguard.typechecked
-@dataclass(order=True, frozen=True)
+@dataclasses.dataclass(order=True, frozen=True)
 class Terminal:
     text: str
 
@@ -88,11 +88,11 @@ class Terminal:
         return f"T({self.text})"
 
 
-Symbol = Union[Terminal, NonTerminal]
+Symbol = Terminal | NonTerminal
 
 
 @typeguard.typechecked
-@dataclass(order=True, frozen=True)
+@dataclasses.dataclass(order=True, frozen=True)
 class RuleOption:
     """
     represents one possible expansion of a rule, i.e. "the stuff separated by `|`"
@@ -115,7 +115,7 @@ class RuleOption:
 
 
 @typeguard.typechecked
-@dataclass(order=True, frozen=True)
+@dataclasses.dataclass(order=True, frozen=True)
 class ProductionRule:
     lhs: NonTerminal
     rhs: RuleOption
@@ -307,15 +307,17 @@ class GrammarTransformer(lark.Transformer[list[ProductionRule]]):
 
         self._frozen = True
 
-        self._terminals: Optional[list[Terminal]] = None
-        self._nonterminals: Optional[list[NonTerminal]] = None
-        self._rules: Optional[list[ProductionRule]] = None
-        self._start: Optional[NonTerminal] = None
+        self._terminals: typing.Optional[list[Terminal]] = None
+        self._nonterminals: typing.Optional[list[NonTerminal]] = None
+        self._rules: typing.Optional[list[ProductionRule]] = None
+        self._start: typing.Optional[NonTerminal] = None
 
-    def __default__(self, data: Any, children: Any, meta: Any) -> None:
+    def __default__(
+        self, data: typing.Any, children: typing.Any, meta: typing.Any
+    ) -> None:
         raise NotImplementedError(f"method not implemented for tree.data: {data}")
 
-    def __default_token__(self, token_text: Any) -> None:
+    def __default_token__(self, token_text: typing.Any) -> None:
         raise NotImplementedError(
             f"method not implemented for token with text: {token_text}"
         )
@@ -380,7 +382,7 @@ class GrammarTransformer(lark.Transformer[list[ProductionRule]]):
 
         return nonterm
 
-    def start(self, list_of_list_of_rules: Any) -> list[ProductionRule]:
+    def start(self, list_of_list_of_rules: typing.Any) -> list[ProductionRule]:
         assert not self._frozen
         assert self._start is None
 
@@ -393,7 +395,7 @@ class GrammarTransformer(lark.Transformer[list[ProductionRule]]):
 
         return flattened
 
-    def rule(self, rule_parts: Any) -> list[ProductionRule]:
+    def rule(self, rule_parts: typing.Any) -> list[ProductionRule]:
         assert not self._frozen
 
         lhs, *list_of_list_of_options = rule_parts
@@ -404,7 +406,7 @@ class GrammarTransformer(lark.Transformer[list[ProductionRule]]):
             for rhs in list_of_options
         ]
 
-    def block(self, list_of_list_of_options: Any) -> list[RuleOption]:
+    def block(self, list_of_list_of_options: typing.Any) -> list[RuleOption]:
         assert not self._frozen
 
         return [
@@ -415,7 +417,7 @@ class GrammarTransformer(lark.Transformer[list[ProductionRule]]):
 
     def block_option(
         self,
-        repeated_symbols: list[Iterable[Symbol]],
+        repeated_symbols: list[typing.Iterable[Symbol]],
     ) -> list[RuleOption]:
         assert not self._frozen
 
@@ -438,7 +440,7 @@ class GrammarTransformer(lark.Transformer[list[ProductionRule]]):
             return [[term]]
 
     def symbol_range(
-        self, parts: tuple[NonTerminal, Optional[int], Optional[int]]
+        self, parts: tuple[NonTerminal, typing.Optional[int], typing.Optional[int]]
     ) -> list[list[NonTerminal]]:
         assert not self._frozen
 
@@ -464,7 +466,7 @@ class GrammarTransformer(lark.Transformer[list[ProductionRule]]):
 
         return [[name] * count for count in range(start, stop + 1)]
 
-    def layer(self, list_of_lists_of_options: Any) -> list[RuleOption]:
+    def layer(self, list_of_lists_of_options: typing.Any) -> list[RuleOption]:
         assert not self._frozen
 
         return [
@@ -473,7 +475,7 @@ class GrammarTransformer(lark.Transformer[list[ProductionRule]]):
             for opt in list_of_options
         ]
 
-    def conv_layer(self, parts: Any) -> list[RuleOption]:
+    def conv_layer(self, parts: typing.Any) -> list[RuleOption]:
         assert not self._frozen
 
         marker, filter_counts, kernel_sizes, strides = parts
