@@ -2,13 +2,10 @@ start       : _NL* rule+
 rule        : NONTERMINAL ":" (layer | block)
 NONTERMINAL : NAME
 
-
 block        : block_option ("|" block_option)*
 block_option : maybe_merge symbol_range+ maybe_fork _NL*
 maybe_merge  : [MERGE]
-MERGE        : /"merge"/
 maybe_fork   : [FORK]
-FORK         : /"fork"/
 
 symbol_range : NONTERMINAL ["~" RANGE_BOUND [".." RANGE_BOUND]]
 RANGE_BOUND  : INT
@@ -19,16 +16,10 @@ conv_layer   : CONV2D filter_count kernel_size stride
 filter_count : FILTER_COUNT _int_args
 kernel_size  : KERNEL_SIZE _int_args
 stride       : STRIDE _int_args
-CONV2D       : /"conv2d"/
-FILTER_COUNT : /"filter_count"/
-KERNEL_SIZE  : /"kernel_size"/
-STRIDE       : /"stride"/ 
 
 dense_layer   : DENSE _int_args
-DENSE        : /"dense"/ 
 
 dropout_layer : DROPOUT _float_args
-DROPOUT      : /"dropout"/
 
 _int_args : "(" INT_ARG ("|" INT_ARG)* ")"
 INT_ARG   : INT
@@ -36,6 +27,14 @@ INT_ARG   : INT
 _float_args : "(" FLOAT_ARG ("|" FLOAT_ARG)* ")"
 FLOAT_ARG   : FLOAT
 
+DENSE        : /"dense"/ 
+DROPOUT      : /"dropout"/
+MERGE        : /"merge"/
+FORK         : /"fork"/
+CONV2D       : /"conv2d"/
+FILTER_COUNT : /"filter_count"/
+KERNEL_SIZE  : /"kernel_size"/
+STRIDE       : /"stride"/ 
 
 %import common (INT, FLOAT)
 %import common.NEWLINE -> _NL
