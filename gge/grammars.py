@@ -11,6 +11,15 @@ METAGRAMMAR_PATH = pathlib.Path(__file__).parent.parent / "data" / "metagrammar.
 METAGRAMMAR = METAGRAMMAR_PATH.read_text()
 
 
+def get_metagrammar_parser() -> lark.Lark:
+    return lark.Lark(METAGRAMMAR, parser="lalr", maybe_placeholders=True)
+
+
+def extract_ast(grammar_text: str) -> lark.Tree:
+    parser = get_metagrammar_parser()
+    return parser.parse(grammar_text)
+
+
 def _can_be_parsed_as_float(value: str) -> bool:
     try:
         _ = float(value)
@@ -80,8 +89,8 @@ class Terminal:
         if not (self.text[0] == self.text[-1] == '"'):
             raise ValueError(error_msg)
 
-        core_is_valid = all(c.isalnum() or c == "_" for c in self.text[1:-2])
-        if not core_is_valid:
+        unquoted = self.text[1:-1]
+        if not _is_valid_name(unquoted):
             raise ValueError(error_msg)
 
     def __repr__(self) -> str:
@@ -126,8 +135,7 @@ class ProductionRule:
 
 class Grammar:
     def __init__(self, raw_grammar: str) -> None:
-        parser = lark.Lark(METAGRAMMAR, parser="lalr", maybe_placeholders=True)
-        tree = parser.parse(raw_grammar)
+        tree = extract_ast(raw_grammar)
         transformer = GrammarTransformer()
         transformer.transform(tree)
 
