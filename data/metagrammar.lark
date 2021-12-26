@@ -10,7 +10,7 @@ maybe_fork   : [FORK]
 symbol_range : NONTERMINAL ["~" RANGE_BOUND [".." RANGE_BOUND]]
 RANGE_BOUND  : INT
 
-layer        : conv_layer _NL*
+layer        : (conv_layer | batchnorm_layer) _NL*
 
 conv_layer   : CONV2D filter_count kernel_size stride activation
 filter_count : FILTER_COUNT _int_args
@@ -20,6 +20,8 @@ stride       : STRIDE _int_args
 activation : _act
            | "(" _act ("|" _act)* ")"
 _act       : RELU | GELU | SWISH
+
+batchnorm_layer : BATCHNORM
 
 _int_args : INT_ARG
           | "(" INT_ARG ("|" INT_ARG)* ")"
@@ -38,6 +40,7 @@ CONV2D       : /"conv2d"/
 FILTER_COUNT : /"filter_count"/
 KERNEL_SIZE  : /"kernel_size"/
 STRIDE       : /"stride"/
+BATCHNORM    : /"batchnorm"/
 
 %import common (INT, FLOAT)
 %import common.NEWLINE -> _NL

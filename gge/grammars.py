@@ -326,8 +326,10 @@ class GrammarTransformer(gge_transformers.DisposableTransformer[GrammarComponent
             start_symbol=self._start,
         )
 
+    @typeguard.typechecked
     def _register_terminal(self, text: str) -> Terminal:
         self._raise_if_not_running()
+        assert type(text) == str
 
         term = Terminal(text)
 
@@ -338,6 +340,7 @@ class GrammarTransformer(gge_transformers.DisposableTransformer[GrammarComponent
 
     def _register_nonterminal(self, text: str) -> NonTerminal:
         self._raise_if_not_running()
+        assert type(text) == str
 
         nonterm = NonTerminal(text)
 
@@ -472,6 +475,15 @@ class GrammarTransformer(gge_transformers.DisposableTransformer[GrammarComponent
     def activation(self, activations: list[Terminal]) -> list[Terminal]:
         self._raise_if_not_running()
         return activations
+
+    @typeguard.typechecked
+    @lark.v_args(inline=True)
+    def batchnorm_layer(self, term: Terminal) -> list[RuleOption]:
+        return [RuleOption((term,))]
+
+    def BATCHNORM(self, token: lark.Token) -> Terminal:
+        self._raise_if_not_running()
+        return self._register_terminal(token.value)
 
     def NONTERMINAL(self, token: lark.Token) -> NonTerminal:
         self._raise_if_not_running()

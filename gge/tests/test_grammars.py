@@ -9,6 +9,7 @@ CONV2D = gr.Terminal('"conv2d"')
 FILTER_COUNT = gr.Terminal('"filter_count"')
 KERNEL_SIZE = gr.Terminal('"kernel_size"')
 STRIDE = gr.Terminal('"stride"')
+BATCHRNOM = gr.Terminal('"batchnorm"')
 RELU = gr.Terminal('"relu"')
 GELU = gr.Terminal('"gelu"')
 SWISH = gr.Terminal('"swish"')
@@ -235,3 +236,40 @@ def test_blockless_grammar() -> None:
         )
     )
     assert expected_rhs == conv_def_rule.rhs
+
+
+def test_batchnorm_in_block() -> None:
+    grammar = gr.Grammar(
+        """
+        start : block
+        block : conv norm
+        conv  : "conv2d" "filter_count" (1 | 2) "kernel_size" 2 "stride" 3 "relu"
+        norm  : "batchnorm"
+        """
+    )
+
+    nt = gr.NonTerminal("norm")
+    assert nt in grammar.nonterminals
+
+    (block_exp,) = grammar.expansions(gr.NonTerminal("block"))
+    _, actual = block_exp.symbols
+
+    assert nt == actual
+
+
+def test_batchnorm_def() -> None:
+    grammar = gr.Grammar(
+        """
+        start : block
+        block : conv norm
+        conv  : "conv2d" "filter_count" (1 | 2) "kernel_size" 2 "stride" 3 "relu"
+        norm  : "batchnorm"
+        """
+    )
+
+    nt = gr.NonTerminal("norm")
+    (actual_expansion,) = grammar.expansions(nt)
+
+    expected_expansion = gr.RuleOption((BATCHRNOM,))
+
+    assert expected_expansion == actual_expansion
