@@ -99,9 +99,6 @@ class Terminal:
         return f"T({self.text})"
 
 
-Symbol = Terminal | NonTerminal
-
-
 @typeguard.typechecked
 @dataclasses.dataclass(order=True, frozen=True)
 class RuleOption:
@@ -115,7 +112,7 @@ class RuleOption:
     option2 = x * y
     """
 
-    symbols: tuple[Symbol, ...]
+    symbols: tuple[Terminal | NonTerminal, ...]
 
     def __post_init__(self) -> None:
         assert len(self.symbols) >= 1
@@ -381,7 +378,7 @@ class GrammarTransformer(gge_transformers.DisposableTransformer[GrammarComponent
 
     def block_option(
         self,
-        repeated_symbols: list[typing.Iterable[Symbol]],
+        repeated_symbols: list[list[Terminal | NonTerminal]],
     ) -> list[RuleOption]:
         self._raise_if_not_running()
 
@@ -390,7 +387,7 @@ class GrammarTransformer(gge_transformers.DisposableTransformer[GrammarComponent
         return [RuleOption(tuple(symbols)) for symbols in unpacked]
 
     @lark.v_args(inline=True)
-    def maybe_merge(self, term: Terminal | None) -> list[list[Terminal]]:
+    def maybe_merge(self, term: typing.Optional[Terminal]) -> list[list[Terminal]]:
         self._raise_if_not_running()
 
         if term is None:
@@ -399,7 +396,7 @@ class GrammarTransformer(gge_transformers.DisposableTransformer[GrammarComponent
             return [[term]]
 
     @lark.v_args(inline=True)
-    def maybe_fork(self, term: Terminal | None) -> list[list[Terminal]]:
+    def maybe_fork(self, term: typing.Optional[Terminal]) -> list[list[Terminal]]:
         self._raise_if_not_running()
 
         if term is None:
@@ -407,12 +404,14 @@ class GrammarTransformer(gge_transformers.DisposableTransformer[GrammarComponent
         else:
             return [[term]]
 
+    @lark.v_args(inline=True)
     def symbol_range(
-        self, parts: tuple[NonTerminal, typing.Optional[int], typing.Optional[int]]
+        self,
+        nt: NonTerminal,
+        a: typing.Optional[int] = None,
+        b: typing.Optional[int] = None,
     ) -> list[list[NonTerminal]]:
         self._raise_if_not_running()
-
-        name, a, b = parts
 
         if a is not None and b is not None:
             start = a
@@ -427,12 +426,12 @@ class GrammarTransformer(gge_transformers.DisposableTransformer[GrammarComponent
             stop = 1
 
         else:
-            raise ValueError(f"unexpected symbol_range configuration: {parts}")
+            raise ValueError(f"unexpected symbol_range configuration: {(nt,a,b)}")
 
         assert start >= 0
         assert stop >= start
 
-        return [[name] * count for count in range(start, stop + 1)]
+        return [[nt] * count for count in range(start, stop + 1)]
 
     def layer(self, list_of_lists_of_options: typing.Any) -> list[RuleOption]:
         self._raise_if_not_running()
@@ -446,9 +445,17 @@ class GrammarTransformer(gge_transformers.DisposableTransformer[GrammarComponent
     def conv_layer(self, parts: typing.Any) -> list[RuleOption]:
         self._raise_if_not_running()
 
-        marker, filter_counts, kernel_sizes, strides = parts
-        option_data = itertools.product(filter_counts, kernel_sizes, strides)
-        return [RuleOption((marker, *fc, *ks, *st)) for fc, ks, st in option_data]
+        marker, *params = parts
+        combinations = itertools.product(*params)
+        return [
+            RuleOption((marker, *fc, *ks, *st, act)) for fc, ks, st, act in combinations
+        ]
+
+        # marker, filter_counts, kernel_sizes, strides, activations = parts
+        # option_data = itertools.product(
+        #     filter_counts, kernel_sizes, strides, activations
+        # )
+        # return [RuleOption((marker, *fc, *ks, *st)) for fc, ks, st in option_data]
 
     def filter_count(self, parts: list[Terminal]) -> list[tuple[Terminal, Terminal]]:
         self._raise_if_not_running()
@@ -467,6 +474,10 @@ class GrammarTransformer(gge_transformers.DisposableTransformer[GrammarComponent
 
         marker, *strides = parts
         return [(marker, s) for s in strides]
+
+    def activation(self, activations: list[Terminal]) -> list[Terminal]:
+        self._raise_if_not_running()
+        return activations
 
     def dense_layer(self, parts: list[Terminal]) -> list[RuleOption]:
         self._raise_if_not_running()
@@ -505,6 +516,21 @@ class GrammarTransformer(gge_transformers.DisposableTransformer[GrammarComponent
         return self._register_terminal(token.value)
 
     def STRIDE(self, token: lark.Token) -> Terminal:
+        self._raise_if_not_running()
+        return self._register_terminal(token.value)
+
+    def ACTIVATION(self, term: Terminal) -> Terminal:
+        return term
+
+    def RELU(self, token: lark.Token) -> Terminal:
+        self._raise_if_not_running()
+        return self._register_terminal(token.value)
+
+    def GELU(self, token: lark.Token) -> Terminal:
+        self._raise_if_not_running()
+        return self._register_terminal(token.value)
+
+    def SWISH(self, token: lark.Token) -> Terminal:
         self._raise_if_not_running()
         return self._register_terminal(token.value)
 

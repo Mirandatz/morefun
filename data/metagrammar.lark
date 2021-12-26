@@ -12,10 +12,14 @@ RANGE_BOUND  : INT
 
 layer        : (conv_layer | dense_layer | dropout_layer) _NL*
 
-conv_layer   : CONV2D filter_count kernel_size stride
+conv_layer   : CONV2D filter_count kernel_size stride activation
 filter_count : FILTER_COUNT _int_args
 kernel_size  : KERNEL_SIZE _int_args
 stride       : STRIDE _int_args
+
+activation : _act
+           | "(" _act ("|" _act)* ")"
+_act       : RELU | GELU | SWISH
 
 dense_layer   : DENSE _int_args
 
@@ -29,14 +33,17 @@ _float_args : FLOAT_ARG
             | "(" FLOAT_ARG ("|" FLOAT_ARG)* ")"
 FLOAT_ARG   : FLOAT
 
-DENSE        : /"dense"/ 
+RELU         : /"relu"/
+GELU         : /"gelu"/
+SWISH        : /"swish"/
+DENSE        : /"dense"/
 DROPOUT      : /"dropout"/
 MERGE        : /"merge"/
 FORK         : /"fork"/
 CONV2D       : /"conv2d"/
 FILTER_COUNT : /"filter_count"/
 KERNEL_SIZE  : /"kernel_size"/
-STRIDE       : /"stride"/ 
+STRIDE       : /"stride"/
 
 %import common (INT, FLOAT)
 %import common.NEWLINE -> _NL

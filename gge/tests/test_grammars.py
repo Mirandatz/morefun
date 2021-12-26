@@ -1,125 +1,86 @@
-from pathlib import Path
+import pathlib
 
-import pytest
+import gge.grammars as gr
 
-from gge.grammars import Grammar, NonTerminal, RuleOption, Terminal
+DATA_DIR = pathlib.Path(__file__).parent.parent.parent / "data"
 
-DATA_DIR = Path(__file__).parent.parent.parent / "data"
+START = gr.NonTerminal("start")
+CONV2D = gr.Terminal('"conv2d"')
+FILTER_COUNT = gr.Terminal('"filter_count"')
+KERNEL_SIZE = gr.Terminal('"kernel_size"')
+STRIDE = gr.Terminal('"stride"')
+RELU = gr.Terminal('"relu"')
+GELU = gr.Terminal('"gelu"')
+SWISH = gr.Terminal('"swish"')
 
 
-@pytest.fixture
-def raw_grammar() -> str:
-    return """
-    start: simple_block complex_block simple_dense
-
-    simple_block : simple_conv simple_dense
-    simple_conv  : "conv2d" "filter_count" (4) "kernel_size" (3) "stride" (1)
-    simple_dense : "dense" (16)
-
-    complex_block : complex_conv~2 complex_dense_block~1..3
-                  | simple_conv complex_dense_block~2..2 simple_conv
-                  | simple_conv
-
-    complex_conv  : "conv2d" "filter_count" (4 | 8 | 6) "kernel_size" (3 | 5) "stride" (1 | 2)
-
-    complex_dense_block : complex_dense_layer~3..5 _droperino
-    complex_dense_layer : "dense" (16 | 32 | 64)
-    _droperino          : "dropout" (0.3 | 0.5 | 0.7)
+def test_start_symbol() -> None:
+    grammar = gr.Grammar(
+        """
+        start     : convblock
+        convblock : conv~2
+        conv      : "conv2d" "filter_count" 1 "kernel_size" 2 "stride" 3 "relu"
     """
+    )
+    assert START == grammar.start_symbol
 
 
-@pytest.fixture
-def sample_grammar(raw_grammar: str) -> Grammar:
-    return Grammar(raw_grammar=raw_grammar)
+def test_terminals() -> None:
+    grammar = gr.Grammar(
+        """
+        start : a b
+        a : "conv2d" "filter_count" 1 "kernel_size" (2) "stride" (3 | 4) "relu"
+        b : "conv2d" "filter_count" 5 "kernel_size" 6 "stride" (7) ("gelu" | "swish")
+    """
+    )
+    actual = set(grammar.terminals)
 
-
-def test_start_symbol(sample_grammar: Grammar) -> None:
-    expected = NonTerminal("start")
-    actual = sample_grammar.start_symbol
+    names = {CONV2D, FILTER_COUNT, KERNEL_SIZE, STRIDE, RELU, GELU, SWISH}
+    numbers = {gr.Terminal(str(i)) for i in range(1, 8)}
+    expected = names | numbers
 
     assert expected == actual
 
 
-def test_terminals(sample_grammar: Grammar) -> None:
-    terminals = [
-        '"conv2d"',
-        '"filter_count"',
-        "4",
-        '"kernel_size"',
-        "3",
-        '"stride"',
-        "1",
-        '"dense"',
-        "16",
-        "8",
-        "6",
-        "5",
-        "2",
-        "32",
-        "64",
-        '"dropout"',
-        "0.3",
-        "0.5",
-        "0.7",
-    ]
-    expected = {Terminal(t) for t in terminals}
-    assert expected == set(sample_grammar.terminals)
-
-
-def test_non_terminals(sample_grammar: Grammar) -> None:
-    texts = [
-        "start",
-        "simple_block",
-        "complex_block",
-        "simple_dense",
-        "simple_conv",
-        "complex_conv",
-        "complex_dense_block",
-        "complex_dense_layer",
-        "_droperino",
-    ]
-    expected = {NonTerminal(t) for t in texts}
-    actual = set(sample_grammar.nonterminals)
-
+def test_non_terminals() -> None:
+    grammar = gr.Grammar(
+        """
+        start : a b
+        a : "conv2d" "filter_count" 1 "kernel_size" (2) "stride" (3 | 4) "relu"
+        b : "conv2d" "filter_count" 5 "kernel_size" 6 "stride" (7) ("gelu" | "swish")
+    """
+    )
+    actual = set(grammar.nonterminals)
+    expected = {START, gr.NonTerminal("a"), gr.NonTerminal("b")}
     assert expected == actual
 
 
 def test_start_trivial_expansion() -> None:
-    grammar = Grammar(
-        raw_grammar=r"""
+    grammar = gr.Grammar(
+        """
         start : a
-        a     : "dense" (3)
+        a     : "conv2d" "filter_count" 1 "kernel_size" 2 "stride" 3 "relu"
         """
     )
-
-    start = NonTerminal("start")
-    expansions = grammar.expansions(start)
-    assert len(expansions) == 1
-
-    actual = expansions[0]
-    expected = RuleOption((NonTerminal("a"),))
-
+    (actual,) = grammar.expansions(START)
+    expected = gr.RuleOption((gr.NonTerminal("a"),))
     assert expected == actual
 
 
 def test_start_simple_expansion() -> None:
-    grammar = Grammar(
-        raw_grammar=r"""
+    grammar = gr.Grammar(
+        """
         start : a b
-        a     : "dense" (3)
-        b     : "dropout" (0.1)
+        a     : "conv2d" "filter_count" 1 "kernel_size" 2 "stride" 3 "relu"
+        b     : "conv2d" "filter_count" 1 "kernel_size" 2 "stride" 3 "gelu"
         """
     )
+    (actual,) = grammar.expansions(START)
 
-    start = NonTerminal("start")
-    expansions = grammar.expansions(start)
-    assert len(expansions) == 1
-
-    actual = expansions[0]
-    expected = RuleOption(
+    expected = gr.RuleOption(
         (
-            NonTerminal("a"),
-            NonTerminal("b"),
+            gr.NonTerminal("a"),
+            gr.NonTerminal("b"),
         )
     )
 
@@ -127,149 +88,150 @@ def test_start_simple_expansion() -> None:
 
 
 def test_start_complex_expansion() -> None:
-    grammar = Grammar(
-        raw_grammar=r"""
+    grammar = gr.Grammar(
+        """
         start : a b | c | c a
-        a     : "dense" (3)
-        b     : "dropout" (0.1)
-        c     : "conv2d" "filter_count" (4) "kernel_size" (3) "stride" (1)
+        a     : "conv2d" "filter_count" 1 "kernel_size" 2 "stride" 3 "relu"
+        b     : "conv2d" "filter_count" 4 "kernel_size" 5 "stride" 6 "gelu"
+        c     : "conv2d" "filter_count" 7 "kernel_size" 8 "stride" 9 "swish"
         """
     )
+    actual = grammar.expansions(START)
 
-    start = NonTerminal("start")
-    expansions = grammar.expansions(start)
-    assert len(expansions) == 3
-
-    a = NonTerminal("a")
-    b = NonTerminal("b")
-    c = NonTerminal("c")
+    a = gr.NonTerminal("a")
+    b = gr.NonTerminal("b")
+    c = gr.NonTerminal("c")
 
     expected = (
-        RuleOption((a, b)),
-        RuleOption((c,)),
-        RuleOption((c, a)),
-    )
-
-    assert expected == expansions
-
-
-def test_complex_symbol_expansion(sample_grammar: Grammar) -> None:
-    nt = NonTerminal("complex_block")
-    actual = sample_grammar.expansions(nt)
-
-    cc = NonTerminal("complex_conv")
-    cdb = NonTerminal("complex_dense_block")
-    sc = NonTerminal("simple_conv")
-
-    expected = (
-        RuleOption((cc, cc, cdb)),
-        RuleOption((cc, cc, cdb, cdb)),
-        RuleOption((cc, cc, cdb, cdb, cdb)),
-        RuleOption((sc, cdb, cdb, sc)),
-        RuleOption((sc,)),
+        gr.RuleOption((a, b)),
+        gr.RuleOption((c,)),
+        gr.RuleOption((c, a)),
     )
 
     assert expected == actual
 
 
-def test_non_terminal_with_single_expansion(sample_grammar: Grammar) -> None:
-    nt = NonTerminal("simple_dense")
-    exps = sample_grammar.expansions(nt)
-    assert len(exps) == 1
+def test_complex_symbol_expansion() -> None:
+    grammar = gr.Grammar(
+        """
+        start  : sblock cblock conv1
+        sblock : conv1 conv2
+        cblock : conv1~1..2 sblock conv2~1..3
+               | sblock~2..2 conv1~1
+               | conv3
 
-    actual = exps[0]
-    expected = RuleOption((Terminal('"dense"'), Terminal("16")))
+        conv1 : "conv2d" "filter_count" 1 "kernel_size" 2 "stride" 3 "relu"
+        conv2 : "conv2d" "filter_count" 4 "kernel_size" 5 "stride" 6 "gelu"
+        conv3 : "conv2d" "filter_count" 7 "kernel_size" 8 "stride" 9 "swish"
+        """
+    )
+    actual = grammar.expansions(gr.NonTerminal("cblock"))
 
+    sb = gr.NonTerminal("sblock")
+    c1 = gr.NonTerminal("conv1")
+    c2 = gr.NonTerminal("conv2")
+    c3 = gr.NonTerminal("conv3")
+
+    expected = (
+        gr.RuleOption((c1, sb, c2)),
+        gr.RuleOption((c1, sb, c2, c2)),
+        gr.RuleOption((c1, sb, c2, c2, c2)),
+        gr.RuleOption((c1, c1, sb, c2)),
+        gr.RuleOption((c1, c1, sb, c2, c2)),
+        gr.RuleOption((c1, c1, sb, c2, c2, c2)),
+        gr.RuleOption((sb, sb, c1)),
+        gr.RuleOption((c3,)),
+    )
+
+    assert expected == actual
+
+
+def test_non_terminal_with_single_expansion() -> None:
+    grammar = gr.Grammar(
+        """ start : block
+        block : layer
+        layer : "conv2d" "filter_count" 1 "kernel_size" 2 "stride" 3 "relu"
+    """
+    )
+    (actual,) = grammar.expansions(gr.NonTerminal("block"))
+    expected = gr.RuleOption((gr.NonTerminal("layer"),))
     assert actual == expected
 
 
-def test_unparenthesized_int_arg() -> None:
-    grammar = Grammar(
-        raw_grammar=r"""
-        start : dl
-        dl    : "dense" 3
+def test_int_arg_parenthesis() -> None:
+    grammar = gr.Grammar(
+        """
+        start   : with without
+        with    : "conv2d" "filter_count" (1) "kernel_size" (2) "stride" (3) "relu"
+        without : "conv2d" "filter_count" 1 "kernel_size" 2 "stride" 3 "relu"
         """
     )
-
-    expansions = grammar.expansions(NonTerminal("dl"))
-    assert len(expansions) == 1
-    actual = expansions[0]
-
-    expected = RuleOption((Terminal('"dense"'), Terminal("3")))
-    assert expected == actual
-
-
-def test_parenthesized_int_arg() -> None:
-    grammar = Grammar(
-        raw_grammar=r"""
-        start : dl
-        dl    : "dense" (3)
-        """
-    )
-
-    expansions = grammar.expansions(NonTerminal("dl"))
-    assert len(expansions) == 1
-    actual = expansions[0]
-
-    assert RuleOption((Terminal('"dense"'), Terminal("3"))) == actual
+    with_par = grammar.expansions(gr.NonTerminal("with"))
+    without_par = grammar.expansions(gr.NonTerminal("without"))
+    assert with_par == without_par
 
 
 def test_multiple_int_arg() -> None:
-    grammar = Grammar(
-        raw_grammar=r"""
-        start : dl
-        dl    : "dense" (3 | 4)
+    grammar = gr.Grammar(
+        """
+        start : layer
+        layer : "conv2d" "filter_count" (1 | 2) "kernel_size" 2 "stride" 3 "relu"
         """
     )
+    actual_first, actual_second = grammar.expansions(gr.NonTerminal("layer"))
 
-    expansions = grammar.expansions(NonTerminal("dl"))
-    assert len(expansions) == 2
-
-    first, second = expansions
-
-    assert RuleOption((Terminal('"dense"'), Terminal("3"))) == first
-    assert RuleOption((Terminal('"dense"'), Terminal("4"))) == second
-
-
-def test_unparenthesized_float_arg() -> None:
-    grammar = Grammar(
-        raw_grammar=r"""
-        start : dl
-        dl    : "dropout" 0.3
-        """
+    expected_first = gr.RuleOption(
+        (
+            CONV2D,
+            FILTER_COUNT,
+            gr.Terminal("1"),
+            KERNEL_SIZE,
+            gr.Terminal("2"),
+            STRIDE,
+            gr.Terminal("3"),
+            RELU,
+        )
     )
+    assert expected_first == actual_first
 
-    expansions = grammar.expansions(NonTerminal("dl"))
-    assert len(expansions) == 1
-    actual = expansions[0]
-
-    assert RuleOption((Terminal('"dropout"'), Terminal("0.3"))) == actual
-
-
-def test_parenthesized_float_arg() -> None:
-    grammar = Grammar(
-        raw_grammar=r"""
-        start : dl
-        dl    : "dropout" (0.3)
-        """
+    expected_second = gr.RuleOption(
+        (
+            CONV2D,
+            FILTER_COUNT,
+            gr.Terminal("2"),
+            KERNEL_SIZE,
+            gr.Terminal("2"),
+            STRIDE,
+            gr.Terminal("3"),
+            RELU,
+        )
     )
-
-    expansions = grammar.expansions(NonTerminal("dl"))
-    assert len(expansions) == 1
-    actual = expansions[0]
-
-    assert RuleOption((Terminal('"dropout"'), Terminal("0.3"))) == actual
+    assert expected_second == actual_second
 
 
-def test_multiple_float_arg() -> None:
-    grammar = Grammar(
-        raw_grammar=r"""
-        start : dl
-        dl    : "dropout" (0.3 | 0.5)
+def test_blockless_grammar() -> None:
+    grammar = gr.Grammar(
         """
+        start : conv
+        conv  : "conv2d" "filter_count" 1 "kernel_size" 2 "stride" 3 "relu"
+    """
     )
+    start_rule, conv_def_rule = grammar.rules
 
-    expansions = grammar.expansions(NonTerminal("dl"))
-    first_exp, second_exp = expansions
-    assert (Terminal('"dropout"'), Terminal("0.3")) == first_exp.symbols
-    assert (Terminal('"dropout"'), Terminal("0.5")) == second_exp.symbols
+    assert START == start_rule.lhs
+    assert gr.RuleOption((gr.NonTerminal("conv"),)) == start_rule.rhs
+
+    assert gr.NonTerminal("conv") == conv_def_rule.lhs
+    expected_rhs = gr.RuleOption(
+        (
+            CONV2D,
+            FILTER_COUNT,
+            gr.Terminal("1"),
+            KERNEL_SIZE,
+            gr.Terminal("2"),
+            STRIDE,
+            gr.Terminal("3"),
+            RELU,
+        )
+    )
+    assert expected_rhs == conv_def_rule.rhs
