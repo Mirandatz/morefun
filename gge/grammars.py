@@ -451,12 +451,6 @@ class GrammarTransformer(gge_transformers.DisposableTransformer[GrammarComponent
             RuleOption((marker, *fc, *ks, *st, act)) for fc, ks, st, act in combinations
         ]
 
-        # marker, filter_counts, kernel_sizes, strides, activations = parts
-        # option_data = itertools.product(
-        #     filter_counts, kernel_sizes, strides, activations
-        # )
-        # return [RuleOption((marker, *fc, *ks, *st)) for fc, ks, st in option_data]
-
     def filter_count(self, parts: list[Terminal]) -> list[tuple[Terminal, Terminal]]:
         self._raise_if_not_running()
 
@@ -478,12 +472,6 @@ class GrammarTransformer(gge_transformers.DisposableTransformer[GrammarComponent
     def activation(self, activations: list[Terminal]) -> list[Terminal]:
         self._raise_if_not_running()
         return activations
-
-    def dropout_layer(self, parts: list[Terminal]) -> list[RuleOption]:
-        self._raise_if_not_running()
-
-        marker, *rates = parts
-        return [RuleOption((marker, rt)) for rt in rates]
 
     def NONTERMINAL(self, token: lark.Token) -> NonTerminal:
         self._raise_if_not_running()

@@ -35,7 +35,7 @@ def test_simple_recursive_grammar() -> None:
         start : a
         a : b c | a
         b : b | c
-        c : "dropout" (0.3)
+        c : "conv2d" "filter_count" (2) "kernel_size" (1) "stride" (2) "relu"
         """
     )
 
@@ -95,12 +95,12 @@ def test_complex_recursive_grammar() -> None:
 
 def test_nasty_recursive_grammar() -> None:
     grammar = gr.Grammar(
-        raw_grammar=r"""
+        """
         start : a
         a : b | c a | k
         b : c | k
         c : k
-        k : "dropout" (0.0)
+        k : "conv2d" "filter_count" (2) "kernel_size" (1) "stride" (2) "relu"
         """
     )
     a = gr.NonTerminal("a")
