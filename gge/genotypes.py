@@ -17,7 +17,7 @@ class Genotype:
 
 def create_genotype(backbone_genemancer: sge.Genemancer, rng: rand.RNG) -> Genotype:
     backbone_genotype = backbone_genemancer.create_genotype(rng)
-    tokens = backbone_genemancer.map_to_tokens(backbone_genotype)
+    tokens = backbone_genemancer.map_to_tokenstream(backbone_genotype)
     tokenstream = "".join(tokens)
     backbone = bb.parse(tokenstream)
     connections_schema = conn.create_connections_schema(
