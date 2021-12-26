@@ -5,14 +5,21 @@ import gge.grammars as gr
 DATA_DIR = pathlib.Path(__file__).parent.parent.parent / "data"
 
 START = gr.NonTerminal("start")
+
 CONV2D = gr.Terminal('"conv2d"')
 FILTER_COUNT = gr.Terminal('"filter_count"')
 KERNEL_SIZE = gr.Terminal('"kernel_size"')
 STRIDE = gr.Terminal('"stride"')
+
 BATCHRNOM = gr.Terminal('"batchnorm"')
+
 RELU = gr.Terminal('"relu"')
 GELU = gr.Terminal('"gelu"')
 SWISH = gr.Terminal('"swish"')
+
+POOLING = gr.Terminal('"pooling"')
+TYPE = gr.Terminal('"type"')
+MAX = gr.Terminal('"max"')
 
 
 def test_start_symbol() -> None:
@@ -273,3 +280,38 @@ def test_batchnorm_def() -> None:
     expected_expansion = gr.RuleOption((BATCHRNOM,))
 
     assert expected_expansion == actual_expansion
+
+
+def test_pooling_layer_in_block() -> None:
+    grammar = gr.Grammar(
+        """
+        start : block
+        block : conv pool
+        conv  : "conv2d" "filter_count" 1 "kernel_size" (2) "stride" (3 | 4) "relu"
+        pool  : "pooling" "type" "max" "stride" 2
+        """
+    )
+
+    nt = gr.NonTerminal("pool")
+    assert nt in grammar.nonterminals
+
+    (block_exp,) = grammar.expansions(gr.NonTerminal("block"))
+    _, actual = block_exp.symbols
+
+    assert nt == actual
+
+
+def test_pooling_layer_def() -> None:
+    grammar = gr.Grammar(
+        """
+        start : block
+        block : conv pool
+        conv  : "conv2d" "filter_count" 1 "kernel_size" (2) "stride" (3 | 4) "relu"
+        pool  : "pooling" "type" "max" "stride" 2
+        """
+    )
+
+    (actual,) = grammar.expansions(gr.NonTerminal("pool"))
+    expected = gr.RuleOption((POOLING, TYPE, MAX, STRIDE, gr.Terminal("2")))
+
+    assert expected == actual

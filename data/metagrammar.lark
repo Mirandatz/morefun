@@ -10,11 +10,12 @@ maybe_fork   : [FORK]
 symbol_range : NONTERMINAL ["~" RANGE_BOUND [".." RANGE_BOUND]]
 RANGE_BOUND  : INT
 
-layer        : (conv_layer | batchnorm_layer) _NL*
+layer        : (conv_layer | pooling_layer | batchnorm_layer) _NL*
 
 conv_layer   : CONV2D filter_count kernel_size stride activation
 filter_count : FILTER_COUNT _int_args
 kernel_size  : KERNEL_SIZE _int_args
+
 stride       : STRIDE _int_args
 
 activation : _act
@@ -22,6 +23,13 @@ activation : _act
 _act       : RELU | GELU | SWISH
 
 batchnorm_layer : BATCHNORM
+
+pooling_layer      : POOLING_LAYER pooling_type_seq pooling_stride_seq
+pooling_type_seq   : POOLING_TYPE _pooling_type_args
+_pooling_type_args : _pooling_type
+                   | "(" _pooling_type ("|" _pooling_type)* ")" 
+_pooling_type      : POOLING_MAX | POOLING_AVG
+pooling_stride_seq : POOLING_STRIDE _int_args
 
 _int_args : INT_ARG
           | "(" INT_ARG ("|" INT_ARG)* ")"
@@ -31,16 +39,25 @@ _float_args : FLOAT_ARG
             | "(" FLOAT_ARG ("|" FLOAT_ARG)* ")"
 FLOAT_ARG   : FLOAT
 
-RELU         : /"relu"/
-GELU         : /"gelu"/
-SWISH        : /"swish"/
-MERGE        : /"merge"/
-FORK         : /"fork"/
+RELU  : /"relu"/
+GELU  : /"gelu"/
+SWISH : /"swish"/
+
+MERGE : /"merge"/
+FORK  : /"fork"/
+
 CONV2D       : /"conv2d"/
 FILTER_COUNT : /"filter_count"/
 KERNEL_SIZE  : /"kernel_size"/
 STRIDE       : /"stride"/
-BATCHNORM    : /"batchnorm"/
+
+BATCHNORM : /"batchnorm"/
+
+POOLING_LAYER  : /"pooling"/
+POOLING_TYPE   : /"type"/
+POOLING_STRIDE : /"stride"/
+POOLING_MAX    : /"max"/
+POOLING_AVG    : /"avg"/
 
 %import common (INT, FLOAT)
 %import common.NEWLINE -> _NL

@@ -307,6 +307,9 @@ class Grammar:
         return self._as_tuple == other._as_tuple
 
 
+MarkerValuePair = tuple[Terminal, Terminal]
+
+
 class GrammarTransformer(gge_transformers.DisposableTransformer[GrammarComponents]):
     def __init__(self) -> None:
         super().__init__()
@@ -481,6 +484,37 @@ class GrammarTransformer(gge_transformers.DisposableTransformer[GrammarComponent
     def batchnorm_layer(self, term: Terminal) -> list[RuleOption]:
         return [RuleOption((term,))]
 
+    # pooling layer nonterminals
+    @typeguard.typechecked
+    @lark.v_args(inline=True)
+    def pooling_layer(
+        self,
+        marker: Terminal,
+        types: list[MarkerValuePair],
+        strides: list[MarkerValuePair],
+    ) -> list[RuleOption]:
+        combinations = itertools.product(types, strides)
+        return [RuleOption((marker, *tp, *st)) for tp, st in combinations]
+
+    @typeguard.typechecked
+    @lark.v_args(inline=True)
+    def pooling_type_seq(
+        self,
+        marker: Terminal,
+        *values: Terminal,
+    ) -> list[tuple[Terminal, Terminal]]:
+        return [(marker, v) for v in values]
+
+    @typeguard.typechecked
+    @lark.v_args(inline=True)
+    def pooling_stride_seq(
+        self,
+        marker: Terminal,
+        *values: Terminal,
+    ) -> list[tuple[Terminal, Terminal]]:
+        return [(marker, v) for v in values]
+
+    # terminals
     def BATCHNORM(self, token: lark.Token) -> Terminal:
         self._raise_if_not_running()
         return self._register_terminal(token.value)
@@ -528,10 +562,6 @@ class GrammarTransformer(gge_transformers.DisposableTransformer[GrammarComponent
         self._raise_if_not_running()
         return self._register_terminal(token.value)
 
-    def DROPOUT(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
-        return self._register_terminal(token.value)
-
     def RANGE_BOUND(self, token: lark.Token) -> int:
         self._raise_if_not_running()
         return int(token.value)
@@ -541,5 +571,26 @@ class GrammarTransformer(gge_transformers.DisposableTransformer[GrammarComponent
         return self._register_terminal(token.value)
 
     def FLOAT_ARG(self, token: lark.Token) -> Terminal:
+        self._raise_if_not_running()
+        return self._register_terminal(token.value)
+
+    # pooling layer terminals
+    def POOLING_LAYER(self, token: lark.Token) -> Terminal:
+        self._raise_if_not_running()
+        return self._register_terminal(token.value)
+
+    def POOLING_TYPE(self, token: lark.Token) -> Terminal:
+        self._raise_if_not_running()
+        return self._register_terminal(token.value)
+
+    def POOLING_STRIDE(self, token: lark.Token) -> Terminal:
+        self._raise_if_not_running()
+        return self._register_terminal(token.value)
+
+    def POOLING_MAX(self, token: lark.Token) -> Terminal:
+        self._raise_if_not_running()
+        return self._register_terminal(token.value)
+
+    def POOLING_AVG(self, token: lark.Token) -> Terminal:
         self._raise_if_not_running()
         return self._register_terminal(token.value)
