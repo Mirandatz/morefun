@@ -93,7 +93,9 @@ class Genemancer:
 
         gene_consumption_tracker = {g: 0 for g in genotype.genes}
 
-        to_process: collections.deque[gg.Symbol] = collections.deque()
+        to_process: collections.deque[
+            gg.Terminal | gg.NonTerminal
+        ] = collections.deque()
         to_process.append(self.grammar.start_symbol)
 
         while to_process:
