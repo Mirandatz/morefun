@@ -21,10 +21,12 @@ dense_layer   : DENSE _int_args
 
 dropout_layer : DROPOUT _float_args
 
-_int_args : "(" INT_ARG ("|" INT_ARG)* ")"
+_int_args : INT_ARG
+          | "(" INT_ARG ("|" INT_ARG)* ")"
 INT_ARG   : INT
 
-_float_args : "(" FLOAT_ARG ("|" FLOAT_ARG)* ")"
+_float_args : FLOAT_ARG
+            | "(" FLOAT_ARG ("|" FLOAT_ARG)* ")"
 FLOAT_ARG   : FLOAT
 
 DENSE        : /"dense"/ 

@@ -181,3 +181,95 @@ def test_non_terminal_with_single_expansion(sample_grammar: Grammar) -> None:
     expected = RuleOption((Terminal('"dense"'), Terminal("16")))
 
     assert actual == expected
+
+
+def test_unparenthesized_int_arg() -> None:
+    grammar = Grammar(
+        raw_grammar=r"""
+        start : dl
+        dl    : "dense" 3
+        """
+    )
+
+    expansions = grammar.expansions(NonTerminal("dl"))
+    assert len(expansions) == 1
+    actual = expansions[0]
+
+    expected = RuleOption((Terminal('"dense"'), Terminal("3")))
+    assert expected == actual
+
+
+def test_parenthesized_int_arg() -> None:
+    grammar = Grammar(
+        raw_grammar=r"""
+        start : dl
+        dl    : "dense" (3)
+        """
+    )
+
+    expansions = grammar.expansions(NonTerminal("dl"))
+    assert len(expansions) == 1
+    actual = expansions[0]
+
+    assert RuleOption((Terminal('"dense"'), Terminal("3"))) == actual
+
+
+def test_multiple_int_arg() -> None:
+    grammar = Grammar(
+        raw_grammar=r"""
+        start : dl
+        dl    : "dense" (3 | 4)
+        """
+    )
+
+    expansions = grammar.expansions(NonTerminal("dl"))
+    assert len(expansions) == 2
+
+    first, second = expansions
+
+    assert RuleOption((Terminal('"dense"'), Terminal("3"))) == first
+    assert RuleOption((Terminal('"dense"'), Terminal("4"))) == second
+
+
+def test_unparenthesized_float_arg() -> None:
+    grammar = Grammar(
+        raw_grammar=r"""
+        start : dl
+        dl    : "dropout" 0.3
+        """
+    )
+
+    expansions = grammar.expansions(NonTerminal("dl"))
+    assert len(expansions) == 1
+    actual = expansions[0]
+
+    assert RuleOption((Terminal('"dropout"'), Terminal("0.3"))) == actual
+
+
+def test_parenthesized_float_arg() -> None:
+    grammar = Grammar(
+        raw_grammar=r"""
+        start : dl
+        dl    : "dropout" (0.3)
+        """
+    )
+
+    expansions = grammar.expansions(NonTerminal("dl"))
+    assert len(expansions) == 1
+    actual = expansions[0]
+
+    assert RuleOption((Terminal('"dropout"'), Terminal("0.3"))) == actual
+
+
+def test_multiple_float_arg() -> None:
+    grammar = Grammar(
+        raw_grammar=r"""
+        start : dl
+        dl    : "dropout" (0.3 | 0.5)
+        """
+    )
+
+    expansions = grammar.expansions(NonTerminal("dl"))
+    first_exp, second_exp = expansions
+    assert (Terminal('"dropout"'), Terminal("0.3")) == first_exp.symbols
+    assert (Terminal('"dropout"'), Terminal("0.5")) == second_exp.symbols
