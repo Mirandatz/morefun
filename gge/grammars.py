@@ -479,12 +479,6 @@ class GrammarTransformer(gge_transformers.DisposableTransformer[GrammarComponent
         self._raise_if_not_running()
         return activations
 
-    def dense_layer(self, parts: list[Terminal]) -> list[RuleOption]:
-        self._raise_if_not_running()
-
-        marker, *units = parts
-        return [RuleOption((marker, ut)) for ut in units]
-
     def dropout_layer(self, parts: list[Terminal]) -> list[RuleOption]:
         self._raise_if_not_running()
 
@@ -531,10 +525,6 @@ class GrammarTransformer(gge_transformers.DisposableTransformer[GrammarComponent
         return self._register_terminal(token.value)
 
     def SWISH(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
-        return self._register_terminal(token.value)
-
-    def DENSE(self, token: lark.Token) -> Terminal:
         self._raise_if_not_running()
         return self._register_terminal(token.value)
 

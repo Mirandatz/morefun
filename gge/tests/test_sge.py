@@ -7,8 +7,8 @@ def test_nonrecursive_grammar() -> None:
         """
         start : a
         a : b c
-        b : "dense" (3)
-        c : "dense" (8)
+        b : "conv2d" "filter_count" 64 "kernel_size" 5 "stride" 2 "relu"
+        c : "conv2d" "filter_count" 128 "kernel_size" 3 "stride" 1 "gelu"
         """
     )
 
