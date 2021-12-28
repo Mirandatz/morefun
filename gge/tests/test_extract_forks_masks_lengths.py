@@ -3,7 +3,7 @@ import gge.connections as conn
 
 
 def test_0fork_0merge() -> None:
-    layers = (bb.DenseLayer("dense_0", 1),)
+    layers = (bb.Conv2DLayer("conv_0", 1, 2, 3),)
     backbone = bb.Backbone(layers)
     actual = conn.extract_forks_masks_lengths(backbone)
     expected: tuple[int, ...] = tuple()
@@ -12,7 +12,7 @@ def test_0fork_0merge() -> None:
 
 def test_1fork_0merge() -> None:
     layers = (
-        bb.DenseLayer("dense_0", 1),
+        bb.Conv2DLayer("conv_0", 1, 2, 3),
         bb.Fork("fork_0"),
     )
     backbone = bb.Backbone(layers)
@@ -24,7 +24,7 @@ def test_1fork_0merge() -> None:
 def test_0fork_1merge() -> None:
     layers = (
         bb.Merge("merge_0"),
-        bb.DenseLayer("dense_0", 2),
+        bb.Conv2DLayer("conv_0", 1, 2, 3),
     )
     backbone = bb.Backbone(layers)
     actual = conn.extract_forks_masks_lengths(backbone)
@@ -34,13 +34,13 @@ def test_0fork_1merge() -> None:
 
 def test_nfork_1merge() -> None:
     layers = (
-        bb.DenseLayer("dense_0", 1),
+        bb.Conv2DLayer("conv_0", 1, 2, 3),
         bb.Fork("fork_0"),
-        bb.DenseLayer("dense_1", 2),
+        bb.Conv2DLayer("conv_1", 1, 2, 3),
         bb.Fork("fork_1"),
-        bb.DenseLayer("dense_2", 3),
+        bb.Conv2DLayer("conv_2", 1, 2, 3),
         bb.Merge("merge_0"),
-        bb.DenseLayer("dense_3", 4),
+        bb.Conv2DLayer("conv_3", 1, 2, 3),
     )
     backbone = bb.Backbone(layers)
     actual = conn.extract_forks_masks_lengths(backbone)
@@ -50,15 +50,15 @@ def test_nfork_1merge() -> None:
 
 def test_1fork_nmerge() -> None:
     layers = (
-        bb.DenseLayer("dense_0", 1),
+        bb.Conv2DLayer("conv_0", 1, 2, 3),
         bb.Fork("fork_0"),
-        bb.DenseLayer("dense_1", 2),
+        bb.Conv2DLayer("conv_1", 1, 2, 3),
         bb.Merge("merge_0"),
-        bb.DenseLayer("dense_2", 3),
+        bb.Conv2DLayer("conv_2", 1, 2, 3),
         bb.Merge("merge_1"),
-        bb.DenseLayer("dense_3", 4),
+        bb.Conv2DLayer("conv_3", 1, 2, 3),
         bb.Merge("merge_2"),
-        bb.DenseLayer("dense_4", 5),
+        bb.Conv2DLayer("conv_4", 1, 2, 3),
     )
     backbone = bb.Backbone(layers)
     actual = conn.extract_forks_masks_lengths(backbone)
@@ -68,17 +68,17 @@ def test_1fork_nmerge() -> None:
 
 def test_nfork_nmerge() -> None:
     layers = (
-        bb.DenseLayer("dense_0", 1),
+        bb.Conv2DLayer("conv_0", 1, 2, 3),
         bb.Fork("fork_0"),
-        bb.DenseLayer("dense_1", 2),
+        bb.Conv2DLayer("conv_1", 1, 2, 3),
         bb.Fork("fork_1"),
-        bb.DenseLayer("dense_2", 3),
+        bb.Conv2DLayer("conv_2", 1, 2, 3),
         bb.Merge("merge_0"),
-        bb.DenseLayer("dense_3", 4),
+        bb.Conv2DLayer("conv_3", 1, 2, 3),
         bb.Merge("merge_1"),
-        bb.DenseLayer("dense_4", 5),
+        bb.Conv2DLayer("conv_4", 1, 2, 3),
         bb.Fork("fork_2"),
-        bb.DenseLayer("dense_5", 6),
+        bb.Conv2DLayer("conv_5", 1, 2, 3),
         bb.Merge("merge_2"),
     )
     backbone = bb.Backbone(layers)

@@ -47,17 +47,6 @@ class Conv2DLayer:
 
 @typeguard.typechecked
 @dataclasses.dataclass(frozen=True)
-class DenseLayer:
-    name: str
-    units: int
-
-    def __post_init__(self) -> None:
-        assert self.name
-        assert self.units > 0
-
-
-@typeguard.typechecked
-@dataclasses.dataclass(frozen=True)
 class DropoutLayer:
     name: str
     rate: float
@@ -67,7 +56,7 @@ class DropoutLayer:
         assert 0 <= self.rate <= 1
 
 
-Layer = Conv2DLayer | DenseLayer | DropoutLayer | Fork | Merge
+Layer = Conv2DLayer | DropoutLayer | Fork | Merge
 
 
 @typeguard.typechecked
@@ -160,15 +149,6 @@ class BackboneSynthetizer(gge_transformers.DisposableTransformer[Backbone]):
         assert size >= 1
 
         return size
-
-    def dense_layer(self, units: int) -> DenseLayer:
-        self._raise_if_not_running()
-        assert units >= 1
-
-        return DenseLayer(
-            name=self._create_layer_name("dense"),
-            units=units,
-        )
 
     def dropout_layer(self, rate: float) -> DropoutLayer:
         self._raise_if_not_running()
