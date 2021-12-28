@@ -12,17 +12,6 @@ def test_conv2d() -> None:
     assert expected == actual
 
 
-def test_dropout() -> None:
-    tokenstream = """
-    "dropout" 0.7
-    """
-
-    actual = bb.parse(tokenstream)
-    layers = (bb.DropoutLayer("dropout_0", 0.7),)
-    expected = bb.Backbone(layers)
-    assert expected == actual
-
-
 def test_merge() -> None:
     tokenstream = """
     "merge" "conv2d" "filter_count" 1 "kernel_size" 2 "stride" 3
@@ -69,17 +58,15 @@ def test_merge_and_fork() -> None:
 def test_simple_backbone() -> None:
     tokenstream = """
     "conv2d" "filter_count" 1 "kernel_size" 2 "stride" 3
-    "dropout" 0.4
     "conv2d" "filter_count" 5 "kernel_size" 6 "stride" 7
-    "dropout" 0.8
+    "conv2d" "filter_count" 8 "kernel_size" 9 "stride" 10
     """
 
     actual = bb.parse(tokenstream)
     layers = (
         bb.Conv2DLayer("conv2d_0", 1, 2, 3),
-        bb.DropoutLayer("dropout_0", 0.4),
         bb.Conv2DLayer("conv2d_1", 5, 6, 7),
-        bb.DropoutLayer("dropout_1", 0.8),
+        bb.Conv2DLayer("conv2d_2", 8, 9, 10),
     )
     expected = bb.Backbone(layers)
 

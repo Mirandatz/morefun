@@ -150,15 +150,6 @@ class BackboneSynthetizer(gge_transformers.DisposableTransformer[Backbone]):
 
         return size
 
-    def dropout_layer(self, rate: float) -> DropoutLayer:
-        self._raise_if_not_running()
-        assert 0 < rate < 1
-
-        return DropoutLayer(
-            name=self._create_layer_name("dropout"),
-            rate=rate,
-        )
-
     def INT(self, token: lark.Token) -> int:
         self._raise_if_not_running()
 

@@ -4,7 +4,7 @@ block : MERGE? layer FORK?
 MERGE : /"merge"/
 FORK  : /"fork"/
 
-layer : conv_layer | dense_layer | dropout_layer
+layer : conv_layer 
  
 conv_layer   : _CONV2D filter_count kernel_size stride
 filter_count : _FILTER_COUNT INT
@@ -14,12 +14,6 @@ _CONV2D       : /"conv2d"/
 _FILTER_COUNT : /"filter_count"/
 _KERNEL_SIZE  : /"kernel_size"/
 _STRIDE       : /"stride"/
-
-dense_layer : _DENSE INT
-_DENSE      : /"dense"/
-
-dropout_layer : _DROPOUT FLOAT
-_DROPOUT      : /"dropout"/
 
 
 %import common (INT, FLOAT)

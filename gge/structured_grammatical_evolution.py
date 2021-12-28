@@ -79,7 +79,6 @@ class Genemancer:
         return Genotype(tuple(sorted_genes))
 
     def map_to_tokenstream(self, genotype: Genotype) -> str:
-
         """
         This function implements the "genotype mapping" procedure of the GE literature.
         Partially. Because the mapping process usually translates a phenotype to a genotype in a
