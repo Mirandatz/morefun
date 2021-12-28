@@ -107,3 +107,27 @@ def test_complex_backbone() -> None:
     )
     expected = bb.Backbone(layers)
     assert expected == actual
+
+
+def test_standalone_batchnorm() -> None:
+    tokenstream = """
+    "batchnorm"
+    """
+    actual = bb.parse(tokenstream)
+    layers = (bb.BatchNorm("batchnorm_0"),)
+    expected = bb.Backbone(layers)
+    assert expected == actual
+
+
+def test_batchnorm_after_conv() -> None:
+    tokenstream = """
+    "conv2d" "filter_count" 1 "kernel_size" 2 "stride" 3
+    "batchnorm"
+    """
+    actual = bb.parse(tokenstream)
+    layers = (
+        bb.Conv2DLayer("conv2d_0", 1, 2, 3),
+        bb.BatchNorm("batchnorm_0"),
+    )
+    expected = bb.Backbone(layers)
+    assert expected == actual

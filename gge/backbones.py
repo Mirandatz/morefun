@@ -47,16 +47,14 @@ class Conv2DLayer:
 
 @typeguard.typechecked
 @dataclasses.dataclass(frozen=True)
-class DropoutLayer:
+class BatchNorm:
     name: str
-    rate: float
 
     def __post_init__(self) -> None:
         assert self.name
-        assert 0 <= self.rate <= 1
 
 
-Layer = Conv2DLayer | DropoutLayer | Fork | Merge
+Layer: typing.TypeAlias = Conv2DLayer | BatchNorm | Fork | Merge
 
 
 @typeguard.typechecked
@@ -149,6 +147,10 @@ class BackboneSynthetizer(gge_transformers.DisposableTransformer[Backbone]):
         assert size >= 1
 
         return size
+
+    @typeguard.typechecked
+    def batchnorm_layer(self) -> BatchNorm:
+        return BatchNorm(self._create_layer_name("batchnorm"))
 
     def INT(self, token: lark.Token) -> int:
         self._raise_if_not_running()
