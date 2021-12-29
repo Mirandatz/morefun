@@ -4,11 +4,11 @@ from gge.grammars import Grammar, NonTerminal
 
 def test_simple_grammar() -> None:
     grammar = Grammar(
-        raw_grammar=r"""
+        """
         start : a
         a : b c
-        b : "dense" (2)
-        c : "dense" (4)
+        b : "conv2d" "filter_count" 1 "kernel_size" 2 "stride" 3 "relu"
+        c : "conv2d" "filter_count" 4 "kernel_size" 5 "stride" 6 "relu"
         """
     )
 
@@ -31,11 +31,11 @@ def test_simple_grammar() -> None:
 
 def test_simple_repetition() -> None:
     grammar = Grammar(
-        raw_grammar=r"""
+        """
         start : a
         a : b c~5 b
-        b : "dense" (4)
-        c : "dense" (9)
+        b : "conv2d" "filter_count" 1 "kernel_size" 2 "stride" 3 "relu"
+        c : "conv2d" "filter_count" 3 "kernel_size" 2 "stride" 1 "gelu"
         """
     )
 
@@ -58,10 +58,10 @@ def test_simple_repetition() -> None:
 
 def test_ranged_repetion() -> None:
     grammar = Grammar(
-        raw_grammar=r"""
+        """
         start : a
         a : b~5..7
-        b : "dense" (37)
+        b : "conv2d" "filter_count" 1 "kernel_size" 2 "stride" 3 "relu"
         """
     )
 

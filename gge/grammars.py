@@ -1,13 +1,29 @@
+import dataclasses
 import functools
 import itertools
-from dataclasses import dataclass
-from pathlib import Path
-from typing import Any, Iterable, Optional, Union
+import pathlib
+import typing
 
 import lark
 import typeguard
 
-METAGRAMMAR_PATH = Path(__file__).parent.parent / "data" / "metagrammar.lark"
+import gge.transformers as gge_transformers
+
+METAGRAMMAR_PATH = pathlib.Path(__file__).parent.parent / "data" / "metagrammar.lark"
+
+
+@functools.cache
+def get_metagrammar() -> str:
+    return METAGRAMMAR_PATH.read_text()
+
+
+def get_metagrammar_parser() -> lark.Lark:
+    return lark.Lark(get_metagrammar(), parser="lalr", maybe_placeholders=True)
+
+
+def extract_ast(grammar_text: str) -> lark.Tree:
+    parser = get_metagrammar_parser()
+    return parser.parse(grammar_text)
 
 
 def _can_be_parsed_as_float(value: str) -> bool:
@@ -30,7 +46,7 @@ def _is_valid_name(value: str) -> bool:
 
 
 @typeguard.typechecked
-@dataclass(order=True, frozen=True)
+@dataclasses.dataclass(order=True, frozen=True)
 class NonTerminal:
     text: str
 
@@ -53,7 +69,7 @@ class NonTerminal:
 
 
 @typeguard.typechecked
-@dataclass(order=True, frozen=True)
+@dataclasses.dataclass(order=True, frozen=True)
 class Terminal:
     text: str
 
@@ -79,19 +95,16 @@ class Terminal:
         if not (self.text[0] == self.text[-1] == '"'):
             raise ValueError(error_msg)
 
-        core_is_valid = all(c.isalnum() or c == "_" for c in self.text[1:-2])
-        if not core_is_valid:
+        unquoted = self.text.strip('"')
+        if not _is_valid_name(unquoted):
             raise ValueError(error_msg)
 
     def __repr__(self) -> str:
         return f"T({self.text})"
 
 
-Symbol = Union[Terminal, NonTerminal]
-
-
 @typeguard.typechecked
-@dataclass(order=True, frozen=True)
+@dataclasses.dataclass(order=True, frozen=True)
 class RuleOption:
     """
     represents one possible expansion of a rule, i.e. "the stuff separated by `|`"
@@ -103,7 +116,7 @@ class RuleOption:
     option2 = x * y
     """
 
-    symbols: tuple[Symbol, ...]
+    symbols: tuple[Terminal | NonTerminal, ...]
 
     def __post_init__(self) -> None:
         assert len(self.symbols) >= 1
@@ -114,7 +127,7 @@ class RuleOption:
 
 
 @typeguard.typechecked
-@dataclass(order=True, frozen=True)
+@dataclasses.dataclass(order=True, frozen=True)
 class ProductionRule:
     lhs: NonTerminal
     rhs: RuleOption
@@ -123,26 +136,126 @@ class ProductionRule:
         return f"Rule({self.lhs}->{self.rhs})"
 
 
-class Grammar:
-    def __init__(
-        self,
-        raw_grammar: str,
-        *,
-        metagrammar_path: Path = METAGRAMMAR_PATH,
-    ) -> None:
-        assert metagrammar_path.is_file()
+@typeguard.typechecked
+@dataclasses.dataclass(frozen=True)
+class GrammarComponents:
+    nonterminals: tuple[NonTerminal, ...]
+    terminals: tuple[Terminal, ...]
+    rules: tuple[ProductionRule, ...]
+    start_symbol: NonTerminal
 
-        parser = lark.Lark.open(str(metagrammar_path), parser="lalr")
-        tree = parser.parse(raw_grammar)
-        transformer = GrammarTransformer()
-        transformer.transform(tree)
+    def __post_init__(self) -> None:
+        N = self.nonterminals
+        T = self.terminals
+        P = self.rules
+        S = self.start_symbol
+
+        assert len(N) > 0
+        assert len(T) > 0
+        assert len(P) > 0
+
+        assert len(N) == len(set(N))
+        assert len(T) == len(set(T))
+        assert len(P) == len(set(P))
+
+        assert S in N
+
+        _nonterminals_and_lhss_are_consistent(N, P)
+        _nonterminals_and_rhss_are_consistent(N, P, S)
+        _terminals_and_rhss_are_consistent(T, P)
+
+
+def _nonterminals_and_lhss_are_consistent(
+    nonterminals: tuple[NonTerminal, ...],
+    rules: tuple[ProductionRule, ...],
+) -> None:
+    nts_set = set(nonterminals)
+    lhss_set = set(r.lhs for r in rules)
+
+    only_on_nts = set.difference(nts_set, lhss_set)
+    if only_on_nts:
+        raise ValueError(
+            "all nonterminals must appear on the lhs of a rule at least once, "
+            f"but the following do not: {only_on_nts}"
+        )
+
+    only_on_lhss = set.difference(lhss_set, nts_set)
+    if only_on_lhss:
+        raise ValueError(
+            "all symbols that appear on the lhs of a rule must be registered "
+            f"as a nonterminal, but the following are not: {only_on_lhss}"
+        )
+
+
+def _nonterminals_and_rhss_are_consistent(
+    nonterminals: tuple[NonTerminal, ...],
+    rules: tuple[ProductionRule, ...],
+    start: NonTerminal,
+) -> None:
+    all_rhs_options = (r.rhs.symbols for r in rules)
+    all_rhs_symbols = itertools.chain(*all_rhs_options)
+    all_rhs_nonterminals = set(
+        nt for nt in all_rhs_symbols if isinstance(nt, NonTerminal)
+    )
+
+    # start is always used therefore should not be checked
+    nts_set = set(nonterminals)
+    nts_set.remove(start)
+
+    only_on_nts = set.difference(nts_set, all_rhs_nonterminals)
+    if only_on_nts:
+        raise ValueError(
+            "all nonterminals must be used "
+            "(i.e. appear on the rhs of a rule) "
+            f"at least once, but the following do not: {only_on_nts}"
+        )
+
+    only_on_rhss = set.difference(all_rhs_nonterminals, nts_set)
+    if only_on_rhss:
+        raise ValueError(
+            "all nonterminals that appear on the rhs of a rule must be "
+            "registered as a nonterminal, "
+            f"but the following are not: {only_on_rhss}"
+        )
+
+
+def _terminals_and_rhss_are_consistent(
+    terminals: tuple[Terminal, ...],
+    rules: tuple[ProductionRule, ...],
+) -> None:
+    all_rhs_options = (r.rhs.symbols for r in rules)
+    all_rhs_symbols = itertools.chain(*all_rhs_options)
+    all_rhs_terminals = set(nt for nt in all_rhs_symbols if isinstance(nt, Terminal))
+
+    terms_set = set(terminals)
+
+    only_on_terms = set.difference(terms_set, all_rhs_terminals)
+    if only_on_terms:
+        raise ValueError(
+            "all terminals must appear on the rhs of a rule "
+            f"at least once, but the following do not: {only_on_terms}"
+        )
+
+    only_on_rhss = set.difference(all_rhs_terminals, terms_set)
+    if only_on_rhss:
+        raise ValueError(
+            "all terminals that appear on the rhs of a rule "
+            "must be registered as a terminal, "
+            f"but the following are not: {only_on_rhss}"
+        )
+
+
+class Grammar:
+    def __init__(self, raw_grammar: str) -> None:
+        tree = extract_ast(raw_grammar)
+        components = GrammarTransformer().transform(tree)
 
         self._raw_grammar = raw_grammar
 
-        self._nonterminals = transformer.get_nonterminals()
-        self._terminals = transformer.get_terminals()
-        self._rules = transformer.get_rules()
-        self._start_symbol = transformer.get_start_symbol()
+        self._nonterminals = components.nonterminals
+        self._terminals = components.terminals
+        self._rules = components.rules
+        self._start_symbol = components.start_symbol
 
         self._as_tuple = (
             self._nonterminals,
@@ -198,168 +311,32 @@ class Grammar:
         return self._as_tuple == other._as_tuple
 
 
-def _nonterminals_and_lhss_are_consistent(
-    nonterminals: tuple[NonTerminal, ...],
-    rules: tuple[ProductionRule, ...],
-) -> None:
-    nts_set = set(nonterminals)
-    lhss_set = set(r.lhs for r in rules)
-
-    only_on_nts = nts_set.difference(lhss_set)
-    if only_on_nts:
-        raise ValueError(
-            "all nonterminals must appear on the lhs of a rule at least once, "
-            f"but the following do not: {only_on_nts}"
-        )
-
-    only_on_lhss = lhss_set.difference(only_on_nts)
-    if only_on_lhss:
-        raise ValueError(
-            "all symbols that appear on the lhs of a rule must be registered "
-            f"as a nonterminal, but the following are not: {only_on_lhss}"
-        )
+MarkerValuePair = tuple[Terminal, Terminal]
 
 
-def _nonterminals_and_rhss_are_consistent(
-    nonterminals: tuple[NonTerminal, ...],
-    rules: tuple[ProductionRule, ...],
-    start: NonTerminal,
-) -> None:
-    all_rhs_options = (r.rhs.symbols for r in rules)
-    all_rhs_symbols = itertools.chain(*all_rhs_options)
-    all_rhs_nonterminals = set(
-        nt for nt in all_rhs_symbols if isinstance(nt, NonTerminal)
-    )
-
-    # start is always used therefore should not be checked
-    nts_set = set(nonterminals)
-    nts_set.remove(start)
-
-    only_on_nts = nts_set.difference(all_rhs_nonterminals)
-    if only_on_nts:
-        raise ValueError(
-            "all nonterminals must be used "
-            "(i.e. appear on the rhs of a rule) "
-            f"at least once, but the following do not: {only_on_nts}"
-        )
-
-    only_on_rhss = all_rhs_nonterminals.difference(nts_set)
-    if only_on_rhss:
-        raise ValueError(
-            "all nonterminals that appear on the rhs of a rule must be "
-            "registered as a nonterminal, "
-            f"but the following are not: {only_on_rhss}"
-        )
-
-
-def _terminals_and_rhss_are_consistent(
-    terminals: tuple[Terminal, ...],
-    rules: tuple[ProductionRule, ...],
-) -> None:
-    all_rhs_options = (r.rhs.symbols for r in rules)
-    all_rhs_symbols = itertools.chain(*all_rhs_options)
-    all_rhs_terminals = set(nt for nt in all_rhs_symbols if isinstance(nt, Terminal))
-
-    terms_set = set(terminals)
-
-    only_on_terms = terms_set.difference(all_rhs_terminals)
-    if only_on_terms:
-        raise ValueError(
-            "all terminals must appear on the rhs of a rule "
-            f"at least once, but the following do not: {only_on_terms}"
-        )
-
-    only_on_rhss = all_rhs_terminals.difference(terms_set)
-    if only_on_rhss:
-        raise ValueError(
-            "all terminals that appear on the rhs of a rule "
-            "must be registered as a terminal, "
-            f"but the following are not: {only_on_rhss}"
-        )
-
-
-@typeguard.typechecked
-def validate_grammar_components(
-    N: tuple[NonTerminal, ...],
-    T: tuple[Terminal, ...],
-    P: tuple[ProductionRule, ...],
-    S: NonTerminal,
-) -> None:
-    assert len(N) > 0
-    assert len(T) > 0
-    assert len(P) > 0
-
-    assert len(N) == len(set(N))
-    assert len(T) == len(set(T))
-    assert len(P) == len(set(P))
-
-    assert S in N
-
-    _nonterminals_and_lhss_are_consistent(N, P)
-    _nonterminals_and_rhss_are_consistent(N, P, S)
-    _terminals_and_rhss_are_consistent(T, P)
-
-
-class GrammarTransformer(lark.Transformer[list[ProductionRule]]):
+class GrammarTransformer(gge_transformers.SinglePassTransformer[GrammarComponents]):
     def __init__(self) -> None:
         super().__init__()
 
-        self._frozen = True
+        self._terminals: list[Terminal] = []
+        self._nonterminals: list[NonTerminal] = []
+        self._rules: list[ProductionRule] = []
+        self._start: NonTerminal = NonTerminal("start")
 
-        self._terminals: Optional[list[Terminal]] = None
-        self._nonterminals: Optional[list[NonTerminal]] = None
-        self._rules: Optional[list[ProductionRule]] = None
-        self._start: Optional[NonTerminal] = None
+    def transform(self, tree: lark.Tree) -> GrammarComponents:
+        super().transform(tree)
 
-    def __default__(self, data: Any, children: Any, meta: Any) -> None:
-        raise NotImplementedError(f"method not implemented for tree.data: {data}")
-
-    def __default_token__(self, token_text: Any) -> None:
-        raise NotImplementedError(
-            f"method not implemented for token with text: {token_text}"
+        return GrammarComponents(
+            nonterminals=tuple(self._nonterminals),
+            terminals=tuple(self._terminals),
+            rules=tuple(self._rules),
+            start_symbol=self._start,
         )
 
-    def get_nonterminals(self) -> tuple[NonTerminal, ...]:
-        assert self._frozen
-        assert self._nonterminals is not None
-
-        return tuple(self._nonterminals)
-
-    def get_terminals(self) -> tuple[Terminal, ...]:
-        assert self._frozen
-        assert self._terminals is not None
-
-        return tuple(self._terminals)
-
-    def get_rules(self) -> tuple[ProductionRule, ...]:
-        assert self._frozen
-        assert self._rules is not None
-
-        return tuple(self._rules)
-
-    def get_start_symbol(self) -> NonTerminal:
-        assert self._frozen
-        assert self._start is not None
-
-        return self._start
-
-    def transform(self, tree: lark.Tree) -> list[ProductionRule]:
-        assert self._frozen
-
-        self._frozen = False
-
-        self._terminals = []
-        self._nonterminals = []
-        self._rules = []
-
-        ret = super().transform(tree)
-        self._frozen = True
-
-        return ret
-
+    @typeguard.typechecked
     def _register_terminal(self, text: str) -> Terminal:
-        assert not self._frozen
-        assert self._terminals is not None
+        self._raise_if_not_running()
+        assert type(text) == str
 
         term = Terminal(text)
 
@@ -369,8 +346,8 @@ class GrammarTransformer(lark.Transformer[list[ProductionRule]]):
         return term
 
     def _register_nonterminal(self, text: str) -> NonTerminal:
-        assert not self._frozen
-        assert self._nonterminals is not None
+        self._raise_if_not_running()
+        assert type(text) == str
 
         nonterm = NonTerminal(text)
 
@@ -379,21 +356,18 @@ class GrammarTransformer(lark.Transformer[list[ProductionRule]]):
 
         return nonterm
 
-    def start(self, list_of_list_of_rules: Any) -> list[ProductionRule]:
-        assert not self._frozen
-        assert self._start is None
-
-        self._start = NonTerminal("start")
+    def start(self, list_of_list_of_rules: typing.Any) -> list[ProductionRule]:
+        self._raise_if_not_running()
 
         flattened = [
             rule for list_of_rules in list_of_list_of_rules for rule in list_of_rules
         ]
-        self._rules = flattened
+        self._rules.extend(flattened)
 
         return flattened
 
-    def rule(self, rule_parts: Any) -> list[ProductionRule]:
-        assert not self._frozen
+    def rule(self, rule_parts: typing.Any) -> list[ProductionRule]:
+        self._raise_if_not_running()
 
         lhs, *list_of_list_of_options = rule_parts
 
@@ -403,8 +377,8 @@ class GrammarTransformer(lark.Transformer[list[ProductionRule]]):
             for rhs in list_of_options
         ]
 
-    def block(self, list_of_list_of_options: Any) -> list[RuleOption]:
-        assert not self._frozen
+    def block(self, list_of_list_of_options: typing.Any) -> list[RuleOption]:
+        self._raise_if_not_running()
 
         return [
             option
@@ -414,20 +388,40 @@ class GrammarTransformer(lark.Transformer[list[ProductionRule]]):
 
     def block_option(
         self,
-        repeated_symbols: list[Iterable[Symbol]],
+        repeated_symbols: list[list[Terminal | NonTerminal]],
     ) -> list[RuleOption]:
-        assert not self._frozen
+        self._raise_if_not_running()
 
         combinations = itertools.product(*repeated_symbols)
         unpacked = [itertools.chain(*inner) for inner in combinations]
         return [RuleOption(tuple(symbols)) for symbols in unpacked]
 
-    def symbol_range(
-        self, parts: tuple[NonTerminal, Optional[int], Optional[int]]
-    ) -> list[list[NonTerminal]]:
-        assert not self._frozen
+    @lark.v_args(inline=True)
+    def maybe_merge(self, term: typing.Optional[Terminal]) -> list[list[Terminal]]:
+        self._raise_if_not_running()
 
-        name, a, b = parts
+        if term is None:
+            return [[]]
+        else:
+            return [[term]]
+
+    @lark.v_args(inline=True)
+    def maybe_fork(self, term: typing.Optional[Terminal]) -> list[list[Terminal]]:
+        self._raise_if_not_running()
+
+        if term is None:
+            return [[]]
+        else:
+            return [[term]]
+
+    @lark.v_args(inline=True)
+    def symbol_range(
+        self,
+        nt: NonTerminal,
+        a: typing.Optional[int] = None,
+        b: typing.Optional[int] = None,
+    ) -> list[list[NonTerminal]]:
+        self._raise_if_not_running()
 
         if a is not None and b is not None:
             start = a
@@ -442,15 +436,15 @@ class GrammarTransformer(lark.Transformer[list[ProductionRule]]):
             stop = 1
 
         else:
-            raise ValueError(f"unexpected symbol_range configuration: {parts}")
+            raise ValueError(f"unexpected symbol_range configuration: {(nt,a,b)}")
 
         assert start >= 0
         assert stop >= start
 
-        return [[name] * count for count in range(start, stop + 1)]
+        return [[nt] * count for count in range(start, stop + 1)]
 
-    def layer(self, list_of_lists_of_options: Any) -> list[RuleOption]:
-        assert not self._frozen
+    def layer(self, list_of_lists_of_options: typing.Any) -> list[RuleOption]:
+        self._raise_if_not_running()
 
         return [
             opt
@@ -458,79 +452,146 @@ class GrammarTransformer(lark.Transformer[list[ProductionRule]]):
             for opt in list_of_options
         ]
 
-    def conv_layer(self, parts: Any) -> list[RuleOption]:
-        assert not self._frozen
+    def conv_layer(self, parts: typing.Any) -> list[RuleOption]:
+        self._raise_if_not_running()
 
-        marker, filter_counts, kernel_sizes, strides = parts
-        option_data = itertools.product(filter_counts, kernel_sizes, strides)
-        return [RuleOption((marker, *fc, *ks, *st)) for fc, ks, st in option_data]
+        marker, *params = parts
+        combinations = itertools.product(*params)
+        return [
+            RuleOption((marker, *fc, *ks, *st, act)) for fc, ks, st, act in combinations
+        ]
 
     def filter_count(self, parts: list[Terminal]) -> list[tuple[Terminal, Terminal]]:
-        assert not self._frozen
+        self._raise_if_not_running()
 
         marker, *counts = parts
         return [(marker, c) for c in counts]
 
     def kernel_size(self, parts: list[Terminal]) -> list[tuple[Terminal, Terminal]]:
-        assert not self._frozen
+        self._raise_if_not_running()
 
         marker, *sizes = parts
         return [(marker, s) for s in sizes]
 
     def stride(self, parts: list[Terminal]) -> list[tuple[Terminal, Terminal]]:
-        assert not self._frozen
+        self._raise_if_not_running()
 
         marker, *strides = parts
         return [(marker, s) for s in strides]
 
-    def dense_layer(self, parts: list[Terminal]) -> list[RuleOption]:
-        assert not self._frozen
+    def activation(self, activations: list[Terminal]) -> list[Terminal]:
+        self._raise_if_not_running()
+        return activations
 
-        marker, *units = parts
-        return [RuleOption((marker, ut)) for ut in units]
+    @typeguard.typechecked
+    @lark.v_args(inline=True)
+    def batchnorm_layer(self, term: Terminal) -> list[RuleOption]:
+        return [RuleOption((term,))]
 
-    def dropout_layer(self, parts: list[Terminal]) -> list[RuleOption]:
-        assert not self._frozen
+    @typeguard.typechecked
+    @lark.v_args(inline=True)
+    def pooling_layer(
+        self,
+        marker: Terminal,
+        types: list[MarkerValuePair],
+        strides: list[MarkerValuePair],
+    ) -> list[RuleOption]:
+        combinations = itertools.product(types, strides)
+        return [RuleOption((marker, *tp, *st)) for tp, st in combinations]
 
-        marker, *rates = parts
-        return [RuleOption((marker, rt)) for rt in rates]
+    @typeguard.typechecked
+    @lark.v_args(inline=True)
+    def pooling_type_seq(
+        self,
+        marker: Terminal,
+        *values: Terminal,
+    ) -> list[tuple[Terminal, Terminal]]:
+        return [(marker, v) for v in values]
+
+    @typeguard.typechecked
+    @lark.v_args(inline=True)
+    def pooling_stride_seq(
+        self,
+        marker: Terminal,
+        *values: Terminal,
+    ) -> list[tuple[Terminal, Terminal]]:
+        return [(marker, v) for v in values]
+
+    def BATCHNORM(self, token: lark.Token) -> Terminal:
+        self._raise_if_not_running()
+        return self._register_terminal(token.value)
 
     def NONTERMINAL(self, token: lark.Token) -> NonTerminal:
-        assert not self._frozen
+        self._raise_if_not_running()
         return self._register_nonterminal(token.value)
 
+    def MERGE(self, token: lark.Token) -> Terminal:
+        self._raise_if_not_running()
+        return self._register_terminal(token.value)
+
+    def FORK(self, token: lark.Token) -> Terminal:
+        self._raise_if_not_running()
+        return self._register_terminal(token.value)
+
     def CONV2D(self, token: lark.Token) -> Terminal:
-        assert not self._frozen
+        self._raise_if_not_running()
         return self._register_terminal(token.value)
 
     def FILTER_COUNT(self, token: lark.Token) -> Terminal:
-        assert not self._frozen
+        self._raise_if_not_running()
         return self._register_terminal(token.value)
 
     def KERNEL_SIZE(self, token: lark.Token) -> Terminal:
-        assert not self._frozen
+        self._raise_if_not_running()
         return self._register_terminal(token.value)
 
     def STRIDE(self, token: lark.Token) -> Terminal:
-        assert not self._frozen
+        self._raise_if_not_running()
         return self._register_terminal(token.value)
 
-    def DENSE(self, token: lark.Token) -> Terminal:
-        assert not self._frozen
+    def ACTIVATION(self, term: Terminal) -> Terminal:
+        return term
+
+    def RELU(self, token: lark.Token) -> Terminal:
+        self._raise_if_not_running()
         return self._register_terminal(token.value)
 
-    def DROPOUT(self, token: lark.Token) -> Terminal:
-        assert not self._frozen
+    def GELU(self, token: lark.Token) -> Terminal:
+        self._raise_if_not_running()
+        return self._register_terminal(token.value)
+
+    def SWISH(self, token: lark.Token) -> Terminal:
+        self._raise_if_not_running()
         return self._register_terminal(token.value)
 
     def RANGE_BOUND(self, token: lark.Token) -> int:
-        assert not self._frozen
+        self._raise_if_not_running()
         return int(token.value)
 
     def INT_ARG(self, token: lark.Token) -> Terminal:
-        assert not self._frozen
+        self._raise_if_not_running()
         return self._register_terminal(token.value)
 
     def FLOAT_ARG(self, token: lark.Token) -> Terminal:
-        assert not self._frozen
+        self._raise_if_not_running()
+        return self._register_terminal(token.value)
+
+    def POOLING_LAYER(self, token: lark.Token) -> Terminal:
+        self._raise_if_not_running()
+        return self._register_terminal(token.value)
+
+    def POOLING_TYPE(self, token: lark.Token) -> Terminal:
+        self._raise_if_not_running()
+        return self._register_terminal(token.value)
+
+    def POOLING_STRIDE(self, token: lark.Token) -> Terminal:
+        self._raise_if_not_running()
+        return self._register_terminal(token.value)
+
+    def POOLING_MAX(self, token: lark.Token) -> Terminal:
+        self._raise_if_not_running()
+        return self._register_terminal(token.value)
+
+    def POOLING_AVG(self, token: lark.Token) -> Terminal:
+        self._raise_if_not_running()
         return self._register_terminal(token.value)

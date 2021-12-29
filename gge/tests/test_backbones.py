@@ -1,0 +1,167 @@
+import pytest
+
+import gge.backbones as bb
+
+
+def test_conv2d() -> None:
+    tokenstream = """
+    "conv2d" "filter_count" 1 "kernel_size" 2 "stride" 3
+    """
+
+    actual = bb.parse(tokenstream)
+    layers = (bb.Conv2DLayer("conv2d_0", 1, 2, 3),)
+    expected = bb.Backbone(layers)
+    assert expected == actual
+
+
+def test_merge() -> None:
+    tokenstream = """
+    "merge" "conv2d" "filter_count" 1 "kernel_size" 2 "stride" 3
+    """
+
+    actual = bb.parse(tokenstream)
+    layers = (
+        bb.Merge("merge_0"),
+        bb.Conv2DLayer("conv2d_0", 1, 2, 3),
+    )
+    expected = bb.Backbone(layers)
+    assert expected == actual
+
+
+def test_fork() -> None:
+    tokenstream = """
+    "conv2d" "filter_count" 1 "kernel_size" 2 "stride" 3 "fork"
+    """
+
+    actual = bb.parse(tokenstream)
+    layers = (
+        bb.Conv2DLayer("conv2d_0", 1, 2, 3),
+        bb.Fork("fork_0"),
+    )
+    expected = bb.Backbone(layers)
+    assert expected == actual
+
+
+def test_merge_and_fork() -> None:
+    tokenstream = """
+    "merge" "conv2d" "filter_count" 1 "kernel_size" 2 "stride" 3 "fork"
+    """
+
+    actual = bb.parse(tokenstream)
+    layers = (
+        bb.Merge("merge_0"),
+        bb.Conv2DLayer("conv2d_0", 1, 2, 3),
+        bb.Fork("fork_0"),
+    )
+    expected = bb.Backbone(layers)
+    assert expected == actual
+
+
+def test_simple_backbone() -> None:
+    tokenstream = """
+    "conv2d" "filter_count" 1 "kernel_size" 2 "stride" 3
+    "conv2d" "filter_count" 5 "kernel_size" 6 "stride" 7
+    "conv2d" "filter_count" 8 "kernel_size" 9 "stride" 10
+    """
+
+    actual = bb.parse(tokenstream)
+    layers = (
+        bb.Conv2DLayer("conv2d_0", 1, 2, 3),
+        bb.Conv2DLayer("conv2d_1", 5, 6, 7),
+        bb.Conv2DLayer("conv2d_2", 8, 9, 10),
+    )
+    expected = bb.Backbone(layers)
+
+    assert expected == actual
+
+
+def test_complex_backbone() -> None:
+    tokenstream = """
+    "conv2d" "filter_count" 1 "kernel_size" 2 "stride" 3
+    "fork"
+
+    "merge"
+    "conv2d" "filter_count" 4 "kernel_size" 5 "stride" 6
+    "fork"
+
+    "merge"
+    "conv2d" "filter_count" 7 "kernel_size" 8 "stride" 9
+
+    "conv2d" "filter_count" 10 "kernel_size" 11 "stride" 12
+    "conv2d" "filter_count" 13 "kernel_size" 14"stride" 15
+    "merge"
+    "conv2d" "filter_count" 16 "kernel_size" 17 "stride" 18
+    """
+
+    actual = bb.parse(tokenstream)
+    layers = (
+        bb.Conv2DLayer("conv2d_0", 1, 2, 3),
+        bb.Fork("fork_0"),
+        bb.Merge("merge_0"),
+        bb.Conv2DLayer("conv2d_1", 4, 5, 6),
+        bb.Fork("fork_1"),
+        bb.Merge("merge_1"),
+        bb.Conv2DLayer("conv2d_2", 7, 8, 9),
+        bb.Conv2DLayer("conv2d_3", 10, 11, 12),
+        bb.Conv2DLayer("conv2d_4", 13, 14, 15),
+        bb.Merge("merge_2"),
+        bb.Conv2DLayer("conv2d_5", 16, 17, 18),
+    )
+    expected = bb.Backbone(layers)
+    assert expected == actual
+
+
+def test_standalone_batchnorm() -> None:
+    tokenstream = """
+    "batchnorm"
+    """
+    actual = bb.parse(tokenstream)
+    layers = (bb.BatchNorm("batchnorm_0"),)
+    expected = bb.Backbone(layers)
+    assert expected == actual
+
+
+def test_batchnorm_after_conv() -> None:
+    tokenstream = """
+    "conv2d" "filter_count" 1 "kernel_size" 2 "stride" 3
+    "batchnorm"
+    """
+    actual = bb.parse(tokenstream)
+    layers = (
+        bb.Conv2DLayer("conv2d_0", 1, 2, 3),
+        bb.BatchNorm("batchnorm_0"),
+    )
+    expected = bb.Backbone(layers)
+    assert expected == actual
+
+
+@pytest.mark.parametrize(
+    argnames=["text", "layer"],
+    argvalues=[
+        ('"max"', bb.PoolingLayer("pooling_layer_0", bb.PoolingType.MAX_POOLING, 1)),
+        ('"avg"', bb.PoolingLayer("pooling_layer_0", bb.PoolingType.AVG_POOLING, 1)),
+    ],
+)
+def test_pooling_layer_type(text: str, layer: bb.PoolingLayer) -> None:
+    tokenstream = f"""
+    "pool2d" {text} 1
+    """
+    actual = bb.parse(tokenstream)
+    expected = bb.Backbone((layer,))
+    assert expected == actual
+
+
+@pytest.mark.parametrize(
+    argnames=["text", "layer"],
+    argvalues=[
+        ("1", bb.PoolingLayer("pooling_layer_0", bb.PoolingType.MAX_POOLING, 1)),
+        ("2", bb.PoolingLayer("pooling_layer_0", bb.PoolingType.MAX_POOLING, 2)),
+    ],
+)
+def test_pooling_layer_stride(text: str, layer: bb.PoolingLayer) -> None:
+    tokenstream = f"""
+    "pool2d" "max" {text}
+    """
+    actual = bb.parse(tokenstream)
+    expected = bb.Backbone((layer,))
+    assert expected == actual

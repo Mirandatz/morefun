@@ -1,20 +1,20 @@
-from gge import structured_grammatical_evolution as sge
-from gge.grammars import Grammar, NonTerminal
+import gge.grammars as gr
+import gge.structured_grammatical_evolution as sge
 
 
 def test_nonrecursive_grammar() -> None:
-    grammar = Grammar(
-        raw_grammar=r"""
+    grammar = gr.Grammar(
+        """
         start : a
         a : b c
-        b : "dense" (3)
-        c : "dense" (8)
+        b : "conv2d" "filter_count" 64 "kernel_size" 5 "stride" 2 "relu"
+        c : "conv2d" "filter_count" 128 "kernel_size" 3 "stride" 1 "gelu"
         """
     )
 
-    a = NonTerminal("a")
-    b = NonTerminal("b")
-    c = NonTerminal("c")
+    a = gr.NonTerminal("a")
+    b = gr.NonTerminal("b")
+    c = gr.NonTerminal("c")
 
     assert not sge.can_expand(a, a, grammar)
     assert sge.can_expand(a, b, grammar)
@@ -30,18 +30,18 @@ def test_nonrecursive_grammar() -> None:
 
 
 def test_simple_recursive_grammar() -> None:
-    grammar = Grammar(
-        raw_grammar=r"""
+    grammar = gr.Grammar(
+        """
         start : a
         a : b c | a
         b : b | c
-        c : "dropout" (0.3)
+        c : "conv2d" "filter_count" (2) "kernel_size" (1) "stride" (2) "relu"
         """
     )
 
-    a = NonTerminal("a")
-    b = NonTerminal("b")
-    c = NonTerminal("c")
+    a = gr.NonTerminal("a")
+    b = gr.NonTerminal("b")
+    c = gr.NonTerminal("c")
 
     assert sge.can_expand(a, a, grammar)
     assert sge.can_expand(a, b, grammar)
@@ -57,20 +57,20 @@ def test_simple_recursive_grammar() -> None:
 
 
 def test_complex_recursive_grammar() -> None:
-    grammar = Grammar(
-        raw_grammar=r"""
+    grammar = gr.Grammar(
+        """
         start : a
         a : b c d
         b : c d
         c : d a
-        d : "conv2d" "filter_count" (2) "kernel_size" (1) "stride" (2)
+        d : "conv2d" "filter_count" (2) "kernel_size" (1) "stride" (2) "relu"
         """
     )
 
-    a = NonTerminal("a")
-    b = NonTerminal("b")
-    c = NonTerminal("c")
-    d = NonTerminal("d")
+    a = gr.NonTerminal("a")
+    b = gr.NonTerminal("b")
+    c = gr.NonTerminal("c")
+    d = gr.NonTerminal("d")
 
     assert sge.can_expand(a, a, grammar)
     assert sge.can_expand(a, b, grammar)
@@ -94,18 +94,18 @@ def test_complex_recursive_grammar() -> None:
 
 
 def test_nasty_recursive_grammar() -> None:
-    grammar = Grammar(
-        raw_grammar=r"""
+    grammar = gr.Grammar(
+        """
         start : a
         a : b | c a | k
         b : c | k
         c : k
-        k : "dropout" (0.0)
+        k : "conv2d" "filter_count" (2) "kernel_size" (1) "stride" (2) "relu"
         """
     )
-    a = NonTerminal("a")
-    b = NonTerminal("b")
-    c = NonTerminal("c")
+    a = gr.NonTerminal("a")
+    b = gr.NonTerminal("b")
+    c = gr.NonTerminal("c")
 
     assert sge.can_expand(a, a, grammar)
     assert sge.can_expand(a, b, grammar)
