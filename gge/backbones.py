@@ -1,6 +1,7 @@
 import collections
 import dataclasses
 import enum
+import functools
 import pathlib
 import typing
 
@@ -10,7 +11,11 @@ import typeguard
 import gge.transformers as gge_transformers
 
 MESAGRAMMAR_PATH = pathlib.Path(__file__).parent.parent / "data" / "mesagrammar.lark"
-MESAGRAMMAR = MESAGRAMMAR_PATH.read_text()
+
+
+@functools.cache
+def get_mesagrammar() -> str:
+    return MESAGRAMMAR_PATH.read_text()
 
 
 @typeguard.typechecked
@@ -211,6 +216,6 @@ def parse(string: str) -> Backbone:
     be visited/transformed into a `Backbone`.
     """
 
-    parser = lark.Lark(grammar=MESAGRAMMAR, parser="lalr")
+    parser = lark.Lark(grammar=get_mesagrammar(), parser="lalr")
     tree = parser.parse(string)
     return BackboneSynthetizer().transform(tree)
