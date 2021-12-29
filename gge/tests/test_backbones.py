@@ -1,3 +1,5 @@
+import pytest
+
 import gge.backbones as bb
 
 
@@ -130,4 +132,36 @@ def test_batchnorm_after_conv() -> None:
         bb.BatchNorm("batchnorm_0"),
     )
     expected = bb.Backbone(layers)
+    assert expected == actual
+
+
+@pytest.mark.parametrize(
+    argnames=["text", "layer"],
+    argvalues=[
+        ('"max"', bb.PoolingLayer("pooling_layer_0", bb.PoolingType.MAX_POOLING, 1)),
+        ('"avg"', bb.PoolingLayer("pooling_layer_0", bb.PoolingType.AVG_POOLING, 1)),
+    ],
+)
+def test_pooling_layer_type(text: str, layer: bb.PoolingLayer) -> None:
+    tokenstream = f"""
+    "pool2d" {text} 1
+    """
+    actual = bb.parse(tokenstream)
+    expected = bb.Backbone((layer,))
+    assert expected == actual
+
+
+@pytest.mark.parametrize(
+    argnames=["text", "layer"],
+    argvalues=[
+        ("1", bb.PoolingLayer("pooling_layer_0", bb.PoolingType.MAX_POOLING, 1)),
+        ("2", bb.PoolingLayer("pooling_layer_0", bb.PoolingType.MAX_POOLING, 2)),
+    ],
+)
+def test_pooling_layer_stride(text: str, layer: bb.PoolingLayer) -> None:
+    tokenstream = f"""
+    "pool2d" "max" {text}
+    """
+    actual = bb.parse(tokenstream)
+    expected = bb.Backbone((layer,))
     assert expected == actual

@@ -2,12 +2,16 @@ start: block+
 
 block : MERGE? layer FORK?
 
-layer : (conv_layer | batchnorm_layer)
+layer : (conv_layer | pool_layer | batchnorm_layer)
  
 conv_layer   : _CONV2D filter_count kernel_size stride
 filter_count : _FILTER_COUNT INT
 kernel_size  : _KERNEL_SIZE INT
 stride       : _STRIDE INT
+
+pool_layer   : _POOL_MARKER _pool_type POOL_STRIDE
+_pool_type   : POOL_MAX | POOL_AVG
+POOL_STRIDE  : INT
 
 batchnorm_layer : _BATCHNORM
 
@@ -18,6 +22,10 @@ _CONV2D       : /"conv2d"/
 _FILTER_COUNT : /"filter_count"/
 _KERNEL_SIZE  : /"kernel_size"/
 _STRIDE       : /"stride"/
+
+_POOL_MARKER : /"pool2d"/
+POOL_MAX     : /"max"/
+POOL_AVG     : /"avg"/
 
 _BATCHNORM    : /"batchnorm"/
 

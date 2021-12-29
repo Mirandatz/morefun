@@ -1,5 +1,6 @@
 import collections
 import dataclasses
+import enum
 import pathlib
 import typing
 
@@ -45,6 +46,23 @@ class Conv2DLayer:
         assert self.stride > 0
 
 
+class PoolingType(enum.Enum):
+    MAX_POOLING = enum.auto()
+    AVG_POOLING = enum.auto()
+
+
+@typeguard.typechecked
+@dataclasses.dataclass(frozen=True)
+class PoolingLayer:
+    name: str
+    pooling_type: PoolingType
+    stride: int
+
+    def _post_init__(self) -> None:
+        assert self.name
+        assert self.stride > 0
+
+
 @typeguard.typechecked
 @dataclasses.dataclass(frozen=True)
 class BatchNorm:
@@ -54,7 +72,7 @@ class BatchNorm:
         assert self.name
 
 
-Layer: typing.TypeAlias = Conv2DLayer | BatchNorm | Fork | Merge
+Layer: typing.TypeAlias = Conv2DLayer | PoolingLayer | BatchNorm | Fork | Merge
 
 
 @typeguard.typechecked
@@ -150,7 +168,29 @@ class BackboneSynthetizer(gge_transformers.DisposableTransformer[Backbone]):
 
     @typeguard.typechecked
     def batchnorm_layer(self) -> BatchNorm:
+        self._raise_if_not_running()
         return BatchNorm(self._create_layer_name("batchnorm"))
+
+    @typeguard.typechecked
+    def pool_layer(self, pool_type: PoolingType, stride: int) -> PoolingLayer:
+        self._raise_if_not_running()
+        return PoolingLayer(
+            name=self._create_layer_name("pooling_layer"),
+            pooling_type=pool_type,
+            stride=stride,
+        )
+
+    def POOL_MAX(self, _: lark.Token) -> PoolingType:
+        self._raise_if_not_running()
+        return PoolingType.MAX_POOLING
+
+    def POOL_AVG(self, _: lark.Token) -> PoolingType:
+        self._raise_if_not_running()
+        return PoolingType.AVG_POOLING
+
+    def POOL_STRIDE(self, token: lark.Token) -> int:
+        self._raise_if_not_running()
+        return int(token.value)
 
     def INT(self, token: lark.Token) -> int:
         self._raise_if_not_running()
