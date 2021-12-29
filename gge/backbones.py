@@ -104,16 +104,35 @@ def _raise_if_contains_repeated_names(layers: tuple[Layer, ...]) -> None:
         )
 
 
+def _raise_if_contains_repeated_names(layers: tuple[Layer, ...]) -> None:
+    names = collections.Counter(layer.name for layer in layers)
+    repeated = [name for name, times in names.items() if times > 1]
+    if repeated:
+        raise ValueError(
+            f"layers must have unique names, but the following are repeated: {repeated}"
+        )
+
+
+def _raise_if_contains_sequences_of_forks(layers: tuple[Layer, ...]) -> None:
+    previous, *other = layers
+
+    for current in other:
+        if isinstance(current, Fork) and isinstance(previous, Fork):
+            raise ValueError("backbone is must not contain sequences of forks")
+
+        previous = current
+
+
 @dataclasses.dataclass(frozen=True)
 class Backbone:
     layers: tuple[Layer, ...]
 
     def __post_init__(self) -> None:
-        len(self.layers) >= 1
         assert isinstance(self.layers, tuple)
         for layer in self.layers:
             assert isinstance(layer, Layer)
 
+        len(self.layers) >= 1
         _raise_if_contains_sequence_of_forks(self.layers)
         _raise_if_contains_repeated_names(self.layers)
 
