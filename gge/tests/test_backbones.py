@@ -139,11 +139,11 @@ def test_batchnorm_after_conv() -> None:
 @pytest.mark.parametrize(
     argnames=["text", "layer"],
     argvalues=[
-        ('"max"', gl.Pool("pooling_layer_0", gl.PoolType.MAX_POOLING, 1)),
-        ('"avg"', gl.Pool("pooling_layer_0", gl.PoolType.AVG_POOLING, 1)),
+        ('"max"', gl.Pool2D("pooling_layer_0", gl.PoolType.MAX_POOLING, 1)),
+        ('"avg"', gl.Pool2D("pooling_layer_0", gl.PoolType.AVG_POOLING, 1)),
     ],
 )
-def test_pooling_layer_type(text: str, layer: gl.Pool) -> None:
+def test_pooling_layer_type(text: str, layer: gl.Pool2D) -> None:
     tokenstream = f"""
     "pool2d" {text} 1
     """
@@ -155,11 +155,11 @@ def test_pooling_layer_type(text: str, layer: gl.Pool) -> None:
 @pytest.mark.parametrize(
     argnames=["text", "layer"],
     argvalues=[
-        ("1", gl.Pool("pooling_layer_0", gl.PoolType.MAX_POOLING, 1)),
-        ("2", gl.Pool("pooling_layer_0", gl.PoolType.MAX_POOLING, 2)),
+        ("1", gl.Pool2D("pooling_layer_0", gl.PoolType.MAX_POOLING, 1)),
+        ("2", gl.Pool2D("pooling_layer_0", gl.PoolType.MAX_POOLING, 2)),
     ],
 )
-def test_pooling_layer_stride(text: str, layer: gl.Pool) -> None:
+def test_pooling_layer_stride(text: str, layer: gl.Pool2D) -> None:
     tokenstream = f"""
     "pool2d" "max" {text}
     """

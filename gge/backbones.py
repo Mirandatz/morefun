@@ -1,7 +1,6 @@
 import collections
 import dataclasses
 import functools
-import itertools
 import pathlib
 import typing
 
@@ -19,96 +18,7 @@ def get_mesagrammar() -> str:
     return MESAGRAMMAR_PATH.read_text()
 
 
-<<<<<<< HEAD
-@dataclasses.dataclass(frozen=True)
-class Fork:
-    name: str
-
-    def __post_init__(self) -> None:
-        assert isinstance(self.name, str)
-        assert self.name
-
-
-@dataclasses.dataclass(frozen=True)
-class Merge:
-    name: str
-
-    def __post_init__(self) -> None:
-        assert isinstance(self.name, str)
-        assert self.name
-
-
-@dataclasses.dataclass(frozen=True)
-class Conv2DLayer:
-    name: str
-    filter_count: int
-    kernel_size: int
-    stride: int
-
-    def __post_init__(self) -> None:
-        assert isinstance(self.name, str)
-        assert isinstance(self.filter_count, int)
-        assert isinstance(self.kernel_size, int)
-        assert isinstance(self.stride, int)
-
-        assert self.name
-        assert self.filter_count > 0
-        assert self.kernel_size > 0
-        assert self.stride > 0
-
-
-class PoolingType(enum.Enum):
-    MAX_POOLING = enum.auto()
-    AVG_POOLING = enum.auto()
-
-
-@dataclasses.dataclass(frozen=True)
-class PoolingLayer:
-    name: str
-    pooling_type: PoolingType
-    stride: int
-
-    def _post_init__(self) -> None:
-        assert isinstance(self.name, str)
-        assert isinstance(self.pooling_type, PoolingType)
-        assert isinstance(self.stride, int)
-
-        assert self.name
-        assert self.stride > 0
-
-
-@dataclasses.dataclass(frozen=True)
-class BatchNorm:
-    name: str
-
-    def __post_init__(self) -> None:
-        assert isinstance(self.name, str)
-        assert self.name
-
-
-Layer: typing.TypeAlias = Conv2DLayer | PoolingLayer | BatchNorm | Fork | Merge
-
-
-def _raise_if_contains_sequence_of_forks(layers: tuple[Layer, ...]) -> None:
-    for a, b in itertools.pairwise(layers):
-        if isinstance(a, Fork) and isinstance(b, Fork):
-            raise ValueError("layers can not contain sequences of forks")
-
-
-def _raise_if_contains_repeated_names(layers: tuple[Layer, ...]) -> None:
-    names = collections.Counter(layer.name for layer in layers)
-    repeated = [name for name, times in names.items() if times > 1]
-    if repeated:
-        raise ValueError(
-            "layers must have unique names, "
-            f"but the following are repeated: {repeated}"
-        )
-
-
-def _raise_if_contains_repeated_names(layers: tuple[Layer, ...]) -> None:
-=======
 def _raise_if_contains_repeated_names(layers: tuple[gl.Layer, ...]) -> None:
->>>>>>> Move layers from backbones.py to layers.py
     names = collections.Counter(layer.name for layer in layers)
     repeated = [name for name, times in names.items() if times > 1]
     if repeated:
@@ -134,10 +44,10 @@ class Backbone:
     def __post_init__(self) -> None:
         assert isinstance(self.layers, tuple)
         for layer in self.layers:
-            assert isinstance(layer, Layer)
+            assert isinstance(layer, gl.Layer)
 
         len(self.layers) >= 1
-        _raise_if_contains_sequence_of_forks(self.layers)
+        _raise_if_contains_sequences_of_forks(self.layers)
         _raise_if_contains_repeated_names(self.layers)
 
 
@@ -219,7 +129,7 @@ class BackboneSynthetizer(gge_transformers.SinglePassTransformer[Backbone]):
 
     def pool_layer(self, pool_type: PoolingType, stride: int) -> PoolingLayer:
         self._raise_if_not_running()
-        return gl.Pool(
+        return gl.Pool2D(
             name=self._create_layer_name("pooling_layer"),
             pooling_type=pool_type,
             stride=stride,

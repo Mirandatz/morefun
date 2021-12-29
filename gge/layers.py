@@ -44,7 +44,7 @@ class PoolType(enum.Enum):
 
 @typeguard.typechecked
 @dataclasses.dataclass(frozen=True)
-class Pool:
+class Pool2D:
     name: str
     pooling_type: PoolType
     stride: int
@@ -63,4 +63,4 @@ class BatchNorm:
         assert self.name
 
 
-Layer = Conv2D | Pool | BatchNorm | Fork | Merge
+Layer = Conv2D | Pool2D | BatchNorm | Fork | Merge
