@@ -8,6 +8,7 @@ import typing
 
 import lark
 
+import gge.name_generator
 import gge.transformers as gge_transformers
 
 MESAGRAMMAR_PATH = pathlib.Path(__file__).parent.parent / "data" / "mesagrammar.lark"
@@ -120,14 +121,11 @@ class Backbone:
 class BackboneSynthetizer(gge_transformers.SinglePassTransformer[Backbone]):
     def __init__(self) -> None:
         super().__init__()
-        self._layer_counter: collections.Counter[str] = collections.Counter()
+        self._name_generator = gge.name_generator.NameGenerator()
 
-    def _create_layer_name(self, suffix: str) -> str:
+    def _create_layer_name(self, prefix: str) -> str:
         self._raise_if_not_running()
-
-        instance_id = self._layer_counter[suffix]
-        self._layer_counter[suffix] += 1
-        return f"{suffix}_{instance_id}"
+        return self._name_generator.create_name(prefix)
 
     @lark.v_args(inline=False)
     def start(self, blocks: list[list[Layer]]) -> Backbone:
