@@ -2,7 +2,7 @@ import gge.backbones as bb
 import gge.connections as conn
 
 
-def test_0fork_0merge() -> None:
+def test_no_fork_no_merge() -> None:
     layers = (bb.Conv2DLayer("conv_0", 1, 2, 3),)
     backbone = bb.Backbone(layers)
     actual = conn.extract_forks_masks_lengths(backbone)
@@ -10,7 +10,7 @@ def test_0fork_0merge() -> None:
     assert expected == actual
 
 
-def test_1fork_0merge() -> None:
+def test_one_fork_no_merge() -> None:
     layers = (
         bb.Conv2DLayer("conv_0", 1, 2, 3),
         bb.Fork("fork_0"),
@@ -21,7 +21,7 @@ def test_1fork_0merge() -> None:
     assert expected == actual
 
 
-def test_0fork_1merge() -> None:
+def test_no_fork_one_merge() -> None:
     layers = (
         bb.Merge("merge_0"),
         bb.Conv2DLayer("conv_0", 1, 2, 3),
@@ -32,7 +32,7 @@ def test_0fork_1merge() -> None:
     assert expected == actual
 
 
-def test_nfork_1merge() -> None:
+def test_many_fork_one_merge() -> None:
     layers = (
         bb.Conv2DLayer("conv_0", 1, 2, 3),
         bb.Fork("fork_0"),
@@ -48,7 +48,7 @@ def test_nfork_1merge() -> None:
     assert expected == actual
 
 
-def test_1fork_nmerge() -> None:
+def test_one_fork_many_merge() -> None:
     layers = (
         bb.Conv2DLayer("conv_0", 1, 2, 3),
         bb.Fork("fork_0"),
@@ -66,7 +66,7 @@ def test_1fork_nmerge() -> None:
     assert expected == actual
 
 
-def test_nfork_nmerge() -> None:
+def test_many_fork_many_merge() -> None:
     layers = (
         bb.Conv2DLayer("conv_0", 1, 2, 3),
         bb.Fork("fork_0"),
