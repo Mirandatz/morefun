@@ -12,7 +12,7 @@ class TransformerState(enum.Enum):
     PARSE_DONE = enum.auto()
 
 
-class SinglePlassTransformer(lark.Transformer[_T]):
+class SinglePassTransformer(lark.Transformer[_T]):
     """
     Specialization of a base transformer that:
     - can only visit a tree if they start on the root node;

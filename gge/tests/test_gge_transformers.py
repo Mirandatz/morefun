@@ -4,7 +4,7 @@ import pytest
 import gge.transformers as tr
 
 
-class BasicDisposableTransformer(tr.SinglePlassTransformer[None]):
+class BasicSinglePassDisposableTransformer(tr.SinglePassTransformer[None]):
     def __init__(self) -> None:
         super().__init__()
 
@@ -49,7 +49,7 @@ def test_raise_on_default_tree() -> None:
         ew ew
     """
     tree = extract_ast(text)
-    trans = BasicDisposableTransformer()
+    trans = BasicSinglePassDisposableTransformer()
     with pytest.raises(
         NotImplementedError,
         match="method not implemented for tree.data: example_nonterminal",
@@ -62,7 +62,7 @@ def test_raise_on_default_token() -> None:
         ew
     """
     tree = extract_ast(text)
-    trans = tr.SinglePlassTransformer()  # type: ignore
+    trans = tr.SinglePassTransformer()  # type: ignore
 
     with pytest.raises(
         NotImplementedError,
