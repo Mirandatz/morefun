@@ -45,7 +45,7 @@ def test_terminals() -> None:
 
     names = {CONV2D, FILTER_COUNT, KERNEL_SIZE, STRIDE, RELU, GELU, SWISH}
     numbers = {gr.Terminal(str(i)) for i in range(1, 8)}
-    expected = names | numbers
+    expected = set.union(names, numbers)
 
     assert expected == actual
 
