@@ -1,5 +1,6 @@
 import dataclasses
 import enum
+import itertools
 
 import gge.backbones as bb
 import gge.randomness as rand
@@ -88,3 +89,11 @@ def create_connections_schema(
     masks_lens = extract_forks_masks_lengths(backbone)
     merge_layers = (create_inputs_merger(ml, rng) for ml in masks_lens)
     return ConnectionsSchema(tuple(merge_layers))
+
+
+def collect_sources(backbone: bb.Backbone) -> list[bb.Layer]:
+    return [
+        source
+        for source, next in itertools.pairwise(backbone.layers)
+        if isinstance(next, bb.Fork)
+    ]
