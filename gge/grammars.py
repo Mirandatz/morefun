@@ -95,7 +95,7 @@ class Terminal:
         if not (self.text[0] == self.text[-1] == '"'):
             raise ValueError(error_msg)
 
-        unquoted = self.text[1:-1]
+        unquoted = self.text.strip('"')
         if not _is_valid_name(unquoted):
             raise ValueError(error_msg)
 
@@ -488,7 +488,6 @@ class GrammarTransformer(gge_transformers.SinglePlassTransformer[GrammarComponen
     def batchnorm_layer(self, term: Terminal) -> list[RuleOption]:
         return [RuleOption((term,))]
 
-    # pooling layer nonterminals
     @typeguard.typechecked
     @lark.v_args(inline=True)
     def pooling_layer(
@@ -518,7 +517,6 @@ class GrammarTransformer(gge_transformers.SinglePlassTransformer[GrammarComponen
     ) -> list[tuple[Terminal, Terminal]]:
         return [(marker, v) for v in values]
 
-    # terminals
     def BATCHNORM(self, token: lark.Token) -> Terminal:
         self._raise_if_not_running()
         return self._register_terminal(token.value)
@@ -578,7 +576,6 @@ class GrammarTransformer(gge_transformers.SinglePlassTransformer[GrammarComponen
         self._raise_if_not_running()
         return self._register_terminal(token.value)
 
-    # pooling layer terminals
     def POOLING_LAYER(self, token: lark.Token) -> Terminal:
         self._raise_if_not_running()
         return self._register_terminal(token.value)

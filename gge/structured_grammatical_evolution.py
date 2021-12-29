@@ -88,7 +88,7 @@ class Genemancer:
         finally, we visit the nodes of the tree and synthesize the phenotype.
         """
 
-        tokenstream = ""
+        tokenstream = []
 
         gene_consumption_tracker = {g: 0 for g in genotype.genes}
 
@@ -104,7 +104,7 @@ class Genemancer:
             assert isinstance(symbol, gg.Terminal | gg.NonTerminal)
 
             if isinstance(symbol, gg.Terminal):
-                tokenstream += symbol.text
+                tokenstream.append(symbol.text)
                 continue
 
             gene = genotype.get_associated_gene(symbol)
@@ -119,7 +119,7 @@ class Genemancer:
             for s in reversed(chosen_exp.symbols):
                 to_process.appendleft(s)
 
-        return tokenstream
+        return "".join(tokenstream)
 
 
 def max_nr_of_times_nonterminal_can_be_expanded(
