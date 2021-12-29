@@ -10,11 +10,15 @@ import typeguard
 import gge.transformers as gge_transformers
 
 METAGRAMMAR_PATH = pathlib.Path(__file__).parent.parent / "data" / "metagrammar.lark"
-METAGRAMMAR = METAGRAMMAR_PATH.read_text()
+
+
+@functools.cache
+def get_metagrammar() -> str:
+    return METAGRAMMAR_PATH.read_text()
 
 
 def get_metagrammar_parser() -> lark.Lark:
-    return lark.Lark(METAGRAMMAR, parser="lalr", maybe_placeholders=True)
+    return lark.Lark(get_metagrammar(), parser="lalr", maybe_placeholders=True)
 
 
 def extract_ast(grammar_text: str) -> lark.Tree:
