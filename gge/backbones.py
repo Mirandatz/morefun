@@ -109,6 +109,7 @@ class Backbone:
     layers: tuple[Layer, ...]
 
     def __post_init__(self) -> None:
+        len(self.layers) >= 1
         assert isinstance(self.layers, tuple)
         for layer in self.layers:
             assert isinstance(layer, Layer)
