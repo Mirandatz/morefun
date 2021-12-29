@@ -90,7 +90,7 @@ class Backbone:
 
 
 @lark.v_args(inline=True)
-class BackboneSynthetizer(gge_transformers.DisposableTransformer[Backbone]):
+class BackboneSynthetizer(gge_transformers.SinglePlassTransformer[Backbone]):
     def __init__(self) -> None:
         super().__init__()
         self._layer_counter: collections.Counter[str] = collections.Counter()

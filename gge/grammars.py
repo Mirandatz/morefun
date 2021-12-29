@@ -310,7 +310,7 @@ class Grammar:
 MarkerValuePair = tuple[Terminal, Terminal]
 
 
-class GrammarTransformer(gge_transformers.DisposableTransformer[GrammarComponents]):
+class GrammarTransformer(gge_transformers.SinglePlassTransformer[GrammarComponents]):
     def __init__(self) -> None:
         super().__init__()
 

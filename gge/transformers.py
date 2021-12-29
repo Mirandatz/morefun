@@ -6,15 +6,27 @@ import lark
 _T = typing.TypeVar("_T")
 
 
-class State(enum.Enum):
-    READY_TO_RUN = enum.auto()
-    RUNNING = enum.auto()
-    DONE_RUNNING = enum.auto()
+class TransformerState(enum.Enum):
+    READY = enum.auto()
+    PARSING = enum.auto()
+    PARSE_DONE = enum.auto()
 
 
-class DisposableTransformer(lark.Transformer[_T]):
+class SinglePlassTransformer(lark.Transformer[_T]):
+    """
+    Specialization of a base transformer that:
+    - can only visit a tree if they start on the root node;
+    - raises exceptions if they visit an unexpected subtree/token;
+    - can only visit one tree.
+
+    The last property makes instances of this class effectively "disposable"
+    because they should be used once and then discarded. This "disposableness"
+    reduces the complexity of the object by not keeping track / resetting
+    internal states between calls to `transform`.
+    """
+
     def __init__(self) -> None:
-        self._state = State.READY_TO_RUN
+        self._state = TransformerState.READY
         super().__init__(visit_tokens=True)
 
     def __default__(
@@ -31,25 +43,25 @@ class DisposableTransformer(lark.Transformer[_T]):
         )
 
     def transform(self, tree: lark.Tree) -> _T:
-        assert self._state == State.READY_TO_RUN
+        assert self._state == TransformerState.READY
 
-        self._state = State.RUNNING
+        self._state = TransformerState.PARSING
 
         result = super().transform(tree)
 
-        self._state = State.DONE_RUNNING
+        self._state = TransformerState.PARSE_DONE
 
         return result
 
     def _raise_if_not_running(self) -> None:
-        if self._state != State.RUNNING:
+        if self._state != TransformerState.PARSING:
             raise ValueError(
                 "instances of this class should only be used once "
                 "and only the method `transform` should be called manually."
             )
 
     def _raise_if_not_done(self) -> None:
-        if self._state != State.DONE_RUNNING:
+        if self._state != TransformerState.PARSE_DONE:
             raise ValueError(
                 "this method should only be called after `transform` has been called"
             )

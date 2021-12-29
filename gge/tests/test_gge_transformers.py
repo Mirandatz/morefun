@@ -4,7 +4,7 @@ import pytest
 import gge.transformers as tr
 
 
-class BasicDisposableTransformer(tr.DisposableTransformer[None]):
+class BasicDisposableTransformer(tr.SinglePlassTransformer[None]):
     def __init__(self) -> None:
         super().__init__()
 
@@ -62,7 +62,7 @@ def test_raise_on_default_token() -> None:
         ew
     """
     tree = extract_ast(text)
-    trans = tr.DisposableTransformer()  # type: ignore
+    trans = tr.SinglePlassTransformer()  # type: ignore
 
     with pytest.raises(
         NotImplementedError,
