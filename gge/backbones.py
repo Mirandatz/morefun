@@ -1,6 +1,5 @@
 import collections
 import dataclasses
-import enum
 import functools
 import itertools
 import pathlib
@@ -8,6 +7,7 @@ import typing
 
 import lark
 
+import gge.layers as gl
 import gge.name_generator
 import gge.transformers as gge_transformers
 
@@ -19,6 +19,7 @@ def get_mesagrammar() -> str:
     return MESAGRAMMAR_PATH.read_text()
 
 
+<<<<<<< HEAD
 @dataclasses.dataclass(frozen=True)
 class Fork:
     name: str
@@ -105,6 +106,9 @@ def _raise_if_contains_repeated_names(layers: tuple[Layer, ...]) -> None:
 
 
 def _raise_if_contains_repeated_names(layers: tuple[Layer, ...]) -> None:
+=======
+def _raise_if_contains_repeated_names(layers: tuple[gl.Layer, ...]) -> None:
+>>>>>>> Move layers from backbones.py to layers.py
     names = collections.Counter(layer.name for layer in layers)
     repeated = [name for name, times in names.items() if times > 1]
     if repeated:
@@ -113,19 +117,19 @@ def _raise_if_contains_repeated_names(layers: tuple[Layer, ...]) -> None:
         )
 
 
-def _raise_if_contains_sequences_of_forks(layers: tuple[Layer, ...]) -> None:
+def _raise_if_contains_sequences_of_forks(layers: tuple[gl.Layer, ...]) -> None:
     previous, *other = layers
 
     for current in other:
-        if isinstance(current, Fork) and isinstance(previous, Fork):
-            raise ValueError("backbone is must not contain sequences of forks")
+        if isinstance(current, gl.Fork) and isinstance(previous, gl.Fork):
+            raise ValueError("backbone is must not contain sequences of `Fork`")
 
         previous = current
 
 
 @dataclasses.dataclass(frozen=True)
 class Backbone:
-    layers: tuple[Layer, ...]
+    layers: tuple[gl.Layer, ...]
 
     def __post_init__(self) -> None:
         assert isinstance(self.layers, tuple)
@@ -148,45 +152,43 @@ class BackboneSynthetizer(gge_transformers.SinglePassTransformer[Backbone]):
         return self._name_generator.create_name(prefix)
 
     @lark.v_args(inline=False)
-    def start(self, blocks: list[list[Layer]]) -> Backbone:
+    def start(self, blocks: list[list[gl.Layer]]) -> Backbone:
         self._raise_if_not_running()
 
         layers = tuple(layer for list_of_layers in blocks for layer in list_of_layers)
         return Backbone(layers)
 
     @lark.v_args(inline=False)
-    def block(self, parts: typing.Any) -> list[Layer]:
+    def block(self, parts: typing.Any) -> list[gl.Layer]:
         self._raise_if_not_running()
 
         return [x for x in parts if x is not None]
 
-    def MERGE(self, token: lark.Token | None = None) -> Merge | None:
+    def MERGE(self, token: lark.Token | None = None) -> gl.Merge | None:
         self._raise_if_not_running()
 
         if token is not None:
-            return Merge(self._create_layer_name("merge"))
+            return gl.Merge(self._create_layer_name("merge"))
         else:
             return None
 
-    def FORK(self, token: lark.Token | None = None) -> Fork | None:
+    def FORK(self, token: lark.Token | None = None) -> gl.Fork | None:
         self._raise_if_not_running()
 
         if token is not None:
-            return Fork(self._create_layer_name("fork"))
+            return gl.Fork(self._create_layer_name("fork"))
         else:
             return None
 
-    def layer(self, layer: Layer) -> Layer:
+    def layer(self, layer: gl.Layer) -> gl.Layer:
         self._raise_if_not_running()
 
         return layer
 
-    def conv_layer(
-        self, filter_count: int, kernel_size: int, stride: int
-    ) -> Conv2DLayer:
+    def conv_layer(self, filter_count: int, kernel_size: int, stride: int) -> gl.Conv2D:
         self._raise_if_not_running()
 
-        return Conv2DLayer(
+        return gl.Conv2D(
             name=self._create_layer_name("conv2d"),
             filter_count=filter_count,
             kernel_size=kernel_size,
@@ -213,23 +215,23 @@ class BackboneSynthetizer(gge_transformers.SinglePassTransformer[Backbone]):
 
     def batchnorm_layer(self) -> BatchNorm:
         self._raise_if_not_running()
-        return BatchNorm(self._create_layer_name("batchnorm"))
+        return gl.BatchNorm(self._create_layer_name("batchnorm"))
 
     def pool_layer(self, pool_type: PoolingType, stride: int) -> PoolingLayer:
         self._raise_if_not_running()
-        return PoolingLayer(
+        return gl.Pool(
             name=self._create_layer_name("pooling_layer"),
             pooling_type=pool_type,
             stride=stride,
         )
 
-    def POOL_MAX(self, _: lark.Token) -> PoolingType:
+    def POOL_MAX(self, _: lark.Token) -> gl.PoolType:
         self._raise_if_not_running()
-        return PoolingType.MAX_POOLING
+        return gl.PoolType.MAX_POOLING
 
-    def POOL_AVG(self, _: lark.Token) -> PoolingType:
+    def POOL_AVG(self, _: lark.Token) -> gl.PoolType:
         self._raise_if_not_running()
-        return PoolingType.AVG_POOLING
+        return gl.PoolType.AVG_POOLING
 
     def POOL_STRIDE(self, token: lark.Token) -> int:
         self._raise_if_not_running()

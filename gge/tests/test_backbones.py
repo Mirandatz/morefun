@@ -1,6 +1,7 @@
 import pytest
 
 import gge.backbones as bb
+import gge.layers as gl
 
 
 def test_conv2d() -> None:
@@ -9,7 +10,7 @@ def test_conv2d() -> None:
     """
 
     actual = bb.parse(tokenstream)
-    layers = (bb.Conv2DLayer("conv2d_0", 1, 2, 3),)
+    layers = (gl.Conv2D("conv2d_0", 1, 2, 3),)
     expected = bb.Backbone(layers)
     assert expected == actual
 
@@ -21,8 +22,8 @@ def test_merge() -> None:
 
     actual = bb.parse(tokenstream)
     layers = (
-        bb.Merge("merge_0"),
-        bb.Conv2DLayer("conv2d_0", 1, 2, 3),
+        gl.Merge("merge_0"),
+        gl.Conv2D("conv2d_0", 1, 2, 3),
     )
     expected = bb.Backbone(layers)
     assert expected == actual
@@ -35,8 +36,8 @@ def test_fork() -> None:
 
     actual = bb.parse(tokenstream)
     layers = (
-        bb.Conv2DLayer("conv2d_0", 1, 2, 3),
-        bb.Fork("fork_0"),
+        gl.Conv2D("conv2d_0", 1, 2, 3),
+        gl.Fork("fork_0"),
     )
     expected = bb.Backbone(layers)
     assert expected == actual
@@ -49,9 +50,9 @@ def test_merge_and_fork() -> None:
 
     actual = bb.parse(tokenstream)
     layers = (
-        bb.Merge("merge_0"),
-        bb.Conv2DLayer("conv2d_0", 1, 2, 3),
-        bb.Fork("fork_0"),
+        gl.Merge("merge_0"),
+        gl.Conv2D("conv2d_0", 1, 2, 3),
+        gl.Fork("fork_0"),
     )
     expected = bb.Backbone(layers)
     assert expected == actual
@@ -66,9 +67,9 @@ def test_simple_backbone() -> None:
 
     actual = bb.parse(tokenstream)
     layers = (
-        bb.Conv2DLayer("conv2d_0", 1, 2, 3),
-        bb.Conv2DLayer("conv2d_1", 5, 6, 7),
-        bb.Conv2DLayer("conv2d_2", 8, 9, 10),
+        gl.Conv2D("conv2d_0", 1, 2, 3),
+        gl.Conv2D("conv2d_1", 5, 6, 7),
+        gl.Conv2D("conv2d_2", 8, 9, 10),
     )
     expected = bb.Backbone(layers)
 
@@ -95,17 +96,17 @@ def test_complex_backbone() -> None:
 
     actual = bb.parse(tokenstream)
     layers = (
-        bb.Conv2DLayer("conv2d_0", 1, 2, 3),
-        bb.Fork("fork_0"),
-        bb.Merge("merge_0"),
-        bb.Conv2DLayer("conv2d_1", 4, 5, 6),
-        bb.Fork("fork_1"),
-        bb.Merge("merge_1"),
-        bb.Conv2DLayer("conv2d_2", 7, 8, 9),
-        bb.Conv2DLayer("conv2d_3", 10, 11, 12),
-        bb.Conv2DLayer("conv2d_4", 13, 14, 15),
-        bb.Merge("merge_2"),
-        bb.Conv2DLayer("conv2d_5", 16, 17, 18),
+        gl.Conv2D("conv2d_0", 1, 2, 3),
+        gl.Fork("fork_0"),
+        gl.Merge("merge_0"),
+        gl.Conv2D("conv2d_1", 4, 5, 6),
+        gl.Fork("fork_1"),
+        gl.Merge("merge_1"),
+        gl.Conv2D("conv2d_2", 7, 8, 9),
+        gl.Conv2D("conv2d_3", 10, 11, 12),
+        gl.Conv2D("conv2d_4", 13, 14, 15),
+        gl.Merge("merge_2"),
+        gl.Conv2D("conv2d_5", 16, 17, 18),
     )
     expected = bb.Backbone(layers)
     assert expected == actual
@@ -116,7 +117,7 @@ def test_standalone_batchnorm() -> None:
     "batchnorm"
     """
     actual = bb.parse(tokenstream)
-    layers = (bb.BatchNorm("batchnorm_0"),)
+    layers = (gl.BatchNorm("batchnorm_0"),)
     expected = bb.Backbone(layers)
     assert expected == actual
 
@@ -128,8 +129,8 @@ def test_batchnorm_after_conv() -> None:
     """
     actual = bb.parse(tokenstream)
     layers = (
-        bb.Conv2DLayer("conv2d_0", 1, 2, 3),
-        bb.BatchNorm("batchnorm_0"),
+        gl.Conv2D("conv2d_0", 1, 2, 3),
+        gl.BatchNorm("batchnorm_0"),
     )
     expected = bb.Backbone(layers)
     assert expected == actual
@@ -138,11 +139,11 @@ def test_batchnorm_after_conv() -> None:
 @pytest.mark.parametrize(
     argnames=["text", "layer"],
     argvalues=[
-        ('"max"', bb.PoolingLayer("pooling_layer_0", bb.PoolingType.MAX_POOLING, 1)),
-        ('"avg"', bb.PoolingLayer("pooling_layer_0", bb.PoolingType.AVG_POOLING, 1)),
+        ('"max"', gl.Pool("pooling_layer_0", gl.PoolType.MAX_POOLING, 1)),
+        ('"avg"', gl.Pool("pooling_layer_0", gl.PoolType.AVG_POOLING, 1)),
     ],
 )
-def test_pooling_layer_type(text: str, layer: bb.PoolingLayer) -> None:
+def test_pooling_layer_type(text: str, layer: gl.Pool) -> None:
     tokenstream = f"""
     "pool2d" {text} 1
     """
@@ -154,11 +155,11 @@ def test_pooling_layer_type(text: str, layer: bb.PoolingLayer) -> None:
 @pytest.mark.parametrize(
     argnames=["text", "layer"],
     argvalues=[
-        ("1", bb.PoolingLayer("pooling_layer_0", bb.PoolingType.MAX_POOLING, 1)),
-        ("2", bb.PoolingLayer("pooling_layer_0", bb.PoolingType.MAX_POOLING, 2)),
+        ("1", gl.Pool("pooling_layer_0", gl.PoolType.MAX_POOLING, 1)),
+        ("2", gl.Pool("pooling_layer_0", gl.PoolType.MAX_POOLING, 2)),
     ],
 )
-def test_pooling_layer_stride(text: str, layer: bb.PoolingLayer) -> None:
+def test_pooling_layer_stride(text: str, layer: gl.Pool) -> None:
     tokenstream = f"""
     "pool2d" "max" {text}
     """

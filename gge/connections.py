@@ -3,6 +3,7 @@ import enum
 import itertools
 
 import gge.backbones as bb
+import gge.layers as gl
 import gge.randomness as rand
 
 
@@ -53,10 +54,10 @@ def extract_forks_masks_lengths(backbone: bb.Backbone) -> tuple[int, ...]:
     fork_count = 0
 
     for layer in backbone.layers:
-        if isinstance(layer, bb.Fork):
+        if isinstance(layer, gl.Fork):
             fork_count += 1
 
-        if isinstance(layer, bb.Merge):
+        if isinstance(layer, gl.Merge):
             lengths.append(fork_count)
 
     return tuple(lengths)
@@ -91,9 +92,9 @@ def create_connections_schema(
     return ConnectionsSchema(tuple(merge_layers))
 
 
-def collect_sources(backbone: bb.Backbone) -> list[bb.Layer]:
+def collect_sources(backbone: bb.Backbone) -> list[gl.Layer]:
     return [
         source
         for source, next in itertools.pairwise(backbone.layers)
-        if isinstance(next, bb.Fork)
+        if isinstance(next, gl.Fork)
     ]
