@@ -72,7 +72,7 @@ class BatchNorm:
         assert self.name
 
 
-Layer: typing.TypeAlias = Conv2DLayer | PoolingLayer | BatchNorm | Fork | Merge
+Layer = Conv2DLayer | PoolingLayer | BatchNorm | Fork | Merge
 
 
 @typeguard.typechecked
