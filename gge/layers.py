@@ -1,29 +1,27 @@
 import dataclasses
 import enum
 import math
+import typing
 
-import typeguard
 
-
-@typeguard.typechecked
 @dataclasses.dataclass(frozen=True)
 class Fork:
     name: str
 
     def __post_init__(self) -> None:
+        assert isinstance(self.name, str)
         assert self.name
 
 
-@typeguard.typechecked
 @dataclasses.dataclass(frozen=True)
 class Merge:
     name: str
 
     def __post_init__(self) -> None:
+        assert isinstance(self.name, str)
         assert self.name
 
 
-@typeguard.typechecked
 @dataclasses.dataclass(frozen=True)
 class Conv2D:
     name: str
@@ -32,6 +30,11 @@ class Conv2D:
     stride: int
 
     def __post_init__(self) -> None:
+        assert isinstance(self.name, str)
+        assert isinstance(self.filter_count, int)
+        assert isinstance(self.kernel_size, int)
+        assert isinstance(self.stride, int)
+
         assert self.name
         assert self.filter_count > 0
         assert self.kernel_size > 0
@@ -43,7 +46,6 @@ class PoolType(enum.Enum):
     AVG_POOLING = enum.auto()
 
 
-@typeguard.typechecked
 @dataclasses.dataclass(frozen=True)
 class Pool2D:
     name: str
@@ -51,23 +53,26 @@ class Pool2D:
     stride: int
 
     def _post_init__(self) -> None:
+        assert isinstance(self.name, str)
+        assert isinstance(self.pooling_type, PoolType)
+        assert isinstance(self.stride, int)
+
         assert self.name
         assert self.stride > 0
 
 
-@typeguard.typechecked
 @dataclasses.dataclass(frozen=True)
 class BatchNorm:
     name: str
 
     def __post_init__(self) -> None:
+        assert isinstance(self.name, str)
         assert self.name
 
 
-Layer = Conv2D | Pool2D | BatchNorm | Fork | Merge
+Layer: typing.TypeAlias = Conv2D | Pool2D | BatchNorm | Fork | Merge
 
 
-@typeguard.typechecked
 @dataclasses.dataclass(frozen=True)
 class Shape:
     width: int
@@ -75,15 +80,21 @@ class Shape:
     depth: int
 
     def __post_int__(self) -> None:
+        assert isinstance(self.width, int)
+        assert isinstance(self.height, int)
+        assert isinstance(self.depth, int)
+
         assert self.width >= 1
         assert self.height >= 1
         assert self.depth >= 1
 
 
-@typeguard.typechecked
 @dataclasses.dataclass(frozen=True)
 class Input:
     shape: Shape
+
+    def __post_int__(self) -> None:
+        assert isinstance(self.shape, Shape)
 
     @property
     def name(self) -> str:
@@ -95,10 +106,13 @@ class Input:
 
 
 @dataclasses.dataclass(frozen=True)
-@typeguard.typechecked
 class ConnectedConv2D:
     input_layer: "ConnectedLayer"
     params: Conv2D
+
+    def __post_int__(self) -> None:
+        assert isinstance(self.input_layer, ConnectedLayer)
+        assert isinstance(self.params, Conv2D)
 
     @property
     def output_shape(self) -> Shape:
@@ -110,11 +124,14 @@ class ConnectedConv2D:
         return Shape(width=out_width, height=out_height, depth=out_depth)
 
 
-@typeguard.typechecked
 @dataclasses.dataclass(frozen=True)
 class ConnectedPool2D:
     input_layer: "ConnectedLayer"
     params: Pool2D
+
+    def __post_int__(self) -> None:
+        assert isinstance(self.input_layer, ConnectedLayer)
+        assert isinstance(self.params, Pool2D)
 
     @property
     def output_shape(self) -> Shape:
@@ -126,15 +143,24 @@ class ConnectedPool2D:
         return Shape(width=out_width, height=out_height, depth=out_depth)
 
 
-@typeguard.typechecked
 @dataclasses.dataclass(frozen=True)
 class ConnectedBatchNorm:
     input_layer: "ConnectedLayer"
     params: BatchNorm
 
+    def __post_int__(self) -> None:
+        assert isinstance(self.input_layer, ConnectedLayer)
+        assert isinstance(self.params, BatchNorm)
+
     @property
     def output_shape(self) -> Shape:
-        return self.input_layer.output_shape
+        shape = self.input_layer.output_shape
+
+        # This assert is here because mypy ;-; wants (?)
+        assert isinstance(shape, Shape)
+        return shape
 
 
-ConnectedLayer = Input | ConnectedConv2D | ConnectedPool2D
+ConnectedLayer: typing.TypeAlias = (
+    Input | ConnectedPool2D | ConnectedPool2D | ConnectedBatchNorm
+)

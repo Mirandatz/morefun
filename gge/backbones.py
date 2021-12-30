@@ -123,11 +123,11 @@ class BackboneSynthetizer(gge_transformers.SinglePassTransformer[Backbone]):
 
         return size
 
-    def batchnorm_layer(self) -> BatchNorm:
+    def batchnorm_layer(self) -> gl.BatchNorm:
         self._raise_if_not_running()
         return gl.BatchNorm(self._create_layer_name("batchnorm"))
 
-    def pool_layer(self, pool_type: PoolingType, stride: int) -> PoolingLayer:
+    def pool_layer(self, pool_type: gl.PoolType, stride: int) -> gl.Pool2D:
         self._raise_if_not_running()
         return gl.Pool2D(
             name=self._create_layer_name("pooling_layer"),
