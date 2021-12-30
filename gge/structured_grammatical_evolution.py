@@ -2,25 +2,27 @@ import collections
 import dataclasses
 import functools
 
-import typeguard
-
 import gge.grammars as gg
 import gge.randomness as rand
 
 
 # order=True because we want to store genes in a consistent order
-@typeguard.typechecked
 @dataclasses.dataclass(frozen=True, order=True)
 class Gene:
     nonterminal: gg.NonTerminal
     expansions_indices: tuple[int, ...]
 
     def __post_init__(self) -> None:
+        assert isinstance(self.nonterminal, gg.NonTerminal)
+
+        assert isinstance(self.expansions_indices, tuple)
+        for ei in self.expansions_indices:
+            assert isinstance(ei, int)
+
         assert len(self.expansions_indices) > 0
         assert all(i >= 0 for i in self.expansions_indices)
 
 
-@typeguard.typechecked
 @dataclasses.dataclass(frozen=True)
 class Genotype:
     genes: tuple[Gene, ...]

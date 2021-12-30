@@ -1,8 +1,6 @@
 import dataclasses
 import enum
 
-import typeguard
-
 import gge.backbones as bb
 import gge.randomness as rand
 
@@ -23,18 +21,29 @@ class ReshapeStrategy(enum.Enum):
     UPSAMPLE = enum.auto()
 
 
-@typeguard.typechecked
 @dataclasses.dataclass(frozen=True)
 class MergeLayer:
     forks_mask: tuple[bool, ...]
     merge_strategy: MergeStrategy
     reshape_strategy: ReshapeStrategy
 
+    def __post_init__(self) -> None:
+        assert isinstance(self.forks_mask, tuple)
+        for value in self.forks_mask:
+            assert isinstance(value, bool)
 
-@typeguard.typechecked
+        assert isinstance(self.merge_strategy, MergeStrategy)
+        assert isinstance(self.reshape_strategy, ReshapeStrategy)
+
+
 @dataclasses.dataclass(frozen=True)
 class ConnectionsSchema:
     merge_layers: tuple[MergeLayer, ...]
+
+    def __post_init__(self) -> None:
+        assert isinstance(self.merge_layers, tuple)
+        for ml in self.merge_layers:
+            assert isinstance(ml, MergeLayer)
 
 
 def extract_forks_masks_lengths(backbone: bb.Backbone) -> tuple[int, ...]:

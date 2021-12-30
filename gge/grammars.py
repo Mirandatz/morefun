@@ -5,7 +5,6 @@ import pathlib
 import typing
 
 import lark
-import typeguard
 
 import gge.transformers as gge_transformers
 
@@ -45,12 +44,13 @@ def _is_valid_name(value: str) -> bool:
     return all(chars_are_valid)
 
 
-@typeguard.typechecked
 @dataclasses.dataclass(order=True, frozen=True)
 class NonTerminal:
     text: str
 
     def __post_init__(self) -> None:
+        assert isinstance(self.text, str)
+
         error_msg = (
             "text must be non empty, "
             "can only contain lowercase alphanum and underscores, "
@@ -68,12 +68,13 @@ class NonTerminal:
         return f"NT({self.text})"
 
 
-@typeguard.typechecked
 @dataclasses.dataclass(order=True, frozen=True)
 class Terminal:
     text: str
 
     def __post_init__(self) -> None:
+        assert isinstance(self.text, str)
+
         if _can_be_parsed_as_float(self.text):
             return
 
@@ -103,7 +104,9 @@ class Terminal:
         return f"T({self.text})"
 
 
-@typeguard.typechecked
+Symbol: typing.TypeAlias = Terminal | NonTerminal
+
+
 @dataclasses.dataclass(order=True, frozen=True)
 class RuleOption:
     """
@@ -116,9 +119,13 @@ class RuleOption:
     option2 = x * y
     """
 
-    symbols: tuple[Terminal | NonTerminal, ...]
+    symbols: tuple[Symbol, ...]
 
     def __post_init__(self) -> None:
+        assert isinstance(self.symbols, tuple)
+        for s in self.symbols:
+            assert isinstance(s, Symbol)
+
         assert len(self.symbols) >= 1
 
     def __repr__(self) -> str:
@@ -126,17 +133,19 @@ class RuleOption:
         return f"RuleOption({all_options})"
 
 
-@typeguard.typechecked
 @dataclasses.dataclass(order=True, frozen=True)
 class ProductionRule:
     lhs: NonTerminal
     rhs: RuleOption
 
+    def __post_init__(self) -> None:
+        assert isinstance(self.lhs, NonTerminal)
+        assert isinstance(self.rhs, RuleOption)
+
     def __repr__(self) -> str:
         return f"Rule({self.lhs}->{self.rhs})"
 
 
-@typeguard.typechecked
 @dataclasses.dataclass(frozen=True)
 class GrammarComponents:
     nonterminals: tuple[NonTerminal, ...]
@@ -145,6 +154,20 @@ class GrammarComponents:
     start_symbol: NonTerminal
 
     def __post_init__(self) -> None:
+        assert isinstance(self.nonterminals, tuple)
+        for nt in self.nonterminals:
+            assert isinstance(nt, NonTerminal)
+
+        assert isinstance(self.terminals, tuple)
+        for term in self.terminals:
+            assert isinstance(term, Terminal)
+
+        assert isinstance(self.rules, tuple)
+        for r in self.rules:
+            assert isinstance(r, ProductionRule)
+
+        assert isinstance(self.start_symbol, NonTerminal)
+
         N = self.nonterminals
         T = self.terminals
         P = self.rules
@@ -333,7 +356,6 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer[GrammarComponent
             start_symbol=self._start,
         )
 
-    @typeguard.typechecked
     def _register_terminal(self, text: str) -> Terminal:
         self._raise_if_not_running()
         assert type(text) == str
@@ -483,12 +505,10 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer[GrammarComponent
         self._raise_if_not_running()
         return activations
 
-    @typeguard.typechecked
     @lark.v_args(inline=True)
     def batchnorm_layer(self, term: Terminal) -> list[RuleOption]:
         return [RuleOption((term,))]
 
-    @typeguard.typechecked
     @lark.v_args(inline=True)
     def pooling_layer(
         self,
@@ -499,7 +519,6 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer[GrammarComponent
         combinations = itertools.product(types, strides)
         return [RuleOption((marker, *tp, *st)) for tp, st in combinations]
 
-    @typeguard.typechecked
     @lark.v_args(inline=True)
     def pooling_type_seq(
         self,
@@ -508,7 +527,6 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer[GrammarComponent
     ) -> list[tuple[Terminal, Terminal]]:
         return [(marker, v) for v in values]
 
-    @typeguard.typechecked
     @lark.v_args(inline=True)
     def pooling_stride_seq(
         self,
