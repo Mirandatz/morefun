@@ -2,13 +2,14 @@ import collections
 import dataclasses
 import enum
 import functools
+import itertools
 import pathlib
 import typing
 
 import lark
-import typeguard
 
 import gge.transformers as gge_transformers
+import gge.type_checking as tc
 
 MESAGRAMMAR_PATH = pathlib.Path(__file__).parent.parent / "data" / "mesagrammar.lark"
 
@@ -18,25 +19,24 @@ def get_mesagrammar() -> str:
     return MESAGRAMMAR_PATH.read_text()
 
 
-@typeguard.typechecked
 @dataclasses.dataclass(frozen=True)
 class Fork:
     name: str
 
     def __post_init__(self) -> None:
+        assert isinstance(self.name, str)
         assert self.name
 
 
-@typeguard.typechecked
 @dataclasses.dataclass(frozen=True)
 class Merge:
     name: str
 
     def __post_init__(self) -> None:
+        assert isinstance(self.name, str)
         assert self.name
 
 
-@typeguard.typechecked
 @dataclasses.dataclass(frozen=True)
 class Conv2DLayer:
     name: str
@@ -45,6 +45,11 @@ class Conv2DLayer:
     stride: int
 
     def __post_init__(self) -> None:
+        assert isinstance(self.name, str)
+        assert isinstance(self.filter_count, int)
+        assert isinstance(self.kernel_size, int)
+        assert isinstance(self.stride, int)
+
         assert self.name
         assert self.filter_count > 0
         assert self.kernel_size > 0
@@ -56,7 +61,6 @@ class PoolingType(enum.Enum):
     AVG_POOLING = enum.auto()
 
 
-@typeguard.typechecked
 @dataclasses.dataclass(frozen=True)
 class PoolingLayer:
     name: str
@@ -64,34 +68,50 @@ class PoolingLayer:
     stride: int
 
     def _post_init__(self) -> None:
+        assert isinstance(self.name, str)
+        assert isinstance(self.pooling_type, PoolingType)
+        assert isinstance(self.stride, int)
+
         assert self.name
         assert self.stride > 0
 
 
-@typeguard.typechecked
 @dataclasses.dataclass(frozen=True)
 class BatchNorm:
     name: str
 
     def __post_init__(self) -> None:
+        assert isinstance(self.name, str)
         assert self.name
 
 
 Layer = Conv2DLayer | PoolingLayer | BatchNorm | Fork | Merge
 
 
-@typeguard.typechecked
+def _raise_if_contains_sequence_of_forks(layers: tuple[Layer, ...]) -> None:
+    for a, b in itertools.pairwise(layers):
+        if isinstance(a, Fork) and isinstance(b, Fork):
+            raise ValueError("layers can not contain sequences of forks")
+
+
+def _raise_if_contains_repeated_names(layers: tuple[Layer, ...]) -> None:
+    names = collections.Counter(layer.name for layer in layers)
+    repeated = [name for name, times in names.items() if times > 1]
+    if repeated:
+        raise ValueError(
+            "layers must have unique names, "
+            f"but the following are repeated: {repeated}"
+        )
+
+
 @dataclasses.dataclass(frozen=True)
 class Backbone:
     layers: tuple[Layer, ...]
 
     def __post_init__(self) -> None:
-        names = collections.Counter(layer.name for layer in self.layers)
-        repeated = [name for name, times in names.items() if times > 1]
-        if repeated:
-            raise ValueError(
-                f"layers must have unique names, but the following are repeated: {repeated}"
-            )
+        tc.assert_tuple_is_homogeneous(self.layers)
+        _raise_if_contains_sequence_of_forks(self.layers)
+        _raise_if_contains_repeated_names(self.layers)
 
 
 @lark.v_args(inline=True)
@@ -171,12 +191,10 @@ class BackboneSynthetizer(gge_transformers.SinglePassTransformer[Backbone]):
 
         return size
 
-    @typeguard.typechecked
     def batchnorm_layer(self) -> BatchNorm:
         self._raise_if_not_running()
         return BatchNorm(self._create_layer_name("batchnorm"))
 
-    @typeguard.typechecked
     def pool_layer(self, pool_type: PoolingType, stride: int) -> PoolingLayer:
         self._raise_if_not_running()
         return PoolingLayer(
