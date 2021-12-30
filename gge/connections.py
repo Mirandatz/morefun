@@ -1,8 +1,6 @@
 import dataclasses
 import enum
 
-import typeguard
-
 import gge.backbones as bb
 import gge.randomness as rand
 
