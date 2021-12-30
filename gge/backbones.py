@@ -9,7 +9,6 @@ import typing
 import lark
 
 import gge.transformers as gge_transformers
-import gge.type_checking as tc
 
 MESAGRAMMAR_PATH = pathlib.Path(__file__).parent.parent / "data" / "mesagrammar.lark"
 
@@ -85,7 +84,7 @@ class BatchNorm:
         assert self.name
 
 
-Layer = Conv2DLayer | PoolingLayer | BatchNorm | Fork | Merge
+Layer: typing.TypeAlias = Conv2DLayer | PoolingLayer | BatchNorm | Fork | Merge
 
 
 def _raise_if_contains_sequence_of_forks(layers: tuple[Layer, ...]) -> None:
@@ -109,7 +108,10 @@ class Backbone:
     layers: tuple[Layer, ...]
 
     def __post_init__(self) -> None:
-        tc.assert_tuple_is_homogeneous(self.layers, Layer)
+        assert isinstance(self.layers, tuple)
+        for layer in self.layers:
+            assert isinstance(layer, Layer)
+
         _raise_if_contains_sequence_of_forks(self.layers)
         _raise_if_contains_repeated_names(self.layers)
 

@@ -1,15 +1,15 @@
-from typing import NewType, Optional
+import typing
 
 import numpy as np
 
-RNG = NewType("RNG", np.random.Generator)
+RNG = typing.NewType("RNG", np.random.Generator)
 
 
 def get_rng_seed() -> int:
     return 42
 
 
-def create_rng(seed: Optional[int] = None) -> RNG:
+def create_rng(seed: typing.Optional[int] = None) -> RNG:
     if seed is None:
         seed = get_rng_seed()
 

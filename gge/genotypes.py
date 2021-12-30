@@ -1,18 +1,19 @@
 import dataclasses
 
-import typeguard
-
 import gge.backbones as bb
 import gge.connections as conn
 import gge.randomness as rand
 import gge.structured_grammatical_evolution as sge
 
 
-@typeguard.typechecked
 @dataclasses.dataclass(frozen=True)
 class Genotype:
     backbone_genotype: sge.Genotype
     connections_genotype: conn.ConnectionsSchema
+
+    def __post_init__(self) -> None:
+        assert isinstance(self.backbone_genotype, sge.Genotype)
+        assert isinstance(self.connections_genotype, conn.ConnectionsSchema)
 
 
 def create_genotype(backbone_genemancer: sge.Genemancer, rng: rand.RNG) -> Genotype:
