@@ -131,4 +131,16 @@ def test_connect_upsampling_shortcut_identity() -> None:
 
 
 def test_connect_upsampling_shortcut() -> None:
-    pass
+    src_layer = gl.ConnectedBatchNorm(
+        input_layer=gl.Input(gl.Shape(1, 2, 3)),
+        params=gl.BatchNorm(name="wololo"),
+    )
+    dst_shape = gl.Shape(width=5, height=10, depth=19)
+
+    connected_shortcut = conn.connect_upsampling_shortcut(
+        src_layer, dst_shape, "whatever"
+    )
+
+    assert connected_shortcut != src_layer
+    assert connected_shortcut.input_layer == src_layer
+    assert connected_shortcut.output_shape == dst_shape
