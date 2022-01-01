@@ -98,3 +98,47 @@ def collect_sources(backbone: bb.Backbone) -> list[gl.Layer]:
         for source, next in itertools.pairwise(backbone.layers)
         if isinstance(next, gl.Fork)
     ]
+
+
+def downsampling_shortcut(
+    src: gl.Shape,
+    dst: gl.Shape,
+    name: str,
+) -> gl.Conv2D:
+    assert src.width > dst.width
+    assert src.height > dst.height
+
+    width_ratio = src.width / dst.width
+    if width_ratio != int(width_ratio):
+        raise ValueError("src.width must be a multiple of dst.width")
+
+    height_ratio = src.height / dst.height
+    if height_ratio != int(height_ratio):
+        raise ValueError("src.height must be a multiple of dst.height")
+
+    if width_ratio != height_ratio:
+        raise ValueError("src and dst must have the same width-to-height ratio")
+
+    return gl.Conv2D(
+        name=name,
+        filter_count=dst.depth,
+        kernel_size=1,
+        stride=int(width_ratio),
+    )
+
+
+def connect_downsampling_shortcut(
+    src: gl.ConnectedLayer,
+    target_shape: gl.Shape,
+    name: str,
+) -> gl.Layer:
+    if src.output_shape == target_shape:
+        return src
+
+    shortcut = downsampling_shortcut(
+        src=src.output_shape,
+        dst=target_shape,
+        name=name,
+    )
+
+    return gl.ConnectedConv2D(input_layer=src, params=shortcut)
