@@ -41,6 +41,25 @@ class Conv2D:
         assert self.stride > 0
 
 
+@dataclasses.dataclass(frozen=True)
+class Conv2DTranspose:
+    name: str
+    filter_count: int
+    kernel_size: int
+    stride: int
+
+    def __post_init__(self) -> None:
+        assert isinstance(self.name, str)
+        assert isinstance(self.filter_count, int)
+        assert isinstance(self.kernel_size, int)
+        assert isinstance(self.stride, int)
+
+        assert self.name
+        assert self.filter_count > 0
+        assert self.kernel_size > 0
+        assert self.stride > 0
+
+
 class PoolType(enum.Enum):
     MAX_POOLING = enum.auto()
     AVG_POOLING = enum.auto()
@@ -125,6 +144,25 @@ class ConnectedConv2D:
 
 
 @dataclasses.dataclass(frozen=True)
+class ConnectedConv2DTranspose:
+    input_layer: "ConnectedLayer"
+    params: Conv2DTranspose
+
+    def __post_int__(self) -> None:
+        assert isinstance(self.input_layer, ConnectedLayer)
+        assert isinstance(self.params, Conv2DTranspose)
+
+    @property
+    def output_shape(self) -> Shape:
+        input_shape = self.input_layer.output_shape
+        params = self.params
+        out_width = input_shape.width * params.stride
+        out_height = input_shape.height * params.stride
+        out_depth = self.params.filter_count
+        return Shape(width=out_width, height=out_height, depth=out_depth)
+
+
+@dataclasses.dataclass(frozen=True)
 class ConnectedPool2D:
     input_layer: "ConnectedLayer"
     params: Pool2D
@@ -162,5 +200,9 @@ class ConnectedBatchNorm:
 
 
 ConnectedLayer: typing.TypeAlias = (
-    Input | ConnectedPool2D | ConnectedPool2D | ConnectedBatchNorm
+    Input
+    | ConnectedPool2D
+    | ConnectedConv2DTranspose
+    | ConnectedPool2D
+    | ConnectedBatchNorm
 )

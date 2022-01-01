@@ -131,7 +131,7 @@ def connect_downsampling_shortcut(
     src: gl.ConnectedLayer,
     target_shape: gl.Shape,
     name: str,
-) -> gl.Layer:
+) -> gl.ConnectedLayer:
     if src.output_shape == target_shape:
         return src
 
@@ -142,3 +142,47 @@ def connect_downsampling_shortcut(
     )
 
     return gl.ConnectedConv2D(input_layer=src, params=shortcut)
+
+
+def upsampling_shortcut(
+    src: gl.Shape,
+    dst: gl.Shape,
+    name: str,
+) -> gl.Conv2DTranspose:
+    assert src.width < dst.width
+    assert src.height < dst.height
+
+    width_ratio = dst.width / src.width
+    if width_ratio != int(width_ratio):
+        raise ValueError("dst.width must be a multiple of src.width")
+
+    height_ratio = dst.height / src.height
+    if height_ratio != int(height_ratio):
+        raise ValueError("dst.height must be a multiple of src.height")
+
+    if width_ratio != height_ratio:
+        raise ValueError("src and dst must have the same width-to-height ratio")
+
+    return gl.Conv2DTranspose(
+        name=name,
+        filter_count=dst.depth,
+        kernel_size=1,
+        stride=int(width_ratio),
+    )
+
+
+def connect_upsampling_shortcut(
+    src: gl.ConnectedLayer,
+    target_shape: gl.Shape,
+    name: str,
+) -> gl.ConnectedLayer:
+    if src.output_shape == target_shape:
+        return src
+
+    shortcut = upsampling_shortcut(
+        src=src.output_shape,
+        dst=target_shape,
+        name=name,
+    )
+
+    return gl.ConnectedConv2DTranspose(input_layer=src, params=shortcut)
