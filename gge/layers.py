@@ -1,5 +1,6 @@
 import dataclasses
 import enum
+import itertools
 import math
 import typing
 
@@ -199,10 +200,30 @@ class ConnectedBatchNorm:
         return shape
 
 
+@dataclasses.dataclass(frozen=True)
+class Add:
+    inputs: tuple["ConnectedLayer", ...]
+
+    def __post_init__(self) -> None:
+        assert isinstance(self.inputs, ConnectedLayer)
+        for layer in self.inputs:
+            assert isinstance(layer, ConnectedLayer)
+
+        assert len(self.inputs) >= 1
+        for a, b in itertools.pairwise(self.inputs):
+            assert a.output_shape == b.output_shape
+
+    @property
+    def output_shape(self) -> Shape:
+        shape: Shape = self.inputs[0].output_shape
+        return shape
+
+
 ConnectedLayer: typing.TypeAlias = (
     Input
     | ConnectedConv2D
     | ConnectedConv2DTranspose
     | ConnectedPool2D
     | ConnectedBatchNorm
+    | Add
 )
