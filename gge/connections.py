@@ -13,7 +13,6 @@ class MergeStrategy(enum.Enum):
     # effectively disable "multiconnections", keeping only the backbone
     NO_MERGE = enum.auto()
     ADD = enum.auto()
-    MULTIPLY = enum.auto()
     CONCAT = enum.auto()
 
 
