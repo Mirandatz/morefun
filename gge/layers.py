@@ -201,7 +201,7 @@ class ConnectedBatchNorm:
 
 ConnectedLayer: typing.TypeAlias = (
     Input
-    | ConnectedPool2D
+    | ConnectedConv2D
     | ConnectedConv2DTranspose
     | ConnectedPool2D
     | ConnectedBatchNorm
