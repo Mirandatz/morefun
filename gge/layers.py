@@ -219,6 +219,33 @@ class Add:
         return shape
 
 
+@dataclasses.dataclass(frozen=True)
+class Concat:
+    inputs: tuple["ConnectedLayer", ...]
+
+    def __post_init__(self) -> None:
+        assert isinstance(self.inputs, ConnectedLayer)
+        for layer in self.inputs:
+            assert isinstance(layer, ConnectedLayer)
+
+        assert len(self.inputs) >= 1
+        for a, b in itertools.pairwise(self.inputs):
+            assert a.output_shape.width == b.output_shape.width
+            assert a.output_shape.height == b.output_shape.height
+
+    @property
+    def output_shape(self) -> Shape:
+        depths = (layer.output_shape.depth for layer in self.inputs)
+        total_depth = sum(depths)
+
+        sample_shape = self.inputs[0].output_shape
+        return Shape(
+            width=sample_shape.width,
+            height=sample_shape.height,
+            depth=total_depth,
+        )
+
+
 ConnectedLayer: typing.TypeAlias = (
     Input
     | ConnectedConv2D
@@ -226,4 +253,5 @@ ConnectedLayer: typing.TypeAlias = (
     | ConnectedPool2D
     | ConnectedBatchNorm
     | Add
+    | Concat
 )
