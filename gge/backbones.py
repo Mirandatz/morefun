@@ -46,7 +46,10 @@ class Backbone:
         for layer in self.layers:
             assert isinstance(layer, gl.Layer)
 
-        len(self.layers) >= 1
+        real_layers = filter(gl.is_real_layer, self.layers)
+        if not any(real_layers):
+            raise ValueError("layers must contain at least one real layer")
+
         _raise_if_contains_sequences_of_forks(self.layers)
         _raise_if_contains_repeated_names(self.layers)
 

@@ -94,6 +94,12 @@ class BatchNorm:
 Layer: typing.TypeAlias = Conv2D | Pool2D | BatchNorm | Fork | Merge
 
 
+def is_real_layer(layer: Layer) -> bool:
+    assert isinstance(layer, Layer)
+
+    return not isinstance(layer, Fork | Merge)
+
+
 @dataclasses.dataclass(frozen=True)
 class Shape:
     width: int
