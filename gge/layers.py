@@ -237,8 +237,13 @@ class ConnectedAdd:
             assert isinstance(layer, ConnectedLayer)
 
         assert len(self.inputs) >= 1
-        for a, b in itertools.pairwise(self.inputs):
-            assert a.output_shape == b.output_shape
+
+        shapes = (layer.output_shape for layer in self.inputs)
+        if len(set(shapes)) != 1:
+            raise ValueError("inputs must have the same shape")
+
+        if len(set(self.inputs)) != len(self.inputs):
+            raise ValueError("inputs must not contain duplicated layers")
 
     @property
     def output_shape(self) -> Shape:
@@ -259,6 +264,9 @@ class ConnectedConcatenate:
         for a, b in itertools.pairwise(self.inputs):
             assert a.output_shape.width == b.output_shape.width
             assert a.output_shape.height == b.output_shape.height
+
+        if len(set(self.inputs)) != len(self.inputs):
+            raise ValueError("inputs must not contain duplicated layers")
 
     @property
     def output_shape(self) -> Shape:
