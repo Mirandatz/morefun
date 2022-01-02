@@ -89,7 +89,7 @@ def create_connections_schema(
     return ConnectionsSchema(tuple(merge_layers))
 
 
-def collect_sources(backbone: bb.Backbone) -> list[gl.Layer]:
+def collect_fork_sources(backbone: bb.Backbone) -> list[gl.Layer]:
     return [
         source
         for source, next in itertools.pairwise(backbone.layers)
