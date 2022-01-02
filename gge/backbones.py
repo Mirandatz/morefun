@@ -59,7 +59,7 @@ class BackboneSynthetizer(gge_transformers.SinglePassTransformer[Backbone]):
 
     def _create_layer_name(self, prefix: str) -> str:
         self._raise_if_not_running()
-        return self._name_generator.create_name(prefix)
+        return self._name_generator.gen_name(prefix)
 
     @lark.v_args(inline=False)
     def start(self, blocks: list[list[gl.Layer]]) -> Backbone:

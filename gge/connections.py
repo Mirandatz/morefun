@@ -4,6 +4,7 @@ import itertools
 
 import gge.backbones as bb
 import gge.layers as gl
+import gge.name_generator as ng
 import gge.randomness as rand
 
 
@@ -100,88 +101,92 @@ def collect_sources(backbone: bb.Backbone) -> list[gl.Layer]:
 
 
 def downsampling_shortcut(
-    src: gl.Shape,
-    dst: gl.Shape,
-    name: str,
-) -> gl.Conv2D:
-    assert src.width > dst.width
-    assert src.height > dst.height
-
-    width_ratio = src.width / dst.width
-    if width_ratio != int(width_ratio):
-        raise ValueError("src.width must be a multiple of dst.width")
-
-    height_ratio = src.height / dst.height
-    if height_ratio != int(height_ratio):
-        raise ValueError("src.height must be a multiple of dst.height")
-
-    if width_ratio != height_ratio:
-        raise ValueError("src and dst must have the same width-to-height ratio")
-
-    return gl.Conv2D(
-        name=name,
-        filter_count=dst.depth,
-        kernel_size=1,
-        stride=int(width_ratio),
-    )
-
-
-def connect_downsampling_shortcut(
-    src: gl.ConnectedLayer,
+    source: gl.ConnectedLayer,
     target_shape: gl.Shape,
     name: str,
-) -> gl.ConnectedLayer:
-    if src.output_shape == target_shape:
-        return src
+) -> gl.ConnectedConv2D:
+    assert source.output_shape != target_shape
+    assert source.output_shape.aspect_ratio == target_shape.aspect_ratio
 
-    shortcut = downsampling_shortcut(
-        src=src.output_shape,
-        dst=target_shape,
+    ratio = source.output_shape.width / target_shape.width
+    stride = int(ratio)
+    assert stride == ratio
+
+    reshaper = gl.Conv2D(
         name=name,
+        filter_count=target_shape.depth,
+        kernel_size=1,
+        stride=stride,
     )
 
-    return gl.ConnectedConv2D(input_layer=src, params=shortcut)
+    return gl.ConnectedConv2D(input_layer=source, params=reshaper)
 
 
 def upsampling_shortcut(
-    src: gl.Shape,
-    dst: gl.Shape,
-    name: str,
-) -> gl.Conv2DTranspose:
-    assert src.width < dst.width
-    assert src.height < dst.height
-
-    width_ratio = dst.width / src.width
-    if width_ratio != int(width_ratio):
-        raise ValueError("dst.width must be a multiple of src.width")
-
-    height_ratio = dst.height / src.height
-    if height_ratio != int(height_ratio):
-        raise ValueError("dst.height must be a multiple of src.height")
-
-    if width_ratio != height_ratio:
-        raise ValueError("src and dst must have the same width-to-height ratio")
-
-    return gl.Conv2DTranspose(
-        name=name,
-        filter_count=dst.depth,
-        kernel_size=1,
-        stride=int(width_ratio),
-    )
-
-
-def connect_upsampling_shortcut(
-    src: gl.ConnectedLayer,
+    source: gl.ConnectedLayer,
     target_shape: gl.Shape,
     name: str,
-) -> gl.ConnectedLayer:
-    if src.output_shape == target_shape:
-        return src
+) -> gl.ConnectedConv2DTranspose:
+    assert source.output_shape != target_shape
+    assert source.output_shape.aspect_ratio == target_shape.aspect_ratio
 
-    shortcut = upsampling_shortcut(
-        src=src.output_shape,
-        dst=target_shape,
+    ratio = target_shape.width / source.output_shape.width
+    stride = int(ratio)
+    assert stride == ratio
+
+    reshaper = gl.Conv2DTranspose(
         name=name,
+        filter_count=target_shape.depth,
+        kernel_size=1,
+        stride=stride,
     )
 
-    return gl.ConnectedConv2DTranspose(input_layer=src, params=shortcut)
+    return gl.ConnectedConv2DTranspose(input_layer=source, params=reshaper)
+
+
+def make_shortcut(
+    source: gl.ConnectedLayer,
+    target_shape: gl.Shape,
+    mode: ReshapeStrategy,
+    name_gen: ng.NameGenerator,
+) -> gl.ConnectedLayer:
+
+    assert source.output_shape.aspect_ratio == target_shape.aspect_ratio
+
+    if source.output_shape == target_shape:
+        return source
+
+    if mode == ReshapeStrategy.DOWNSAMPLE:
+        return downsampling_shortcut(
+            source=source,
+            target_shape=target_shape,
+            name=name_gen.gen_name(gl.Conv2D),
+        )
+
+    elif mode == ReshapeStrategy.UPSAMPLE:
+        return upsampling_shortcut(
+            source=source,
+            target_shape=target_shape,
+            name=name_gen.gen_name(gl.Conv2DTranspose),
+        )
+
+    else:
+        raise ValueError(f"unexpected ReshapeStrategy: {mode}")
+
+
+def select_target_shape(
+    candidates: list[gl.Shape],
+    mode: ReshapeStrategy,
+) -> gl.Shape:
+    assert len(candidates) > 1
+    for a, b in itertools.pairwise(candidates):
+        assert a.aspect_ratio == b.aspect_ratio
+
+    if mode == ReshapeStrategy.DOWNSAMPLE:
+        return min(candidates, key=lambda shape: shape.width)
+
+    elif mode == ReshapeStrategy.UPSAMPLE:
+        return max(candidates, key=lambda shape: shape.width)
+
+    else:
+        raise ValueError("unexpected ReshapeStrategy")

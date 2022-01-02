@@ -13,7 +13,7 @@ class NameGenerator:
         self._instance_counter[prefix] += 1
         return name
 
-    def create_name(self, prefix_or_type: str | type) -> str:
+    def gen_name(self, prefix_or_type: str | type) -> str:
         if isinstance(prefix_or_type, str):
             return self._create_name(prefix_or_type)
 
