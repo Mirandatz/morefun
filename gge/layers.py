@@ -211,7 +211,7 @@ class Add:
     inputs: tuple["ConnectedLayer", ...]
 
     def __post_init__(self) -> None:
-        assert isinstance(self.inputs, ConnectedLayer)
+        assert isinstance(self.inputs, tuple)
         for layer in self.inputs:
             assert isinstance(layer, ConnectedLayer)
 
@@ -230,7 +230,7 @@ class Concat:
     inputs: tuple["ConnectedLayer", ...]
 
     def __post_init__(self) -> None:
-        assert isinstance(self.inputs, ConnectedLayer)
+        assert isinstance(self.inputs, tuple)
         for layer in self.inputs:
             assert isinstance(layer, ConnectedLayer)
 

@@ -9,22 +9,19 @@ import gge.randomness as rand
 
 
 @enum.unique
-class MergeStrategy(enum.Enum):
-
-    # effectively disable "multiconnections", keeping only the backbone
-    NO_MERGE = enum.auto()
-    ADD = enum.auto()
-    CONCAT = enum.auto()
-
-
-@enum.unique
 class ReshapeStrategy(enum.Enum):
     DOWNSAMPLE = enum.auto()
     UPSAMPLE = enum.auto()
 
 
+@enum.unique
+class MergeStrategy(enum.Enum):
+    ADD = enum.auto()
+    CONCAT = enum.auto()
+
+
 @dataclasses.dataclass(frozen=True)
-class MergeLayer:
+class MergeParameters:
     forks_mask: tuple[bool, ...]
     merge_strategy: MergeStrategy
     reshape_strategy: ReshapeStrategy
@@ -40,12 +37,12 @@ class MergeLayer:
 
 @dataclasses.dataclass(frozen=True)
 class ConnectionsSchema:
-    merge_layers: tuple[MergeLayer, ...]
+    merge_layers: tuple[MergeParameters, ...]
 
     def __post_init__(self) -> None:
         assert isinstance(self.merge_layers, tuple)
         for ml in self.merge_layers:
-            assert isinstance(ml, MergeLayer)
+            assert isinstance(ml, MergeParameters)
 
 
 def extract_forks_masks_lengths(backbone: bb.Backbone) -> tuple[int, ...]:
@@ -63,7 +60,7 @@ def extract_forks_masks_lengths(backbone: bb.Backbone) -> tuple[int, ...]:
     return tuple(lengths)
 
 
-def create_inputs_merger(mask_len: int, rng: rand.RNG) -> MergeLayer:
+def create_inputs_merger(mask_len: int, rng: rand.RNG) -> MergeParameters:
     assert mask_len >= 0
 
     mask = rng.integers(
@@ -77,7 +74,7 @@ def create_inputs_merger(mask_len: int, rng: rand.RNG) -> MergeLayer:
     merge_strat = rng.choice(list(MergeStrategy))  # type: ignore
     reshape_strat = rng.choice(list(ReshapeStrategy))  # type: ignore
 
-    return MergeLayer(
+    return MergeParameters(
         forks_mask=mask_as_bools,
         merge_strategy=merge_strat,
         reshape_strategy=reshape_strat,
@@ -190,3 +187,37 @@ def select_target_shape(
 
     else:
         raise ValueError("unexpected ReshapeStrategy")
+
+
+def make_merge(
+    sources: list[gl.ConnectedLayer],
+    reshape_strategy: ReshapeStrategy,
+    merge_strategy: MergeStrategy,
+    name_gen: ng.NameGenerator,
+) -> gl.Add | gl.Concat:
+    assert len(sources) >= 1
+
+    src_shapes = [src.output_shape for src in sources]
+    target_shape = select_target_shape(
+        candidates=src_shapes,
+        mode=reshape_strategy,
+    )
+
+    shorcuts = [
+        make_shortcut(
+            src,
+            target_shape,
+            mode=reshape_strategy,
+            name_gen=name_gen,
+        )
+        for src in sources
+    ]
+
+    if merge_strategy == MergeStrategy.ADD:
+        return gl.Add(tuple(shorcuts))
+
+    elif merge_strategy == MergeStrategy.CONCAT:
+        return gl.Concat(tuple(shorcuts))
+
+    else:
+        raise ValueError(f"unknown MergeStrategy: {merge_strategy}")
