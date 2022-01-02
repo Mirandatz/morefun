@@ -1,6 +1,7 @@
 import collections
 import dataclasses
 import functools
+import itertools
 import pathlib
 import typing
 
@@ -27,14 +28,17 @@ def _raise_if_contains_repeated_names(layers: tuple[gl.Layer, ...]) -> None:
         )
 
 
+def _is_fork(layer: gl.Layer) -> bool:
+    return (
+        isinstance(layer, gl.MarkerLayer)
+        and layer.mark_type == gl.MarkerType.FORK_POINT
+    )
+
+
 def _raise_if_contains_sequences_of_forks(layers: tuple[gl.Layer, ...]) -> None:
-    previous, *other = layers
-
-    for current in other:
-        if isinstance(current, gl.Fork) and isinstance(previous, gl.Fork):
-            raise ValueError("backbone is must not contain sequences of `Fork`")
-
-        previous = current
+    for prev, curr in itertools.pairwise(layers):
+        if _is_fork(prev) and _is_fork(curr):
+            raise ValueError("backbone must not contain sequences of forks")
 
 
 @dataclasses.dataclass(frozen=True)
@@ -77,19 +81,19 @@ class BackboneSynthetizer(gge_transformers.SinglePassTransformer[Backbone]):
 
         return [x for x in parts if x is not None]
 
-    def MERGE(self, token: lark.Token | None = None) -> gl.Merge | None:
+    def MERGE(self, token: lark.Token | None = None) -> gl.MarkerLayer | None:
         self._raise_if_not_running()
 
         if token is not None:
-            return gl.Merge(self._create_layer_name("merge"))
+            return gl.make_merge(self._create_layer_name("merge"))
         else:
             return None
 
-    def FORK(self, token: lark.Token | None = None) -> gl.Fork | None:
+    def FORK(self, token: lark.Token | None = None) -> gl.MarkerLayer | None:
         self._raise_if_not_running()
 
         if token is not None:
-            return gl.Fork(self._create_layer_name("fork"))
+            return gl.make_fork(self._create_layer_name("fork"))
         else:
             return None
 

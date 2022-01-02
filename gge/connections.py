@@ -51,10 +51,13 @@ def extract_forks_masks_lengths(backbone: bb.Backbone) -> tuple[int, ...]:
     fork_count = 0
 
     for layer in backbone.layers:
-        if isinstance(layer, gl.Fork):
+        if not isinstance(layer, gl.MarkerLayer):
+            continue
+
+        if layer.mark_type == gl.MarkerType.FORK_POINT:
             fork_count += 1
 
-        if isinstance(layer, gl.Merge):
+        if layer.mark_type == gl.MarkerType.MERGE_POINT:
             lengths.append(fork_count)
 
     return tuple(lengths)
@@ -93,7 +96,8 @@ def collect_fork_sources(backbone: bb.Backbone) -> list[gl.Layer]:
     return [
         source
         for source, next in itertools.pairwise(backbone.layers)
-        if isinstance(next, gl.Fork)
+        if isinstance(next, gl.MarkerLayer)
+        and next.mark_type == gl.MarkerType.FORK_POINT
     ]
 
 

@@ -14,7 +14,7 @@ def test_no_fork_no_merge() -> None:
 def test_one_fork_no_merge() -> None:
     layers = (
         gl.Conv2D("conv_0", 1, 2, 3),
-        gl.Fork("fork_0"),
+        gl.make_fork("fork_0"),
     )
     backbone = bb.Backbone(layers)
     actual = conn.extract_forks_masks_lengths(backbone)
@@ -24,7 +24,7 @@ def test_one_fork_no_merge() -> None:
 
 def test_no_fork_one_merge() -> None:
     layers = (
-        gl.Merge("merge_0"),
+        gl.make_merge("merge_0"),
         gl.Conv2D("conv_0", 1, 2, 3),
     )
     backbone = bb.Backbone(layers)
@@ -36,11 +36,11 @@ def test_no_fork_one_merge() -> None:
 def test_many_fork_one_merge() -> None:
     layers = (
         gl.Conv2D("conv_0", 1, 2, 3),
-        gl.Fork("fork_0"),
+        gl.make_fork("fork_0"),
         gl.Conv2D("conv_1", 1, 2, 3),
-        gl.Fork("fork_1"),
+        gl.make_fork("fork_1"),
         gl.Conv2D("conv_2", 1, 2, 3),
-        gl.Merge("merge_0"),
+        gl.make_merge("merge_0"),
         gl.Conv2D("conv_3", 1, 2, 3),
     )
     backbone = bb.Backbone(layers)
@@ -52,13 +52,13 @@ def test_many_fork_one_merge() -> None:
 def test_one_fork_many_merge() -> None:
     layers = (
         gl.Conv2D("conv_0", 1, 2, 3),
-        gl.Fork("fork_0"),
+        gl.make_fork("fork_0"),
         gl.Conv2D("conv_1", 1, 2, 3),
-        gl.Merge("merge_0"),
+        gl.make_merge("merge_0"),
         gl.Conv2D("conv_2", 1, 2, 3),
-        gl.Merge("merge_1"),
+        gl.make_merge("merge_1"),
         gl.Conv2D("conv_3", 1, 2, 3),
-        gl.Merge("merge_2"),
+        gl.make_merge("merge_2"),
         gl.Conv2D("conv_4", 1, 2, 3),
     )
     backbone = bb.Backbone(layers)
@@ -70,17 +70,17 @@ def test_one_fork_many_merge() -> None:
 def test_many_fork_many_merge() -> None:
     layers = (
         gl.Conv2D("conv_0", 1, 2, 3),
-        gl.Fork("fork_0"),
+        gl.make_fork("fork_0"),
         gl.Conv2D("conv_1", 1, 2, 3),
-        gl.Fork("fork_1"),
+        gl.make_fork("fork_1"),
         gl.Conv2D("conv_2", 1, 2, 3),
-        gl.Merge("merge_0"),
+        gl.make_merge("merge_0"),
         gl.Conv2D("conv_3", 1, 2, 3),
-        gl.Merge("merge_1"),
+        gl.make_merge("merge_1"),
         gl.Conv2D("conv_4", 1, 2, 3),
-        gl.Fork("fork_2"),
+        gl.make_fork("fork_2"),
         gl.Conv2D("conv_5", 1, 2, 3),
-        gl.Merge("merge_2"),
+        gl.make_merge("merge_2"),
     )
     backbone = bb.Backbone(layers)
     actual = conn.extract_forks_masks_lengths(backbone)

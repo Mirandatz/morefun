@@ -22,7 +22,7 @@ def test_merge() -> None:
 
     actual = bb.parse(tokenstream)
     layers = (
-        gl.Merge("merge_0"),
+        gl.make_merge("merge_0"),
         gl.Conv2D("conv2d_0", 1, 2, 3),
     )
     expected = bb.Backbone(layers)
@@ -37,7 +37,7 @@ def test_fork() -> None:
     actual = bb.parse(tokenstream)
     layers = (
         gl.Conv2D("conv2d_0", 1, 2, 3),
-        gl.Fork("fork_0"),
+        gl.make_fork("fork_0"),
     )
     expected = bb.Backbone(layers)
     assert expected == actual
@@ -50,9 +50,9 @@ def test_merge_and_fork() -> None:
 
     actual = bb.parse(tokenstream)
     layers = (
-        gl.Merge("merge_0"),
+        gl.make_merge("merge_0"),
         gl.Conv2D("conv2d_0", 1, 2, 3),
-        gl.Fork("fork_0"),
+        gl.make_fork("fork_0"),
     )
     expected = bb.Backbone(layers)
     assert expected == actual
@@ -97,15 +97,15 @@ def test_complex_backbone() -> None:
     actual = bb.parse(tokenstream)
     layers = (
         gl.Conv2D("conv2d_0", 1, 2, 3),
-        gl.Fork("fork_0"),
-        gl.Merge("merge_0"),
+        gl.make_fork("fork_0"),
+        gl.make_merge("merge_0"),
         gl.Conv2D("conv2d_1", 4, 5, 6),
-        gl.Fork("fork_1"),
-        gl.Merge("merge_1"),
+        gl.make_fork("fork_1"),
+        gl.make_merge("merge_1"),
         gl.Conv2D("conv2d_2", 7, 8, 9),
         gl.Conv2D("conv2d_3", 10, 11, 12),
         gl.Conv2D("conv2d_4", 13, 14, 15),
-        gl.Merge("merge_2"),
+        gl.make_merge("merge_2"),
         gl.Conv2D("conv2d_5", 16, 17, 18),
     )
     expected = bb.Backbone(layers)

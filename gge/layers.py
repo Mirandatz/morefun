@@ -6,22 +6,29 @@ import math
 import typing
 
 
-@dataclasses.dataclass(frozen=True)
-class Fork:
-    name: str
-
-    def __post_init__(self) -> None:
-        assert isinstance(self.name, str)
-        assert self.name
+@enum.unique
+class MarkerType(enum.Enum):
+    FORK_POINT = enum.auto()
+    MERGE_POINT = enum.auto()
 
 
 @dataclasses.dataclass(frozen=True)
-class Merge:
+class MarkerLayer:
     name: str
+    mark_type: MarkerType
 
     def __post_init__(self) -> None:
         assert isinstance(self.name, str)
+        assert isinstance(self.mark_type, MarkerType)
         assert self.name
+
+
+def make_fork(name: str) -> MarkerLayer:
+    return MarkerLayer(name, MarkerType.FORK_POINT)
+
+
+def make_merge(name: str) -> MarkerLayer:
+    return MarkerLayer(name, MarkerType.MERGE_POINT)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -62,6 +69,7 @@ class Conv2DTranspose:
         assert self.stride > 0
 
 
+@enum.unique
 class PoolType(enum.Enum):
     MAX_POOLING = enum.auto()
     AVG_POOLING = enum.auto()
@@ -91,13 +99,12 @@ class BatchNorm:
         assert self.name
 
 
-Layer: typing.TypeAlias = Conv2D | Pool2D | BatchNorm | Fork | Merge
+Layer: typing.TypeAlias = Conv2D | Pool2D | BatchNorm | MarkerLayer
 
 
 def is_real_layer(layer: Layer) -> bool:
     assert isinstance(layer, Layer)
-
-    return not isinstance(layer, Fork | Merge)
+    return not isinstance(layer, MarkerLayer)
 
 
 @dataclasses.dataclass(frozen=True)

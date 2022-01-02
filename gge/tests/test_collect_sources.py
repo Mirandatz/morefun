@@ -13,7 +13,7 @@ def test_no_fork() -> None:
 def test_one_fork() -> None:
     layers = (
         gl.Conv2D("c0", 1, 2, 3),
-        gl.Fork("fork"),
+        gl.make_fork("fork"),
         gl.Conv2D("c1", 1, 2, 3),
     )
     backbone = bb.Backbone(layers)
@@ -24,11 +24,11 @@ def test_one_fork() -> None:
 def test_many_fork() -> None:
     layers = (
         gl.Conv2D("c0", 1, 2, 3),
-        gl.Fork("fork"),
+        gl.make_fork("fork"),
         gl.Conv2D("c1", 1, 2, 3),
         gl.Conv2D("c2", 1, 2, 3),
         gl.Conv2D("c3", 1, 2, 3),
-        gl.Fork("bork"),
+        gl.make_fork("bork"),
         gl.Conv2D("c4", 1, 2, 3),
     )
     backbone = bb.Backbone(layers)
