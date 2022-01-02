@@ -47,6 +47,9 @@ class Backbone:
         if not any(real_layers):
             raise ValueError("layers must contain at least one real layer")
 
+        if len(set(self.layers)) != len(self.layers):
+            raise ValueError("layers must not contain duplicates")
+
         _raise_if_contains_sequences_of_forks(self.layers)
         _raise_if_contains_repeated_names(self.layers)
 
