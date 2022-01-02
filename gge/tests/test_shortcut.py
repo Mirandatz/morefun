@@ -85,7 +85,7 @@ def test_merge_downsample_add() -> None:
         name_gen=name_gen,
     )
 
-    assert isinstance(add, gl.Add)
+    assert isinstance(add, gl.ConnectedAdd)
     assert add.output_shape == gl.Shape(5, 5, 3)
 
 
@@ -111,7 +111,7 @@ def test_merge_downsample_concat() -> None:
         name_gen=name_gen,
     )
 
-    assert isinstance(add, gl.Concat)
+    assert isinstance(add, gl.ConnectedConcatenate)
     assert add.output_shape == gl.Shape(5, 5, 6)
 
 
@@ -137,5 +137,5 @@ def test_merge_upsample_concat() -> None:
         name_gen=name_gen,
     )
 
-    assert isinstance(add, gl.Concat)
+    assert isinstance(add, gl.ConnectedConcatenate)
     assert add.output_shape == gl.Shape(10, 10, 6)

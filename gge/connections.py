@@ -197,7 +197,7 @@ def make_merge(
     reshape_strategy: ReshapeStrategy,
     merge_strategy: MergeStrategy,
     name_gen: ng.NameGenerator,
-) -> gl.Add | gl.Concat:
+) -> gl.ConnectedMergeLayer:
     assert len(sources) >= 1
 
     src_shapes = [src.output_shape for src in sources]
@@ -217,10 +217,10 @@ def make_merge(
     ]
 
     if merge_strategy == MergeStrategy.ADD:
-        return gl.Add(tuple(shorcuts))
+        return gl.ConnectedAdd(tuple(shorcuts))
 
     elif merge_strategy == MergeStrategy.CONCAT:
-        return gl.Concat(tuple(shorcuts))
+        return gl.ConnectedConcatenate(tuple(shorcuts))
 
     else:
         raise ValueError(f"unknown MergeStrategy: {merge_strategy}")

@@ -228,7 +228,7 @@ class ConnectedBatchNorm:
 
 
 @dataclasses.dataclass(frozen=True)
-class Add:
+class ConnectedAdd:
     inputs: tuple["ConnectedLayer", ...]
 
     def __post_init__(self) -> None:
@@ -247,7 +247,7 @@ class Add:
 
 
 @dataclasses.dataclass(frozen=True)
-class Concat:
+class ConnectedConcatenate:
     inputs: tuple["ConnectedLayer", ...]
 
     def __post_init__(self) -> None:
@@ -279,6 +279,8 @@ ConnectedLayer: typing.TypeAlias = (
     | ConnectedConv2DTranspose
     | ConnectedPool2D
     | ConnectedBatchNorm
-    | Add
-    | Concat
+    | ConnectedAdd
+    | ConnectedConcatenate
 )
+
+ConnectedMergeLayer: typing.TypeAlias = ConnectedAdd | ConnectedConcatenate
