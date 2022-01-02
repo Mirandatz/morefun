@@ -1,5 +1,6 @@
 import dataclasses
 import enum
+import fractions
 import itertools
 import math
 import typing
@@ -107,6 +108,11 @@ class Shape:
         assert self.width >= 1
         assert self.height >= 1
         assert self.depth >= 1
+
+    @property
+    def aspect_ratio(self) -> tuple[int, int]:
+        frac = fractions.Fraction(self.width, self.height)
+        return (frac.numerator, frac.denominator)
 
 
 @dataclasses.dataclass(frozen=True)
