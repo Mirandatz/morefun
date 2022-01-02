@@ -96,8 +96,7 @@ def collect_fork_sources(backbone: bb.Backbone) -> list[gl.Layer]:
     return [
         source
         for source, next in itertools.pairwise(backbone.layers)
-        if isinstance(next, gl.MarkerLayer)
-        and next.mark_type == gl.MarkerType.FORK_POINT
+        if gl.is_fork_marker(next)
     ]
 
 

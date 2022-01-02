@@ -28,16 +28,9 @@ def _raise_if_contains_repeated_names(layers: tuple[gl.Layer, ...]) -> None:
         )
 
 
-def _is_fork(layer: gl.Layer) -> bool:
-    return (
-        isinstance(layer, gl.MarkerLayer)
-        and layer.mark_type == gl.MarkerType.FORK_POINT
-    )
-
-
 def _raise_if_contains_sequences_of_forks(layers: tuple[gl.Layer, ...]) -> None:
     for prev, curr in itertools.pairwise(layers):
-        if _is_fork(prev) and _is_fork(curr):
+        if gl.is_fork_marker(prev) and gl.is_fork_marker(curr):
             raise ValueError("backbone must not contain sequences of forks")
 
 

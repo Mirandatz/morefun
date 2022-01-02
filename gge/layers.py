@@ -107,6 +107,14 @@ def is_real_layer(layer: Layer) -> bool:
     return not isinstance(layer, MarkerLayer)
 
 
+def is_fork_marker(layer: Layer) -> bool:
+    return isinstance(layer, MarkerLayer) and layer.mark_type == MarkerType.FORK_POINT
+
+
+def is_merge_marker(layer: Layer) -> bool:
+    return isinstance(layer, MarkerLayer) and layer.mark_type == MarkerType.MERGE_POINT
+
+
 @dataclasses.dataclass(frozen=True)
 class Shape:
     width: int
