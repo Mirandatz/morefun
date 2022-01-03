@@ -292,3 +292,14 @@ ConnectedLayer: typing.TypeAlias = (
 )
 
 ConnectedMergeLayer: typing.TypeAlias = ConnectedAdd | ConnectedConcatenate
+
+
+def iter_sources(layer: ConnectedLayer) -> typing.Iterable[ConnectedLayer]:
+    if isinstance(layer, Input):
+        return
+
+    elif isinstance(layer, ConnectedMergeLayer):
+        yield from layer.inputs
+
+    else:
+        yield layer.input_layer
