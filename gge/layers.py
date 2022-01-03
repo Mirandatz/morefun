@@ -20,7 +20,9 @@ class MarkerLayer:
     def __post_init__(self) -> None:
         assert isinstance(self.name, str)
         assert isinstance(self.mark_type, MarkerType)
+
         assert self.name
+        assert self.mark_type in (MarkerType.FORK_POINT, MarkerType.MERGE_POINT)
 
 
 def make_fork(name: str) -> MarkerLayer:
@@ -135,6 +137,9 @@ class Shape:
         frac = fractions.Fraction(self.width, self.height)
         return (frac.numerator, frac.denominator)
 
+    def __repr__(self) -> str:
+        return f"{self.width, self.height, self.depth}"
+
 
 @dataclasses.dataclass(frozen=True)
 class Input:
@@ -170,6 +175,9 @@ class ConnectedConv2D:
         out_depth = self.params.filter_count
         return Shape(width=out_width, height=out_height, depth=out_depth)
 
+    def __repr__(self) -> str:
+        return f"{self.params.name}: out_shape=[{self.output_shape}]"
+
 
 @dataclasses.dataclass(frozen=True)
 class ConnectedConv2DTranspose:
@@ -188,6 +196,9 @@ class ConnectedConv2DTranspose:
         out_height = input_shape.height * params.stride
         out_depth = self.params.filter_count
         return Shape(width=out_width, height=out_height, depth=out_depth)
+
+    def __repr__(self) -> str:
+        return f"{self.params.name}: out_shape=[{self.output_shape}]"
 
 
 @dataclasses.dataclass(frozen=True)
@@ -208,6 +219,9 @@ class ConnectedPool2D:
         out_depth = input_shape.depth
         return Shape(width=out_width, height=out_height, depth=out_depth)
 
+    def __repr__(self) -> str:
+        return f"{self.params.name}: out_shape=[{self.output_shape}]"
+
 
 @dataclasses.dataclass(frozen=True)
 class ConnectedBatchNorm:
@@ -225,6 +239,9 @@ class ConnectedBatchNorm:
         # This assert is here because mypy ;-; wants (?)
         assert isinstance(shape, Shape)
         return shape
+
+    def __repr__(self) -> str:
+        return f"{self.params.name}: out_shape=[{self.output_shape}]"
 
 
 @dataclasses.dataclass(frozen=True)
@@ -249,6 +266,9 @@ class ConnectedAdd:
     def output_shape(self) -> Shape:
         shape: Shape = self.inputs[0].output_shape
         return shape
+
+    def __repr__(self) -> str:
+        return f"add: out_shape=[{self.output_shape}]"
 
 
 @dataclasses.dataclass(frozen=True)
@@ -279,6 +299,9 @@ class ConnectedConcatenate:
             height=sample_shape.height,
             depth=total_depth,
         )
+
+    def __repr__(self) -> str:
+        return f"concatenate: out_shape=[{self.output_shape}]"
 
 
 ConnectedLayer: typing.TypeAlias = (
