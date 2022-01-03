@@ -1,6 +1,7 @@
 import dataclasses
 import enum
 import itertools
+import typing
 
 import gge.backbones as bb
 import gge.layers as gl
@@ -228,66 +229,116 @@ def make_merge(
         raise ValueError(f"unknown MergeStrategy: {merge_strategy}")
 
 
-def collect_merge_inputs(
-    backbone: bb.Backbone,
-) -> dict[gl.MarkerLayer, tuple[gl.ConnectedLayer, ...]]:
-    merge_inputs = {}
-    fork_points = []
+class StatefulLayerConnector:
+    def __init__(
+        self,
+        input_layer: gl.Input,
+        merge_params_iter: typing.Iterator[MergeParameters],
+    ) -> None:
+        self._merge_params_iter = merge_params_iter
+        self._previous_layer: gl.ConnectedLayer = input_layer
+        self._name_gen = ng.NameGenerator()
+        self._fork_points: list[gl.ConnectedLayer] = []
 
-    for prev, curr in itertools.pairwise(backbone.layers):
-        if gl.is_fork_marker(curr):
-            fork_points.append(prev)
+    @property
+    def previous_layer(self) -> gl.ConnectedLayer:
+        return self._previous_layer
 
-        elif gl.is_merge_marker(curr):
-            merge_inputs[curr] = tuple(fork_points)
+    def _connect_single_input_layer(self, layer: gl.Layer) -> None:
+        if isinstance(layer, gl.Conv2D):
+            self._previous_layer = gl.ConnectedConv2D(
+                self._previous_layer,
+                layer,
+            )
 
-    return merge_inputs
+        elif isinstance(layer, gl.Conv2DTranspose):
+            self._previous_layer = gl.ConnectedConv2DTranspose(
+                self._previous_layer,
+                layer,
+            )
+
+        elif isinstance(layer, gl.Pool2D):
+            self._previous_layer = gl.ConnectedPool2D(
+                self._previous_layer,
+                layer,
+            )
+
+        elif isinstance(layer, gl.BatchNorm):
+            self._previous_layer = gl.ConnectedBatchNorm(
+                self._previous_layer,
+                layer,
+            )
+
+        else:
+            raise ValueError(f"unknown layer type: {layer}")
+
+    def _register_fork_point(self) -> None:
+        self._fork_points.append(self._previous_layer)
+
+    def _get_merge_params(self) -> MergeParameters:
+        return next(self._merge_params_iter)
+
+    def _connect_multi_input_layer(self) -> None:
+        merge_params = self._get_merge_params()
+
+        assert len(self._fork_points) == len(merge_params.forks_mask)
+
+        chosen_fork_points = itertools.compress(
+            data=self._fork_points,
+            selectors=merge_params.forks_mask,
+        )
+
+        sources = [self._previous_layer] + list(chosen_fork_points)
+        merge = make_merge(
+            sources=sources,
+            reshape_strategy=merge_params.reshape_strategy,
+            merge_strategy=merge_params.merge_strategy,
+            name_gen=self._name_gen,
+        )
+
+        self._previous_layer = merge
+
+        pass
+
+    def process_layer(self, layer: gl.Layer) -> None:
+        if gl.is_real_layer(layer):
+            self._connect_single_input_layer(layer)
+
+        elif gl.is_fork_marker(layer):
+            self._register_fork_point()
+
+        elif gl.is_merge_marker(layer):
+            self._connect_multi_input_layer()
+
+        else:
+            raise ValueError(f"unknown layer type/configuration: {layer}")
 
 
-def pair_merge_parameters_to_marker_layers(
+def connect_backbone(
     backbone: bb.Backbone,
     conn_schema: ConnectionsSchema,
-) -> dict[gl.MarkerLayer, MergeParameters]:
-    markers = filter(gl.is_fork_marker, backbone.layers)
-    params = conn_schema.merge_params
-    return dict(itertools.zip_longest(markers, params))
+    input_layer: gl.Input,
+) -> gl.ConnectedLayer:
+    """
+    This function creates connected versions of the layers in the `backbone`
+    using `conn_schema` to describe how to generate "fork points" and "merge layers"
 
+    The return value is the "output layer", i.e., the last layer connected
+    to the network. Since the network forms a Directed Acyclic Graph, it is possible
+    to "navigate the entire network" by recursively visiting the sources of the output layer.
+    """
 
-def extract_merge_layers(
-    backbone: bb.Backbone,
-    conn_schema: ConnectionsSchema,
-    name_gen: ng.NameGenerator,
-) -> dict[gl.MarkerLayer, gl.ConnectedMergeLayer]:
-    sources = collect_merge_inputs(backbone)
-    parameters = pair_merge_parameters_to_marker_layers(backbone, conn_schema)
+    merge_params_iter = iter(conn_schema.merge_params)
+
+    stateful_connector = StatefulLayerConnector(
+        input_layer=input_layer,
+        merge_params_iter=merge_params_iter,
+    )
+
+    for layer in backbone.layers:
+        stateful_connector.process_layer(layer)
 
     # sanity check
-    assert sources.keys() == parameters.keys()
+    assert len(list(merge_params_iter)) == 0
 
-    mergers_map = {}
-
-    for marker in parameters.keys():
-        curr_params = parameters[marker]
-
-        available_sources = sources[marker]
-
-        # sanity check
-        assert len(available_sources) == len(curr_params.forks_mask)
-
-        chosen_sources = list(
-            itertools.compress(
-                data=available_sources,
-                selectors=curr_params.forks_mask,
-            )
-        )
-
-        merger = make_merge(
-            sources=chosen_sources,
-            reshape_strategy=curr_params.reshape_strategy,
-            merge_strategy=curr_params.merge_strategy,
-            name_gen=name_gen,
-        )
-
-        mergers_map[marker] = merger
-
-    return mergers_map
+    return stateful_connector.previous_layer
