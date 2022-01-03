@@ -34,14 +34,16 @@ class MergeParameters:
         assert isinstance(self.merge_strategy, MergeStrategy)
         assert isinstance(self.reshape_strategy, ReshapeStrategy)
 
+        assert len(self.forks_mask) >= 1
+
 
 @dataclasses.dataclass(frozen=True)
 class ConnectionsSchema:
-    merge_layers: tuple[MergeParameters, ...]
+    merge_params: tuple[MergeParameters, ...]
 
     def __post_init__(self) -> None:
-        assert isinstance(self.merge_layers, tuple)
-        for ml in self.merge_layers:
+        assert isinstance(self.merge_params, tuple)
+        for ml in self.merge_params:
             assert isinstance(ml, MergeParameters)
 
 
@@ -224,3 +226,68 @@ def make_merge(
 
     else:
         raise ValueError(f"unknown MergeStrategy: {merge_strategy}")
+
+
+def collect_merge_inputs(
+    backbone: bb.Backbone,
+) -> dict[gl.MarkerLayer, tuple[gl.ConnectedLayer, ...]]:
+    merge_inputs = {}
+    fork_points = []
+
+    for prev, curr in itertools.pairwise(backbone.layers):
+        if gl.is_fork_marker(curr):
+            fork_points.append(prev)
+
+        elif gl.is_merge_marker(curr):
+            merge_inputs[curr] = tuple(fork_points)
+
+    return merge_inputs
+
+
+def pair_merge_parameters_to_marker_layers(
+    backbone: bb.Backbone,
+    conn_schema: ConnectionsSchema,
+) -> dict[gl.MarkerLayer, MergeParameters]:
+    markers = filter(gl.is_fork_marker, backbone.layers)
+    params = conn_schema.merge_params
+    return dict(itertools.zip_longest(markers, params))
+
+
+def extract_merge_layers(
+    backbone: bb.Backbone,
+    conn_schema: ConnectionsSchema,
+    name_gen: ng.NameGenerator,
+) -> dict[gl.MarkerLayer, gl.ConnectedMergeLayer]:
+    sources = collect_merge_inputs(backbone)
+    parameters = pair_merge_parameters_to_marker_layers(backbone, conn_schema)
+
+    # sanity check
+    assert sources.keys() == parameters.keys()
+
+    mergers_map = {}
+
+    for marker in parameters.keys():
+        curr_params = parameters[marker]
+
+        available_sources = sources[marker]
+
+        # sanity check
+        assert len(available_sources) == len(curr_params.forks_mask)
+
+        chosen_sources = list(
+            itertools.compress(
+                data=available_sources,
+                selectors=curr_params.forks_mask,
+            )
+        )
+
+        merger = make_merge(
+            sources=chosen_sources,
+            reshape_strategy=curr_params.reshape_strategy,
+            merge_strategy=curr_params.merge_strategy,
+            name_gen=name_gen,
+        )
+
+        mergers_map[marker] = merger
+
+    return mergers_map
