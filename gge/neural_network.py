@@ -1,9 +1,11 @@
 import networkx as nx
 
+import gge.connections as conn
 import gge.layers as gl
+import gge.name_generator as ng
 
 
-def make_network(output_layer: gl.ConnectedLayer) -> nx.DiGraph:
+def make_network(output_layer: gl.ConnectableLayer) -> nx.DiGraph:
     assert not isinstance(output_layer, gl.Input)
 
     network = nx.DiGraph()
@@ -33,11 +35,23 @@ def draw_network(net: nx.DiGraph) -> None:
 
 
 def main() -> None:
-    input = gl.Input(gl.Shape(10, 10, 3))
-    conv1 = gl.ConnectedConv2D(input, gl.Conv2D("c1", 128, 5, 2))
-    conv2 = gl.ConnectedConv2D(input, gl.Conv2D("c2", 128, 5, 2))
-    add1 = gl.ConnectedAdd((conv1, conv2))
-    network = make_network(add1)
+    name_gen = ng.NameGenerator()
+    input = gl.Input(gl.Shape(100, 100, 3))
+    conv1 = gl.ConnectedConv2D(
+        input,
+        gl.Conv2D(name_gen.gen_name(gl.Conv2D), 128, 5, 2),
+    )
+    conv2 = gl.ConnectedConv2D(
+        input,
+        gl.Conv2D(name_gen.gen_name(gl.Conv2D), 128, 5, 4),
+    )
+    merge1 = conn.make_merge(
+        [conv1, conv2],
+        reshape_strategy=conn.ReshapeStrategy.DOWNSAMPLE,
+        merge_strategy=conn.MergeStrategy.ADD,
+        name_gen=name_gen,
+    )
+    network = make_network(merge1)
     draw_network(network)
 
 

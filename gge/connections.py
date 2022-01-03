@@ -104,7 +104,7 @@ def collect_fork_sources(backbone: bb.Backbone) -> list[gl.Layer]:
 
 
 def downsampling_shortcut(
-    source: gl.ConnectedLayer,
+    source: gl.ConnectableLayer,
     target_shape: gl.Shape,
     name: str,
 ) -> gl.ConnectedConv2D:
@@ -126,7 +126,7 @@ def downsampling_shortcut(
 
 
 def upsampling_shortcut(
-    source: gl.ConnectedLayer,
+    source: gl.ConnectableLayer,
     target_shape: gl.Shape,
     name: str,
 ) -> gl.ConnectedConv2DTranspose:
@@ -148,11 +148,11 @@ def upsampling_shortcut(
 
 
 def make_shortcut(
-    source: gl.ConnectedLayer,
+    source: gl.ConnectableLayer,
     target_shape: gl.Shape,
     mode: ReshapeStrategy,
     name_gen: ng.NameGenerator,
-) -> gl.ConnectedLayer:
+) -> gl.ConnectableLayer:
 
     assert source.output_shape.aspect_ratio == target_shape.aspect_ratio
 
@@ -196,11 +196,11 @@ def select_target_shape(
 
 
 def make_merge(
-    sources: list[gl.ConnectedLayer],
+    sources: list[gl.ConnectableLayer],
     reshape_strategy: ReshapeStrategy,
     merge_strategy: MergeStrategy,
     name_gen: ng.NameGenerator,
-) -> gl.ConnectedMergeLayer:
+) -> gl.MultiInputLayer:
     assert len(sources) >= 1
 
     src_shapes = [src.output_shape for src in sources]
@@ -236,12 +236,12 @@ class StatefulLayerConnector:
         merge_params_iter: typing.Iterator[MergeParameters],
     ) -> None:
         self._merge_params_iter = merge_params_iter
-        self._previous_layer: gl.ConnectedLayer = input_layer
+        self._previous_layer: gl.ConnectableLayer = input_layer
         self._name_gen = ng.NameGenerator()
-        self._fork_points: list[gl.ConnectedLayer] = []
+        self._fork_points: list[gl.ConnectableLayer] = []
 
     @property
-    def previous_layer(self) -> gl.ConnectedLayer:
+    def previous_layer(self) -> gl.ConnectableLayer:
         return self._previous_layer
 
     def _connect_single_input_layer(self, layer: gl.Layer) -> None:
@@ -298,8 +298,6 @@ class StatefulLayerConnector:
 
         self._previous_layer = merge
 
-        pass
-
     def process_layer(self, layer: gl.Layer) -> None:
         if gl.is_real_layer(layer):
             self._connect_single_input_layer(layer)
@@ -318,7 +316,7 @@ def connect_backbone(
     backbone: bb.Backbone,
     conn_schema: ConnectionsSchema,
     input_layer: gl.Input,
-) -> gl.ConnectedLayer:
+) -> gl.ConnectableLayer:
     """
     This function creates connected versions of the layers in the `backbone`
     using `conn_schema` to describe how to generate "fork points" and "merge layers"

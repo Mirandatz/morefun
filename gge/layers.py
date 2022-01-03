@@ -159,11 +159,11 @@ class Input:
 
 @dataclasses.dataclass(frozen=True)
 class ConnectedConv2D:
-    input_layer: "ConnectedLayer"
+    input_layer: "ConnectableLayer"
     params: Conv2D
 
     def __post_int__(self) -> None:
-        assert isinstance(self.input_layer, ConnectedLayer)
+        assert isinstance(self.input_layer, ConnectableLayer)
         assert isinstance(self.params, Conv2D)
 
     @property
@@ -181,11 +181,11 @@ class ConnectedConv2D:
 
 @dataclasses.dataclass(frozen=True)
 class ConnectedConv2DTranspose:
-    input_layer: "ConnectedLayer"
+    input_layer: "ConnectableLayer"
     params: Conv2DTranspose
 
     def __post_int__(self) -> None:
-        assert isinstance(self.input_layer, ConnectedLayer)
+        assert isinstance(self.input_layer, ConnectableLayer)
         assert isinstance(self.params, Conv2DTranspose)
 
     @property
@@ -203,11 +203,11 @@ class ConnectedConv2DTranspose:
 
 @dataclasses.dataclass(frozen=True)
 class ConnectedPool2D:
-    input_layer: "ConnectedLayer"
+    input_layer: "ConnectableLayer"
     params: Pool2D
 
     def __post_int__(self) -> None:
-        assert isinstance(self.input_layer, ConnectedLayer)
+        assert isinstance(self.input_layer, ConnectableLayer)
         assert isinstance(self.params, Pool2D)
 
     @property
@@ -225,11 +225,11 @@ class ConnectedPool2D:
 
 @dataclasses.dataclass(frozen=True)
 class ConnectedBatchNorm:
-    input_layer: "ConnectedLayer"
+    input_layer: "ConnectableLayer"
     params: BatchNorm
 
     def __post_int__(self) -> None:
-        assert isinstance(self.input_layer, ConnectedLayer)
+        assert isinstance(self.input_layer, ConnectableLayer)
         assert isinstance(self.params, BatchNorm)
 
     @property
@@ -246,12 +246,12 @@ class ConnectedBatchNorm:
 
 @dataclasses.dataclass(frozen=True)
 class ConnectedAdd:
-    inputs: tuple["ConnectedLayer", ...]
+    inputs: tuple["ConnectableLayer", ...]
 
     def __post_init__(self) -> None:
         assert isinstance(self.inputs, tuple)
         for layer in self.inputs:
-            assert isinstance(layer, ConnectedLayer)
+            assert isinstance(layer, ConnectableLayer)
 
         assert len(self.inputs) >= 1
 
@@ -273,12 +273,12 @@ class ConnectedAdd:
 
 @dataclasses.dataclass(frozen=True)
 class ConnectedConcatenate:
-    inputs: tuple["ConnectedLayer", ...]
+    inputs: tuple["ConnectableLayer", ...]
 
     def __post_init__(self) -> None:
         assert isinstance(self.inputs, tuple)
         for layer in self.inputs:
-            assert isinstance(layer, ConnectedLayer)
+            assert isinstance(layer, ConnectableLayer)
 
         assert len(self.inputs) >= 1
         for a, b in itertools.pairwise(self.inputs):
@@ -304,25 +304,28 @@ class ConnectedConcatenate:
         return f"concatenate: out_shape=[{self.output_shape}]"
 
 
-ConnectedLayer: typing.TypeAlias = (
-    Input
-    | ConnectedConv2D
-    | ConnectedConv2DTranspose
-    | ConnectedPool2D
-    | ConnectedBatchNorm
-    | ConnectedAdd
-    | ConnectedConcatenate
+# An example of another (not yet implemented) is the Constant
+NoInputLayer: typing.TypeAlias = Input
+
+SingleInputLayer: typing.TypeAlias = (
+    ConnectedConv2D | ConnectedConv2DTranspose | ConnectedPool2D | ConnectedBatchNorm
 )
 
-ConnectedMergeLayer: typing.TypeAlias = ConnectedAdd | ConnectedConcatenate
+MultiInputLayer: typing.TypeAlias = ConnectedAdd | ConnectedConcatenate
 
 
-def iter_sources(layer: ConnectedLayer) -> typing.Iterable[ConnectedLayer]:
-    if isinstance(layer, Input):
+ConnectableLayer: typing.TypeAlias = NoInputLayer | SingleInputLayer | MultiInputLayer
+
+
+def iter_sources(layer: ConnectableLayer) -> typing.Iterable[ConnectableLayer]:
+    if isinstance(layer, NoInputLayer):
         return
 
-    elif isinstance(layer, ConnectedMergeLayer):
+    elif isinstance(layer, SingleInputLayer):
+        yield layer.input_layer
+
+    elif isinstance(layer, MultiInputLayer):
         yield from layer.inputs
 
     else:
-        yield layer.input_layer
+        raise ValueError(f"unknown layer type: {layer}")
