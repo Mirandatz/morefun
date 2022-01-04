@@ -8,7 +8,7 @@ def test_conv2d_output_depth_non_unity_stride() -> None:
     )
 
     actual = connected.output_shape
-    expected = gl.Shape(1024 // 4, 1024 // 4, 17)
+    expected = gl.Shape(256, 256, 17)
     assert expected == actual
 
 
