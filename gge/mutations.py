@@ -1,24 +1,47 @@
 import dataclasses as dt
+import functools
 import typing
 
 import gge.connections as conn
 import gge.genotypes as geno
 import gge.randomness as rand
+import gge.structured_grammatical_evolution as sge
 
 _T = typing.TypeVar("_T")
 
 
-def _mutate_tuple(tup: tuple[_T, ...], index: int, new_value: _T) -> tuple[_T, ...]:
+def _update_tuple_item(
+    tup: tuple[_T, ...],
+    index: int,
+    new_value: _T,
+) -> tuple[_T, ...]:
+    assert len(tup) > 0
     assert 0 <= index < len(tup)
+
     temporary_container = list(tup)
     temporary_container[index] = new_value
     return tuple(temporary_container)
 
 
-def mutate(genotype: geno.Genotype, rng: rand.RNG) -> geno.Genotype:
+def _mutate_tuple(
+    tup: tuple[_T, ...],
+    mutator: typing.Callable[[_T], _T],
+    rng: rand.RNG,
+) -> tuple[_T, ...]:
+    assert len(tup) > 0
+
+    index = rng.integers(low=0, high=len(tup))
+    old_value = tup[index]
+    new_value = mutator(old_value)
+
+    return _update_tuple_item(tup, index, new_value)
+
+
+def mutate(
+    genotype: geno.Genotype, genemancer: sge.Genemancer, rng: rand.RNG
+) -> geno.Genotype:
     if rng.random() < 0.5:
         raise NotImplementedError()
-
     else:
         new_connections = mutate_connections_schema(
             genotype.connections_genotype,
@@ -36,11 +59,11 @@ def mutate_connections_schema(
 ) -> conn.ConnectionsSchema:
     old_params = schema.merge_params
 
-    index = rng.integers(low=0, high=len(old_params))
-    mutation_target = old_params[index]
-    mutation_result = mutate_merge_parameters(mutation_target, rng)
-
-    new_params = _mutate_tuple(old_params, index, mutation_result)
+    new_params = _mutate_tuple(
+        old_params,
+        mutator=functools.partial(mutate_merge_parameters, rng=rng),
+        rng=rng,
+    )
 
     return dt.replace(schema, merge_params=new_params)
 
@@ -70,10 +93,11 @@ def mutate_merge_parameters(
 
 
 def mutate_forks_mask(mask: tuple[bool, ...], rng: rand.RNG) -> tuple[bool, ...]:
-    index = rng.integers(low=0, high=len(mask))
-    old_value = mask[index]
-    new_value = not old_value
-    return _mutate_tuple(mask, index, new_value)
+    return _mutate_tuple(
+        mask,
+        mutator=lambda v: not v,
+        rng=rng,
+    )
 
 
 def mutate_reshape_strategy(strat: conn.ReshapeStrategy) -> conn.ReshapeStrategy:
