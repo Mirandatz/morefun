@@ -2,8 +2,8 @@ import dataclasses as dt
 import functools
 import typing
 
+import gge.composite_genotypes as cg
 import gge.connections as conn
-import gge.genotypes as geno
 import gge.randomness as rand
 import gge.structured_grammatical_evolution as sge
 
@@ -38,10 +38,24 @@ def _mutate_tuple(
 
 
 def mutate(
-    genotype: geno.Genotype, genemancer: sge.Genemancer, rng: rand.RNG
-) -> geno.Genotype:
+    genotype: cg.CompositeGenotype,
+    genemancer: sge.Genemancer,
+    rng: rand.RNG,
+) -> cg.CompositeGenotype:
     if rng.random() < 0.5:
-        raise NotImplementedError()
+        new_backbone_genotype = mutate_backbone_genotype(
+            genotype.backbone_genotype, genemancer, rng
+        )
+
+        # maybe the evolutionary algorithm's locality could be improved
+        # by trying to preserve as much of the original "connections genotype"
+        # as possible, instead of generating an entirely new one
+        return cg.make_composite_genotype(
+            new_backbone_genotype,
+            genemancer,
+            rng,
+        )
+
     else:
         new_connections = mutate_connections_schema(
             genotype.connections_genotype,
@@ -51,6 +65,33 @@ def mutate(
             genotype,
             connections_genotype=new_connections,
         )
+
+
+def mutate_backbone_genotype(
+    backbone_genotype: sge.Genotype,
+    genemancer: sge.Genemancer,
+    rng: rand.RNG,
+) -> sge.Genotype:
+    new_genes = _mutate_tuple(
+        backbone_genotype.genes,
+        mutator=functools.partial(mutate_gene, genemancer=genemancer, rng=rng),
+        rng=rng,
+    )
+    return sge.Genotype(new_genes)
+
+
+def mutate_gene(
+    gene: sge.Gene,
+    genemancer: sge.Genemancer,
+    rng: rand.RNG,
+) -> sge.Gene:
+    # maybe the evolutionary algorithm's locality could be improved by
+    # trying to preserve as much of the original 'expansions indices' as possible,
+    # instead of generating an entirely new one
+    return genemancer.create_gene(
+        nt=gene.nonterminal,
+        rng=rng,
+    )
 
 
 def mutate_connections_schema(
