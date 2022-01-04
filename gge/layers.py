@@ -133,9 +133,8 @@ class Shape:
         assert self.depth >= 1
 
     @property
-    def aspect_ratio(self) -> tuple[int, int]:
-        frac = fractions.Fraction(self.width, self.height)
-        return (frac.numerator, frac.denominator)
+    def aspect_ratio(self) -> fractions.Fraction:
+        return fractions.Fraction(self.width, self.height)
 
     def __repr__(self) -> str:
         return f"{self.width, self.height, self.depth}"
