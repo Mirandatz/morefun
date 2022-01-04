@@ -319,13 +319,13 @@ ConnectableLayer: typing.TypeAlias = NoInputLayer | SingleInputLayer | MultiInpu
 
 def iter_sources(layer: ConnectableLayer) -> typing.Iterable[ConnectableLayer]:
     if isinstance(layer, NoInputLayer):
-        return
+        return []
 
     elif isinstance(layer, SingleInputLayer):
-        yield layer.input_layer
+        return [layer.input_layer]
 
     elif isinstance(layer, MultiInputLayer):
-        yield from layer.inputs
+        return layer.inputs
 
     else:
         raise ValueError(f"unknown layer type: {layer}")
