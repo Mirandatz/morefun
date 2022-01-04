@@ -16,9 +16,5 @@ class NameGenerator:
     def gen_name(self, prefix_or_type: str | type) -> str:
         if isinstance(prefix_or_type, str):
             return self._create_name(prefix_or_type)
-
-        elif isinstance(prefix_or_type, type):
-            return self._create_name(prefix_or_type.__name__)
-
         else:
-            raise ValueError("prefix_or_type must be a str or a type")
+            return self._create_name(prefix_or_type.__name__)
