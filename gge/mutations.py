@@ -42,7 +42,10 @@ def mutate(
     genemancer: sge.Genemancer,
     rng: rand.RNG,
 ) -> cg.CompositeGenotype:
-    if rng.random() < 0.5:
+    options = ["backbone", "connections"]
+    chosen = rng.choice(options)
+
+    if chosen == "backbone":
         new_backbone_genotype = mutate_backbone_genotype(
             genotype.backbone_genotype, genemancer, rng
         )
