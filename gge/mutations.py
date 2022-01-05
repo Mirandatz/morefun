@@ -7,14 +7,14 @@ import gge.connections as conn
 import gge.randomness as rand
 import gge.structured_grammatical_evolution as sge
 
-_T = typing.TypeVar("_T")
+T = typing.TypeVar("T")
 
 
 def _update_tuple_item(
-    tup: tuple[_T, ...],
+    tup: tuple[T, ...],
     index: int,
-    new_value: _T,
-) -> tuple[_T, ...]:
+    new_value: T,
+) -> tuple[T, ...]:
     assert len(tup) > 0
     assert 0 <= index < len(tup)
 
@@ -24,10 +24,10 @@ def _update_tuple_item(
 
 
 def _mutate_tuple(
-    tup: tuple[_T, ...],
-    mutator: typing.Callable[[_T], _T],
+    tup: tuple[T, ...],
+    mutator: typing.Callable[[T], T],
     rng: rand.RNG,
-) -> tuple[_T, ...]:
+) -> tuple[T, ...]:
     assert len(tup) > 0
 
     index = rng.integers(low=0, high=len(tup))
