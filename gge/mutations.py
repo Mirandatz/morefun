@@ -1,4 +1,4 @@
-import dataclasses as dt
+import dataclasses as dc
 import functools
 import typing
 
@@ -64,7 +64,7 @@ def mutate(
             genotype.connections_genotype,
             rng,
         )
-        return dt.replace(
+        return dc.replace(
             genotype,
             connections_genotype=new_connections,
         )
@@ -109,7 +109,7 @@ def mutate_connections_schema(
         rng=rng,
     )
 
-    return dt.replace(schema, merge_params=new_params)
+    return dc.replace(schema, merge_params=new_params)
 
 
 def mutate_merge_parameters(
@@ -125,15 +125,15 @@ def mutate_merge_parameters(
 
     if mutation_type == "forks":
         new_forks_mask = mutate_forks_mask(params.forks_mask, rng)
-        return dt.replace(params, forks_mask=new_forks_mask)
+        return dc.replace(params, forks_mask=new_forks_mask)
 
     elif mutation_type == "reshape":
         new_reshape_strategy = mutate_reshape_strategy(params.reshape_strategy)
-        return dt.replace(params, reshape_strategy=new_reshape_strategy)
+        return dc.replace(params, reshape_strategy=new_reshape_strategy)
 
     else:
         new_merge_strategy = mutate_merge_strategy(params.merge_strategy)
-        return dt.replace(params, merge_strategy=new_merge_strategy)
+        return dc.replace(params, merge_strategy=new_merge_strategy)
 
 
 def mutate_forks_mask(mask: tuple[bool, ...], rng: rand.RNG) -> tuple[bool, ...]:
