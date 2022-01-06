@@ -10,9 +10,9 @@ maybe_fork   : [FORK]
 symbol_range : NONTERMINAL ["~" RANGE_BOUND [".." RANGE_BOUND]]
 RANGE_BOUND  : INT
 
-layer        : (conv_layer | pooling_layer | batchnorm_layer) _NL*
+layer        : (conv_layer | pooling_layer | batchnorm_layer | activation) _NL*
 
-conv_layer   : CONV2D filter_count kernel_size stride activation
+conv_layer   : CONV2D filter_count kernel_size stride
 filter_count : FILTER_COUNT _int_args
 kernel_size  : KERNEL_SIZE _int_args
 

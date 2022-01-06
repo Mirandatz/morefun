@@ -479,9 +479,7 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer[GrammarComponent
 
         marker, *params = parts
         combinations = itertools.product(*params)
-        return [
-            RuleOption((marker, *fc, *ks, *st, act)) for fc, ks, st, act in combinations
-        ]
+        return [RuleOption((marker, *fc, *ks, *st)) for fc, ks, st in combinations]
 
     def filter_count(self, parts: list[Terminal]) -> list[tuple[Terminal, Terminal]]:
         self._raise_if_not_running()
