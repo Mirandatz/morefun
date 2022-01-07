@@ -138,6 +138,10 @@ class BackboneSynthetizer(gge_transformers.SinglePassTransformer[Backbone]):
             stride=stride,
         )
 
+    def activation_layer(self, layer: gl.SingleInputLayer) -> gl.SingleInputLayer:
+        self._raise_if_not_running()
+        return layer
+
     def POOL_MAX(self, _: lark.Token) -> gl.PoolType:
         self._raise_if_not_running()
         return gl.PoolType.MAX_POOLING
@@ -150,14 +154,24 @@ class BackboneSynthetizer(gge_transformers.SinglePassTransformer[Backbone]):
         self._raise_if_not_running()
         return int(token.value)
 
+    def RELU(self, token: lark.Token) -> gl.Relu:
+        self._raise_if_not_running()
+        return gl.Relu(name=self._create_layer_name("relu"))
+
+    def GELU(self, token: lark.Token) -> gl.Gelu:
+        self._raise_if_not_running()
+        return gl.Gelu(name=self._create_layer_name("gelu"))
+
+    def SWISH(self, token: lark.Token) -> gl.Swish:
+        self._raise_if_not_running()
+        return gl.Swish(name=self._create_layer_name("swish"))
+
     def INT(self, token: lark.Token) -> int:
         self._raise_if_not_running()
-
         return int(token.value)
 
     def FLOAT(self, token: lark.Token) -> float:
         self._raise_if_not_running()
-
         return float(token.value)
 
 

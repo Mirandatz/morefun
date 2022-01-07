@@ -7,8 +7,8 @@ def test_nonrecursive_grammar() -> None:
         """
         start : a
         a : b c
-        b : "conv2d" "filter_count" 1 "kernel_size" 2 "stride" 3 "gelu"
-        c : "conv2d" "filter_count" 4 "kernel_size" 5 "stride" 6 "gelu"
+        b : "conv2d" "filter_count" 1 "kernel_size" 2 "stride" 3
+        c : "conv2d" "filter_count" 4 "kernel_size" 5 "stride" 6
         """
     )
 
@@ -21,7 +21,7 @@ def test_simple_recursive_grammar() -> None:
         start : a
         a : b c | a
         b : b | c
-        c : "conv2d" "filter_count" 1 "kernel_size" 2 "stride" 3 "relu"
+        c : "conv2d" "filter_count" 1 "kernel_size" 2 "stride" 3
         """
     )
 
@@ -35,7 +35,7 @@ def test_complex_recursive_grammar() -> None:
         a : b c d
         b : c d
         c : d a
-        d : "conv2d" "filter_count" 1 "kernel_size" 2 "stride" 3 "swish"
+        d : "conv2d" "filter_count" 1 "kernel_size" 2 "stride" 3
         """
     )
 
@@ -51,7 +51,7 @@ def test_nasty_recursive_grammar() -> None:
         c : k
         d : c | b
         j : a
-        k : "conv2d" "filter_count" (2) "kernel_size" (5) "stride" (2) "gelu"
+        k : "conv2d" "filter_count" (2) "kernel_size" (5) "stride" (2)
         """
     )
 

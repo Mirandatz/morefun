@@ -7,8 +7,8 @@ def test_simple_grammar() -> None:
         """
         start : a
         a : b c
-        b : "conv2d" "filter_count" 1 "kernel_size" 2 "stride" 3 "relu"
-        c : "conv2d" "filter_count" 4 "kernel_size" 5 "stride" 6 "relu"
+        b : "conv2d" "filter_count" 1 "kernel_size" 2 "stride" 3
+        c : "conv2d" "filter_count" 4 "kernel_size" 5 "stride" 6
         """
     )
 
@@ -34,8 +34,8 @@ def test_simple_repetition() -> None:
         """
         start : a
         a : b c~5 b
-        b : "conv2d" "filter_count" 1 "kernel_size" 2 "stride" 3 "relu"
-        c : "conv2d" "filter_count" 3 "kernel_size" 2 "stride" 1 "gelu"
+        b : "conv2d" "filter_count" 1 "kernel_size" 2 "stride" 3
+        c : "conv2d" "filter_count" 3 "kernel_size" 2 "stride" 1
         """
     )
 
@@ -61,7 +61,7 @@ def test_ranged_repetion() -> None:
         """
         start : a
         a : b~5..7
-        b : "conv2d" "filter_count" 1 "kernel_size" 2 "stride" 3 "relu"
+        b : "conv2d" "filter_count" 1 "kernel_size" 2 "stride" 3
         """
     )
 

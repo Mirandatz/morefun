@@ -7,8 +7,8 @@ def test_nonrecursive_grammar() -> None:
         """
         start : a
         a : b c
-        b : "conv2d" "filter_count" 64 "kernel_size" 5 "stride" 2 "relu"
-        c : "conv2d" "filter_count" 128 "kernel_size" 3 "stride" 1 "gelu"
+        b : "conv2d" "filter_count" 64 "kernel_size" 5 "stride" 2
+        c : "conv2d" "filter_count" 128 "kernel_size" 3 "stride" 1
         """
     )
 
@@ -35,7 +35,7 @@ def test_simple_recursive_grammar() -> None:
         start : a
         a : b c | a
         b : b | c
-        c : "conv2d" "filter_count" (2) "kernel_size" (1) "stride" (2) "relu"
+        c : "conv2d" "filter_count" (2) "kernel_size" (1) "stride" (2)
         """
     )
 
@@ -63,7 +63,7 @@ def test_complex_recursive_grammar() -> None:
         a : b c d
         b : c d
         c : d a
-        d : "conv2d" "filter_count" (2) "kernel_size" (1) "stride" (2) "relu"
+        d : "conv2d" "filter_count" (2) "kernel_size" (1) "stride" (2)
         """
     )
 
@@ -100,7 +100,7 @@ def test_nasty_recursive_grammar() -> None:
         a : b | c a | k
         b : c | k
         c : k
-        k : "conv2d" "filter_count" (2) "kernel_size" (1) "stride" (2) "relu"
+        k : "conv2d" "filter_count" (2) "kernel_size" (1) "stride" (2)
         """
     )
     a = gr.NonTerminal("a")

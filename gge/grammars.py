@@ -499,9 +499,10 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer[GrammarComponent
         marker, *strides = parts
         return [(marker, s) for s in strides]
 
-    def activation(self, activations: list[Terminal]) -> list[Terminal]:
+    @lark.v_args(inline=True)
+    def activation_layer(self, activation: NonTerminal) -> list[RuleOption]:
         self._raise_if_not_running()
-        return activations
+        return [RuleOption((activation,))]
 
     @lark.v_args(inline=True)
     def batchnorm_layer(self, term: Terminal) -> list[RuleOption]:
@@ -564,9 +565,6 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer[GrammarComponent
     def STRIDE(self, token: lark.Token) -> Terminal:
         self._raise_if_not_running()
         return self._register_terminal(token.value)
-
-    def ACTIVATION(self, term: Terminal) -> Terminal:
-        return term
 
     def RELU(self, token: lark.Token) -> Terminal:
         self._raise_if_not_running()
