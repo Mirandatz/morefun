@@ -140,6 +140,27 @@ class Shape:
         return f"{self.width, self.height, self.depth}"
 
 
+@typing.runtime_checkable
+class ConnectableLayer(typing.Protocol):
+    @property
+    def output_shape(self) -> Shape:
+        ...
+
+
+@typing.runtime_checkable
+class SingleInputLayer(ConnectableLayer, typing.Protocol):
+    @property
+    def input_layer(self) -> ConnectableLayer:
+        ...
+
+
+@typing.runtime_checkable
+class MultiInputLayer(ConnectableLayer, typing.Protocol):
+    @property
+    def input_layers(self) -> tuple[ConnectableLayer, ...]:
+        ...
+
+
 @dataclasses.dataclass(frozen=True)
 class Input:
     shape: Shape
@@ -158,7 +179,7 @@ class Input:
 
 @dataclasses.dataclass(frozen=True)
 class ConnectedConv2D:
-    input_layer: "ConnectableLayer"
+    input_layer: ConnectableLayer
     params: Conv2D
 
     def __post_int__(self) -> None:
@@ -180,7 +201,7 @@ class ConnectedConv2D:
 
 @dataclasses.dataclass(frozen=True)
 class ConnectedConv2DTranspose:
-    input_layer: "ConnectableLayer"
+    input_layer: ConnectableLayer
     params: Conv2DTranspose
 
     def __post_int__(self) -> None:
@@ -202,7 +223,7 @@ class ConnectedConv2DTranspose:
 
 @dataclasses.dataclass(frozen=True)
 class ConnectedPool2D:
-    input_layer: "ConnectableLayer"
+    input_layer: ConnectableLayer
     params: Pool2D
 
     def __post_int__(self) -> None:
@@ -224,7 +245,7 @@ class ConnectedPool2D:
 
 @dataclasses.dataclass(frozen=True)
 class ConnectedBatchNorm:
-    input_layer: "ConnectableLayer"
+    input_layer: ConnectableLayer
     params: BatchNorm
 
     def __post_int__(self) -> None:
@@ -245,25 +266,25 @@ class ConnectedBatchNorm:
 
 @dataclasses.dataclass(frozen=True)
 class ConnectedAdd:
-    inputs: tuple["ConnectableLayer", ...]
+    input_layers: tuple[ConnectableLayer, ...]
 
     def __post_init__(self) -> None:
-        assert isinstance(self.inputs, tuple)
-        for layer in self.inputs:
+        assert isinstance(self.input_layers, tuple)
+        for layer in self.input_layers:
             assert isinstance(layer, ConnectableLayer)
 
-        assert len(self.inputs) >= 1
+        assert len(self.input_layers) >= 1
 
-        shapes = (layer.output_shape for layer in self.inputs)
+        shapes = (layer.output_shape for layer in self.input_layers)
         if len(set(shapes)) != 1:
             raise ValueError("inputs must have the same shape")
 
-        if len(set(self.inputs)) != len(self.inputs):
+        if len(set(self.input_layers)) != len(self.input_layers):
             raise ValueError("inputs must not contain duplicated layers")
 
     @property
     def output_shape(self) -> Shape:
-        shape: Shape = self.inputs[0].output_shape
+        shape: Shape = self.input_layers[0].output_shape
         return shape
 
     def __repr__(self) -> str:
@@ -272,27 +293,27 @@ class ConnectedAdd:
 
 @dataclasses.dataclass(frozen=True)
 class ConnectedConcatenate:
-    inputs: tuple["ConnectableLayer", ...]
+    input_layers: tuple[ConnectableLayer, ...]
 
     def __post_init__(self) -> None:
-        assert isinstance(self.inputs, tuple)
-        for layer in self.inputs:
+        assert isinstance(self.input_layers, tuple)
+        for layer in self.input_layers:
             assert isinstance(layer, ConnectableLayer)
 
-        assert len(self.inputs) >= 1
-        for a, b in itertools.pairwise(self.inputs):
+        assert len(self.input_layers) >= 1
+        for a, b in itertools.pairwise(self.input_layers):
             assert a.output_shape.width == b.output_shape.width
             assert a.output_shape.height == b.output_shape.height
 
-        if len(set(self.inputs)) != len(self.inputs):
+        if len(set(self.input_layers)) != len(self.input_layers):
             raise ValueError("inputs must not contain duplicated layers")
 
     @property
     def output_shape(self) -> Shape:
-        depths = (layer.output_shape.depth for layer in self.inputs)
+        depths = (layer.output_shape.depth for layer in self.input_layers)
         total_depth = sum(depths)
 
-        sample_shape = self.inputs[0].output_shape
+        sample_shape = self.input_layers[0].output_shape
         return Shape(
             width=sample_shape.width,
             height=sample_shape.height,
@@ -303,28 +324,12 @@ class ConnectedConcatenate:
         return f"concatenate: out_shape=[{self.output_shape}]"
 
 
-# An example of another (not yet implemented) is the Constant
-NoInputLayer: typing.TypeAlias = Input
-
-SingleInputLayer: typing.TypeAlias = (
-    ConnectedConv2D | ConnectedConv2DTranspose | ConnectedPool2D | ConnectedBatchNorm
-)
-
-MultiInputLayer: typing.TypeAlias = ConnectedAdd | ConnectedConcatenate
-
-
-ConnectableLayer: typing.TypeAlias = NoInputLayer | SingleInputLayer | MultiInputLayer
-
-
 def iter_sources(layer: ConnectableLayer) -> typing.Iterable[ConnectableLayer]:
-    if isinstance(layer, NoInputLayer):
-        return []
+    if isinstance(layer, MultiInputLayer):
+        return layer.input_layers
 
     elif isinstance(layer, SingleInputLayer):
         return [layer.input_layer]
 
-    elif isinstance(layer, MultiInputLayer):
-        return layer.inputs
-
     else:
-        raise ValueError(f"unknown layer type: {layer}")
+        return []
