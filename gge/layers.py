@@ -101,7 +101,36 @@ class BatchNorm:
         assert self.name
 
 
-Layer: typing.TypeAlias = Conv2D | Pool2D | BatchNorm | MarkerLayer
+@dataclasses.dataclass(frozen=True)
+class Relu:
+    name: str
+
+    def __post_init__(self) -> None:
+        assert isinstance(self.name, str)
+        assert self.name
+
+
+@dataclasses.dataclass(frozen=True)
+class Gelu:
+    name: str
+
+    def __post_init__(self) -> None:
+        assert isinstance(self.name, str)
+        assert self.name
+
+
+@dataclasses.dataclass(frozen=True)
+class Swish:
+    name: str
+
+    def __post_init__(self) -> None:
+        assert isinstance(self.name, str)
+        assert self.name
+
+
+Layer: typing.TypeAlias = (
+    Conv2D | Pool2D | BatchNorm | MarkerLayer | Relu | Gelu | Swish
+)
 
 
 def is_real_layer(layer: Layer) -> bool:
@@ -254,11 +283,7 @@ class ConnectedBatchNorm:
 
     @property
     def output_shape(self) -> Shape:
-        shape = self.input_layer.output_shape
-
-        # This assert is here because mypy ;-; wants (?)
-        assert isinstance(shape, Shape)
-        return shape
+        return self.input_layer.output_shape
 
     def __repr__(self) -> str:
         return f"{self.params.name}: out_shape=[{self.output_shape}]"
@@ -322,6 +347,57 @@ class ConnectedConcatenate:
 
     def __repr__(self) -> str:
         return f"concatenate: out_shape=[{self.output_shape}]"
+
+
+@dataclasses.dataclass(frozen=True)
+class ConnectedRelu:
+    input_layer: ConnectableLayer
+    params: Relu
+
+    def __post_int__(self) -> None:
+        assert isinstance(self.input_layer, ConnectableLayer)
+        assert isinstance(self.params, Relu)
+
+    @property
+    def output_shape(self) -> Shape:
+        return self.input_layer.output_shape
+
+    def __repr__(self) -> str:
+        return f"{self.params.name}: out_shape=[{self.output_shape}]"
+
+
+@dataclasses.dataclass(frozen=True)
+class ConnectedGelu:
+    input_layer: ConnectableLayer
+    params: Gelu
+
+    def __post_int__(self) -> None:
+        assert isinstance(self.input_layer, ConnectableLayer)
+        assert isinstance(self.params, Gelu)
+
+    @property
+    def output_shape(self) -> Shape:
+        return self.input_layer.output_shape
+
+    def __repr__(self) -> str:
+        return f"{self.params.name}: out_shape=[{self.output_shape}]"
+
+
+@dataclasses.dataclass(frozen=True)
+class ConnectedSwish:
+    input_layer: ConnectableLayer
+    params: Swish
+
+    def __post_int__(self) -> None:
+        assert isinstance(self.input_layer, ConnectableLayer)
+        assert isinstance(self.params, Swish)
+
+    @property
+    def output_shape(self) -> Shape:
+        return self.input_layer.output_shape
+
+    def __repr__(self) -> str:
+        return f"{self.params.name}: out_shape=[{self.output_shape}]"
 
 
 def iter_sources(layer: ConnectableLayer) -> typing.Iterable[ConnectableLayer]:
