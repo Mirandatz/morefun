@@ -206,6 +206,11 @@ class Input:
         return self.shape
 
 
+def make_input(width: int, height: int, depth: int) -> Input:
+    shape = Shape(width=width, height=height, depth=depth)
+    return Input(shape)
+
+
 @dataclasses.dataclass(frozen=True)
 class ConnectedConv2D:
     input_layer: ConnectableLayer
