@@ -35,8 +35,6 @@ class MergeParameters:
         assert isinstance(self.merge_strategy, MergeStrategy)
         assert isinstance(self.reshape_strategy, ReshapeStrategy)
 
-        assert len(self.forks_mask) >= 1
-
 
 @dataclasses.dataclass(frozen=True)
 class ConnectionsSchema:

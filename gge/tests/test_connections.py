@@ -258,3 +258,11 @@ def test_many_fork_many_merge() -> None:
     actual = conn.extract_forks_masks_lengths(backbone)
     expected = (2, 2, 3)
     assert expected == actual
+
+
+def test_merge_parameters_constructor_empty_forks_mask() -> None:
+    _ = conn.MergeParameters(
+        forks_mask=tuple(),
+        merge_strategy=conn.MergeStrategy.ADD,
+        reshape_strategy=conn.ReshapeStrategy.DOWNSAMPLE,
+    )
