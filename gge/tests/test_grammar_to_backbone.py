@@ -57,3 +57,16 @@ def test_conv_relu() -> None:
     assert 2 == conv.stride
 
     assert isinstance(relu, gl.Relu)
+
+
+def test_merge_relu() -> None:
+    backbone = make_backbone(
+        """
+        start : "merge" act
+        act   : "relu"
+        """
+    )
+
+    merge, act = backbone.layers
+    assert gl.is_merge_marker(merge)
+    assert isinstance(act, gl.Relu)
