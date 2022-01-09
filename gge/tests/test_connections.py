@@ -283,3 +283,27 @@ def test_select_target_shape_single_candidate() -> None:
 
     assert candidates[0] == chosen_downsample
     assert candidates[0] == chosen_upsample
+
+
+def test_connect_backbone_with_duplicate_merge_entries() -> None:
+    layers = gl.BatchNorm("bn0"), gl.make_fork("f0"), gl.make_merge("m0")
+    backbone = bb.Backbone(layers)
+    merge_params = (
+        conn.MergeParameters(
+            forks_mask=(True,),
+            merge_strategy=conn.MergeStrategy.ADD,
+            reshape_strategy=conn.ReshapeStrategy.DOWNSAMPLE,
+        ),
+    )
+    schema = conn.ConnectionsSchema(merge_params)
+
+    output = conn.connect_backbone(
+        backbone,
+        schema,
+        input_layer=gl.make_input(1, 2, 3),
+    )
+
+    assert isinstance(output, gl.ConnectedAdd)
+
+    (input,) = output.input_layers
+    assert isinstance(input, gl.ConnectedBatchNorm)
