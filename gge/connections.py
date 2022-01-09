@@ -179,7 +179,7 @@ def select_target_shape(
     candidates: list[gl.Shape],
     mode: ReshapeStrategy,
 ) -> gl.Shape:
-    assert len(candidates) > 1
+    assert len(candidates) >= 1
     for a, b in itertools.pairwise(candidates):
         assert a.aspect_ratio == b.aspect_ratio
 

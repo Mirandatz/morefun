@@ -266,3 +266,20 @@ def test_merge_parameters_constructor_empty_forks_mask() -> None:
         merge_strategy=conn.MergeStrategy.ADD,
         reshape_strategy=conn.ReshapeStrategy.DOWNSAMPLE,
     )
+
+
+def test_select_target_shape_single_candidate() -> None:
+    candidates = [gl.Shape(1, 2, 3)]
+
+    chosen_upsample = conn.select_target_shape(
+        candidates,
+        conn.ReshapeStrategy.UPSAMPLE,
+    )
+
+    chosen_downsample = conn.select_target_shape(
+        candidates,
+        conn.ReshapeStrategy.DOWNSAMPLE,
+    )
+
+    assert candidates[0] == chosen_downsample
+    assert candidates[0] == chosen_upsample
