@@ -2,8 +2,6 @@ import pathlib
 
 import gge.grammars as gr
 
-DATA_DIR = pathlib.Path(__file__).parent.parent.parent / "data"
-
 START = gr.NonTerminal("start")
 
 CONV2D = gr.Terminal('"conv2d"')
@@ -313,4 +311,15 @@ def test_pooling_layer_def() -> None:
     (actual,) = grammar.expansions(gr.NonTerminal("pool"))
     expected = gr.RuleOption((POOLING, TYPE, MAX, STRIDE, gr.Terminal("2")))
 
+    assert expected == actual
+
+
+def test_relu_def() -> None:
+    grammar = gr.Grammar(
+        """
+        start : "relu"
+        """
+    )
+    (actual,) = grammar.expansions(gr.NonTerminal("start"))
+    expected = gr.RuleOption((RELU,))
     assert expected == actual
