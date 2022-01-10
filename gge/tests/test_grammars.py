@@ -1,5 +1,3 @@
-import pathlib
-
 import gge.grammars as gr
 
 START = gr.NonTerminal("start")
