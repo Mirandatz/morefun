@@ -95,3 +95,26 @@ def test_multiple_option(seed: int, filter_counts: gge_hs.GrammarOption) -> None
     (conv,) = backbone.layers
 
     assert conv.filter_count in filter_counts.possible_values
+
+
+@given(
+    seed=hs.integers(min_value=1),
+    filter_counts=gge_hs.grammar_integer_option(),
+    strides=gge_hs.grammar_integer_option(),
+)
+@end_to_end_settings
+def test_multiple_option_many_places(
+    seed: int, filter_counts: gge_hs.GrammarOption, strides: gge_hs.GrammarOption
+) -> None:
+    """Grammar accepts multiple integer arguments for constants at different places of the grammar"""
+    backbone = make_backbone(
+        f"""
+        start : "conv2d" "filter_count" {filter_counts.mesagrammar_string} "kernel_size" 5 "stride" {strides.mesagrammar_string}
+        """,
+        seed,
+    )
+
+    (conv,) = backbone.layers
+
+    assert conv.filter_count in filter_counts.possible_values
+    assert conv.stride in strides.possible_values
