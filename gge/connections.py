@@ -287,7 +287,7 @@ class StatefulLayerConnector:
         )
 
         sources = [self._previous_layer] + list(chosen_fork_points)
-
+        # same as traditional `list(set(sources))` but keeps the ordering
         sources_without_duplicates_and_in_same_order = list(dict.fromkeys(sources))
 
         merge = make_merge(
