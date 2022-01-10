@@ -1,6 +1,8 @@
 -r base.in
 
 black
-mypy
 flake8
+hypothesis
+mypy
 pytest
+pytest-pspec
