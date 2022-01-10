@@ -166,3 +166,33 @@ def test_pooling_layer_stride(text: str, layer: gl.Pool2D) -> None:
     actual = bb.parse(tokenstream)
     expected = bb.Backbone((layer,))
     assert expected == actual
+
+
+def test_relu() -> None:
+    actual = bb.parse(
+        """
+    "relu"
+    """
+    )
+    expected = bb.Backbone((gl.Relu("relu_0"),))
+    assert expected == actual
+
+
+def test_gelu() -> None:
+    actual = bb.parse(
+        """
+    "gelu"
+    """
+    )
+    expected = bb.Backbone((gl.Gelu("gelu_0"),))
+    assert expected == actual
+
+
+def test_swish() -> None:
+    actual = bb.parse(
+        """
+    "swish"
+    """
+    )
+    expected = bb.Backbone((gl.Swish("swish_0"),))
+    assert expected == actual

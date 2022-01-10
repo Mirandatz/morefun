@@ -35,8 +35,6 @@ class MergeParameters:
         assert isinstance(self.merge_strategy, MergeStrategy)
         assert isinstance(self.reshape_strategy, ReshapeStrategy)
 
-        assert len(self.forks_mask) >= 1
-
 
 @dataclasses.dataclass(frozen=True)
 class ConnectionsSchema:
@@ -181,7 +179,7 @@ def select_target_shape(
     candidates: list[gl.Shape],
     mode: ReshapeStrategy,
 ) -> gl.Shape:
-    assert len(candidates) > 1
+    assert len(candidates) >= 1
     for a, b in itertools.pairwise(candidates):
         assert a.aspect_ratio == b.aspect_ratio
 
@@ -289,8 +287,11 @@ class StatefulLayerConnector:
         )
 
         sources = [self._previous_layer] + list(chosen_fork_points)
+        # same as traditional `list(set(sources))` but keeps the ordering
+        sources_without_duplicates_and_in_same_order = list(dict.fromkeys(sources))
+
         merge = make_merge(
-            sources=sources,
+            sources=sources_without_duplicates_and_in_same_order,
             reshape_strategy=merge_params.reshape_strategy,
             merge_strategy=merge_params.merge_strategy,
             name_gen=self._name_gen,

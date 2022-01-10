@@ -2,7 +2,7 @@ start: block+
 
 block : MERGE? layer FORK?
 
-layer : (conv_layer | pool_layer | batchnorm_layer)
+layer : (conv_layer | pool_layer | batchnorm_layer | activation_layer)
  
 conv_layer   : _CONV2D filter_count kernel_size stride
 filter_count : _FILTER_COUNT INT
@@ -14,6 +14,8 @@ _pool_type   : POOL_MAX | POOL_AVG
 POOL_STRIDE  : INT
 
 batchnorm_layer : _BATCHNORM
+
+activation_layer : RELU | GELU | SWISH
 
 MERGE         : /"merge"/
 FORK          : /"fork"/
@@ -28,6 +30,10 @@ POOL_MAX     : /"max"/
 POOL_AVG     : /"avg"/
 
 _BATCHNORM    : /"batchnorm"/
+
+RELU  : /"relu"/
+GELU  : /"gelu"/
+SWISH : /"swish"/
 
 %import common (INT, FLOAT)
 %import common.WS
