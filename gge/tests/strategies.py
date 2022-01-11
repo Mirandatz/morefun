@@ -4,7 +4,7 @@ import typing
 import hypothesis.strategies as hs
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class GrammarOption:
     """the mesagrammar '(1 | 2 | 3)' string has values [1, 2, 3]"""
 
