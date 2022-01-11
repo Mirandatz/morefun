@@ -57,23 +57,57 @@ def test_different_aspect_ratio(
     assert high_a.aspect_ratio != high_b.aspect_ratio
 
 
-def test_conv2d_output_depth_non_unit_stride() -> None:
+# max values are needed to avoid rounding above max_int
+@given(
+    output_width=hs.integers(min_value=1, max_value=999999),
+    output_height=hs.integers(min_value=1, max_value=999999),
+    depth=hs.integers(min_value=1),
+    stride=hs.integers(min_value=1, max_value=999999),
+    filter_count=hs.integers(min_value=1),
+    kernel_size=hs.integers(min_value=1),
+    layer_name=hs.text(min_size=1),
+)
+@example(
+    output_width=256,
+    output_height=256,
+    depth=3,
+    stride=4,
+    filter_count=17,
+    kernel_size=5,
+    layer_name="a",
+)
+@example(
+    output_width=1024,
+    output_height=1024,
+    depth=3,
+    stride=1,
+    filter_count=17,
+    kernel_size=5,
+    layer_name="a",
+)
+def test_conv2d_output_shape(
+    output_width: int,
+    output_height: int,
+    depth: int,
+    stride: int,
+    filter_count: int,
+    kernel_size: int,
+    layer_name: str,
+) -> None:
+    """A Conv2D layer output shape is based on its stride and the input layer."""
+    input_width = output_width * stride
+    input_height = output_height * stride
+
     connected = gl.ConnectedConv2D(
-        gl.Input(gl.Shape(1024, 1024, 3)),
-        gl.Conv2D(name="a", filter_count=17, kernel_size=5, stride=4),
+        gl.Input(gl.Shape(input_width, input_height, depth)),
+        gl.Conv2D(
+            name=layer_name,
+            filter_count=filter_count,
+            kernel_size=kernel_size,
+            stride=stride,
+        ),
     )
 
     actual = connected.output_shape
-    expected = gl.Shape(256, 256, 17)
-    assert expected == actual
-
-
-def test_conv2d_output_depth_unit_stride() -> None:
-    connected = gl.ConnectedConv2D(
-        gl.Input(gl.Shape(1024, 1024, 3)),
-        gl.Conv2D(name="a", filter_count=17, kernel_size=5, stride=1),
-    )
-
-    actual = connected.output_shape
-    expected = gl.Shape(1024, 1024, 17)
+    expected = gl.Shape(output_width, output_height, filter_count)
     assert expected == actual
