@@ -1,6 +1,4 @@
-import itertools
-
-from hypothesis import example, given
+from hypothesis import assume, example, given
 import hypothesis.strategies as hs
 
 import gge.layers as gl
@@ -34,11 +32,29 @@ def test_same_aspect_ratio(width: int, height: int, depth: int, factor: int) -> 
     assert shape_a.aspect_ratio == shape_b.aspect_ratio
 
 
-def test_different_aspect_ratio() -> None:
-    a = gl.Shape(1, 2, 3)
-    b = gl.Shape(1, 3, 3)
+@given(
+    base_side=hs.integers(min_value=1),
+    changing_side_a=hs.integers(min_value=1),
+    changing_side_b=hs.integers(min_value=1),
+    depth=hs.integers(min_value=1),
+)
+@example(base_side=1, changing_side_a=2, changing_side_b=3, depth=3)
+def test_different_aspect_ratio(
+    base_side: int, changing_side_a: int, changing_side_b: int, depth: int
+) -> None:
+    """Shapes with non-multiple values in one side do not have the same aspect ratio."""
+    assume(changing_side_b % changing_side_a != 0)
+    assume(changing_side_a % changing_side_b != 0)
 
-    assert a.aspect_ratio != b.aspect_ratio
+    wide_a = gl.Shape(changing_side_a, base_side, depth)
+    wide_b = gl.Shape(changing_side_b, base_side, depth)
+
+    assert wide_a.aspect_ratio != wide_b.aspect_ratio
+
+    high_a = gl.Shape(base_side, changing_side_a, depth)
+    high_b = gl.Shape(base_side, changing_side_b, depth)
+
+    assert high_a.aspect_ratio != high_b.aspect_ratio
 
 
 def test_conv2d_output_depth_non_unit_stride() -> None:
