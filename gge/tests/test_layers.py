@@ -1,17 +1,37 @@
 import itertools
 
+from hypothesis import example, given
+import hypothesis.strategies as hs
+
 import gge.layers as gl
 
 
-def test_same_aspect_ratio() -> None:
-    shapes = [
-        gl.Shape(4, 3, 19),
-        gl.Shape(8, 6, 12),
-        gl.Shape(4, 3, 19),
-    ]
+@given(
+    width=hs.integers(min_value=1),
+    height=hs.integers(min_value=1),
+    depth=hs.integers(min_value=1),
+)
+def test_same_object_aspect_ratio(width: int, height: int, depth: int) -> None:
+    """Two equal shapes should have the same aspect ratio."""
+    shape_a = gl.Shape(width, height, depth)
+    shape_b = gl.Shape(width, height, depth)
 
-    for a, b in itertools.pairwise(shapes):
-        assert a.aspect_ratio == b.aspect_ratio
+    assert shape_a.aspect_ratio == shape_b.aspect_ratio
+
+
+@given(
+    width=hs.integers(min_value=1),
+    height=hs.integers(min_value=1),
+    depth=hs.integers(min_value=1),
+    factor=hs.integers(min_value=2),
+)
+@example(width=4, height=3, depth=19, factor=2)
+def test_same_aspect_ratio(width: int, height: int, depth: int, factor: int) -> None:
+    """Shapes that are a factor of one another have the same aspect ratio."""
+    shape_a = gl.Shape(width, height, depth)
+    shape_b = gl.Shape(width * factor, height * factor, depth)
+
+    assert shape_a.aspect_ratio == shape_b.aspect_ratio
 
 
 def test_different_aspect_ratio() -> None:
