@@ -35,46 +35,106 @@ def grammar_integer_option(draw: typing.Callable[..., typing.Any]) -> GrammarOpt
 
 
 @hs.composite
-def conv2d(
-    draw: typing.Callable[..., typing.Any],
-    *,
-    can_merge: bool = False,
-    can_fork: bool = False,
+def with_markers(
+    draw: typing.Callable[..., typing.Any], element: GrammarLayer
 ) -> GrammarLayer:
     name_gen = gge.name_generator.NameGenerator()
-    conv_name = name_gen.gen_name("conv2d")
     merge_name = name_gen.gen_name("merge")
     fork_name = name_gen.gen_name("fork")
 
-    filter_count = draw(hs.integers(min_value=1))
-    kernel_size = draw(hs.integers(min_value=1))
-    stride = draw(hs.integers(min_value=1))
-
-    merge = can_merge and draw(hs.booleans())
-    fork = can_fork and draw(hs.booleans())
-
+    merge = draw(hs.booleans())
+    fork = draw(hs.booleans())
     merge_layer = gl.make_merge(merge_name)
-    conv_layer = gl.Conv2D(conv_name, filter_count, kernel_size, stride)
     fork_layer = gl.make_fork(fork_name)
 
-    layers: tuple[gl.Layer, ...] = (conv_layer,)
+    layers: tuple[gl.Layer, ...] = element.layers
+    mesa_str = element.mesagrammar_string
     if merge:
         layers = (merge_layer,) + layers
+        mesa_str = '"merge"' + mesa_str
     if fork:
         layers = layers + (fork_layer,)
-
-    merge_str = f"""{'"merge"' if merge else ''}"""
-    fork_str = f"""{'"fork"' if fork else ''}"""
-    conv_str = f'"conv2d" "filter_count" {filter_count} "kernel_size" {kernel_size} "stride" {stride}'
-    mesa_str = f"{merge_str} {conv_str} {fork_str}"
+        mesa_str = mesa_str + '"fork"'
 
     return GrammarLayer(layers, mesa_str)
 
 
 @hs.composite
-def uniquely_named(
-    draw: typing.Callable[..., typing.Any], layers: tuple[gl.Layer, ...]
-) -> tuple[gl.Layer, ...]:
+def conv2d_layer(
+    draw: typing.Callable[..., typing.Any],
+) -> GrammarLayer:
+    name = gge.name_generator.NameGenerator().gen_name(gl.Conv2D)
+
+    filter_count = draw(hs.integers(min_value=1))
+    kernel_size = draw(hs.integers(min_value=1))
+    stride = draw(hs.integers(min_value=1))
+
+    conv_layer = gl.Conv2D(name, filter_count, kernel_size, stride)
+    conv_str = f'"conv2d" "filter_count" {filter_count} "kernel_size" {kernel_size} "stride" {stride}'
+
+    return GrammarLayer(layers=(conv_layer,), mesagrammar_string=conv_str)
+
+
+@hs.composite
+def pool_layer(draw: typing.Callable[..., typing.Any]) -> GrammarLayer:
+    name = gge.name_generator.NameGenerator().gen_name(gl.Pool2D)
+    pool_type = draw(hs.sampled_from(gl.PoolType))
+    stride = draw(hs.integers(min_value=1, max_value=999999))
+    layer = gl.Pool2D(name, pool_type, stride)
+
+    pool_name = {gl.PoolType.MAX_POOLING: "max", gl.PoolType.AVG_POOLING: "avg"}[
+        pool_type
+    ]
+    mesa_str = f'"pool2d" "{pool_name}" {stride}'
+
+    return GrammarLayer(layers=(layer,), mesagrammar_string=mesa_str)
+
+
+@hs.composite
+def batch_norm_layer(draw: typing.Callable[..., typing.Any]) -> GrammarLayer:
+    name = gge.name_generator.NameGenerator().gen_name(gl.BatchNorm)
+    return GrammarLayer(layers=(gl.BatchNorm(name),), mesagrammar_string='"batchnorm"')
+
+
+@hs.composite
+def relu_layer(draw: typing.Callable[..., typing.Any]) -> GrammarLayer:
+    name = gge.name_generator.NameGenerator().gen_name(gl.Relu)
+    return GrammarLayer(layers=(gl.Relu(name),), mesagrammar_string='"relu"')
+
+
+@hs.composite
+def gelu_layer(draw: typing.Callable[..., typing.Any]) -> GrammarLayer:
+    name = gge.name_generator.NameGenerator().gen_name(gl.Gelu)
+    return GrammarLayer(layers=(gl.Gelu(name),), mesagrammar_string='"gelu"')
+
+
+@hs.composite
+def swish_layer(draw: typing.Callable[..., typing.Any]) -> GrammarLayer:
+    name = gge.name_generator.NameGenerator().gen_name(gl.Swish)
+    return GrammarLayer(layers=(gl.Swish(name),), mesagrammar_string='"swish"')
+
+
+@hs.composite
+def any_layer(
+    draw: typing.Callable[..., GrammarLayer],
+    *,
+    can_mark: bool = True,
+    valid_layers: list[typing.Callable[..., hs.SearchStrategy[GrammarLayer]]] = [
+        conv2d_layer,
+        pool_layer,
+        batch_norm_layer,
+        relu_layer,
+        gelu_layer,
+        swish_layer,
+    ],
+) -> GrammarLayer:
+    layer = draw(hs.sampled_from([draw(valid()) for valid in valid_layers]))
+    if can_mark:
+        layer = draw(with_markers(layer))
+    return layer
+
+
+def uniquely_named(backbone: GrammarLayer) -> GrammarLayer:
     """replaces names of a layer sequence for unique generated names"""
     gen = gge.name_generator.NameGenerator()
 
@@ -85,20 +145,29 @@ def uniquely_named(
             return gen.gen_name("fork")
         return gen.gen_name(type(layer))
 
-    new_layers = (dataclasses.replace(layer, name=get_name(layer)) for layer in layers)
-    return tuple(new_layers)
+    new_layers = (
+        dataclasses.replace(layer, name=get_name(layer)) for layer in backbone.layers
+    )
+    return GrammarLayer(
+        layers=tuple(new_layers), mesagrammar_string=backbone.mesagrammar_string
+    )
 
 
 @hs.composite
-def conv2d_backbone(
-    draw: typing.Callable[..., typing.Any], min_size: int = 1, max_size: int = 1
+def backbone(
+    draw: typing.Callable[..., typing.Any],
+    *,
+    min_size: int = 1,
+    max_size: int = 10,
+    valid_layers: list[typing.Callable[..., hs.SearchStrategy[GrammarLayer]]]
+    | None = None,
 ) -> GrammarLayer:
-    """creates a sequence of layers using Conv2D, merge and fork layers
-
-    the min_size/max_size params is for the number of Conv2D, merge/fork does not count"""
+    layer_strat = (
+        any_layer() if valid_layers is None else any_layer(valid_layers=valid_layers)
+    )
     grammar_layers: list[GrammarLayer] = draw(
         hs.lists(
-            conv2d(can_merge=True, can_fork=True),
+            layer_strat,
             min_size=min_size,
             max_size=max_size,
         )
@@ -108,6 +177,5 @@ def conv2d_backbone(
         operator.add, [layer.mesagrammar_string for layer in grammar_layers]
     )
 
-    new_layers = draw(uniquely_named(flattened_layers))
-
-    return GrammarLayer(new_layers, concat_mesa_str)
+    base_backbone = GrammarLayer(flattened_layers, concat_mesa_str)
+    return uniquely_named(base_backbone)

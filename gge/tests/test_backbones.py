@@ -1,5 +1,3 @@
-import pytest
-
 from hypothesis import example, given
 
 import gge.backbones as bb
@@ -7,7 +5,7 @@ import gge.layers as gl
 import gge.tests.strategies as gge_hs
 
 
-@given(gge_hs.conv2d_backbone())
+@given(gge_hs.backbone(valid_layers=[gge_hs.conv2d_layer]))
 @example(
     gge_hs.GrammarLayer(
         layers=(gl.Conv2D("Conv2D_0", 1, 2, 3),),
@@ -90,87 +88,9 @@ def test_conv2d_backbone(backbone: gge_hs.GrammarLayer) -> None:
     assert actual == expected
 
 
-def test_standalone_batchnorm() -> None:
-    tokenstream = """
-    "batchnorm"
-    """
-    actual = bb.parse(tokenstream)
-    layers = (gl.BatchNorm("BatchNorm_0"),)
-    expected = bb.Backbone(layers)
-    assert expected == actual
-
-
-def test_batchnorm_after_conv() -> None:
-    tokenstream = """
-    "conv2d" "filter_count" 1 "kernel_size" 2 "stride" 3
-    "batchnorm"
-    """
-    actual = bb.parse(tokenstream)
-    layers = (
-        gl.Conv2D("Conv2D_0", 1, 2, 3),
-        gl.BatchNorm("BatchNorm_0"),
-    )
-    expected = bb.Backbone(layers)
-    assert expected == actual
-
-
-@pytest.mark.parametrize(
-    argnames=["text", "layer"],
-    argvalues=[
-        ('"max"', gl.Pool2D("Pool2D_0", gl.PoolType.MAX_POOLING, 1)),
-        ('"avg"', gl.Pool2D("Pool2D_0", gl.PoolType.AVG_POOLING, 1)),
-    ],
-)
-def test_pooling_layer_type(text: str, layer: gl.Pool2D) -> None:
-    tokenstream = f"""
-    "pool2d" {text} 1
-    """
-    actual = bb.parse(tokenstream)
-    expected = bb.Backbone((layer,))
-    assert expected == actual
-
-
-@pytest.mark.parametrize(
-    argnames=["text", "layer"],
-    argvalues=[
-        ("1", gl.Pool2D("Pool2D_0", gl.PoolType.MAX_POOLING, 1)),
-        ("2", gl.Pool2D("Pool2D_0", gl.PoolType.MAX_POOLING, 2)),
-    ],
-)
-def test_pooling_layer_stride(text: str, layer: gl.Pool2D) -> None:
-    tokenstream = f"""
-    "pool2d" "max" {text}
-    """
-    actual = bb.parse(tokenstream)
-    expected = bb.Backbone((layer,))
-    assert expected == actual
-
-
-def test_relu() -> None:
-    actual = bb.parse(
-        """
-    "relu"
-    """
-    )
-    expected = bb.Backbone((gl.Relu("Relu_0"),))
-    assert expected == actual
-
-
-def test_gelu() -> None:
-    actual = bb.parse(
-        """
-    "gelu"
-    """
-    )
-    expected = bb.Backbone((gl.Gelu("Gelu_0"),))
-    assert expected == actual
-
-
-def test_swish() -> None:
-    actual = bb.parse(
-        """
-    "swish"
-    """
-    )
-    expected = bb.Backbone((gl.Swish("Swish_0"),))
-    assert expected == actual
+@given(gge_hs.backbone())
+def test_parse_backbone(backbone: gge_hs.GrammarLayer) -> None:
+    """Can parse a backbone with any layer, possibly marked."""
+    actual = bb.parse(backbone.mesagrammar_string)
+    expected = bb.Backbone(backbone.layers)
+    assert actual == expected
