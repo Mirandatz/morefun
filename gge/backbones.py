@@ -60,7 +60,7 @@ class BackboneSynthetizer(gge_transformers.SinglePassTransformer[Backbone]):
         super().__init__()
         self._name_generator = gge.name_generator.NameGenerator()
 
-    def _create_layer_name(self, prefix: str) -> str:
+    def _create_layer_name(self, prefix: str | type) -> str:
         self._raise_if_not_running()
         return self._name_generator.gen_name(prefix)
 
@@ -102,7 +102,7 @@ class BackboneSynthetizer(gge_transformers.SinglePassTransformer[Backbone]):
         self._raise_if_not_running()
 
         return gl.Conv2D(
-            name=self._create_layer_name("conv2d"),
+            name=self._create_layer_name(gl.Conv2D),
             filter_count=filter_count,
             kernel_size=kernel_size,
             stride=stride,
@@ -128,12 +128,12 @@ class BackboneSynthetizer(gge_transformers.SinglePassTransformer[Backbone]):
 
     def batchnorm_layer(self) -> gl.BatchNorm:
         self._raise_if_not_running()
-        return gl.BatchNorm(self._create_layer_name("batchnorm"))
+        return gl.BatchNorm(self._create_layer_name(gl.BatchNorm))
 
     def pool_layer(self, pool_type: gl.PoolType, stride: int) -> gl.Pool2D:
         self._raise_if_not_running()
         return gl.Pool2D(
-            name=self._create_layer_name("pooling_layer"),
+            name=self._create_layer_name(gl.Pool2D),
             pooling_type=pool_type,
             stride=stride,
         )
@@ -156,15 +156,15 @@ class BackboneSynthetizer(gge_transformers.SinglePassTransformer[Backbone]):
 
     def RELU(self, token: lark.Token) -> gl.Relu:
         self._raise_if_not_running()
-        return gl.Relu(name=self._create_layer_name("relu"))
+        return gl.Relu(name=self._create_layer_name(gl.Relu))
 
     def GELU(self, token: lark.Token) -> gl.Gelu:
         self._raise_if_not_running()
-        return gl.Gelu(name=self._create_layer_name("gelu"))
+        return gl.Gelu(name=self._create_layer_name(gl.Gelu))
 
     def SWISH(self, token: lark.Token) -> gl.Swish:
         self._raise_if_not_running()
-        return gl.Swish(name=self._create_layer_name("swish"))
+        return gl.Swish(name=self._create_layer_name(gl.Swish))
 
     def INT(self, token: lark.Token) -> int:
         self._raise_if_not_running()

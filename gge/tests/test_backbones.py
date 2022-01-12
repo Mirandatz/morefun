@@ -10,19 +10,19 @@ import gge.tests.strategies as gge_hs
 @given(gge_hs.conv2d_backbone())
 @example(
     gge_hs.GrammarLayer(
-        layers=(gl.Conv2D("conv2d_0", 1, 2, 3),),
+        layers=(gl.Conv2D("Conv2D_0", 1, 2, 3),),
         mesagrammar_string='"conv2d" "filter_count" 1 "kernel_size" 2 "stride" 3',
     )
 )
 @example(
     gge_hs.GrammarLayer(
-        layers=(gl.make_merge("merge_0"), gl.Conv2D("conv2d_0", 1, 2, 3)),
+        layers=(gl.make_merge("merge_0"), gl.Conv2D("Conv2D_0", 1, 2, 3)),
         mesagrammar_string='"merge" "conv2d" "filter_count" 1 "kernel_size" 2 "stride" 3',
     )
 )
 @example(
     gge_hs.GrammarLayer(
-        layers=(gl.Conv2D("conv2d_0", 1, 2, 3), gl.make_fork("fork_0")),
+        layers=(gl.Conv2D("Conv2D_0", 1, 2, 3), gl.make_fork("fork_0")),
         mesagrammar_string='"conv2d" "filter_count" 1 "kernel_size" 2 "stride" 3 "fork"',
     )
 )
@@ -30,7 +30,7 @@ import gge.tests.strategies as gge_hs
     gge_hs.GrammarLayer(
         layers=(
             gl.make_merge("merge_0"),
-            gl.Conv2D("conv2d_0", 1, 2, 3),
+            gl.Conv2D("Conv2D_0", 1, 2, 3),
             gl.make_fork("fork_0"),
         ),
         mesagrammar_string='"merge" "conv2d" "filter_count" 1 "kernel_size" 2 "stride" 3 "fork"',
@@ -39,9 +39,9 @@ import gge.tests.strategies as gge_hs
 @example(
     gge_hs.GrammarLayer(
         layers=(
-            gl.Conv2D("conv2d_0", 1, 2, 3),
-            gl.Conv2D("conv2d_1", 5, 6, 7),
-            gl.Conv2D("conv2d_2", 8, 9, 10),
+            gl.Conv2D("Conv2D_0", 1, 2, 3),
+            gl.Conv2D("Conv2D_1", 5, 6, 7),
+            gl.Conv2D("Conv2D_2", 8, 9, 10),
         ),
         mesagrammar_string="""
     "conv2d" "filter_count" 1 "kernel_size" 2 "stride" 3
@@ -53,17 +53,17 @@ import gge.tests.strategies as gge_hs
 @example(
     gge_hs.GrammarLayer(
         layers=(
-            gl.Conv2D("conv2d_0", 1, 2, 3),
+            gl.Conv2D("Conv2D_0", 1, 2, 3),
             gl.make_fork("fork_0"),
             gl.make_merge("merge_0"),
-            gl.Conv2D("conv2d_1", 4, 5, 6),
+            gl.Conv2D("Conv2D_1", 4, 5, 6),
             gl.make_fork("fork_1"),
             gl.make_merge("merge_1"),
-            gl.Conv2D("conv2d_2", 7, 8, 9),
-            gl.Conv2D("conv2d_3", 10, 11, 12),
-            gl.Conv2D("conv2d_4", 13, 14, 15),
+            gl.Conv2D("Conv2D_2", 7, 8, 9),
+            gl.Conv2D("Conv2D_3", 10, 11, 12),
+            gl.Conv2D("Conv2D_4", 13, 14, 15),
             gl.make_merge("merge_2"),
-            gl.Conv2D("conv2d_5", 16, 17, 18),
+            gl.Conv2D("Conv2D_5", 16, 17, 18),
         ),
         mesagrammar_string="""
     "conv2d" "filter_count" 1 "kernel_size" 2 "stride" 3
@@ -95,7 +95,7 @@ def test_standalone_batchnorm() -> None:
     "batchnorm"
     """
     actual = bb.parse(tokenstream)
-    layers = (gl.BatchNorm("batchnorm_0"),)
+    layers = (gl.BatchNorm("BatchNorm_0"),)
     expected = bb.Backbone(layers)
     assert expected == actual
 
@@ -107,8 +107,8 @@ def test_batchnorm_after_conv() -> None:
     """
     actual = bb.parse(tokenstream)
     layers = (
-        gl.Conv2D("conv2d_0", 1, 2, 3),
-        gl.BatchNorm("batchnorm_0"),
+        gl.Conv2D("Conv2D_0", 1, 2, 3),
+        gl.BatchNorm("BatchNorm_0"),
     )
     expected = bb.Backbone(layers)
     assert expected == actual
@@ -117,8 +117,8 @@ def test_batchnorm_after_conv() -> None:
 @pytest.mark.parametrize(
     argnames=["text", "layer"],
     argvalues=[
-        ('"max"', gl.Pool2D("pooling_layer_0", gl.PoolType.MAX_POOLING, 1)),
-        ('"avg"', gl.Pool2D("pooling_layer_0", gl.PoolType.AVG_POOLING, 1)),
+        ('"max"', gl.Pool2D("Pool2D_0", gl.PoolType.MAX_POOLING, 1)),
+        ('"avg"', gl.Pool2D("Pool2D_0", gl.PoolType.AVG_POOLING, 1)),
     ],
 )
 def test_pooling_layer_type(text: str, layer: gl.Pool2D) -> None:
@@ -133,8 +133,8 @@ def test_pooling_layer_type(text: str, layer: gl.Pool2D) -> None:
 @pytest.mark.parametrize(
     argnames=["text", "layer"],
     argvalues=[
-        ("1", gl.Pool2D("pooling_layer_0", gl.PoolType.MAX_POOLING, 1)),
-        ("2", gl.Pool2D("pooling_layer_0", gl.PoolType.MAX_POOLING, 2)),
+        ("1", gl.Pool2D("Pool2D_0", gl.PoolType.MAX_POOLING, 1)),
+        ("2", gl.Pool2D("Pool2D_0", gl.PoolType.MAX_POOLING, 2)),
     ],
 )
 def test_pooling_layer_stride(text: str, layer: gl.Pool2D) -> None:
@@ -152,7 +152,7 @@ def test_relu() -> None:
     "relu"
     """
     )
-    expected = bb.Backbone((gl.Relu("relu_0"),))
+    expected = bb.Backbone((gl.Relu("Relu_0"),))
     assert expected == actual
 
 
@@ -162,7 +162,7 @@ def test_gelu() -> None:
     "gelu"
     """
     )
-    expected = bb.Backbone((gl.Gelu("gelu_0"),))
+    expected = bb.Backbone((gl.Gelu("Gelu_0"),))
     assert expected == actual
 
 
@@ -172,5 +172,5 @@ def test_swish() -> None:
     "swish"
     """
     )
-    expected = bb.Backbone((gl.Swish("swish_0"),))
+    expected = bb.Backbone((gl.Swish("Swish_0"),))
     assert expected == actual

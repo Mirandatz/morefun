@@ -79,14 +79,11 @@ def uniquely_named(
     gen = gge.name_generator.NameGenerator()
 
     def get_name(layer: gl.Layer) -> str:
-        if isinstance(layer, gl.Conv2D):
-            return gen.gen_name("conv2d")
-        if isinstance(layer, gl.MarkerLayer):
-            if layer.mark_type == gl.MarkerType.MERGE_POINT:
-                return gen.gen_name("merge")
-            else:
-                return gen.gen_name("fork")
-        raise NotImplementedError()
+        if gl.is_merge_marker(layer):
+            return gen.gen_name("merge")
+        if gl.is_fork_marker(layer):
+            return gen.gen_name("fork")
+        return gen.gen_name(type(layer))
 
     new_layers = (dataclasses.replace(layer, name=get_name(layer)) for layer in layers)
     return tuple(new_layers)
