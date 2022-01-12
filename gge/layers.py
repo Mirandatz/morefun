@@ -83,7 +83,7 @@ class Pool2D:
     pooling_type: PoolType
     stride: int
 
-    def _post_init__(self) -> None:
+    def __post_init__(self) -> None:
         assert isinstance(self.name, str)
         assert isinstance(self.pooling_type, PoolType)
         assert isinstance(self.stride, int)
