@@ -11,7 +11,7 @@ import gge.tests.strategies as gge_hs
 
 
 # end-to-end tests may take a while
-end_to_end_settings = hypothesis.settings(max_examples=50)
+end_to_end_settings = hypothesis.settings(max_examples=10)
 
 
 def make_backbone(raw_grammar: str, rng_seed: int | None = None) -> bb.Backbone:
