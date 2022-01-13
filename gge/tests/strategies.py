@@ -38,6 +38,9 @@ def grammar_integer_option(draw: typing.Callable[..., typing.Any]) -> GrammarOpt
 def with_markers(
     draw: typing.Callable[..., typing.Any], element: GrammarLayer
 ) -> GrammarLayer:
+    """randomly adds merge and fork points to a layer
+
+    This should shrink towards having no markers."""
     name_gen = gge.name_generator.NameGenerator()
     merge_name = name_gen.gen_name("merge")
     fork_name = name_gen.gen_name("fork")
