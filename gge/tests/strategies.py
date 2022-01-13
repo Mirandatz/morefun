@@ -59,11 +59,17 @@ def with_markers(
     return GrammarLayer(layers, mesa_str)
 
 
+def temporary_name(cls: type) -> str:
+    """used for single-use calls of NameGenerator"""
+    gen = gge.name_generator.NameGenerator()
+    return gen.gen_name(cls)
+
+
 @hs.composite
 def conv2d_layer(
     draw: typing.Callable[..., typing.Any],
 ) -> GrammarLayer:
-    name = gge.name_generator.NameGenerator().gen_name(gl.Conv2D)
+    name = temporary_name(gl.Conv2D)
 
     filter_count = draw(hs.integers(min_value=1))
     kernel_size = draw(hs.integers(min_value=1))
@@ -77,7 +83,7 @@ def conv2d_layer(
 
 @hs.composite
 def pool_layer(draw: typing.Callable[..., typing.Any]) -> GrammarLayer:
-    name = gge.name_generator.NameGenerator().gen_name(gl.Pool2D)
+    name = temporary_name(gl.Pool2D)
     pool_type = draw(hs.sampled_from(gl.PoolType))
     stride = draw(hs.integers(min_value=1, max_value=999999))
     layer = gl.Pool2D(name, pool_type, stride)
@@ -92,25 +98,25 @@ def pool_layer(draw: typing.Callable[..., typing.Any]) -> GrammarLayer:
 
 @hs.composite
 def batch_norm_layer(draw: typing.Callable[..., typing.Any]) -> GrammarLayer:
-    name = gge.name_generator.NameGenerator().gen_name(gl.BatchNorm)
+    name = temporary_name(gl.BatchNorm)
     return GrammarLayer(layers=(gl.BatchNorm(name),), mesagrammar_string='"batchnorm"')
 
 
 @hs.composite
 def relu_layer(draw: typing.Callable[..., typing.Any]) -> GrammarLayer:
-    name = gge.name_generator.NameGenerator().gen_name(gl.Relu)
+    name = temporary_name(gl.Relu)
     return GrammarLayer(layers=(gl.Relu(name),), mesagrammar_string='"relu"')
 
 
 @hs.composite
 def gelu_layer(draw: typing.Callable[..., typing.Any]) -> GrammarLayer:
-    name = gge.name_generator.NameGenerator().gen_name(gl.Gelu)
+    name = temporary_name(gl.Gelu)
     return GrammarLayer(layers=(gl.Gelu(name),), mesagrammar_string='"gelu"')
 
 
 @hs.composite
 def swish_layer(draw: typing.Callable[..., typing.Any]) -> GrammarLayer:
-    name = gge.name_generator.NameGenerator().gen_name(gl.Swish)
+    name = temporary_name(gl.Swish)
     return GrammarLayer(layers=(gl.Swish(name),), mesagrammar_string='"swish"')
 
 
