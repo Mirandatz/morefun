@@ -106,24 +106,24 @@ def test_upsampling_shortcut(
     assert shortcut.output_shape == output_shape
 
 
-def test_shortcut_identity() -> None:
+@given(shape=gge_hs.shape())
+def test_shortcut_identity(shape: gl.Shape) -> None:
+    """Making a shortcut with same shape returns the same layer regardless of method."""
     source = gl.ConnectedBatchNorm(
-        input_layer=gl.Input(gl.Shape(10, 10, 3)),
+        input_layer=gl.Input(shape),
         params=gl.BatchNorm(name="bn"),
     )
     name_gen = ng.NameGenerator()
 
-    target = gl.Shape(10, 10, 3)
-    shortcut = conn.make_shortcut(
-        source, target, mode=conn.ReshapeStrategy.DOWNSAMPLE, name_gen=name_gen
+    downsample_shortcut = conn.make_shortcut(
+        source, shape, mode=conn.ReshapeStrategy.DOWNSAMPLE, name_gen=name_gen
     )
-    assert source == shortcut
+    upsample_shortcut = conn.make_shortcut(
+        source, shape, mode=conn.ReshapeStrategy.UPSAMPLE, name_gen=name_gen
+    )
 
-    target = gl.Shape(10, 10, 3)
-    shortcut = conn.make_shortcut(
-        source, target, mode=conn.ReshapeStrategy.UPSAMPLE, name_gen=name_gen
-    )
-    assert source == shortcut
+    assert source == downsample_shortcut
+    assert source == upsample_shortcut
 
 
 def test_merge_downsample_add() -> None:
