@@ -203,3 +203,21 @@ def shape(draw: DrawStrat) -> gl.Shape:
         )
     )
     return gl.Shape(width=width, height=height, depth=depth)
+
+
+@dataclasses.dataclass(frozen=True)
+class ShapePair:
+    smaller: gl.Shape
+    bigger: gl.Shape
+    ratio: int
+
+
+@hs.composite
+def same_aspect_shape_pair(draw: DrawStrat) -> ShapePair:
+    ratio = draw(hs.integers(min_value=2, max_value=1024))
+    smaller = draw(shape())
+    bigger_depth = draw(hs.integers(min_value=1, max_value=1024))
+    bigger = gl.Shape(
+        width=smaller.width * ratio, height=smaller.height * ratio, depth=bigger_depth
+    )
+    return ShapePair(smaller, bigger, ratio)

@@ -9,58 +9,48 @@ import gge.tests.strategies as gge_hs
 
 
 @given(
-    output_shape=gge_hs.shape(),
-    ratio=hs.integers(min_value=2, max_value=64),
-    input_depth=hs.integers(min_value=2, max_value=64),
+    shapes=gge_hs.same_aspect_shape_pair(),
     batch_norm=gge_hs.batch_norm_layer(),
     shortcut_name=hs.text(min_size=1),
 )
 def test_downsampling(
-    output_shape: gl.Shape,
-    ratio: int,
-    input_depth: int,
+    shapes: gge_hs.ShapePair,
     batch_norm: gge_hs.GrammarLayer,
     shortcut_name: str,
 ) -> None:
     """Can downsample to exact fraction target output shape."""
-    input_shape = gl.Shape(
-        width=output_shape.width * ratio,
-        height=output_shape.height * ratio,
-        depth=input_depth,
-    )
+    input_shape = shapes.bigger
+    output_shape = shapes.smaller
     (batch_norm_layer,) = batch_norm.layers
+
     source = gl.ConnectedBatchNorm(
         input_layer=gl.Input(input_shape), params=batch_norm_layer
     )
     shortcut = conn.downsampling_shortcut(source, output_shape, name=shortcut_name)
+
     assert shortcut.output_shape == output_shape
 
 
 @given(
-    input_shape=gge_hs.shape(),
-    ratio=hs.integers(min_value=2, max_value=64),
-    output_depth=hs.integers(min_value=2, max_value=64),
+    shapes=gge_hs.same_aspect_shape_pair(),
     batch_norm=gge_hs.batch_norm_layer(),
     shortcut_name=hs.text(min_size=1),
 )
 def test_upsampling(
-    input_shape: gl.Shape,
-    ratio: int,
-    output_depth: int,
+    shapes: gge_hs.ShapePair,
     batch_norm: gge_hs.GrammarLayer,
     shortcut_name: str,
 ) -> None:
     """Can upsample to exact fraction target output shape."""
-    output_shape = gl.Shape(
-        width=input_shape.width * ratio,
-        height=input_shape.height * ratio,
-        depth=output_depth,
-    )
+    input_shape = shapes.smaller
+    output_shape = shapes.bigger
     (batch_norm_layer,) = batch_norm.layers
+
     source = gl.ConnectedBatchNorm(
         input_layer=gl.Input(input_shape), params=batch_norm_layer
     )
     shortcut = conn.upsampling_shortcut(source, output_shape, name=shortcut_name)
+
     assert shortcut.output_shape == output_shape
 
 
