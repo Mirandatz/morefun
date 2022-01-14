@@ -1,3 +1,5 @@
+import dataclasses
+
 from hypothesis import given
 import hypothesis.strategies as hs
 
@@ -154,8 +156,11 @@ def test_merge_downsample_add(shapes: gge_hs.ShapePair) -> None:
     assert add.output_shape == shapes.smaller
 
 
-def test_merge_downsample_concat() -> None:
-    input_layer = gl.Input(gl.Shape(10, 10, 3))
+@given(shapes=gge_hs.same_aspect_shape_pair(same_depth=True))
+def test_merge_downsample_concat(shapes: gge_hs.ShapePair) -> None:
+    """Concatenating sources double the depth."""
+    input_layer = gl.Input(shapes.bigger)
+    expected = dataclasses.replace(shapes.smaller, depth=shapes.smaller.depth * 2)
 
     source0 = gl.ConnectedBatchNorm(
         input_layer=input_layer,
@@ -164,7 +169,7 @@ def test_merge_downsample_concat() -> None:
 
     source1 = gl.ConnectedPool2D(
         input_layer=input_layer,
-        params=gl.Pool2D("maxpool", gl.PoolType.MAX_POOLING, stride=2),
+        params=gl.Pool2D("maxpool", gl.PoolType.MAX_POOLING, stride=shapes.ratio),
     )
 
     name_gen = ng.NameGenerator()
@@ -177,7 +182,7 @@ def test_merge_downsample_concat() -> None:
     )
 
     assert isinstance(add, gl.ConnectedConcatenate)
-    assert add.output_shape == gl.Shape(5, 5, 6)
+    assert add.output_shape == expected
 
 
 def test_merge_upsample_concat() -> None:
