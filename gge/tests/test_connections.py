@@ -1,7 +1,6 @@
 import dataclasses
 
 from hypothesis import given
-import hypothesis.strategies as hs
 
 import gge.backbones as bb
 import gge.connections as conn
@@ -10,70 +9,44 @@ import gge.name_generator as ng
 import gge.tests.strategies as gge_hs
 
 
-@given(
-    shapes=gge_hs.same_aspect_shape_pair(),
-    batch_norm=gge_hs.batch_norm_layer(),
-    shortcut_name=hs.text(min_size=1),
-)
-def test_downsampling(
-    shapes: gge_hs.ShapePair,
-    batch_norm: gge_hs.GrammarLayer,
-    shortcut_name: str,
-) -> None:
+@given(shapes=gge_hs.same_aspect_shape_pair())
+def test_downsampling(shapes: gge_hs.ShapePair) -> None:
     """Can downsample to exact fraction target output shape."""
     input_shape = shapes.bigger
     output_shape = shapes.smaller
-    (batch_norm_layer,) = batch_norm.layers
 
     source = gl.ConnectedBatchNorm(
-        input_layer=gl.Input(input_shape), params=batch_norm_layer
+        input_layer=gl.Input(input_shape),
+        params=gl.BatchNorm(name="bn"),
     )
-    shortcut = conn.downsampling_shortcut(source, output_shape, name=shortcut_name)
+    shortcut = conn.downsampling_shortcut(source, output_shape, name="whatever")
 
     assert shortcut.output_shape == output_shape
 
 
-@given(
-    shapes=gge_hs.same_aspect_shape_pair(),
-    batch_norm=gge_hs.batch_norm_layer(),
-    shortcut_name=hs.text(min_size=1),
-)
-def test_upsampling(
-    shapes: gge_hs.ShapePair,
-    batch_norm: gge_hs.GrammarLayer,
-    shortcut_name: str,
-) -> None:
+@given(shapes=gge_hs.same_aspect_shape_pair())
+def test_upsampling(shapes: gge_hs.ShapePair) -> None:
     """Can upsample to exact fraction target output shape."""
     input_shape = shapes.smaller
     output_shape = shapes.bigger
-    (batch_norm_layer,) = batch_norm.layers
 
     source = gl.ConnectedBatchNorm(
-        input_layer=gl.Input(input_shape), params=batch_norm_layer
+        input_layer=gl.Input(input_shape), params=gl.BatchNorm(name="bn")
     )
-    shortcut = conn.upsampling_shortcut(source, output_shape, name=shortcut_name)
+    shortcut = conn.upsampling_shortcut(source, output_shape, name="whatever")
 
     assert shortcut.output_shape == output_shape
 
 
-@given(
-    shapes=gge_hs.same_aspect_shape_pair(),
-    batch_norm=gge_hs.batch_norm_layer(),
-    shortcut_name=hs.text(min_size=1),
-)
-def test_downsampling_shortcut(
-    shapes: gge_hs.ShapePair,
-    batch_norm: gge_hs.GrammarLayer,
-    shortcut_name: str,
-) -> None:
+@given(shapes=gge_hs.same_aspect_shape_pair())
+def test_downsampling_shortcut(shapes: gge_hs.ShapePair) -> None:
     """Can downsample to exact fraction target output shape from enum."""
     input_shape = shapes.bigger
     output_shape = shapes.smaller
-    (batch_norm_layer,) = batch_norm.layers
     name_gen = ng.NameGenerator()
 
     source = gl.ConnectedBatchNorm(
-        input_layer=gl.Input(input_shape), params=batch_norm_layer
+        input_layer=gl.Input(input_shape), params=gl.BatchNorm(name="bn")
     )
     shortcut = conn.make_shortcut(
         source, output_shape, mode=conn.ReshapeStrategy.DOWNSAMPLE, name_gen=name_gen
@@ -82,24 +55,15 @@ def test_downsampling_shortcut(
     assert shortcut.output_shape == output_shape
 
 
-@given(
-    shapes=gge_hs.same_aspect_shape_pair(),
-    batch_norm=gge_hs.batch_norm_layer(),
-    shortcut_name=hs.text(min_size=1),
-)
-def test_upsampling_shortcut(
-    shapes: gge_hs.ShapePair,
-    batch_norm: gge_hs.GrammarLayer,
-    shortcut_name: str,
-) -> None:
+@given(shapes=gge_hs.same_aspect_shape_pair())
+def test_upsampling_shortcut(shapes: gge_hs.ShapePair) -> None:
     """Can upsample to exact fraction target output shape from enum."""
     input_shape = shapes.smaller
     output_shape = shapes.bigger
-    (batch_norm_layer,) = batch_norm.layers
     name_gen = ng.NameGenerator()
 
     source = gl.ConnectedBatchNorm(
-        input_layer=gl.Input(input_shape), params=batch_norm_layer
+        input_layer=gl.Input(input_shape), params=gl.BatchNorm(name="bn")
     )
     shortcut = conn.make_shortcut(
         source, output_shape, mode=conn.ReshapeStrategy.UPSAMPLE, name_gen=name_gen
