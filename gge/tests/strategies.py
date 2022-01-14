@@ -213,11 +213,13 @@ class ShapePair:
 
 
 @hs.composite
-def same_aspect_shape_pair(draw: DrawStrat) -> ShapePair:
+def same_aspect_shape_pair(draw: DrawStrat, *, same_depth: bool = False) -> ShapePair:
     ratio = draw(hs.integers(min_value=2, max_value=1024))
     smaller = draw(shape())
-    bigger_depth = draw(hs.integers(min_value=1, max_value=1024))
     bigger = gl.Shape(
-        width=smaller.width * ratio, height=smaller.height * ratio, depth=bigger_depth
+        width=smaller.width * ratio, height=smaller.height * ratio, depth=smaller.depth
     )
+    if not same_depth:
+        bigger_depth = draw(hs.integers(min_value=1, max_value=1024))
+        bigger = dataclasses.replace(bigger, depth=bigger_depth)
     return ShapePair(smaller, bigger, ratio)

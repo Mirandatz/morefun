@@ -126,8 +126,10 @@ def test_shortcut_identity(shape: gl.Shape) -> None:
     assert source == upsample_shortcut
 
 
-def test_merge_downsample_add() -> None:
-    input_layer = gl.Input(gl.Shape(10, 10, 3))
+@given(shapes=gge_hs.same_aspect_shape_pair(same_depth=True))
+def test_merge_downsample_add(shapes: gge_hs.ShapePair) -> None:
+    """Can add-merge using a downsample."""
+    input_layer = gl.Input(shapes.bigger)
 
     source0 = gl.ConnectedBatchNorm(
         input_layer=input_layer,
@@ -136,7 +138,7 @@ def test_merge_downsample_add() -> None:
 
     source1 = gl.ConnectedPool2D(
         input_layer=input_layer,
-        params=gl.Pool2D("maxpool", gl.PoolType.MAX_POOLING, stride=2),
+        params=gl.Pool2D("maxpool", gl.PoolType.MAX_POOLING, stride=shapes.ratio),
     )
 
     name_gen = ng.NameGenerator()
@@ -149,7 +151,7 @@ def test_merge_downsample_add() -> None:
     )
 
     assert isinstance(add, gl.ConnectedAdd)
-    assert add.output_shape == gl.Shape(5, 5, 3)
+    assert add.output_shape == shapes.smaller
 
 
 def test_merge_downsample_concat() -> None:
