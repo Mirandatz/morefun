@@ -54,24 +54,56 @@ def test_upsampling(
     assert shortcut.output_shape == output_shape
 
 
-def test_shortcut() -> None:
-    source = gl.ConnectedBatchNorm(
-        input_layer=gl.Input(gl.Shape(10, 10, 3)),
-        params=gl.BatchNorm(name="bn"),
-    )
+@given(
+    shapes=gge_hs.same_aspect_shape_pair(),
+    batch_norm=gge_hs.batch_norm_layer(),
+    shortcut_name=hs.text(min_size=1),
+)
+def test_downsampling_shortcut(
+    shapes: gge_hs.ShapePair,
+    batch_norm: gge_hs.GrammarLayer,
+    shortcut_name: str,
+) -> None:
+    """Can downsample to exact fraction target output shape from enum."""
+    input_shape = shapes.bigger
+    output_shape = shapes.smaller
+    (batch_norm_layer,) = batch_norm.layers
     name_gen = ng.NameGenerator()
 
-    target = gl.Shape(1, 1, 7)
-    shortcut = conn.make_shortcut(
-        source, target, mode=conn.ReshapeStrategy.DOWNSAMPLE, name_gen=name_gen
+    source = gl.ConnectedBatchNorm(
+        input_layer=gl.Input(input_shape), params=batch_norm_layer
     )
-    assert shortcut.output_shape == target
+    shortcut = conn.make_shortcut(
+        source, output_shape, mode=conn.ReshapeStrategy.DOWNSAMPLE, name_gen=name_gen
+    )
 
-    target = gl.Shape(100, 100, 3)
-    shortcut = conn.make_shortcut(
-        source, target, mode=conn.ReshapeStrategy.UPSAMPLE, name_gen=name_gen
+    assert shortcut.output_shape == output_shape
+
+
+@given(
+    shapes=gge_hs.same_aspect_shape_pair(),
+    batch_norm=gge_hs.batch_norm_layer(),
+    shortcut_name=hs.text(min_size=1),
+)
+def test_upsampling_shortcut(
+    shapes: gge_hs.ShapePair,
+    batch_norm: gge_hs.GrammarLayer,
+    shortcut_name: str,
+) -> None:
+    """Can upsample to exact fraction target output shape from enum."""
+    input_shape = shapes.smaller
+    output_shape = shapes.bigger
+    (batch_norm_layer,) = batch_norm.layers
+    name_gen = ng.NameGenerator()
+
+    source = gl.ConnectedBatchNorm(
+        input_layer=gl.Input(input_shape), params=batch_norm_layer
     )
-    assert shortcut.output_shape == target
+    shortcut = conn.make_shortcut(
+        source, output_shape, mode=conn.ReshapeStrategy.UPSAMPLE, name_gen=name_gen
+    )
+
+    assert shortcut.output_shape == output_shape
 
 
 def test_shortcut_identity() -> None:
