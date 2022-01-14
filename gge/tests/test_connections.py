@@ -36,14 +36,32 @@ def test_downsampling(
     assert shortcut.output_shape == output_shape
 
 
-def test_upsampling() -> None:
-    source = gl.ConnectedBatchNorm(
-        input_layer=gl.Input(gl.Shape(10, 10, 3)),
-        params=gl.BatchNorm(name="bn"),
+@given(
+    input_shape=gge_hs.shape(),
+    ratio=hs.integers(min_value=2, max_value=64),
+    output_depth=hs.integers(min_value=2, max_value=64),
+    batch_norm=gge_hs.batch_norm_layer(),
+    shortcut_name=hs.text(min_size=1),
+)
+def test_upsampling(
+    input_shape: gl.Shape,
+    ratio: int,
+    output_depth: int,
+    batch_norm: gge_hs.GrammarLayer,
+    shortcut_name: str,
+) -> None:
+    """Can upsample to exact fraction target output shape."""
+    output_shape = gl.Shape(
+        width=input_shape.width * ratio,
+        height=input_shape.height * ratio,
+        depth=output_depth,
     )
-    target = gl.Shape(20, 20, 7)
-    shortcut = conn.upsampling_shortcut(source, target, name="whatever")
-    assert shortcut.output_shape == target
+    (batch_norm_layer,) = batch_norm.layers
+    source = gl.ConnectedBatchNorm(
+        input_layer=gl.Input(input_shape), params=batch_norm_layer
+    )
+    shortcut = conn.upsampling_shortcut(source, output_shape, name=shortcut_name)
+    assert shortcut.output_shape == output_shape
 
 
 def test_shortcut() -> None:
