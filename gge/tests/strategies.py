@@ -9,6 +9,11 @@ import gge.layers as gl
 import gge.name_generator
 
 
+# python type-system does not allow asserting the two Any's are the same;
+# adding TypeVar would make DrawStrat itself generic
+DrawStrat = typing.Callable[[hs.SearchStrategy[typing.Any]], typing.Any]
+
+
 @dataclasses.dataclass(frozen=True)
 class GrammarOption:
     """the mesagrammar '(1 | 2 | 3)' string has values [1, 2, 3]"""
@@ -29,15 +34,13 @@ class GrammarLayer:
 
 
 @hs.composite
-def grammar_integer_option(draw: typing.Callable[..., typing.Any]) -> GrammarOption:
+def grammar_integer_option(draw: DrawStrat) -> GrammarOption:
     ints = draw(hs.lists(hs.integers(min_value=1), min_size=2, unique=True))
     return GrammarOption(ints)
 
 
 @hs.composite
-def with_markers(
-    draw: typing.Callable[..., typing.Any], element: GrammarLayer
-) -> GrammarLayer:
+def with_markers(draw: DrawStrat, element: GrammarLayer) -> GrammarLayer:
     """randomly adds merge and fork points to a layer
 
     This should shrink towards having no markers."""
@@ -70,7 +73,7 @@ def temporary_name(cls: type) -> str:
 
 @hs.composite
 def conv2d_layer(
-    draw: typing.Callable[..., typing.Any],
+    draw: DrawStrat,
 ) -> GrammarLayer:
     name = temporary_name(gl.Conv2D)
 
@@ -85,7 +88,7 @@ def conv2d_layer(
 
 
 @hs.composite
-def pool_layer(draw: typing.Callable[..., typing.Any]) -> GrammarLayer:
+def pool_layer(draw: DrawStrat) -> GrammarLayer:
     name = temporary_name(gl.Pool2D)
     pool_type = draw(hs.sampled_from(gl.PoolType))
     stride = draw(hs.integers(min_value=1, max_value=999999))
@@ -100,25 +103,25 @@ def pool_layer(draw: typing.Callable[..., typing.Any]) -> GrammarLayer:
 
 
 @hs.composite
-def batch_norm_layer(draw: typing.Callable[..., typing.Any]) -> GrammarLayer:
+def batch_norm_layer(draw: DrawStrat) -> GrammarLayer:
     name = temporary_name(gl.BatchNorm)
     return GrammarLayer(layers=(gl.BatchNorm(name),), mesagrammar_string='"batchnorm"')
 
 
 @hs.composite
-def relu_layer(draw: typing.Callable[..., typing.Any]) -> GrammarLayer:
+def relu_layer(draw: DrawStrat) -> GrammarLayer:
     name = temporary_name(gl.Relu)
     return GrammarLayer(layers=(gl.Relu(name),), mesagrammar_string='"relu"')
 
 
 @hs.composite
-def gelu_layer(draw: typing.Callable[..., typing.Any]) -> GrammarLayer:
+def gelu_layer(draw: DrawStrat) -> GrammarLayer:
     name = temporary_name(gl.Gelu)
     return GrammarLayer(layers=(gl.Gelu(name),), mesagrammar_string='"gelu"')
 
 
 @hs.composite
-def swish_layer(draw: typing.Callable[..., typing.Any]) -> GrammarLayer:
+def swish_layer(draw: DrawStrat) -> GrammarLayer:
     name = temporary_name(gl.Swish)
     return GrammarLayer(layers=(gl.Swish(name),), mesagrammar_string='"swish"')
 
@@ -164,7 +167,7 @@ def uniquely_named(backbone: GrammarLayer) -> GrammarLayer:
 
 @hs.composite
 def backbone(
-    draw: typing.Callable[..., typing.Any],
+    draw: DrawStrat,
     *,
     min_size: int = 1,
     max_size: int = 10,
