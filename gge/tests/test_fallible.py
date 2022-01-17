@@ -3,7 +3,7 @@ import functools
 import typing
 
 import hypothesis.strategies as hs
-from hypothesis import assume, given
+from hypothesis import given
 
 import gge.fallible as gf
 
@@ -24,27 +24,31 @@ class FallibleResultsSequence:
 
 @hs.composite
 def should_succeed_sequence_of_results(draw: DrawStrat) -> FallibleResultsSequence:
-    data = draw(hs.lists(hs.just("yeey") | hs.none(), min_size=30))
-    assume("yeey" in data)
+    results = draw(hs.lists(hs.just("yeey") | hs.none(), max_size=9))
+    guaranteed_success = draw(hs.permutations(results)) + ["yeey"]
 
-    num_results = draw(hs.integers(min_value=1, max_value=data.count("yeey")))
-    max_failures = draw(hs.integers(min_value=data.count(None)))
+    num_results = draw(
+        hs.integers(min_value=1, max_value=guaranteed_success.count("yeey"))
+    )
+    max_failures = draw(hs.integers(min_value=guaranteed_success.count(None)))
 
     return FallibleResultsSequence(
-        data, num_results=num_results, max_failures=max_failures
+        guaranteed_success, num_results=num_results, max_failures=max_failures
     )
 
 
 @hs.composite
 def should_fail_sequence_of_results(draw: DrawStrat) -> FallibleResultsSequence:
-    data = draw(hs.lists(hs.just("yeey") | hs.none(), min_size=30))
-    assume(None in data)
+    results = draw(hs.lists(hs.just("yeey") | hs.none(), max_size=9))
+    guaranteed_failure = draw(hs.permutations(results)) + [None]
 
-    num_results = draw(hs.integers(min_value=data.count("yeey") + 1))
-    max_failures = draw(hs.integers(min_value=0, max_value=data.count(None) - 1))
+    num_results = draw(hs.integers(min_value=guaranteed_failure.count("yeey") + 1))
+    max_failures = draw(
+        hs.integers(min_value=0, max_value=guaranteed_failure.count(None) - 1)
+    )
 
     return FallibleResultsSequence(
-        data, num_results=num_results, max_failures=max_failures
+        guaranteed_failure, num_results=num_results, max_failures=max_failures
     )
 
 
