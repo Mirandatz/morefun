@@ -1,3 +1,5 @@
+import dataclasses
+
 import networkx as nx
 
 import gge.connections as conn
@@ -5,11 +7,15 @@ import gge.layers as gl
 import gge.name_generator as ng
 
 
+@dataclasses.dataclass(frozen=True)
 class NeuralNetwork:
-    ...
+    output_layer: gl.ConnectableLayer
+
+    def __post_init__(self) -> None:
+        assert not isinstance(self.output_layer, gl.Input)
 
 
-def make_network(output_layer: gl.ConnectableLayer) -> nx.DiGraph:
+def convert_to_digraph(output_layer: gl.ConnectableLayer) -> nx.DiGraph:
     assert not isinstance(output_layer, gl.Input)
 
     network = nx.DiGraph()
@@ -55,7 +61,7 @@ def main() -> None:
         merge_strategy=conn.MergeStrategy.ADD,
         name_gen=name_gen,
     )
-    network = make_network(merge1)
+    network = convert_to_digraph(merge1)
     draw_network(network)
 
 
