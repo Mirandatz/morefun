@@ -33,23 +33,21 @@ def make_network(
     return NeuralNetwork(output_layer)
 
 
-def convert_to_digraph(output_layer: gl.ConnectableLayer) -> nx.DiGraph:
-    assert not isinstance(output_layer, gl.Input)
-
-    network = nx.DiGraph()
-    to_visit = [output_layer]
+def convert_to_digraph(networth: NeuralNetwork) -> nx.DiGraph:
+    graph = nx.DiGraph()
+    to_visit = [networth.output_layer]
 
     while to_visit:
         current = to_visit.pop()
         sources = reversed(list(gl.iter_sources(current)))
         for src in sources:
-            network.add_edge(src, current)
+            graph.add_edge(src, current)
             to_visit.append(src)
 
-    return network
+    return graph
 
 
-def draw_network(net: nx.DiGraph) -> None:
+def draw_graph(net: nx.DiGraph) -> None:
     import tempfile
 
     import cv2
@@ -79,8 +77,8 @@ def main() -> None:
         merge_strategy=conn.MergeStrategy.ADD,
         name_gen=name_gen,
     )
-    network = convert_to_digraph(merge1)
-    draw_network(network)
+    graph = convert_to_digraph(NeuralNetwork(merge1))
+    draw_graph(graph)
 
 
 if __name__ == "__main__":
