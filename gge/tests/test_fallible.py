@@ -56,7 +56,7 @@ def should_fail_sequence_of_results(draw: DrawStrat) -> FallibleResultsSequence:
 def test_collect_from_function_that_should_succeed_enough(
     seq: FallibleResultsSequence,
 ) -> None:
-    "Collecting results from a function that returns enough results should succeed."
+    """Collecting results from a function that returns enough results should succeed."""
 
     data_iter = iter(seq.data)
     generator = functools.partial(next, data_iter)
@@ -76,7 +76,7 @@ def test_collect_from_function_that_should_succeed_enough(
 def test_collect_from_function_that_should_not_succeed_enough(
     seq: FallibleResultsSequence,
 ) -> None:
-    "Collecting results from a function that does not return enough results should fail."
+    """Collecting results from a function that does not return enough results should fail."""
     data_iter = iter(seq.data)
     generator = functools.partial(next, data_iter)
 
