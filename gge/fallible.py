@@ -4,7 +4,7 @@ T = typing.TypeVar("T")
 
 
 def collect_results_from_fallible_function(
-    func: typing.Callable[[], T | None],
+    generator: typing.Callable[[], T | None],
     num_results: int,
     max_failures: int,
 ) -> list[T] | None:
@@ -25,7 +25,7 @@ def collect_results_from_fallible_function(
     failures = 0
 
     while len(results) < num_results and failures <= max_failures:
-        res = func()
+        res = generator()
         if res is None:
             failures += 1
         else:

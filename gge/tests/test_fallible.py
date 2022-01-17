@@ -98,7 +98,7 @@ def test_collect_from_never_fail_function(
     unfallible = functools.partial(identity, "hehe")
 
     results = gf.collect_results_from_fallible_function(
-        func=unfallible,
+        generator=unfallible,
         num_results=num_results,
         max_failures=max_failures,
     )
@@ -121,7 +121,7 @@ def test_collect_from_always_fail_function(
     always_fail = functools.partial(identity, None)
 
     results = gf.collect_results_from_fallible_function(
-        func=always_fail,
+        generator=always_fail,
         num_results=num_results,
         max_failures=max_failures,
     )
