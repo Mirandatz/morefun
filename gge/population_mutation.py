@@ -2,10 +2,14 @@ import functools
 
 import gge.composite_genotypes as cg
 import gge.fallible as fallible
+import gge.layers as gl
 import gge.mutations as mutations
+import gge.neural_network as gnn
 import gge.novelty as novel
 import gge.randomness as rand
 import gge.structured_grammatical_evolution as sge
+
+DUMMY_INPUT = gl.make_input(1, 1, 1)
 
 
 def try_generate_mutant(
@@ -14,12 +18,21 @@ def try_generate_mutant(
     rng: rand.RNG,
     novelty_tracker: novel.NoveltyTracker,
 ) -> cg.CompositeGenotype | None:
-    candidate = rng.choice(pop)  # type: ignore
+
+    candidate: cg.CompositeGenotype = rng.choice(pop)  # type: ignore
+
     mutant = mutations.mutate(candidate, genemancer, rng)
-    if not novelty_tracker.is_genotype_novel(mutant):
+    if novelty_tracker.is_genotype_novel(mutant):
+        novelty_tracker.register_genotype(mutant)
+    else:
         return None
 
-    novelty_tracker.register_genotype(mutant)
+    phenotype = gnn.make_network(mutant, genemancer, DUMMY_INPUT)
+    if novelty_tracker.is_phenotype_novel(phenotype):
+        novelty_tracker.register_phenotype(phenotype)
+    else:
+        return None
+
     return mutant
 
 
