@@ -5,6 +5,10 @@ import gge.layers as gl
 import gge.name_generator as ng
 
 
+class NeuralNetwork:
+    ...
+
+
 def make_network(output_layer: gl.ConnectableLayer) -> nx.DiGraph:
     assert not isinstance(output_layer, gl.Input)
 
