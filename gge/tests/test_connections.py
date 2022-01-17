@@ -122,7 +122,7 @@ def test_merge_downsample_add(shapes: gge_hs.ShapePair) -> None:
 
 @given(shapes=gge_hs.same_aspect_shape_pair(same_depth=True))
 def test_merge_downsample_concat(shapes: gge_hs.ShapePair) -> None:
-    """Concatenating sources double the depth."""
+    """Concatenating sources double the depth when downsampling."""
     input_layer = gl.Input(shapes.bigger)
     expected = dataclasses.replace(shapes.smaller, depth=shapes.smaller.depth * 2)
 
@@ -149,8 +149,11 @@ def test_merge_downsample_concat(shapes: gge_hs.ShapePair) -> None:
     assert add.output_shape == expected
 
 
-def test_merge_upsample_concat() -> None:
-    input_layer = gl.Input(gl.Shape(10, 10, 3))
+@given(shapes=gge_hs.same_aspect_shape_pair(same_depth=True))
+def test_merge_upsample_concat(shapes: gge_hs.ShapePair) -> None:
+    """Concatenating sources adds the depths when upsampling preserving the biggest (width, height)."""
+    input_layer = gl.Input(shapes.bigger)
+    expected = dataclasses.replace(shapes.bigger, depth=shapes.bigger.depth * 2)
 
     source0 = gl.ConnectedBatchNorm(
         input_layer=input_layer,
@@ -159,20 +162,23 @@ def test_merge_upsample_concat() -> None:
 
     source1 = gl.ConnectedPool2D(
         input_layer=input_layer,
-        params=gl.Pool2D("maxpool", gl.PoolType.MAX_POOLING, stride=2),
+        params=gl.Pool2D("maxpool", gl.PoolType.MAX_POOLING, stride=shapes.ratio),
     )
 
     name_gen = ng.NameGenerator()
 
-    add = conn.make_merge(
+    merge = conn.make_merge(
         sources=[source0, source1],
         reshape_strategy=conn.ReshapeStrategy.UPSAMPLE,
         merge_strategy=conn.MergeStrategy.CONCAT,
         name_gen=name_gen,
     )
 
-    assert isinstance(add, gl.ConnectedConcatenate)
-    assert add.output_shape == gl.Shape(10, 10, 6)
+    assert isinstance(merge, gl.ConnectedConcatenate)
+    assert len(merge.input_layers) == 2
+    assert source0 in merge.input_layers
+    assert source1 not in merge.input_layers  # shortcut instead
+    assert merge.output_shape == expected
 
 
 def test_no_fork() -> None:
