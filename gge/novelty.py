@@ -5,11 +5,11 @@ import gge.neural_network as gnn
 class NoveltyTracker:
     def __init__(
         self,
-        known_genotypes: set[cg.CompositeGenotype] = set(),
-        known_phenotypes: set[gnn.NeuralNetwork] = set(),
+        known_genotypes: set[cg.CompositeGenotype] | None = None,
+        known_phenotypes: set[gnn.NeuralNetwork] | None = None,
     ) -> None:
-        self._genotypes = known_genotypes.copy()
-        self._phenotypes = known_phenotypes.copy()
+        self._genotypes = (known_genotypes or set()).copy()
+        self._phenotypes = (known_phenotypes or set()).copy()
 
     def copy(self) -> "NoveltyTracker":
         return NoveltyTracker(
