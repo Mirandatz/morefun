@@ -13,13 +13,13 @@ DUMMY_INPUT = gl.make_input(1, 1, 1)
 
 
 def try_generate_mutant(
-    pop: list[cg.CompositeGenotype],
+    population: list[cg.CompositeGenotype],
     genemancer: sge.Genemancer,
     rng: rand.RNG,
     novelty_tracker: novel.NoveltyTracker,
 ) -> cg.CompositeGenotype | None:
 
-    candidate: cg.CompositeGenotype = rng.choice(pop)  # type: ignore
+    candidate: cg.CompositeGenotype = rng.choice(population)  # type: ignore
 
     mutant = mutations.mutate(candidate, genemancer, rng)
     if novelty_tracker.is_genotype_novel(mutant):
@@ -37,14 +37,14 @@ def try_generate_mutant(
 
 
 def try_mutate_population(
-    pop: list[cg.CompositeGenotype],
+    population: list[cg.CompositeGenotype],
     mutants_to_generate: int,
     max_failures: int,
     genemancer: sge.Genemancer,
     rng: rand.RNG,
     novelty_tracker: novel.NoveltyTracker,
 ) -> list[cg.CompositeGenotype] | None:
-    assert len(pop) > 0
+    assert len(population) > 0
     assert mutants_to_generate > 1
     assert max_failures >= 0
 
@@ -53,7 +53,7 @@ def try_mutate_population(
 
     generator = functools.partial(
         try_generate_mutant,
-        pop,
+        population,
         genemancer,
         rng,
         tracker_copy,
