@@ -2,9 +2,12 @@ import dataclasses
 
 import networkx as nx
 
+import gge.backbones as bb
+import gge.composite_genotypes as cg
 import gge.connections as conn
 import gge.layers as gl
 import gge.name_generator as ng
+import gge.structured_grammatical_evolution as sge
 
 
 @dataclasses.dataclass(frozen=True)
@@ -13,6 +16,21 @@ class NeuralNetwork:
 
     def __post_init__(self) -> None:
         assert not isinstance(self.output_layer, gl.Input)
+
+
+def make_network(
+    genotype: cg.CompositeGenotype,
+    genemancer: sge.Genemancer,
+    input_layer: gl.Input,
+) -> NeuralNetwork:
+    backbone_tokenstream = genemancer.map_to_tokenstream(genotype.backbone_genotype)
+    backbone = bb.parse(backbone_tokenstream)
+    output_layer = conn.connect_backbone(
+        backbone,
+        genotype.connections_genotype,
+        input_layer=input_layer,
+    )
+    return NeuralNetwork(output_layer)
 
 
 def convert_to_digraph(output_layer: gl.ConnectableLayer) -> nx.DiGraph:
