@@ -122,7 +122,7 @@ def test_merge_downsample_add(shapes: gge_hs.ShapePair) -> None:
 
 @given(shapes=gge_hs.same_aspect_shape_pair(same_depth=True))
 def test_merge_downsample_concat(shapes: gge_hs.ShapePair) -> None:
-    """Concatenating sources double the depth when downsampling."""
+    """Concatenating sources sums the depths when downsampling preserving the smallest (width, height)."""
     input_layer = gl.Input(shapes.bigger)
     expected = dataclasses.replace(shapes.smaller, depth=shapes.smaller.depth * 2)
 
