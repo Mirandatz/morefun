@@ -195,13 +195,10 @@ def backbone(
 
 @hs.composite
 def shape(draw: DrawStrat) -> gl.Shape:
-    width, height, depth = draw(
-        hs.tuples(
-            hs.integers(min_value=1, max_value=8196),
-            hs.integers(min_value=1, max_value=8196),
-            hs.integers(min_value=1, max_value=8196),
-        )
-    )
+    width = draw(hs.integers(min_value=1, max_value=8196))
+    height = draw(hs.integers(min_value=1, max_value=8196))
+    depth = draw(hs.integers(min_value=1, max_value=8196))
+
     return gl.Shape(width=width, height=height, depth=depth)
 
 
