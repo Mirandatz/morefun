@@ -32,7 +32,7 @@ def fitness_test_data(draw: DrawStrat) -> FitnessTestData:
 
 @given(fitness_test_data())
 def test_select_fittest(data: FitnessTestData) -> None:
-    """Select fittest."""
+    """Should select the individuals with largest fitnesses."""
 
     fittest = gfit.select_fittest(data.population, data.fittest_count)
 
