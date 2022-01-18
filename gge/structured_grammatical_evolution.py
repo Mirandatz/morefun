@@ -43,85 +43,111 @@ class Genotype:
         return self._nonterminals_map[non_terminal]
 
 
-class Genemancer:
-    def __init__(self, grammar: gg.Grammar):
-        assert not grammar_is_recursive(grammar)
+class GenotypeSkeleton:
+    def __init__(
+        self,
+        sizes_of_gene_lists: dict[gg.NonTerminal, int],
+        max_values_in_gene_lists: dict[gg.NonTerminal, int],
+    ) -> None:
+        assert sizes_of_gene_lists.keys() == max_values_in_gene_lists.keys()
+        assert len(sizes_of_gene_lists) > 0
+        for size in sizes_of_gene_lists.values():
+            assert size > 0
+        for max_val in max_values_in_gene_lists.values():
+            assert max_val >= 0
 
-        sizes_of_genes_lists = {
-            nt: max_nr_of_times_nonterminal_can_be_expanded(nt, grammar)
-            for nt in grammar.nonterminals
-        }
+        self._sizes = sizes_of_gene_lists.copy()
+        self._max_values = max_values_in_gene_lists.copy()
 
-        max_values_in_genes_lists = {
-            nt: len(grammar.expansions(nt)) for nt in grammar.nonterminals
-        }
+    def get_gene_list_size(self, nt: gg.NonTerminal) -> int:
+        return self._sizes[nt]
 
-        self._grammar = grammar
-        self._sizes_of_genes_lists = sizes_of_genes_lists
-        self._max_values_in_genes_lists = max_values_in_genes_lists
+    def get_gene_list_max_value(self, nt: gg.NonTerminal) -> int:
+        return self._max_values[nt]
 
-    @property
-    def grammar(self) -> gg.Grammar:
-        return self._grammar
 
-    def create_gene(self, nt: gg.NonTerminal, rng: rand.RNG) -> Gene:
-        rules_indices = rng.integers(
-            low=0,
-            high=self._max_values_in_genes_lists[nt],
-            size=self._sizes_of_genes_lists[nt],
-        )
+@dataclasses.dataclass(frozen=True)
+class SGEParameters:
+    grammar: gg.Grammar
 
-        indices_as_tuple = tuple(int(i) for i in rules_indices)
-        return Gene(nt, indices_as_tuple)
+    @functools.cached_property
+    def genotype_skeleton(self) -> GenotypeSkeleton:
+        return make_genotype_skeleton(self.grammar)
 
-    def create_genotype(self, rng: rand.RNG) -> Genotype:
-        genes = (self.create_gene(nt, rng) for nt in self.grammar.nonterminals)
-        sorted_genes = sorted(genes)
 
-        return Genotype(tuple(sorted_genes))
+# caching for performance
+@functools.cache
+def make_genotype_skeleton(grammar: gg.Grammar) -> GenotypeSkeleton:
+    assert not grammar_is_recursive(grammar)
 
-    def map_to_tokenstream(self, genotype: Genotype) -> str:
-        """
-        This function implements the "genotype mapping" procedure of the GE literature.
-        Partially. Because the mapping process usually translates a phenotype to a genotype in a
-        complex monolithic process, but in this project, we adopt a "multi-stage mapping approach":
-        first we generate a sequence of tokens from the genotype (using this function),
-        then we generate a tree from the tokens (using the Lark library);
-        finally, we visit the nodes of the tree and synthesize the phenotype.
-        """
+    sizes_of_genes_lists = {
+        nt: max_nr_of_times_nonterminal_can_be_expanded(nt, grammar)
+        for nt in grammar.nonterminals
+    }
 
-        tokenstream = []
+    max_values_in_genes_lists = {
+        nt: len(grammar.expansions(nt)) for nt in grammar.nonterminals
+    }
 
-        gene_consumption_tracker = {g: 0 for g in genotype.genes}
+    return GenotypeSkeleton(
+        sizes_of_gene_lists=sizes_of_genes_lists,
+        max_values_in_gene_lists=max_values_in_genes_lists,
+    )
 
-        to_process: collections.deque[
-            gg.Terminal | gg.NonTerminal
-        ] = collections.deque()
-        to_process.append(self.grammar.start_symbol)
 
-        while to_process:
-            symbol = to_process.popleft()
+def create_gene(
+    nt: gg.NonTerminal,
+    skeleton: GenotypeSkeleton,
+    rng: rand.RNG,
+) -> Gene:
+    rules_indices = rng.integers(
+        low=0,
+        high=skeleton.get_gene_list_max_value(nt),
+        size=skeleton.get_gene_list_size(nt),
+    )
 
-            # sanity check
-            assert isinstance(symbol, gg.Terminal | gg.NonTerminal)
+    indices_as_tuple = tuple(int(i) for i in rules_indices)
+    return Gene(nt, indices_as_tuple)
 
-            if isinstance(symbol, gg.Terminal):
-                tokenstream.append(symbol.text)
-                continue
 
-            gene = genotype.get_associated_gene(symbol)
-            expansions = self.grammar.expansions(symbol)
+def create_genotype(grammar: gg.Grammar, rng: rand.RNG) -> Genotype:
+    skeleton = make_genotype_skeleton(grammar)
+    genes = (create_gene(nt, skeleton, rng) for nt in grammar.nonterminals)
+    sorted_genes = sorted(genes)
+    return Genotype(tuple(sorted_genes))
 
-            gene_pos = gene_consumption_tracker[gene]
-            gene_consumption_tracker[gene] += 1
-            exp_choice = gene.expansions_indices[gene_pos]
 
-            chosen_exp = expansions[exp_choice]
+def map_to_tokenstream(genotype: Genotype, grammar: gg.Grammar) -> str:
+    tokenstream = []
 
-            for s in reversed(chosen_exp.symbols):
-                to_process.appendleft(s)
+    gene_consumption_tracker = {g: 0 for g in genotype.genes}
 
-        return "".join(tokenstream)
+    to_process: collections.deque[gg.Terminal | gg.NonTerminal] = collections.deque()
+    to_process.append(grammar.start_symbol)
+
+    while to_process:
+        symbol = to_process.popleft()
+
+        # sanity check
+        assert isinstance(symbol, gg.Terminal | gg.NonTerminal)
+
+        if isinstance(symbol, gg.Terminal):
+            tokenstream.append(symbol.text)
+            continue
+
+        gene = genotype.get_associated_gene(symbol)
+        expansions = grammar.expansions(symbol)
+
+        gene_pos = gene_consumption_tracker[gene]
+        gene_consumption_tracker[gene] += 1
+        exp_choice = gene.expansions_indices[gene_pos]
+
+        chosen_exp = expansions[exp_choice]
+
+        for s in reversed(chosen_exp.symbols):
+            to_process.appendleft(s)
+
+    return "".join(tokenstream)
 
 
 def max_nr_of_times_nonterminal_can_be_expanded(
@@ -156,6 +182,8 @@ def max_nr_of_times_nonterminal_can_be_expanded(
     return sum(max_expansions.values())
 
 
+# caching for performance
+@functools.cache
 def grammar_is_recursive(grammar: gg.Grammar) -> bool:
     return any(
         can_expand(

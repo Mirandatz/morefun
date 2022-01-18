@@ -2,6 +2,7 @@ import dataclasses
 
 import gge.backbones as bb
 import gge.connections as conn
+import gge.grammars as gr
 import gge.randomness as rand
 import gge.structured_grammatical_evolution as sge
 
@@ -17,12 +18,11 @@ class CompositeGenotype:
 
 
 def create_genotype(
-    backbone_genemancer: sge.Genemancer,
+    grammar: gr.Grammar,
     rng: rand.RNG,
 ) -> CompositeGenotype:
-    backbone_genotype = backbone_genemancer.create_genotype(rng)
-    tokens = backbone_genemancer.map_to_tokenstream(backbone_genotype)
-    tokenstream = "".join(tokens)
+    backbone_genotype = sge.create_genotype(grammar, rng)
+    tokenstream = sge.map_to_tokenstream(backbone_genotype, grammar)
     backbone = bb.parse(tokenstream)
     connections_schema = conn.create_connections_schema(
         backbone=backbone,
@@ -33,10 +33,10 @@ def create_genotype(
 
 def make_composite_genotype(
     backbone_genotype: sge.Genotype,
-    genemancer: sge.Genemancer,
+    grammar: gr.Grammar,
     rng: rand.RNG,
 ) -> CompositeGenotype:
-    tokenstream = genemancer.map_to_tokenstream(backbone_genotype)
+    tokenstream = sge.map_to_tokenstream(backbone_genotype, grammar)
     backbone = bb.parse(tokenstream)
     connections_genotype = conn.create_connections_schema(backbone, rng)
     return CompositeGenotype(

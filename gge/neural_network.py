@@ -5,6 +5,7 @@ import networkx as nx
 import gge.backbones as bb
 import gge.composite_genotypes as cg
 import gge.connections as conn
+import gge.grammars as gr
 import gge.layers as gl
 import gge.name_generator as ng
 import gge.structured_grammatical_evolution as sge
@@ -20,10 +21,10 @@ class NeuralNetwork:
 
 def make_network(
     genotype: cg.CompositeGenotype,
-    genemancer: sge.Genemancer,
+    grammar: gr.Grammar,
     input_layer: gl.Input,
 ) -> NeuralNetwork:
-    backbone_tokenstream = genemancer.map_to_tokenstream(genotype.backbone_genotype)
+    backbone_tokenstream = sge.map_to_tokenstream(genotype.backbone_genotype, grammar)
     backbone = bb.parse(backbone_tokenstream)
     output_layer = conn.connect_backbone(
         backbone,
