@@ -38,7 +38,7 @@ def test_select_fittest(data: FitnessTestData) -> None:
 
     assert data.fittest_count == len(fittest)
 
-    worst = min(fittest.values())
-    for k, v in data.population.items():
-        if v > worst:
-            assert k in fittest
+    fitness_of_the_worst_selected_individual = min(fittest.values())
+    for genotype, fitness in data.population.items():
+        if fitness > fitness_of_the_worst_selected_individual:
+            assert genotype in fittest
