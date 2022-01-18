@@ -1,71 +1,101 @@
+import dataclasses
+
+from hypothesis import given
+
 import gge.backbones as bb
 import gge.connections as conn
 import gge.layers as gl
 import gge.name_generator as ng
+import gge.tests.strategies as gge_hs
 
 
-def test_downsampling() -> None:
+@given(shapes=gge_hs.same_aspect_shape_pair())
+def test_downsampling(shapes: gge_hs.ShapePair) -> None:
+    """Can downsample to exact fraction target output shape."""
+    input_shape = shapes.bigger
+    output_shape = shapes.smaller
+
     source = gl.ConnectedBatchNorm(
-        input_layer=gl.Input(gl.Shape(10, 10, 3)),
+        input_layer=gl.Input(input_shape),
         params=gl.BatchNorm(name="bn"),
     )
-    target = gl.Shape(5, 5, 19)
-    shortcut = conn.downsampling_shortcut(source, target, name="whatever")
-    assert shortcut.output_shape == target
+    shortcut = conn.downsampling_shortcut(source, output_shape, name="whatever")
+
+    assert shortcut.output_shape == output_shape
 
 
-def test_upsampling() -> None:
+@given(shapes=gge_hs.same_aspect_shape_pair())
+def test_upsampling(shapes: gge_hs.ShapePair) -> None:
+    """Can upsample to exact fraction target output shape."""
+    input_shape = shapes.smaller
+    output_shape = shapes.bigger
+
     source = gl.ConnectedBatchNorm(
-        input_layer=gl.Input(gl.Shape(10, 10, 3)),
-        params=gl.BatchNorm(name="bn"),
+        input_layer=gl.Input(input_shape), params=gl.BatchNorm(name="bn")
     )
-    target = gl.Shape(20, 20, 7)
-    shortcut = conn.upsampling_shortcut(source, target, name="whatever")
-    assert shortcut.output_shape == target
+    shortcut = conn.upsampling_shortcut(source, output_shape, name="whatever")
+
+    assert shortcut.output_shape == output_shape
 
 
-def test_shortcut() -> None:
+@given(shapes=gge_hs.same_aspect_shape_pair())
+def test_downsampling_shortcut(shapes: gge_hs.ShapePair) -> None:
+    """Can downsample to exact fraction target output shape from enum."""
+    input_shape = shapes.bigger
+    output_shape = shapes.smaller
+    name_gen = ng.NameGenerator()
+
     source = gl.ConnectedBatchNorm(
-        input_layer=gl.Input(gl.Shape(10, 10, 3)),
+        input_layer=gl.Input(input_shape), params=gl.BatchNorm(name="bn")
+    )
+    shortcut = conn.make_shortcut(
+        source, output_shape, mode=conn.ReshapeStrategy.DOWNSAMPLE, name_gen=name_gen
+    )
+
+    assert shortcut.output_shape == output_shape
+
+
+@given(shapes=gge_hs.same_aspect_shape_pair())
+def test_upsampling_shortcut(shapes: gge_hs.ShapePair) -> None:
+    """Can upsample to exact fraction target output shape from enum."""
+    input_shape = shapes.smaller
+    output_shape = shapes.bigger
+    name_gen = ng.NameGenerator()
+
+    source = gl.ConnectedBatchNorm(
+        input_layer=gl.Input(input_shape), params=gl.BatchNorm(name="bn")
+    )
+    shortcut = conn.make_shortcut(
+        source, output_shape, mode=conn.ReshapeStrategy.UPSAMPLE, name_gen=name_gen
+    )
+
+    assert shortcut.output_shape == output_shape
+
+
+@given(shape=gge_hs.shape())
+def test_shortcut_identity(shape: gl.Shape) -> None:
+    """Making a shortcut with same shape returns the same layer regardless of method."""
+    source = gl.ConnectedBatchNorm(
+        input_layer=gl.Input(shape),
         params=gl.BatchNorm(name="bn"),
     )
     name_gen = ng.NameGenerator()
 
-    target = gl.Shape(1, 1, 7)
-    shortcut = conn.make_shortcut(
-        source, target, mode=conn.ReshapeStrategy.DOWNSAMPLE, name_gen=name_gen
+    downsample_shortcut = conn.make_shortcut(
+        source, shape, mode=conn.ReshapeStrategy.DOWNSAMPLE, name_gen=name_gen
     )
-    assert shortcut.output_shape == target
-
-    target = gl.Shape(100, 100, 3)
-    shortcut = conn.make_shortcut(
-        source, target, mode=conn.ReshapeStrategy.UPSAMPLE, name_gen=name_gen
+    upsample_shortcut = conn.make_shortcut(
+        source, shape, mode=conn.ReshapeStrategy.UPSAMPLE, name_gen=name_gen
     )
-    assert shortcut.output_shape == target
+
+    assert source == downsample_shortcut
+    assert source == upsample_shortcut
 
 
-def test_shortcut_identity() -> None:
-    source = gl.ConnectedBatchNorm(
-        input_layer=gl.Input(gl.Shape(10, 10, 3)),
-        params=gl.BatchNorm(name="bn"),
-    )
-    name_gen = ng.NameGenerator()
-
-    target = gl.Shape(10, 10, 3)
-    shortcut = conn.make_shortcut(
-        source, target, mode=conn.ReshapeStrategy.DOWNSAMPLE, name_gen=name_gen
-    )
-    assert source == shortcut
-
-    target = gl.Shape(10, 10, 3)
-    shortcut = conn.make_shortcut(
-        source, target, mode=conn.ReshapeStrategy.UPSAMPLE, name_gen=name_gen
-    )
-    assert source == shortcut
-
-
-def test_merge_downsample_add() -> None:
-    input_layer = gl.Input(gl.Shape(10, 10, 3))
+@given(shapes=gge_hs.same_aspect_shape_pair(same_depth=True))
+def test_merge_downsample_add(shapes: gge_hs.ShapePair) -> None:
+    """Can add-merge using a downsample."""
+    input_layer = gl.Input(shapes.bigger)
 
     source0 = gl.ConnectedBatchNorm(
         input_layer=input_layer,
@@ -74,7 +104,7 @@ def test_merge_downsample_add() -> None:
 
     source1 = gl.ConnectedPool2D(
         input_layer=input_layer,
-        params=gl.Pool2D("maxpool", gl.PoolType.MAX_POOLING, stride=2),
+        params=gl.Pool2D("maxpool", gl.PoolType.MAX_POOLING, stride=shapes.ratio),
     )
 
     name_gen = ng.NameGenerator()
@@ -87,11 +117,14 @@ def test_merge_downsample_add() -> None:
     )
 
     assert isinstance(add, gl.ConnectedAdd)
-    assert add.output_shape == gl.Shape(5, 5, 3)
+    assert add.output_shape == shapes.smaller
 
 
-def test_merge_downsample_concat() -> None:
-    input_layer = gl.Input(gl.Shape(10, 10, 3))
+@given(shapes=gge_hs.same_aspect_shape_pair(same_depth=True))
+def test_merge_downsample_concat(shapes: gge_hs.ShapePair) -> None:
+    """Concatenating sources sums the depths when downsampling preserving the smallest (width, height)."""
+    input_layer = gl.Input(shapes.bigger)
+    expected = dataclasses.replace(shapes.smaller, depth=shapes.smaller.depth * 2)
 
     source0 = gl.ConnectedBatchNorm(
         input_layer=input_layer,
@@ -100,7 +133,7 @@ def test_merge_downsample_concat() -> None:
 
     source1 = gl.ConnectedPool2D(
         input_layer=input_layer,
-        params=gl.Pool2D("maxpool", gl.PoolType.MAX_POOLING, stride=2),
+        params=gl.Pool2D("maxpool", gl.PoolType.MAX_POOLING, stride=shapes.ratio),
     )
 
     name_gen = ng.NameGenerator()
@@ -113,11 +146,14 @@ def test_merge_downsample_concat() -> None:
     )
 
     assert isinstance(add, gl.ConnectedConcatenate)
-    assert add.output_shape == gl.Shape(5, 5, 6)
+    assert add.output_shape == expected
 
 
-def test_merge_upsample_concat() -> None:
-    input_layer = gl.Input(gl.Shape(10, 10, 3))
+@given(shapes=gge_hs.same_aspect_shape_pair(same_depth=True))
+def test_merge_upsample_concat(shapes: gge_hs.ShapePair) -> None:
+    """Concatenating sources adds the depths when upsampling preserving the biggest (width, height)."""
+    input_layer = gl.Input(shapes.bigger)
+    expected = dataclasses.replace(shapes.bigger, depth=shapes.bigger.depth * 2)
 
     source0 = gl.ConnectedBatchNorm(
         input_layer=input_layer,
@@ -126,20 +162,23 @@ def test_merge_upsample_concat() -> None:
 
     source1 = gl.ConnectedPool2D(
         input_layer=input_layer,
-        params=gl.Pool2D("maxpool", gl.PoolType.MAX_POOLING, stride=2),
+        params=gl.Pool2D("maxpool", gl.PoolType.MAX_POOLING, stride=shapes.ratio),
     )
 
     name_gen = ng.NameGenerator()
 
-    add = conn.make_merge(
+    merge = conn.make_merge(
         sources=[source0, source1],
         reshape_strategy=conn.ReshapeStrategy.UPSAMPLE,
         merge_strategy=conn.MergeStrategy.CONCAT,
         name_gen=name_gen,
     )
 
-    assert isinstance(add, gl.ConnectedConcatenate)
-    assert add.output_shape == gl.Shape(10, 10, 6)
+    assert isinstance(merge, gl.ConnectedConcatenate)
+    assert len(merge.input_layers) == 2
+    assert source0 in merge.input_layers
+    assert source1 not in merge.input_layers  # shortcut instead
+    assert merge.output_shape == expected
 
 
 def test_no_fork() -> None:

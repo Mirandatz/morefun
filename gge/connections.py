@@ -109,9 +109,8 @@ def downsampling_shortcut(
     assert source.output_shape != target_shape
     assert source.output_shape.aspect_ratio == target_shape.aspect_ratio
 
-    ratio = source.output_shape.width / target_shape.width
-    stride = int(ratio)
-    assert stride == ratio
+    stride, rest = divmod(source.output_shape.width, target_shape.width)
+    assert rest == 0
 
     reshaper = gl.Conv2D(
         name=name,
