@@ -3,9 +3,9 @@ import enum
 import typing
 
 import gge.composite_genotypes as cg
+import gge.grammars as gr
 import gge.layers as gl
 import gge.neural_network as gnn
-import gge.structured_grammatical_evolution as sge
 
 
 @enum.unique
@@ -16,7 +16,7 @@ class FitnessMetric(enum.Enum):
 @dataclasses.dataclass(frozen=True)
 class FitnessEvaluationParameters:
     metric: FitnessMetric
-    genemancer: sge.Genemancer
+    grammar: gr.Grammar
     input_layer: gl.Input
 
 
@@ -38,7 +38,7 @@ def evaluate(
 
     phenotype = gnn.make_network(
         genotype,
-        params.genemancer,
+        params.grammar,
         params.input_layer,
     )
 
