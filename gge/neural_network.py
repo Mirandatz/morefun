@@ -1,27 +1,53 @@
+import dataclasses
+
 import networkx as nx
 
+import gge.backbones as bb
+import gge.composite_genotypes as cg
 import gge.connections as conn
 import gge.layers as gl
 import gge.name_generator as ng
+import gge.structured_grammatical_evolution as sge
 
 
-def make_network(output_layer: gl.ConnectableLayer) -> nx.DiGraph:
-    assert not isinstance(output_layer, gl.Input)
+@dataclasses.dataclass(frozen=True)
+class NeuralNetwork:
+    output_layer: gl.ConnectableLayer
 
-    network = nx.DiGraph()
-    to_visit = [output_layer]
+    def __post_init__(self) -> None:
+        assert not isinstance(self.output_layer, gl.Input)
+
+
+def make_network(
+    genotype: cg.CompositeGenotype,
+    genemancer: sge.Genemancer,
+    input_layer: gl.Input,
+) -> NeuralNetwork:
+    backbone_tokenstream = genemancer.map_to_tokenstream(genotype.backbone_genotype)
+    backbone = bb.parse(backbone_tokenstream)
+    output_layer = conn.connect_backbone(
+        backbone,
+        genotype.connections_genotype,
+        input_layer=input_layer,
+    )
+    return NeuralNetwork(output_layer)
+
+
+def convert_to_digraph(networth: NeuralNetwork) -> nx.DiGraph:
+    graph = nx.DiGraph()
+    to_visit = [networth.output_layer]
 
     while to_visit:
         current = to_visit.pop()
         sources = reversed(list(gl.iter_sources(current)))
         for src in sources:
-            network.add_edge(src, current)
+            graph.add_edge(src, current)
             to_visit.append(src)
 
-    return network
+    return graph
 
 
-def draw_network(net: nx.DiGraph) -> None:
+def draw_graph(net: nx.DiGraph) -> None:
     import tempfile
 
     import cv2
@@ -51,8 +77,8 @@ def main() -> None:
         merge_strategy=conn.MergeStrategy.ADD,
         name_gen=name_gen,
     )
-    network = make_network(merge1)
-    draw_network(network)
+    graph = convert_to_digraph(NeuralNetwork(merge1))
+    draw_graph(graph)
 
 
 if __name__ == "__main__":
