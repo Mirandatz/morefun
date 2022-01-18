@@ -1,6 +1,6 @@
 import hypothesis
-from hypothesis import given
 import hypothesis.strategies as hs
+from hypothesis import given
 
 import gge.backbones as bb
 import gge.grammars as gr
@@ -9,17 +9,15 @@ import gge.randomness as rand
 import gge.structured_grammatical_evolution as sge
 import gge.tests.strategies as gge_hs
 
-
 # end-to-end tests may take a while
 end_to_end_settings = hypothesis.settings(max_examples=10)
 
 
 def make_backbone(raw_grammar: str, rng_seed: int | None = None) -> bb.Backbone:
     grammar = gr.Grammar(raw_grammar)
-    genemancer = sge.Genemancer(grammar)
     rng = rand.create_rng(rng_seed)
-    genotype = genemancer.create_genotype(rng)
-    tokenstream = genemancer.map_to_tokenstream(genotype)
+    genotype = sge.create_genotype(grammar, rng)
+    tokenstream = sge.map_to_tokenstream(genotype, grammar)
     return bb.parse(tokenstream)
 
 
