@@ -2,6 +2,8 @@ import collections
 import dataclasses
 import functools
 
+from loguru import logger
+
 import gge.grammars as gg
 import gge.randomness as rand
 
@@ -75,7 +77,6 @@ class SGEParameters:
         return make_genotype_skeleton(self.grammar)
 
 
-# caching for performance
 @functools.cache
 def make_genotype_skeleton(grammar: gg.Grammar) -> GenotypeSkeleton:
     assert not grammar_is_recursive(grammar)
@@ -105,19 +106,25 @@ def create_gene(
         high=skeleton.get_gene_list_max_value(nt),
         size=skeleton.get_gene_list_size(nt),
     )
-
     indices_as_tuple = tuple(int(i) for i in rules_indices)
-    return Gene(nt, indices_as_tuple)
+
+    gene = Gene(nt, indices_as_tuple)
+    logger.debug(f"Creating new gene=<{gene}>")
+    return gene
 
 
 def create_genotype(grammar: gg.Grammar, rng: rand.RNG) -> Genotype:
     skeleton = make_genotype_skeleton(grammar)
     genes = (create_gene(nt, skeleton, rng) for nt in grammar.nonterminals)
     sorted_genes = sorted(genes)
-    return Genotype(tuple(sorted_genes))
+
+    genotype = Genotype(tuple(sorted_genes))
+    logger.debug(f"Creating new genotype=<{genotype}>")
+    return genotype
 
 
 def map_to_tokenstream(genotype: Genotype, grammar: gg.Grammar) -> str:
+    logger.trace("map_to_tokenstream")
     tokenstream = []
 
     gene_consumption_tracker = {g: 0 for g in genotype.genes}
@@ -127,12 +134,14 @@ def map_to_tokenstream(genotype: Genotype, grammar: gg.Grammar) -> str:
 
     while to_process:
         symbol = to_process.popleft()
+        logger.debug(f"Processing symbol=<{symbol}>")
 
         # sanity check
         assert isinstance(symbol, gg.Terminal | gg.NonTerminal)
 
         if isinstance(symbol, gg.Terminal):
             tokenstream.append(symbol.text)
+            logger.debug(f"Terminal={symbol.text} added to tokenstream")
             continue
 
         gene = genotype.get_associated_gene(symbol)
@@ -144,7 +153,9 @@ def map_to_tokenstream(genotype: Genotype, grammar: gg.Grammar) -> str:
 
         chosen_exp = expansions[exp_choice]
 
-        for s in reversed(chosen_exp.symbols):
+        symbols_to_add = reversed(chosen_exp.symbols)
+        logger.debug(f"Queueing symbols=<{symbols_to_add}>")
+        for s in symbols_to_add:
             to_process.appendleft(s)
 
     return "".join(tokenstream)
@@ -182,7 +193,6 @@ def max_nr_of_times_nonterminal_can_be_expanded(
     return sum(max_expansions.values())
 
 
-# caching for performance
 @functools.cache
 def grammar_is_recursive(grammar: gg.Grammar) -> bool:
     return any(

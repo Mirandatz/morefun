@@ -7,6 +7,8 @@ import typing
 
 import lark
 
+from loguru import logger
+
 import gge.layers as gl
 import gge.name_generator
 import gge.transformers as gge_transformers
@@ -185,4 +187,5 @@ def parse(string: str) -> Backbone:
 
     parser = lark.Lark(grammar=get_mesagrammar(), parser="lalr")
     tree = parser.parse(string)
+    logger.success("Parsed the mesagrammar into an abstract syntax tree")
     return BackboneSynthetizer().transform(tree)

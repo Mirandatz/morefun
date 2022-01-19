@@ -1,5 +1,7 @@
 import collections
 
+from loguru import logger
+
 
 class NameGenerator:
     def __init__(self) -> None:
@@ -11,6 +13,8 @@ class NameGenerator:
         count = self._instance_counter[prefix]
         name = f"{prefix}_{count}"
         self._instance_counter[prefix] += 1
+
+        logger.debug(f"Generated name=<{name}> for prefix=<{prefix}>")
         return name
 
     def gen_name(self, prefix_or_type: str | type) -> str:

@@ -2,6 +2,8 @@ import dataclasses as dc
 import functools
 import typing
 
+from loguru import logger
+
 import gge.composite_genotypes as cg
 import gge.connections as conn
 import gge.grammars as gr
@@ -45,6 +47,7 @@ def mutate(
 ) -> cg.CompositeGenotype:
     options = ["backbone", "connections"]
     chosen = rng.choice(options)
+    logger.debug(f"Mutating individual on=<{chosen}>")
 
     if chosen == "backbone":
         skeleton = sge.make_genotype_skeleton(grammar)
@@ -89,6 +92,7 @@ def mutate_gene(
     # maybe the evolutionary algorithm's locality could be improved by
     # trying to preserve as much of the original 'expansions indices' as possible,
     # instead of generating an entirely new one
+    logger.trace("mutate_gene")
     return sge.create_gene(gene.nonterminal, skeleton, rng)
 
 
@@ -102,6 +106,10 @@ def mutate_connections_schema(
         old_params,
         mutator=functools.partial(mutate_merge_parameters, rng=rng),
         rng=rng,
+    )
+
+    logger.debug(
+        "Mutating connection schema from old=<{old_params}> to new=<{new_params}>"
     )
 
     return dc.replace(schema, merge_params=new_params)
