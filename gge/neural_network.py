@@ -18,6 +18,13 @@ class NeuralNetwork:
     def __post_init__(self) -> None:
         assert not isinstance(self.output_layer, gl.Input)
 
+        graph = convert_to_digraph(self)
+
+        assert nx.is_directed_acyclic_graph(graph)
+
+        inputs = [layer for layer in graph.nodes if isinstance(layer, gl.Input)]
+        assert len(inputs) == 1
+
 
 def make_network(
     genotype: cg.CompositeGenotype,
