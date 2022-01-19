@@ -75,7 +75,6 @@ class SGEParameters:
         return make_genotype_skeleton(self.grammar)
 
 
-# caching for performance
 @functools.cache
 def make_genotype_skeleton(grammar: gg.Grammar) -> GenotypeSkeleton:
     assert not grammar_is_recursive(grammar)
@@ -182,7 +181,6 @@ def max_nr_of_times_nonterminal_can_be_expanded(
     return sum(max_expansions.values())
 
 
-# caching for performance
 @functools.cache
 def grammar_is_recursive(grammar: gg.Grammar) -> bool:
     return any(
