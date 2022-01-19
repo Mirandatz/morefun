@@ -3,3 +3,4 @@ loguru
 numpy
 networkx
 tensorflow-gpu
+attrs
