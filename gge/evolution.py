@@ -132,7 +132,7 @@ class Checkpoint:
 
             path = self._output_dir / filename
 
-            serialized = pickle.dumps(genotype, protocol=pickle.HIGHEST_PROTOCOL)
+            serialized = pickle.dumps(genotype)
 
             if path.is_file():
                 old_data = path.read_bytes()
