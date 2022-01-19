@@ -34,9 +34,9 @@ def make_network(
     return NeuralNetwork(output_layer)
 
 
-def convert_to_digraph(networth: NeuralNetwork) -> nx.DiGraph:
+def convert_to_digraph(network: NeuralNetwork) -> nx.DiGraph:
     graph = nx.DiGraph()
-    to_visit = [networth.output_layer]
+    to_visit = [network.output_layer]
 
     while to_visit:
         current = to_visit.pop()
