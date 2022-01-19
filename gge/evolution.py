@@ -138,7 +138,7 @@ class Checkpoint:
                 old_data = path.read_bytes()
                 if old_data != serialized:
                     logger.warning(
-                        f"genotype file already exist and will be overwritten. path=<{path}>"
+                        f"Genotype file already exist and will be overwritten; path=<{path}>"
                     )
 
             path.write_bytes(serialized)
@@ -158,9 +158,9 @@ class PrintStatistics:
         max_ = np.max(fitnesses)
 
         logger.success(
-            f"finished generation {self._gen_nr}. "
-            + f"mean fit={format_fitness(mean)} +/- {format_fitness(std)}, "
-            + f"max fit={format_fitness(max_)}"
+            f"Finished generation=<{self._gen_nr}>,"
+            + f" mean fit=>{format_fitness(mean)} +/- {format_fitness(std)}>,"
+            + f" max fit=<{format_fitness(max_)}>"
         )
 
         self._gen_nr += 1
