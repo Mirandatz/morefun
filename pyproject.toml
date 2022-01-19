@@ -1,3 +1,6 @@
+[tool.black]
+target-version = ['py310']
+
 [tool.pytest.ini_options]
 testpaths = ["gge/tests"]
 addopts = "--pspec"
