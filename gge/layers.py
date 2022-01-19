@@ -219,7 +219,7 @@ class Input(ConnectableLayer):
         return keras.Input(
             (
                 self.shape.width,
-                self.shape.width,
+                self.shape.height,
                 self.shape.depth,
             )
         )
@@ -265,7 +265,7 @@ class ConnectedConv2D(SingleInputLayer):
         return conv2d(source)
 
     def __repr__(self) -> str:
-        return f"{self.params.name}: out_shape=[{self.output_shape}]"
+        return f"params={self.params}, input={self.input_layer}, out_shape=[{self.output_shape}]"
 
 
 @attrs.frozen
