@@ -1,5 +1,6 @@
 import hypothesis
 import hypothesis.strategies as hs
+import pytest
 from hypothesis import assume, example, given
 
 import gge.layers as gl
@@ -115,6 +116,15 @@ def test_conv2d_output_shape(
     actual = connected.output_shape
     expected = gl.Shape(output_width, output_height, filter_count)
     assert expected == actual
+
+
+# This ensures that tensorflow allocates memory on the cpu,
+# which greatly reduces test run times (and resources required)
+@pytest.fixture(autouse=True)
+def disable_gpu() -> None:
+    import tensorflow
+
+    tensorflow.config.set_visible_devices([], "GPU")
 
 
 @tensorflow_settings
