@@ -224,10 +224,16 @@ def make_merge(
     ]
 
     if merge_strategy == MergeStrategy.ADD:
-        return gl.ConnectedAdd(tuple(shorcuts))
+        return gl.ConnectedAdd(
+            input_layers=tuple(shorcuts),
+            name=name_gen.gen_name(gl.ConnectedAdd),
+        )
 
     elif merge_strategy == MergeStrategy.CONCAT:
-        return gl.ConnectedConcatenate(tuple(shorcuts))
+        return gl.ConnectedConcatenate(
+            input_layers=tuple(shorcuts),
+            name=name_gen.gen_name(gl.ConnectedConcatenate),
+        )
 
     else:
         raise ValueError(f"unknown MergeStrategy: {merge_strategy}")
