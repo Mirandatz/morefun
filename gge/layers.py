@@ -296,9 +296,13 @@ class ConnectedBatchNorm:
 
 @dataclasses.dataclass(frozen=True)
 class ConnectedAdd:
+    name: str
     input_layers: tuple[ConnectableLayer, ...]
 
     def __post_init__(self) -> None:
+        assert isinstance(self.name, str)
+        assert self.name
+
         assert isinstance(self.input_layers, tuple)
         for layer in self.input_layers:
             assert isinstance(layer, ConnectableLayer)
@@ -318,14 +322,18 @@ class ConnectedAdd:
         return shape
 
     def __repr__(self) -> str:
-        return f"add: out_shape=[{self.output_shape}]"
+        return f"{self.name}: out_shape=[{self.output_shape}]"
 
 
 @dataclasses.dataclass(frozen=True)
 class ConnectedConcatenate:
+    name: str
     input_layers: tuple[ConnectableLayer, ...]
 
     def __post_init__(self) -> None:
+        assert isinstance(self.name, str)
+        assert self.name
+
         assert isinstance(self.input_layers, tuple)
         for layer in self.input_layers:
             assert isinstance(layer, ConnectableLayer)
@@ -351,7 +359,7 @@ class ConnectedConcatenate:
         )
 
     def __repr__(self) -> str:
-        return f"concatenate: out_shape=[{self.output_shape}]"
+        return f"{self.name}: out_shape=[{self.output_shape}]"
 
 
 @dataclasses.dataclass(frozen=True)
