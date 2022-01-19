@@ -1,9 +1,15 @@
+import abc
 import dataclasses
 import enum
 import fractions
 import itertools
 import math
 import typing
+
+import attrs
+import keras
+import keras.layers as kl
+import tensorflow as tf
 
 
 @enum.unique
@@ -169,29 +175,33 @@ class Shape:
         return f"{self.width, self.height, self.depth}"
 
 
-@typing.runtime_checkable
-class ConnectableLayer(typing.Protocol):
+class ConnectableLayer(abc.ABC):
     @property
+    @abc.abstractmethod
     def output_shape(self) -> Shape:
-        ...
+        raise NotImplementedError("this is an abstract method")
+
+    @abc.abstractmethod
+    def to_tensor(self) -> tf.Tensor:
+        raise NotImplementedError("this is an abstract method")
 
 
-@typing.runtime_checkable
-class SingleInputLayer(ConnectableLayer, typing.Protocol):
+class SingleInputLayer(ConnectableLayer):
     @property
+    @abc.abstractmethod
     def input_layer(self) -> ConnectableLayer:
         ...
 
 
-@typing.runtime_checkable
-class MultiInputLayer(ConnectableLayer, typing.Protocol):
+class MultiInputLayer(ConnectableLayer):
     @property
+    @abc.abstractmethod
     def input_layers(self) -> tuple[ConnectableLayer, ...]:
         ...
 
 
-@dataclasses.dataclass(frozen=True)
-class Input:
+@attrs.frozen
+class Input(ConnectableLayer):
     shape: Shape
 
     def __post_int__(self) -> None:
@@ -205,14 +215,23 @@ class Input:
     def output_shape(self) -> Shape:
         return self.shape
 
+    def to_tensor(self) -> tf.Tensor:
+        return keras.Input(
+            (
+                self.shape.width,
+                self.shape.width,
+                self.shape.depth,
+            )
+        )
+
 
 def make_input(width: int, height: int, depth: int) -> Input:
     shape = Shape(width=width, height=height, depth=depth)
     return Input(shape)
 
 
-@dataclasses.dataclass(frozen=True)
-class ConnectedConv2D:
+@attrs.frozen
+class ConnectedConv2D(SingleInputLayer):
     input_layer: ConnectableLayer
     params: Conv2D
 
@@ -229,12 +248,28 @@ class ConnectedConv2D:
         out_depth = self.params.filter_count
         return Shape(width=out_width, height=out_height, depth=out_depth)
 
+    def to_tensor(self) -> tf.Tensor:
+        source = self.input_layer.to_tensor()
+
+        params = self.params
+        strides = (params.stride, params.stride)
+
+        conv2d = kl.Conv2D(
+            filters=params.filter_count,
+            kernel_size=params.kernel_size,
+            strides=strides,
+            padding="same",
+            name=params.name,
+        )
+
+        return conv2d(source)
+
     def __repr__(self) -> str:
         return f"{self.params.name}: out_shape=[{self.output_shape}]"
 
 
-@dataclasses.dataclass(frozen=True)
-class ConnectedConv2DTranspose:
+@attrs.frozen
+class ConnectedConv2DTranspose(SingleInputLayer):
     input_layer: ConnectableLayer
     params: Conv2DTranspose
 
@@ -254,9 +289,25 @@ class ConnectedConv2DTranspose:
     def __repr__(self) -> str:
         return f"{self.params.name}: out_shape=[{self.output_shape}]"
 
+    def to_tensor(self) -> tf.Tensor:
+        source = self.input_layer.to_tensor()
 
-@dataclasses.dataclass(frozen=True)
-class ConnectedPool2D:
+        params = self.params
+        strides = (params.stride, params.stride)
+
+        conv2d_trans = kl.Conv2DTranspose(
+            filters=params.filter_count,
+            kernel_size=params.kernel_size,
+            strides=strides,
+            padding="same",
+            name=params.name,
+        )
+
+        return conv2d_trans(source)
+
+
+@attrs.frozen
+class ConnectedPool2D(SingleInputLayer):
     input_layer: ConnectableLayer
     params: Pool2D
 
@@ -273,12 +324,39 @@ class ConnectedPool2D:
         out_depth = input_shape.depth
         return Shape(width=out_width, height=out_height, depth=out_depth)
 
+    def to_tensor(self) -> tf.Tensor:
+        source = self.input_layer.to_tensor()
+
+        params = self.params
+        pooling_type = params.pooling_type
+        pool_size = (params.stride, params.stride)
+
+        match pooling_type:
+            case PoolType.MAX_POOLING:
+                pool = kl.MaxPool2D(
+                    pool_size=pool_size,
+                    padding="same",
+                    name=params.name,
+                )
+                return pool(source)
+
+            case PoolType.AVG_POOLING:
+                pool = kl.AveragePooling2D(
+                    pool_size=pool_size,
+                    padding="same",
+                    name=params.name,
+                )
+                return pool(source)
+
+            case unknown:
+                raise ValueError(f"unknown pooling type: {unknown}")
+
     def __repr__(self) -> str:
         return f"{self.params.name}: out_shape=[{self.output_shape}]"
 
 
-@dataclasses.dataclass(frozen=True)
-class ConnectedBatchNorm:
+@attrs.frozen
+class ConnectedBatchNorm(SingleInputLayer):
     input_layer: ConnectableLayer
     params: BatchNorm
 
@@ -290,12 +368,17 @@ class ConnectedBatchNorm:
     def output_shape(self) -> Shape:
         return self.input_layer.output_shape
 
+    def to_tensor(self) -> tf.Tensor:
+        source = self.input_layer.to_tensor()
+        batchnorm = kl.BatchNormalization(name=self.params.name)
+        return batchnorm(source)
+
     def __repr__(self) -> str:
         return f"{self.params.name}: out_shape=[{self.output_shape}]"
 
 
-@dataclasses.dataclass(frozen=True)
-class ConnectedAdd:
+@attrs.frozen
+class ConnectedAdd(MultiInputLayer):
     name: str
     input_layers: tuple[ConnectableLayer, ...]
 
@@ -321,12 +404,17 @@ class ConnectedAdd:
         shape: Shape = self.input_layers[0].output_shape
         return shape
 
+    def to_tensor(self) -> tf.Tensor:
+        sources = [src.to_tensor() for src in self.input_layers]
+        add = kl.Add(name=self.name)
+        return add(sources)
+
     def __repr__(self) -> str:
         return f"{self.name}: out_shape=[{self.output_shape}]"
 
 
-@dataclasses.dataclass(frozen=True)
-class ConnectedConcatenate:
+@attrs.frozen
+class ConnectedConcatenate(MultiInputLayer):
     name: str
     input_layers: tuple[ConnectableLayer, ...]
 
@@ -358,12 +446,17 @@ class ConnectedConcatenate:
             depth=total_depth,
         )
 
+    def to_tensor(self) -> tf.Tensor:
+        sources = [src.to_tensor() for src in self.input_layers]
+        concatenate = kl.Concatenate(name=self.name)
+        return concatenate(sources)
+
     def __repr__(self) -> str:
         return f"{self.name}: out_shape=[{self.output_shape}]"
 
 
-@dataclasses.dataclass(frozen=True)
-class ConnectedRelu:
+@attrs.frozen
+class ConnectedRelu(SingleInputLayer):
     input_layer: ConnectableLayer
     params: Relu
 
@@ -375,12 +468,20 @@ class ConnectedRelu:
     def output_shape(self) -> Shape:
         return self.input_layer.output_shape
 
+    def to_tensor(self) -> tf.Tensor:
+        source = self.input_layer.to_tensor()
+        activation = kl.Activation(
+            activation=tf.nn.relu,
+            name=self.params.name,
+        )
+        return activation(source)
+
     def __repr__(self) -> str:
         return f"{self.params.name}: out_shape=[{self.output_shape}]"
 
 
-@dataclasses.dataclass(frozen=True)
-class ConnectedGelu:
+@attrs.frozen
+class ConnectedGelu(SingleInputLayer):
     input_layer: ConnectableLayer
     params: Gelu
 
@@ -392,12 +493,20 @@ class ConnectedGelu:
     def output_shape(self) -> Shape:
         return self.input_layer.output_shape
 
+    def to_tensor(self) -> tf.Tensor:
+        source = self.input_layer.to_tensor()
+        activation = kl.Activation(
+            activation=tf.nn.gelu,
+            name=self.params.name,
+        )
+        return activation(source)
+
     def __repr__(self) -> str:
         return f"{self.params.name}: out_shape=[{self.output_shape}]"
 
 
-@dataclasses.dataclass(frozen=True)
-class ConnectedSwish:
+@attrs.frozen
+class ConnectedSwish(SingleInputLayer):
     input_layer: ConnectableLayer
     params: Swish
 
@@ -408,6 +517,14 @@ class ConnectedSwish:
     @property
     def output_shape(self) -> Shape:
         return self.input_layer.output_shape
+
+    def to_tensor(self) -> tf.Tensor:
+        source = self.input_layer.to_tensor()
+        activation = kl.Activation(
+            activation=tf.nn.swish,
+            name=self.params.name,
+        )
+        return activation(source)
 
     def __repr__(self) -> str:
         return f"{self.params.name}: out_shape=[{self.output_shape}]"
