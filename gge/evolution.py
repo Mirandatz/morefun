@@ -67,11 +67,11 @@ def run_evolutionary_loop(
 
         if next_gen is None:
             return population
-        else:
-            population = next_gen
+
+        population = next_gen
 
         for cb in callbacks:
-            cb(next_gen)
+            cb(population)
 
     return population
 
