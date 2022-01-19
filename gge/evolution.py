@@ -1,3 +1,5 @@
+import datetime as dt
+import pathlib
 import typing
 
 import gge.composite_genotypes as cg
@@ -68,3 +70,28 @@ def run_evolutionary_loop(
             cb(next_gen)
 
     return population
+
+
+class Checkpoint:
+    def __init__(
+        self,
+        output_dir: pathlib.Path,
+        filenames_prefix: str | None = None,
+    ) -> None:
+        if not output_dir.exists():
+            # log warning
+            output_dir.mkdir(parents=True)
+
+        if filenames_prefix is None:
+            now = dt.datetime.now()
+            filenames_prefix = (
+                f"experiment_{now.year}_{now.month}_{now.day}_{now.hour}_{now.minute}"
+            )
+
+        self._current_gen = 0
+        self._output_dir = output_dir
+
+        raise NotImplementedError()
+
+    def __call__(self, population: EvaluatedPopulation) -> None:
+        pass
