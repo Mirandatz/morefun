@@ -16,13 +16,13 @@ click==8.0.3
     # via black
 flake8==4.0.1
     # via -r requirements/test.in
-hypothesis==6.35.0
+hypothesis==6.36.0
     # via -r requirements/test.in
 iniconfig==1.1.1
     # via pytest
 mccabe==0.6.1
     # via flake8
-mypy==0.930
+mypy==0.931
     # via -r requirements/test.in
 mypy-extensions==0.4.3
     # via
