@@ -5,7 +5,7 @@ import gge.layers as gl
 import gge.tests.strategies as gge_hs
 
 
-@given(gge_hs.backbone(valid_layers=[gge_hs.conv2d_layer]))
+@given(gge_hs.backbone_grammar_layer(valid_layers=[gge_hs.conv2d_grammar_layer]))
 @example(
     gge_hs.GrammarLayer(
         layers=(gl.Conv2D("Conv2D_0", 1, 2, 3),),
@@ -88,7 +88,7 @@ def test_conv2d_backbone(backbone: gge_hs.GrammarLayer) -> None:
     assert actual == expected
 
 
-@given(gge_hs.backbone())
+@given(gge_hs.backbone_grammar_layer())
 def test_parse_backbone(backbone: gge_hs.GrammarLayer) -> None:
     """Can parse a backbone with any layer, possibly marked."""
     actual = bb.parse(backbone.mesagrammar_string)
