@@ -6,6 +6,8 @@ import typing
 
 import lark
 
+from loguru import logger
+
 import gge.transformers as gge_transformers
 
 METAGRAMMAR_PATH = pathlib.Path(__file__).parent.parent / "data" / "metagrammar.lark"
@@ -318,6 +320,8 @@ class Grammar:
         rhss_as_tuple = tuple(relevant_rhss)
 
         assert len(rhss_as_tuple) >= 1
+
+        logger.debug(f"Non-terminal=<{nt}> expands into rhss=<{rhss_as_tuple}>")
 
         return rhss_as_tuple
 

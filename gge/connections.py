@@ -3,6 +3,8 @@ import enum
 import itertools
 import typing
 
+from loguru import logger
+
 import gge.backbones as bb
 import gge.layers as gl
 import gge.name_generator as ng
@@ -205,6 +207,9 @@ def make_merge(
         candidates=src_shapes,
         mode=reshape_strategy,
     )
+
+    logger.info(f"Merging shapes=<{src_shapes}> into target=<{target_shape}>"
+                f" from strategy=<{reshape_strategy}")
 
     shorcuts = [
         make_shortcut(
