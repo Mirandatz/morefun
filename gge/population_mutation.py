@@ -1,3 +1,4 @@
+import dataclasses
 import functools
 
 from loguru import logger
@@ -12,6 +13,17 @@ import gge.novelty as novel
 import gge.randomness as rand
 
 DUMMY_INPUT = gl.make_input(1, 1, 1)
+
+
+@dataclasses.dataclass(frozen=True)
+class PopulationMutationParameters:
+    mutants_to_generate: int
+    max_failures: int
+    grammar: gr.Grammar
+
+    def __post_init__(self) -> None:
+        assert self.mutants_to_generate > 1
+        assert self.max_failures >= 0
 
 
 def try_generate_mutant(
@@ -45,15 +57,11 @@ def try_generate_mutant(
 
 def try_mutate_population(
     population: list[cg.CompositeGenotype],
-    mutants_to_generate: int,
-    max_failures: int,
-    grammar: gr.Grammar,
+    mutation_params: PopulationMutationParameters,
     rng: rand.RNG,
     novelty_tracker: novel.NoveltyTracker,
 ) -> list[cg.CompositeGenotype] | None:
     assert len(population) > 0
-    assert mutants_to_generate > 1
-    assert max_failures >= 0
 
     # we only update the actual tracker if we succeed
     tracker_copy = novelty_tracker.copy()
@@ -61,15 +69,15 @@ def try_mutate_population(
     generator = functools.partial(
         try_generate_mutant,
         population,
-        grammar,
+        mutation_params.grammar,
         rng,
         tracker_copy,
     )
 
     results = fallible.collect_results_from_fallible_function(
         generator,
-        num_results=mutants_to_generate,
-        max_failures=max_failures,
+        num_results=mutation_params.mutants_to_generate,
+        max_failures=mutation_params.max_failures,
     )
 
     if results is None:
