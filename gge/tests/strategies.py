@@ -3,6 +3,7 @@ import operator
 import typing
 from functools import reduce
 
+import attrs
 import hypothesis.strategies as hs
 
 import gge.layers as gl
@@ -157,7 +158,7 @@ def uniquely_named_grammar_layer(backbone: GrammarLayer) -> GrammarLayer:
         return gen.gen_name(type(layer))
 
     new_layers = (
-        dataclasses.replace(layer, name=get_name(layer)) for layer in backbone.layers
+        attrs.evolve(layer, name=get_name(layer)) for layer in backbone.layers
     )
     return GrammarLayer(
         layers=tuple(new_layers), mesagrammar_string=backbone.mesagrammar_string
@@ -219,7 +220,7 @@ def same_aspect_shape_pair(draw: DrawStrat, *, same_depth: bool = False) -> Shap
     )
     if not same_depth:
         bigger_depth = draw(hs.integers(min_value=1, max_value=1024))
-        bigger = dataclasses.replace(bigger, depth=bigger_depth)
+        bigger = attrs.evolve(bigger, depth=bigger_depth)
     return ShapePair(smaller, bigger, ratio)
 
 

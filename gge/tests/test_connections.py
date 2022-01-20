@@ -1,5 +1,4 @@
-import dataclasses
-
+import attrs
 from hypothesis import given
 
 import gge.backbones as bb
@@ -124,7 +123,7 @@ def test_merge_downsample_add(shapes: gge_hs.ShapePair) -> None:
 def test_merge_downsample_concat(shapes: gge_hs.ShapePair) -> None:
     """Concatenating sources sums the depths when downsampling preserving the smallest (width, height)."""
     input_layer = gl.Input(shapes.bigger)
-    expected = dataclasses.replace(shapes.smaller, depth=shapes.smaller.depth * 2)
+    expected = attrs.evolve(shapes.smaller, depth=shapes.smaller.depth * 2)
 
     source0 = gl.ConnectedBatchNorm(
         input_layer=input_layer,
@@ -153,7 +152,7 @@ def test_merge_downsample_concat(shapes: gge_hs.ShapePair) -> None:
 def test_merge_upsample_concat(shapes: gge_hs.ShapePair) -> None:
     """Concatenating sources adds the depths when upsampling preserving the biggest (width, height)."""
     input_layer = gl.Input(shapes.bigger)
-    expected = dataclasses.replace(shapes.bigger, depth=shapes.bigger.depth * 2)
+    expected = attrs.evolve(shapes.bigger, depth=shapes.bigger.depth * 2)
 
     source0 = gl.ConnectedBatchNorm(
         input_layer=input_layer,

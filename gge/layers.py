@@ -1,5 +1,4 @@
 import abc
-import dataclasses
 import enum
 import fractions
 import itertools
@@ -18,12 +17,12 @@ class MarkerType(enum.Enum):
     MERGE_POINT = enum.auto()
 
 
-@dataclasses.dataclass(frozen=True)
+@attrs.frozen
 class MarkerLayer:
     name: str
     mark_type: MarkerType
 
-    def __post_init__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         assert isinstance(self.name, str)
         assert isinstance(self.mark_type, MarkerType)
 
@@ -113,45 +112,55 @@ class Pool2D(ConvertibleToConnectableLayer):
         return ConnectedPool2D(input, self)
 
 
-@dataclasses.dataclass(frozen=True)
-class BatchNorm:
+@attrs.frozen
+class BatchNorm(ConvertibleToConnectableLayer):
     name: str
 
-    def __post_init__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         assert isinstance(self.name, str)
         assert self.name
 
+    def to_connectable(self, input: "ConnectableLayer") -> "ConnectedBatchNorm":
+        return ConnectedBatchNorm(input, self)
 
-@dataclasses.dataclass(frozen=True)
-class Relu:
+
+@attrs.frozen
+class Relu(ConvertibleToConnectableLayer):
     name: str
 
-    def __post_init__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         assert isinstance(self.name, str)
         assert self.name
 
+    def to_connectable(self, input: "ConnectableLayer") -> "ConnectedRelu":
+        return ConnectedRelu(input, self)
 
-@dataclasses.dataclass(frozen=True)
-class Gelu:
+
+@attrs.frozen
+class Gelu(ConvertibleToConnectableLayer):
     name: str
 
-    def __post_init__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         assert isinstance(self.name, str)
         assert self.name
 
+    def to_connectable(self, input: "ConnectableLayer") -> "ConnectedGelu":
+        return ConnectedGelu(input, self)
 
-@dataclasses.dataclass(frozen=True)
-class Swish:
+
+@attrs.frozen
+class Swish(ConvertibleToConnectableLayer):
     name: str
 
-    def __post_init__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         assert isinstance(self.name, str)
         assert self.name
 
+    def to_connectable(self, input: "ConnectableLayer") -> "ConnectedSwish":
+        return ConnectedSwish(input, self)
 
-Layer: typing.TypeAlias = (
-    Conv2D | Pool2D | BatchNorm | MarkerLayer | Relu | Gelu | Swish
-)
+
+Layer: typing.TypeAlias = ConvertibleToConnectableLayer | MarkerLayer
 
 
 def is_real_layer(layer: Layer) -> bool:
@@ -167,13 +176,13 @@ def is_merge_marker(layer: Layer) -> bool:
     return isinstance(layer, MarkerLayer) and layer.mark_type == MarkerType.MERGE_POINT
 
 
-@dataclasses.dataclass(frozen=True)
+@attrs.frozen
 class Shape:
     width: int
     height: int
     depth: int
 
-    def __post_init__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         assert isinstance(self.width, int)
         assert isinstance(self.height, int)
         assert isinstance(self.depth, int)
