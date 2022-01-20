@@ -12,13 +12,10 @@ import gge.structured_grammatical_evolution as sge
 
 
 class NeuralNetwork:
-    _input_layer: gl.Input
-    _output_layer: gl.ConnectableLayer
-
     def __init__(self, output_layer: gl.ConnectableLayer) -> None:
         assert not isinstance(output_layer, gl.Input)
 
-        graph = convert_to_digraph(self)
+        graph = convert_to_digraph(output_layer)
         assert nx.is_directed_acyclic_graph(graph)
 
         inputs = [layer for layer in graph.nodes if isinstance(layer, gl.Input)]
@@ -59,9 +56,9 @@ def make_network(
     return NeuralNetwork(output_layer)
 
 
-def convert_to_digraph(network: NeuralNetwork) -> nx.DiGraph:
+def convert_to_digraph(output_layer: gl.ConnectableLayer) -> nx.DiGraph:
     graph = nx.DiGraph()
-    to_visit = [network.output_layer]
+    to_visit = [output_layer]
 
     while to_visit:
         current = to_visit.pop()
@@ -103,7 +100,7 @@ def main() -> None:
         merge_strategy=conn.MergeStrategy.ADD,
         name_gen=name_gen,
     )
-    graph = convert_to_digraph(NeuralNetwork(merge1))
+    graph = convert_to_digraph(merge1)
     draw_graph(graph)
 
 
