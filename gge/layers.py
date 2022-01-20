@@ -209,12 +209,26 @@ class ConnectableLayer(abc.ABC):
     def to_tensor(self) -> tf.Tensor:
         raise NotImplementedError("this is an abstract method")
 
+    def register_tensor_to(
+        self,
+        known_tensors: dict["ConnectableLayer", tf.Tensor],
+    ) -> None:
+        if self not in known_tensors:
+            known_tensors[self] = self.to_tensor()
+
 
 class SingleInputLayer(ConnectableLayer):
     @property
     @abc.abstractmethod
     def input_layer(self) -> ConnectableLayer:
         ...
+
+    def register_tensor_to(
+        self,
+        known_tensors: dict["ConnectableLayer", tf.Tensor],
+    ) -> None:
+        super().register_tensor_to(known_tensors)
+        self.input_layer.register_tensor_to(known_tensors)
 
 
 class MultiInputLayer(ConnectableLayer):
@@ -223,9 +237,19 @@ class MultiInputLayer(ConnectableLayer):
     def input_layers(self) -> tuple[ConnectableLayer, ...]:
         ...
 
+    def register_tensor_to(
+        self,
+        known_tensors: dict["ConnectableLayer", tf.Tensor],
+    ) -> None:
+        super().register_tensor_to(known_tensors)
+        for src in self.input_layers:
+            src.register_tensor_to(known_tensors)
+
 
 @attrs.frozen
 class Input(ConnectableLayer):
+    NAME: typing.ClassVar[str] = "input"
+
     shape: Shape
 
     def __attrs_post_init__(self) -> None:
@@ -233,7 +257,8 @@ class Input(ConnectableLayer):
 
     @property
     def name(self) -> str:
-        return "input"
+        # We rely on this being a constant, do not change!
+        return Input.NAME
 
     @property
     def output_shape(self) -> Shape:
