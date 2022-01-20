@@ -47,6 +47,9 @@ class ConnectionsSchema:
         for ml in self.merge_params:
             assert isinstance(ml, MergeParameters)
 
+    def is_empty(self) -> bool:
+        return len(self.merge_params) == 0
+
 
 def extract_forks_masks_lengths(backbone: bb.Backbone) -> tuple[int, ...]:
     lengths = []
