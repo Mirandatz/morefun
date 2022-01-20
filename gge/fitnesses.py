@@ -10,7 +10,7 @@ import gge.neural_network as gnn
 
 @enum.unique
 class FitnessMetric(enum.Enum):
-    layer_count = enum.auto()
+    LAYER_COUNT = enum.auto()
 
 
 @dataclasses.dataclass(frozen=True)
@@ -42,7 +42,7 @@ def evaluate(
         params.input_layer,
     )
 
-    if params.metric == FitnessMetric.layer_count:
+    if params.metric == FitnessMetric.LAYER_COUNT:
         return layer_count(phenotype)
 
     else:
