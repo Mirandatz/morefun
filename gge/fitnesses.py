@@ -88,14 +88,15 @@ class ValidationAccuracy:
 
     def get_train_and_val(self) -> tuple[DataGen, DataGen]:
         data_gen = keras.preprocessing.image.ImageDataGenerator(
-            validation_split=0.15,
+            validation_split=self._validation_ratio,
         )
 
-        batch_size, width, height, depth = self._input_shape
         train = data_gen.flow_from_directory(
             self._dataset_dir,
             batch_size=self.batch_size,
             target_size=(self.input_width, self.input_height),
+            shuffle=True,
+            seed=self._shuffle_seed,
             subset="training",
         )
 
