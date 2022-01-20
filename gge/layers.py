@@ -158,7 +158,7 @@ class Shape:
     height: int
     depth: int
 
-    def __post_int__(self) -> None:
+    def __post_init__(self) -> None:
         assert isinstance(self.width, int)
         assert isinstance(self.height, int)
         assert isinstance(self.depth, int)
