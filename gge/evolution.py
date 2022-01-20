@@ -1,6 +1,7 @@
 import datetime as dt
 import pathlib
 import pickle
+import sys
 import typing
 
 import numpy as np
@@ -147,8 +148,9 @@ class Checkpoint:
 
 
 class PrintStatistics:
-    def __init__(self) -> None:
+    def __init__(self, *, file: typing.TextIO = sys.stdout) -> None:
         self._gen_nr = 0
+        self._file = file
 
     def __call__(self, population: EvaluatedPopulation) -> None:
         fitnesses = list(population.values())
@@ -157,10 +159,12 @@ class PrintStatistics:
         std = np.std(fitnesses)
         max_ = np.max(fitnesses)
 
-        logger.success(
+        msg = (
             f"Finished generation=<{self._gen_nr}>,"
             + f" mean fit=>{format_fitness(mean)} +/- {format_fitness(std)}>,"
             + f" max fit=<{format_fitness(max_)}>"
         )
+
+        print(msg, file=self._file)
 
         self._gen_nr += 1
