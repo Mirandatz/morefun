@@ -1,6 +1,6 @@
-import dataclasses
-
+import keras
 import networkx as nx
+import tensorflow as tf
 
 import gge.backbones as bb
 import gge.composite_genotypes as cg
@@ -11,19 +11,37 @@ import gge.name_generator as ng
 import gge.structured_grammatical_evolution as sge
 
 
-@dataclasses.dataclass(frozen=True)
 class NeuralNetwork:
-    output_layer: gl.ConnectableLayer
+    _input_layer: gl.Input
+    _output_layer: gl.ConnectableLayer
 
-    def __post_init__(self) -> None:
-        assert not isinstance(self.output_layer, gl.Input)
+    def __init__(self, output_layer: gl.ConnectableLayer) -> None:
+        assert not isinstance(output_layer, gl.Input)
 
         graph = convert_to_digraph(self)
-
         assert nx.is_directed_acyclic_graph(graph)
 
         inputs = [layer for layer in graph.nodes if isinstance(layer, gl.Input)]
         assert len(inputs) == 1
+
+        self._input_layer = inputs[0]
+        self._output_layer = output_layer
+
+    @property
+    def input_layer(self) -> gl.Input:
+        return self._input_layer
+
+    @property
+    def output_layer(self) -> gl.ConnectableLayer:
+        return self._output_layer
+
+    def to_tensorflow(self) -> keras.Model:
+        tensores: dict[gl.ConnectableLayer, tf.Tensor] = {}
+        self.output_layer.register_tensor_to(tensores)
+        return keras.Model(
+            inputs=tensores[self.input_layer],
+            outputs=tensores[self.output_layer],
+        )
 
 
 def make_network(
