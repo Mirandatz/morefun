@@ -39,14 +39,20 @@ def make_merge(name: str) -> MarkerLayer:
     return MarkerLayer(name, MarkerType.MERGE_POINT)
 
 
-@dataclasses.dataclass(frozen=True)
-class Conv2D:
+class ConvertibleToConnectableLayer(abc.ABC):
+    @abc.abstractmethod
+    def to_connectable(self, input: "ConnectableLayer") -> "ConnectableLayer":
+        raise NotImplementedError("this is an abstract method")
+
+
+@attrs.frozen
+class Conv2D(ConvertibleToConnectableLayer):
     name: str
     filter_count: int
     kernel_size: int
     stride: int
 
-    def __post_init__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         assert isinstance(self.name, str)
         assert isinstance(self.filter_count, int)
         assert isinstance(self.kernel_size, int)
@@ -56,6 +62,9 @@ class Conv2D:
         assert self.filter_count > 0
         assert self.kernel_size > 0
         assert self.stride > 0
+
+    def to_connectable(self, input: "ConnectableLayer") -> "ConnectableLayer":
+        return ConnectedConv2D(input, self)
 
 
 @dataclasses.dataclass(frozen=True)
