@@ -22,10 +22,10 @@ class NoveltyTracker:
         self._phenotypes.update(other._phenotypes)
 
     def is_genotype_novel(self, genotype: cg.CompositeGenotype) -> bool:
-        return genotype in self._genotypes
+        return genotype not in self._genotypes
 
     def is_phenotype_novel(self, phenotype: gnn.NeuralNetwork) -> bool:
-        return phenotype in self._phenotypes
+        return phenotype not in self._phenotypes
 
     def register_genotype(self, genotype: cg.CompositeGenotype) -> None:
         self._genotypes.add(genotype)
