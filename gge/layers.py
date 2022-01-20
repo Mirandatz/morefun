@@ -204,7 +204,7 @@ class MultiInputLayer(ConnectableLayer):
 class Input(ConnectableLayer):
     shape: Shape
 
-    def __post_int__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         assert isinstance(self.shape, Shape)
 
     @property
@@ -235,7 +235,7 @@ class ConnectedConv2D(SingleInputLayer):
     input_layer: ConnectableLayer
     params: Conv2D
 
-    def __post_int__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         assert isinstance(self.input_layer, ConnectableLayer)
         assert isinstance(self.params, Conv2D)
 
@@ -273,7 +273,7 @@ class ConnectedConv2DTranspose(SingleInputLayer):
     input_layer: ConnectableLayer
     params: Conv2DTranspose
 
-    def __post_int__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         assert isinstance(self.input_layer, ConnectableLayer)
         assert isinstance(self.params, Conv2DTranspose)
 
@@ -311,7 +311,7 @@ class ConnectedPool2D(SingleInputLayer):
     input_layer: ConnectableLayer
     params: Pool2D
 
-    def __post_int__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         assert isinstance(self.input_layer, ConnectableLayer)
         assert isinstance(self.params, Pool2D)
 
@@ -360,7 +360,7 @@ class ConnectedBatchNorm(SingleInputLayer):
     input_layer: ConnectableLayer
     params: BatchNorm
 
-    def __post_int__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         assert isinstance(self.input_layer, ConnectableLayer)
         assert isinstance(self.params, BatchNorm)
 
@@ -382,7 +382,7 @@ class ConnectedAdd(MultiInputLayer):
     name: str
     input_layers: tuple[ConnectableLayer, ...]
 
-    def __post_init__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         assert isinstance(self.name, str)
         assert self.name
 
@@ -418,7 +418,7 @@ class ConnectedConcatenate(MultiInputLayer):
     name: str
     input_layers: tuple[ConnectableLayer, ...]
 
-    def __post_init__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         assert isinstance(self.name, str)
         assert self.name
 
@@ -460,7 +460,7 @@ class ConnectedRelu(SingleInputLayer):
     input_layer: ConnectableLayer
     params: Relu
 
-    def __post_int__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         assert isinstance(self.input_layer, ConnectableLayer)
         assert isinstance(self.params, Relu)
 
@@ -485,7 +485,7 @@ class ConnectedGelu(SingleInputLayer):
     input_layer: ConnectableLayer
     params: Gelu
 
-    def __post_int__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         assert isinstance(self.input_layer, ConnectableLayer)
         assert isinstance(self.params, Gelu)
 
@@ -510,7 +510,7 @@ class ConnectedSwish(SingleInputLayer):
     input_layer: ConnectableLayer
     params: Swish
 
-    def __post_int__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         assert isinstance(self.input_layer, ConnectableLayer)
         assert isinstance(self.params, Swish)
 
