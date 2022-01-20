@@ -254,33 +254,11 @@ class StatefulLayerConnector:
     def previous_layer(self) -> gl.ConnectableLayer:
         return self._previous_layer
 
-    def _connect_single_input_layer(self, layer: gl.Layer) -> None:
-        if isinstance(layer, gl.Conv2D):
-            self._previous_layer = gl.ConnectedConv2D(
-                self._previous_layer,
-                layer,
-            )
-
-        elif isinstance(layer, gl.Conv2DTranspose):
-            self._previous_layer = gl.ConnectedConv2DTranspose(
-                self._previous_layer,
-                layer,
-            )
-
-        elif isinstance(layer, gl.Pool2D):
-            self._previous_layer = gl.ConnectedPool2D(
-                self._previous_layer,
-                layer,
-            )
-
-        elif isinstance(layer, gl.BatchNorm):
-            self._previous_layer = gl.ConnectedBatchNorm(
-                self._previous_layer,
-                layer,
-            )
-
-        else:
-            raise ValueError(f"unknown layer type: {layer}")
+    def _connect_single_input_layer(
+        self,
+        layer: gl.ConvertibleToConnectableLayer,
+    ) -> None:
+        self._previous_layer = layer.to_connectable(self.previous_layer)
 
     def _register_fork_point(self) -> None:
         self._fork_points.append(self._previous_layer)
@@ -312,7 +290,7 @@ class StatefulLayerConnector:
         self._previous_layer = merge
 
     def process_layer(self, layer: gl.Layer) -> None:
-        if gl.is_real_layer(layer):
+        if isinstance(layer, gl.ConvertibleToConnectableLayer):
             self._connect_single_input_layer(layer)
 
         elif gl.is_fork_marker(layer):
