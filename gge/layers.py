@@ -95,19 +95,22 @@ class PoolType(enum.Enum):
     AVG_POOLING = enum.auto()
 
 
-@dataclasses.dataclass(frozen=True)
-class Pool2D:
+@attrs.frozen
+class Pool2D(ConvertibleToConnectableLayer):
     name: str
     pooling_type: PoolType
     stride: int
 
-    def __post_init__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         assert isinstance(self.name, str)
         assert isinstance(self.pooling_type, PoolType)
         assert isinstance(self.stride, int)
 
         assert self.name
         assert self.stride > 0
+
+    def to_connectable(self, input: "ConnectableLayer") -> "ConnectedPool2D":
+        return ConnectedPool2D(input, self)
 
 
 @dataclasses.dataclass(frozen=True)
