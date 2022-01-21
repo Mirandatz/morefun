@@ -94,21 +94,21 @@ class ValidationAccuracy:
                 validation_split=self._validation_ratio,
             )
 
-        train = data_gen.flow_from_directory(
-            self._dataset_dir,
-            batch_size=self.batch_size,
-            target_size=(self.input_width, self.input_height),
-            shuffle=True,
-            seed=self._shuffle_seed,
-            subset="training",
-        )
+            train = data_gen.flow_from_directory(
+                self._dataset_dir,
+                batch_size=self.batch_size,
+                target_size=(self.input_width, self.input_height),
+                shuffle=True,
+                seed=self._shuffle_seed,
+                subset="training",
+            )
 
-        val = data_gen.flow_from_directory(
-            self._dataset_dir,
-            batch_size=self.batch_size,
-            target_size=(self.input_width, self.input_height),
-            subset="validation",
-        )
+            val = data_gen.flow_from_directory(
+                self._dataset_dir,
+                batch_size=self.batch_size,
+                target_size=(self.input_width, self.input_height),
+                subset="validation",
+            )
 
         return train, val
 
