@@ -3,12 +3,14 @@ import pathlib
 import typing
 
 import keras
+import keras.layers as kl
 import tensorflow as tf
 
 import gge.composite_genotypes as cg
 import gge.grammars as gr
 import gge.layers as gl
 import gge.neural_network as gnn
+import gge.redirection as redirection
 
 DataGen: typing.TypeAlias = keras.preprocessing.image.DirectoryIterator
 
@@ -32,7 +34,7 @@ class LayerCount:
         return False
 
     def evaluate(self, model: gnn.NeuralNetwork) -> float:
-        graph = gnn.convert_to_digraph(model)
+        graph = gnn.convert_to_digraph(model.output_layer)
         layers = graph.nodes
         cool_layers = [
             layer
@@ -87,9 +89,10 @@ class ValidationAccuracy:
         return self._input_shape[3]
 
     def get_train_and_val(self) -> tuple[DataGen, DataGen]:
-        data_gen = keras.preprocessing.image.ImageDataGenerator(
-            validation_split=self._validation_ratio,
-        )
+        with redirection.discard_stderr_and_stdout():
+            data_gen = keras.preprocessing.image.ImageDataGenerator(
+                validation_split=self._validation_ratio,
+            )
 
         train = data_gen.flow_from_directory(
             self._dataset_dir,
@@ -109,11 +112,25 @@ class ValidationAccuracy:
 
         return train, val
 
+    def make_classification_head(self, input_tensor: tf.Tensor) -> tf.Tensor:
+        _, width, height, _ = input_tensor.shape
+
+        conv = kl.Conv2D(
+            filters=self._class_count,
+            kernel_size=(width, height),
+        )(input_tensor)
+
+        global_pool = kl.GlobalMaxPooling2D()(conv)
+
+        return kl.Activation(tf.nn.softmax)(global_pool)
+
     def _try_evaluate(self, model: gnn.NeuralNetwork) -> float:
         for gpu in tf.config.list_physical_devices("GPU"):
             tf.config.experimental.set_memory_growth(gpu, True)
 
-        tf_model = model.to_tensorflow()
+        input_tensor, output_tensor = model.to_input_output_tensores()
+        classification_head = self.make_classification_head(output_tensor)
+        tf_model = keras.Model(inputs=input_tensor, outputs=classification_head)
         tf_model.compile(
             loss="categorical_crossentropy",
             optimizer="nadam",
@@ -128,6 +145,7 @@ class ValidationAccuracy:
             steps_per_epoch=train.samples // self.batch_size,
             validation_data=val,
             validation_steps=val.samples // self.batch_size,
+            verbose=0,
         )
 
         val_acc = max(fitting_result.history["val_accuracy"])

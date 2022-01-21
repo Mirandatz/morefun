@@ -1,4 +1,3 @@
-import keras
 import networkx as nx
 import tensorflow as tf
 
@@ -32,13 +31,10 @@ class NeuralNetwork:
     def output_layer(self) -> gl.ConnectableLayer:
         return self._output_layer
 
-    def to_tensorflow(self) -> keras.Model:
+    def to_input_output_tensores(self) -> tuple[tf.Tensor, tf.Tensor]:
         tensores: dict[gl.ConnectableLayer, tf.Tensor] = {}
         self.output_layer.to_tensor(tensores)
-        return keras.Model(
-            inputs=tensores[self.input_layer],
-            outputs=tensores[self.output_layer],
-        )
+        return tensores[self.input_layer], tensores[self.output_layer]
 
 
 def make_network(
