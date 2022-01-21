@@ -16,7 +16,11 @@ class NeuralNetwork:
         graph = convert_to_digraph(output_layer)
         assert nx.is_directed_acyclic_graph(graph)
 
-        inputs = [layer for layer in graph.nodes if isinstance(layer, gl.Input)]
+        layers = [node for node in graph.nodes]
+        layer_names = [layer.name for layer in layers]
+        assert len(set(layer_names)) == len(layer_names)
+
+        inputs = [layer for layer in layers if isinstance(layer, gl.Input)]
         assert len(inputs) == 1
 
         self._input_layer = inputs[0]

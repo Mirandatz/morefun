@@ -216,6 +216,11 @@ class ConnectableLayer(abc.ABC):
         """
         raise NotImplementedError("this is an abstract method")
 
+    @property
+    @abc.abstractmethod
+    def name(self) -> str:
+        raise NotImplementedError("this is an abstract method")
+
 
 class SingleInputLayer(ConnectableLayer):
     @property
@@ -282,6 +287,10 @@ class ConnectedConv2D(SingleInputLayer):
         assert isinstance(self.params, Conv2D)
 
     @property
+    def name(self) -> str:
+        return self.params.name
+
+    @property
     def output_shape(self) -> Shape:
         input_shape = self.input_layer.output_shape
         params = self.params
@@ -325,6 +334,10 @@ class ConnectedConv2DTranspose(SingleInputLayer):
     def __attrs_post_init__(self) -> None:
         assert isinstance(self.input_layer, ConnectableLayer)
         assert isinstance(self.params, Conv2DTranspose)
+
+    @property
+    def name(self) -> str:
+        return self.params.name
 
     @property
     def output_shape(self) -> Shape:
@@ -382,6 +395,10 @@ class ConnectedPool2D(SingleInputLayer):
         assert isinstance(self.params, Pool2D)
 
     @property
+    def name(self) -> str:
+        return self.params.name
+
+    @property
     def output_shape(self) -> Shape:
         input_shape = self.input_layer.output_shape
         params = self.params
@@ -437,6 +454,10 @@ class ConnectedBatchNorm(SingleInputLayer):
     def __attrs_post_init__(self) -> None:
         assert isinstance(self.input_layer, ConnectableLayer)
         assert isinstance(self.params, BatchNorm)
+
+    @property
+    def name(self) -> str:
+        return self.params.name
 
     @property
     def output_shape(self) -> Shape:
@@ -558,6 +579,10 @@ class ConnectedRelu(SingleInputLayer):
         assert isinstance(self.params, Relu)
 
     @property
+    def name(self) -> str:
+        return self.params.name
+
+    @property
     def output_shape(self) -> Shape:
         return self.input_layer.output_shape
 
@@ -589,6 +614,10 @@ class ConnectedGelu(SingleInputLayer):
         assert isinstance(self.params, Gelu)
 
     @property
+    def name(self) -> str:
+        return self.params.name
+
+    @property
     def output_shape(self) -> Shape:
         return self.input_layer.output_shape
 
@@ -618,6 +647,10 @@ class ConnectedSwish(SingleInputLayer):
     def __attrs_post_init__(self) -> None:
         assert isinstance(self.input_layer, ConnectableLayer)
         assert isinstance(self.params, Swish)
+
+    @property
+    def name(self) -> str:
+        return self.params.name
 
     @property
     def output_shape(self) -> Shape:
