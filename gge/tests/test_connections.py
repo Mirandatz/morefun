@@ -1,4 +1,5 @@
 import attrs
+import pytest
 from hypothesis import given
 
 import gge.backbones as bb
@@ -335,13 +336,9 @@ def test_connect_backbone_with_duplicate_merge_entries() -> None:
     )
     schema = conn.ConnectionsSchema(merge_params)
 
-    output = conn.connect_backbone(
-        backbone,
-        schema,
-        input_layer=gl.make_input(1, 2, 3),
-    )
-
-    assert isinstance(output, gl.ConnectedAdd)
-
-    (input,) = output.input_layers
-    assert isinstance(input, gl.ConnectedBatchNorm)
+    with pytest.raises(AssertionError):
+        _ = conn.connect_backbone(
+            backbone,
+            schema,
+            input_layer=gl.make_input(1, 2, 3),
+        )

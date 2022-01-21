@@ -439,7 +439,7 @@ class ConnectedAdd(MultiInputLayer):
         for layer in self.input_layers:
             assert isinstance(layer, ConnectableLayer)
 
-        assert len(self.input_layers) >= 1
+        assert len(self.input_layers) > 1
 
         shapes = (layer.output_shape for layer in self.input_layers)
         if len(set(shapes)) != 1:
@@ -475,7 +475,8 @@ class ConnectedConcatenate(MultiInputLayer):
         for layer in self.input_layers:
             assert isinstance(layer, ConnectableLayer)
 
-        assert len(self.input_layers) >= 1
+        assert len(self.input_layers) > 1
+
         for a, b in itertools.pairwise(self.input_layers):
             assert a.output_shape.width == b.output_shape.width
             assert a.output_shape.height == b.output_shape.height
