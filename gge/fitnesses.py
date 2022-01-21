@@ -155,8 +155,14 @@ class ValidationAccuracy:
     def evaluate(self, model: gnn.NeuralNetwork) -> float:
         try:
             return self._try_evaluate(model)
+
         except tf.errors.ResourceExhaustedError:
             return float("-inf")
+
+        except tf.errors.InvalidArgumentError:
+            graph = gnn.convert_to_digraph(model.output_layer)
+            gnn.draw_graph(graph)
+            raise
 
 
 @dataclasses.dataclass(frozen=True)
