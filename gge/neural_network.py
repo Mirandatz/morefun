@@ -34,7 +34,7 @@ class NeuralNetwork:
 
     def to_tensorflow(self) -> keras.Model:
         tensores: dict[gl.ConnectableLayer, tf.Tensor] = {}
-        self.output_layer.register_tensor_to(tensores)
+        self.output_layer.to_tensor(tensores)
         return keras.Model(
             inputs=tensores[self.input_layer],
             outputs=tensores[self.output_layer],
@@ -71,6 +71,7 @@ def convert_to_digraph(output_layer: gl.ConnectableLayer) -> nx.DiGraph:
 
 
 def draw_graph(net: nx.DiGraph) -> None:
+    assert isinstance(net, nx.DiGraph)
     import tempfile
 
     import cv2
