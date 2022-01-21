@@ -46,18 +46,46 @@ class LayerCount:
         return len(cool_layers)
 
 
+def make_classification_head(class_count: int, input_tensor: tf.Tensor) -> tf.Tensor:
+    _, width, height, _ = input_tensor.shape
+
+    conv = kl.Conv2D(
+        filters=class_count,
+        kernel_size=(width, height),
+    )(input_tensor)
+
+    global_pool = kl.GlobalMaxPooling2D()(conv)
+
+    return kl.Activation(tf.nn.softmax)(global_pool)
+
+
+def make_tf_model(
+    network_skeleton: gnn.NeuralNetwork,
+    class_count: int,
+) -> keras.Model:
+    input_tensor, output_tensor = network_skeleton.to_input_output_tensores()
+    classification_head = make_classification_head(class_count, output_tensor)
+    tf_model = keras.Model(inputs=input_tensor, outputs=classification_head)
+    tf_model.compile(
+        loss="categorical_crossentropy",
+        optimizer="nadam",
+        metrics=["accuracy"],
+    )
+    return tf_model
+
+
 class ValidationAccuracy:
     def __init__(
         self,
         dataset_dir: pathlib.Path,
-        input_shape: tuple[int, int, int, int],
+        input_shape: gl.Shape,
+        batch_size: int,
         epochs: int,
         class_count: int,
         shuffle_seed: int,
         validation_ratio: float,
     ) -> None:
-        for d in input_shape:
-            assert d >= 1
+        assert batch_size > 0
         assert epochs > 0
         assert class_count > 1
         assert dataset_dir.is_dir()
@@ -65,6 +93,7 @@ class ValidationAccuracy:
 
         self._dataset_dir = dataset_dir
         self._input_shape = input_shape
+        self._batch_size = batch_size
         self._epochs = epochs
         self._class_count = class_count
         self._shuffle_seed = shuffle_seed
@@ -74,22 +103,6 @@ class ValidationAccuracy:
     def should_be_maximized(self) -> bool:
         return True
 
-    @property
-    def batch_size(self) -> int:
-        return self._input_shape[0]
-
-    @property
-    def input_width(self) -> int:
-        return self._input_shape[1]
-
-    @property
-    def input_height(self) -> int:
-        return self._input_shape[2]
-
-    @property
-    def input_depth(self) -> int:
-        return self._input_shape[3]
-
     def get_train_and_val(self) -> tuple[DataGen, DataGen]:
         with redirection.discard_stderr_and_stdout():
             data_gen = keras.preprocessing.image.ImageDataGenerator(
@@ -98,8 +111,8 @@ class ValidationAccuracy:
 
             train = data_gen.flow_from_directory(
                 self._dataset_dir,
-                batch_size=self.batch_size,
-                target_size=(self.input_width, self.input_height),
+                batch_size=self._batch_size,
+                target_size=(self._input_shape.width, self._input_shape.height),
                 shuffle=True,
                 seed=self._shuffle_seed,
                 subset="training",
@@ -107,46 +120,24 @@ class ValidationAccuracy:
 
             val = data_gen.flow_from_directory(
                 self._dataset_dir,
-                batch_size=self.batch_size,
-                target_size=(self.input_width, self.input_height),
+                batch_size=self._batch_size,
+                target_size=(self._input_shape.width, self._input_shape.height),
                 subset="validation",
             )
-
         return train, val
 
-    def make_classification_head(self, input_tensor: tf.Tensor) -> tf.Tensor:
-        _, width, height, _ = input_tensor.shape
-
-        conv = kl.Conv2D(
-            filters=self._class_count,
-            kernel_size=(width, height),
-        )(input_tensor)
-
-        global_pool = kl.GlobalMaxPooling2D()(conv)
-
-        return kl.Activation(tf.nn.softmax)(global_pool)
-
     def evaluate(self, model: gnn.NeuralNetwork) -> float:
-        for gpu in tf.config.list_physical_devices("GPU"):
-            tf.config.experimental.set_memory_growth(gpu, True)
-
-        input_tensor, output_tensor = model.to_input_output_tensores()
-        classification_head = self.make_classification_head(output_tensor)
-        tf_model = keras.Model(inputs=input_tensor, outputs=classification_head)
-        tf_model.compile(
-            loss="categorical_crossentropy",
-            optimizer="nadam",
-            metrics=["accuracy"],
-        )
+        logger.trace("evaluate")
 
         train, val = self.get_train_and_val()
+        tf_model = make_tf_model(model, self._class_count)
 
         fitting_result = tf_model.fit(
             train,
             epochs=self._epochs,
-            steps_per_epoch=train.samples // self.batch_size,
+            steps_per_epoch=train.samples // self._batch_size,
             validation_data=val,
-            validation_steps=val.samples // self.batch_size,
+            validation_steps=val.samples // self._batch_size,
             verbose=0,
         )
 
