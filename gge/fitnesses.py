@@ -5,6 +5,7 @@ import typing
 import keras
 import keras.layers as kl
 import tensorflow as tf
+from loguru import logger
 
 import gge.composite_genotypes as cg
 import gge.grammars as gr
@@ -124,7 +125,7 @@ class ValidationAccuracy:
 
         return kl.Activation(tf.nn.softmax)(global_pool)
 
-    def _try_evaluate(self, model: gnn.NeuralNetwork) -> float:
+    def evaluate(self, model: gnn.NeuralNetwork) -> float:
         for gpu in tf.config.list_physical_devices("GPU"):
             tf.config.experimental.set_memory_growth(gpu, True)
 
@@ -152,18 +153,6 @@ class ValidationAccuracy:
         assert isinstance(val_acc, float)
         return val_acc
 
-    def evaluate(self, model: gnn.NeuralNetwork) -> float:
-        try:
-            return self._try_evaluate(model)
-
-        except tf.errors.ResourceExhaustedError:
-            return float("-inf")
-
-        except tf.errors.InvalidArgumentError:
-            graph = gnn.convert_to_digraph(model.output_layer)
-            gnn.draw_graph(graph)
-            raise
-
 
 @dataclasses.dataclass(frozen=True)
 class FitnessEvaluationParameters:
@@ -176,14 +165,28 @@ def evaluate(
     genotype: cg.CompositeGenotype,
     params: FitnessEvaluationParameters,
 ) -> float:
+    logger.trace("evaluate")
+
     phenotype = gnn.make_network(
         genotype,
         params.grammar,
         params.input_layer,
     )
 
-    fitness = params.metric.evaluate(phenotype)
-    return fitness
+    try:
+        return params.metric.evaluate(phenotype)
+
+    except tf.errors.ResourceExhaustedError:
+        logger.warning(
+            f"Unable to evalute genotype due to resource exhaustion; genotype=<{genotype}>"
+        )
+        return float("-inf")
+
+    except tf.errors.InvalidArgumentError:
+        logger.error(
+            f"Unable to evaluate genotype because the phenotype is malformed; genotype=<{genotype}>"
+        )
+        raise
 
 
 T = typing.TypeVar("T")
