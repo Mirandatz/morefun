@@ -160,7 +160,7 @@ class PrintStatistics:
 
         msg = (
             f"Finished generation=<{self._gen_nr}>,"
-            + f" mean fit=>{format_fitness(mean)} +/- {format_fitness(std)}>,"
+            + f" mean fit=<{format_fitness(mean)} +/- {format_fitness(std)}>,"
             + f" max fit=<{format_fitness(max_)}>"
         )
 
