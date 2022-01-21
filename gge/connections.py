@@ -165,14 +165,14 @@ def make_shortcut(
         return downsampling_shortcut(
             source=source,
             target_shape=target_shape,
-            name=name_gen.gen_name(gl.Conv2D),
+            name="shortcut_" + name_gen.gen_name(gl.Conv2D),
         )
 
     elif mode == ReshapeStrategy.UPSAMPLE:
         return upsampling_shortcut(
             source=source,
             target_shape=target_shape,
-            name=name_gen.gen_name(gl.Conv2DTranspose),
+            name="shortcut_" + name_gen.gen_name(gl.Conv2DTranspose),
         )
 
     else:
