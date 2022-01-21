@@ -174,7 +174,7 @@ def evaluate(
         )
         return float("-inf")
 
-    except tf.errors.InvalidArgumentError:
+    except (ValueError, tf.errors.InvalidArgumentError):
         filename = debug.save_genotype(genotype)
         logger.error(
             f"Unable to evaluate genotype because the phenotype is malformed; saved as=<{filename}>"

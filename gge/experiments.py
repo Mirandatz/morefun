@@ -92,9 +92,11 @@ def get_grammar() -> gr.Grammar:
     raw_grammar = """
     start      : conv_block~1..10
     conv_block : "merge" conv norm act "fork"
+               | "merge" conv norm act pool "fork"
     conv : "conv2d" "filter_count" (32 | 64 | 128 | 256 | 512 | 1024) "kernel_size" (1 | 3 | 5 | 7) "stride" (1 | 2)
     norm : "batchnorm"
     act  : "relu"
+    pool : "pool2d" ("max" | "avg") "stride" 2
     """
     return gr.Grammar(raw_grammar)
 

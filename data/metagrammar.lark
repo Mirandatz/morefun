@@ -24,8 +24,7 @@ stride       : STRIDE _int_args
 batchnorm_layer : BATCHNORM
 
 pooling_layer      : POOLING_LAYER pooling_type_seq pooling_stride_seq
-pooling_type_seq   : POOLING_TYPE _pooling_type_args
-_pooling_type_args : _pooling_type
+pooling_type_seq   :  _pooling_type
                    | "(" _pooling_type ("|" _pooling_type)* ")" 
 _pooling_type      : POOLING_MAX | POOLING_AVG
 pooling_stride_seq : POOLING_STRIDE _int_args
@@ -52,8 +51,7 @@ STRIDE       : /"stride"/
 
 BATCHNORM : /"batchnorm"/
 
-POOLING_LAYER  : /"pooling"/
-POOLING_TYPE   : /"type"/
+POOLING_LAYER  : /"pool2d"/
 POOLING_STRIDE : /"stride"/
 POOLING_MAX    : /"max"/
 POOLING_AVG    : /"avg"/
