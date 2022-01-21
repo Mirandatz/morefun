@@ -266,11 +266,12 @@ class Input(ConnectableLayer):
 
     def to_tensor(self) -> tf.Tensor:
         return keras.Input(
-            (
+            shape=(
                 self.shape.width,
                 self.shape.height,
                 self.shape.depth,
-            )
+            ),
+            name=self.name,
         )
 
 
