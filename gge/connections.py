@@ -203,7 +203,7 @@ def make_merge(
     merge_strategy: MergeStrategy,
     name_gen: ng.NameGenerator,
 ) -> gl.MultiInputLayer:
-    assert len(sources) >= 1
+    assert len(sources) > 1
 
     src_shapes = [src.output_shape for src in sources]
     target_shape = select_target_shape(
@@ -282,6 +282,11 @@ class StatefulLayerConnector:
         sources = [self._previous_layer] + list(chosen_fork_points)
         # same as traditional `list(set(sources))` but keeps the ordering
         sources_without_duplicates_and_in_same_order = list(dict.fromkeys(sources))
+
+        if len(sources_without_duplicates_and_in_same_order) == 1:
+            # we can't create and "merge layer" with only one input,
+            # so we just pass-through the output of the previous layer instead
+            return
 
         merge = make_merge(
             sources=sources_without_duplicates_and_in_same_order,
