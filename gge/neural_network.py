@@ -6,7 +6,6 @@ import gge.composite_genotypes as cg
 import gge.connections as conn
 import gge.grammars as gr
 import gge.layers as gl
-import gge.name_generator as ng
 import gge.structured_grammatical_evolution as sge
 
 
@@ -64,42 +63,3 @@ def convert_to_digraph(output_layer: gl.ConnectableLayer) -> nx.DiGraph:
             to_visit.append(src)
 
     return graph
-
-
-def draw_graph(net: nx.DiGraph) -> None:
-    assert isinstance(net, nx.DiGraph)
-    import tempfile
-
-    import cv2
-
-    with tempfile.NamedTemporaryFile(prefix="/dev/shm/", suffix=".png") as file:
-        agraph = nx.nx_agraph.to_agraph(net)
-        agraph.draw(file.name, prog="dot")
-        img = cv2.imread(file.name)
-        cv2.imshow("network", img)
-        cv2.waitKey()
-
-
-def main() -> None:
-    name_gen = ng.NameGenerator()
-    input = gl.Input(gl.Shape(100, 100, 3))
-    conv1 = gl.ConnectedConv2D(
-        input,
-        gl.Conv2D(name_gen.gen_name(gl.Conv2D), 128, 5, 2),
-    )
-    conv2 = gl.ConnectedConv2D(
-        input,
-        gl.Conv2D(name_gen.gen_name(gl.Conv2D), 128, 5, 4),
-    )
-    merge1 = conn.make_merge(
-        [conv1, conv2],
-        reshape_strategy=conn.ReshapeStrategy.DOWNSAMPLE,
-        merge_strategy=conn.MergeStrategy.ADD,
-        name_gen=name_gen,
-    )
-    graph = convert_to_digraph(merge1)
-    draw_graph(graph)
-
-
-if __name__ == "__main__":
-    main()
