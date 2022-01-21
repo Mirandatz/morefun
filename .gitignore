@@ -9,9 +9,9 @@ __pycache__/
 # pyenv
 .python-version
 
-# playground
+# playground & debugging
+debug_data/
 gge/playground.py
 
 # test history
 .hypothesis/
-

@@ -8,6 +8,7 @@ import tensorflow as tf
 from loguru import logger
 
 import gge.composite_genotypes as cg
+import gge.debugging as debug
 import gge.grammars as gr
 import gge.layers as gl
 import gge.neural_network as gnn
@@ -183,8 +184,9 @@ def evaluate(
         return float("-inf")
 
     except tf.errors.InvalidArgumentError:
+        filename = debug.save_genotype(genotype)
         logger.error(
-            f"Unable to evaluate genotype because the phenotype is malformed; genotype=<{genotype}>"
+            f"Unable to evaluate genotype because the phenotype is malformed; saved as=<{filename}>"
         )
         raise
 
