@@ -311,7 +311,7 @@ class ConnectedConv2D(SingleInputLayer):
         return known_tensores[self]
 
     def __repr__(self) -> str:
-        return f"params={self.params}, input={self.input_layer}, out_shape=[{self.output_shape}]"
+        return f"{self.params.name}, params={self.params}, input={self.input_layer}, out_shape=[{self.output_shape}]"
 
 
 @attrs.frozen
@@ -331,9 +331,6 @@ class ConnectedConv2DTranspose(SingleInputLayer):
         out_height = input_shape.height * params.stride
         out_depth = self.params.filter_count
         return Shape(width=out_width, height=out_height, depth=out_depth)
-
-    def __repr__(self) -> str:
-        return f"{self.params.name}: out_shape=[{self.output_shape}]"
 
     def to_tensor(
         self,
@@ -356,6 +353,9 @@ class ConnectedConv2DTranspose(SingleInputLayer):
             known_tensores[self] = tensor
 
         return known_tensores[self]
+
+    def __repr__(self) -> str:
+        return f"{self.params.name}, params={self.params}, input={self.input_layer}, out_shape=[{self.output_shape}]"
 
 
 @attrs.frozen
