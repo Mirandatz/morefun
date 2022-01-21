@@ -148,9 +148,8 @@ class Checkpoint:
 
 
 class PrintStatistics:
-    def __init__(self, *, file: typing.TextIO = sys.stdout) -> None:
+    def __init__(self) -> None:
         self._gen_nr = 0
-        self._file = file
 
     def __call__(self, population: EvaluatedPopulation) -> None:
         fitnesses = list(population.values())
@@ -165,6 +164,6 @@ class PrintStatistics:
             + f" max fit=<{format_fitness(max_)}>"
         )
 
-        print(msg, file=self._file)
+        logger.success(msg)
 
         self._gen_nr += 1
