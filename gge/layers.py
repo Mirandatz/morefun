@@ -65,8 +65,10 @@ class Conv2D(ConvertibleToConnectableLayer):
         return ConnectedConv2D(input, self)
 
 
+# MUST RENAME THIS LATER
 @attrs.frozen
 class Conv2DTranspose(ConvertibleToConnectableLayer):
+
     name: str
     filter_count: int
     kernel_size: int
@@ -314,6 +316,7 @@ class ConnectedConv2D(SingleInputLayer):
         return f"{self.params.name}, params={self.params}, input={self.input_layer}, out_shape=[{self.output_shape}]"
 
 
+# MUST RENAME THIS LATER
 @attrs.frozen
 class ConnectedConv2DTranspose(SingleInputLayer):
     input_layer: ConnectableLayer
@@ -342,15 +345,25 @@ class ConnectedConv2DTranspose(SingleInputLayer):
             params = self.params
             strides = (params.stride, params.stride)
 
-            layer = kl.Conv2DTranspose(
+            # layer = kl.Conv2DTranspose(
+            #     filters=params.filter_count,
+            #     kernel_size=params.kernel_size,
+            #     strides=strides,
+            #     padding="same",
+            #     name=params.name,
+            # )
+            conv = kl.Conv2D(
                 filters=params.filter_count,
                 kernel_size=params.kernel_size,
-                strides=strides,
+                strides=1,
                 padding="same",
-                name=params.name,
-            )
-            tensor = layer(source)
-            known_tensores[self] = tensor
+                name=params.name + "_conv",
+            )(source)
+            upsample = kl.UpSampling2D(
+                size=strides,
+                name=params.name + "_upsample",
+            )(conv)
+            known_tensores[self] = upsample
 
         return known_tensores[self]
 
@@ -358,6 +371,7 @@ class ConnectedConv2DTranspose(SingleInputLayer):
         return f"{self.params.name}, params={self.params}, input={self.input_layer}, out_shape=[{self.output_shape}]"
 
 
+# MUST REFACTOR THIS LATER
 @attrs.frozen
 class ConnectedPool2D(SingleInputLayer):
     input_layer: ConnectableLayer
