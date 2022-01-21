@@ -26,13 +26,13 @@ IMAGE_DEPTH = 3
 CLASS_COUNT = 10
 VALIDATION_RATIO = 0.15
 
-POPULATION_SIZE = 2
-MAX_GENERATIONS = 2
+POPULATION_SIZE = 5
+MAX_GENERATIONS = 100
 MUTANTS_PER_GENERATION = 2
 MAX_FAILURES = 500
 
 BATCH_SIZE = 32
-EPOCHS = 2
+EPOCHS = 10
 
 
 def try_create_individual(
@@ -90,7 +90,7 @@ def make_initial_population(
 
 def get_grammar() -> gr.Grammar:
     raw_grammar = """
-    start      : conv_block~1..10
+    start      : conv_block~1..20
     conv_block : "merge" conv norm act "fork"
                | "merge" conv norm act pool "fork"
     conv : "conv2d" "filter_count" (32 | 64 | 128 | 256 | 512 | 1024) "kernel_size" (1 | 3 | 5 | 7) "stride" (1 | 2)
@@ -134,6 +134,7 @@ def get_input_layer() -> gl.Input:
 def main() -> None:
     # logger.remove()
     # logger.add(sink=sys.stderr, level="WARNING")
+    logger.add(OUTPUT_DIR / "log.txt")
 
     grammar = get_grammar()
     input_layer = get_input_layer()
