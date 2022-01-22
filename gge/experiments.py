@@ -3,6 +3,7 @@ import functools
 import pathlib
 
 import keras
+import typer
 from loguru import logger
 
 import gge.composite_genotypes as cg
@@ -139,7 +140,7 @@ def get_input_layer() -> gl.Input:
     return gl.make_input(IMAGE_WIDTH, IMAGE_HEIGHT, IMAGE_DEPTH)
 
 
-def main() -> None:
+def main(rng_seed: int = typer.Option(rand.get_rng_seed(), "--seed")) -> None:
     # logger.remove()
     # logger.add(sink=sys.stderr, level="WARNING")
     logger.add(OUTPUT_DIR / "log.txt")
@@ -168,7 +169,7 @@ def main() -> None:
     )
 
     novelty_tracker = novel.NoveltyTracker()
-    rng = rand.create_rng()
+    rng = rand.create_rng(rng_seed)
 
     initial_genotypes = make_initial_population(
         grammar,
@@ -196,4 +197,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    typer.run(main)
