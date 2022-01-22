@@ -1,0 +1,24 @@
+channels:
+  - conda-forge
+dependencies:
+  - python=3.9
+  - pip
+  - graphviz
+  - tensorflow-gpu
+  - pip:
+    - black
+    - flake8
+    - mypy
+    - pip-compile-multi
+    - attrs
+    - h5py
+    - hypothesis
+    - lark
+    - loguru
+    - networkx
+    - pillow
+    - pip-compile-multi
+    - pydot
+    - pytest
+    - pytest-pspec
+    - scipy
