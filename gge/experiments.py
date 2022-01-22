@@ -1,3 +1,4 @@
+import datetime as dt
 import functools
 import pathlib
 
@@ -17,8 +18,15 @@ import gge.randomness as rand
 
 DATASET_DIR = pathlib.Path().home() / "source" / "datasets" / "cifar10" / "train"
 
-OUTPUT_DIR = pathlib.Path().home() / "experiments"
-OUTPUT_DIR.mkdir(exist_ok=True)
+RUN_NAME = (
+    str(dt.datetime.now())
+    .replace(" ", "_")
+    .replace("-", "_")
+    .replace(":", "_")
+    .replace(".", "_")
+)
+OUTPUT_DIR = pathlib.Path().home() / "experiments" / RUN_NAME
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 IMAGE_WIDTH = 32
 IMAGE_HEIGHT = 32
