@@ -31,7 +31,10 @@ def _raise_if_contains_repeated_names(layers: tuple[gl.Layer, ...]) -> None:
 
 
 def _raise_if_contains_sequences_of_forks(layers: tuple[gl.Layer, ...]) -> None:
-    for prev, curr in itertools.pairwise(layers):
+    # crude version of pairwise from py3.10
+    prev_it, curr_it = itertools.tee(layers)
+    next(curr_it, None)
+    for prev, curr in zip(prev_it, curr_it):
         if gl.is_fork_marker(prev) and gl.is_fork_marker(curr):
             raise ValueError("backbone must not contain sequences of forks")
 
@@ -43,7 +46,7 @@ class Backbone:
     def __post_init__(self) -> None:
         assert isinstance(self.layers, tuple)
         for layer in self.layers:
-            assert isinstance(layer, gl.Layer)
+            assert isinstance(layer, (gl.ConvertibleToConnectableLayer, gl.MarkerLayer))
 
         real_layers = filter(gl.is_real_layer, self.layers)
         if not any(real_layers):
@@ -62,7 +65,7 @@ class BackboneSynthetizer(gge_transformers.SinglePassTransformer[Backbone]):
         super().__init__()
         self._name_generator = gge.name_generator.NameGenerator()
 
-    def _create_layer_name(self, prefix: str | type) -> str:
+    def _create_layer_name(self, prefix: typing.Union[str, type]) -> str:
         self._raise_if_not_running()
         return self._name_generator.gen_name(prefix)
 
@@ -79,7 +82,9 @@ class BackboneSynthetizer(gge_transformers.SinglePassTransformer[Backbone]):
 
         return [x for x in parts if x is not None]
 
-    def MERGE(self, token: lark.Token | None = None) -> gl.MarkerLayer | None:
+    def MERGE(
+        self, token: typing.Optional[lark.Token] = None
+    ) -> typing.Optional[gl.MarkerLayer]:
         self._raise_if_not_running()
 
         if token is not None:
@@ -87,7 +92,9 @@ class BackboneSynthetizer(gge_transformers.SinglePassTransformer[Backbone]):
         else:
             return None
 
-    def FORK(self, token: lark.Token | None = None) -> gl.MarkerLayer | None:
+    def FORK(
+        self, token: typing.Optional[lark.Token] = None
+    ) -> typing.Optional[gl.MarkerLayer]:
         self._raise_if_not_running()
 
         if token is not None:

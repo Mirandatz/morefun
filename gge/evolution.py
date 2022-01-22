@@ -1,7 +1,6 @@
 import datetime as dt
 import pathlib
 import pickle
-import sys
 import typing
 
 import numpy as np
@@ -23,7 +22,7 @@ def try_run_single_generation(
     fit_params: fit.FitnessEvaluationParameters,
     rng: rand.RNG,
     novelty_tracker: novel.NoveltyTracker,
-) -> EvaluatedPopulation | None:
+) -> typing.Optional[EvaluatedPopulation]:
     assert len(population) > 0
 
     old_genotypes = list(population.keys())
@@ -96,7 +95,7 @@ class Checkpoint:
     def __init__(
         self,
         output_dir: pathlib.Path,
-        filenames_prefix: str | None = None,
+        filenames_prefix: typing.Optional[str] = None,
     ) -> None:
         logger.trace("Checkpoint constructor")
 

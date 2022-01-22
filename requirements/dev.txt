@@ -6,8 +6,6 @@
 #    pip-compile-multi
 #
 -r test.txt
-mypy @ git+https://github.com/python/mypy
-    # via -r requirements/test.in
 opencv-python==4.5.5.62
     # via -r requirements/dev.in
 pep517==0.12.0

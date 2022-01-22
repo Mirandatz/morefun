@@ -99,10 +99,12 @@ def create_connections_schema(
 
 
 def collect_fork_sources(backbone: bb.Backbone) -> list[gl.Layer]:
+    source_it, next_it = itertools.tee(backbone.layers)
+    next(next_it, None)
     return [
         source
-        for source, next in itertools.pairwise(backbone.layers)
-        if gl.is_fork_marker(next)
+        for source, next_item in zip(source_it, next_it)
+        if gl.is_fork_marker(next_item)
     ]
 
 
@@ -184,7 +186,9 @@ def select_target_shape(
     mode: ReshapeStrategy,
 ) -> gl.Shape:
     assert len(candidates) >= 1
-    for a, b in itertools.pairwise(candidates):
+    a_it, b_it = itertools.tee(candidates)
+    next(b_it, None)
+    for a, b in zip(a_it, b_it):
         assert a.aspect_ratio == b.aspect_ratio
 
     if mode == ReshapeStrategy.DOWNSAMPLE:

@@ -171,8 +171,9 @@ def backbone_grammar_layer(
     *,
     min_size: int = 1,
     max_size: int = 10,
-    valid_layers: list[typing.Callable[..., hs.SearchStrategy[GrammarLayer]]]
-    | None = None,
+    valid_layers: typing.Optional[
+        list[typing.Callable[..., hs.SearchStrategy[GrammarLayer]]]
+    ] = None,
 ) -> GrammarLayer:
     layer_strat = (
         any_grammar_layer()

@@ -1,5 +1,6 @@
 import dataclasses
 import functools
+import typing
 
 from loguru import logger
 
@@ -31,7 +32,7 @@ def try_generate_mutant(
     grammar: gr.Grammar,
     rng: rand.RNG,
     novelty_tracker: novel.NoveltyTracker,
-) -> cg.CompositeGenotype | None:
+) -> typing.Optional[cg.CompositeGenotype]:
     logger.trace("try_generate_mutant")
 
     candidate: cg.CompositeGenotype = rng.choice(population)  # type: ignore
@@ -60,7 +61,7 @@ def try_mutate_population(
     mutation_params: PopulationMutationParameters,
     rng: rand.RNG,
     novelty_tracker: novel.NoveltyTracker,
-) -> list[cg.CompositeGenotype] | None:
+) -> typing.Optional[list[cg.CompositeGenotype]]:
     assert len(population) > 0
 
     # we only update the actual tracker if we succeed

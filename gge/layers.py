@@ -42,6 +42,10 @@ class ConvertibleToConnectableLayer(abc.ABC):
     def to_connectable(self, input: "ConnectableLayer") -> "ConnectableLayer":
         raise NotImplementedError("this is an abstract method")
 
+    @property
+    def name(self) -> str:
+        ...
+
 
 @attrs.frozen
 class Conv2D(ConvertibleToConnectableLayer):
@@ -161,11 +165,11 @@ class Swish(ConvertibleToConnectableLayer):
         return ConnectedSwish(input, self)
 
 
-Layer: typing.TypeAlias = ConvertibleToConnectableLayer | MarkerLayer
+Layer = typing.Union[ConvertibleToConnectableLayer, MarkerLayer]
 
 
 def is_real_layer(layer: Layer) -> bool:
-    assert isinstance(layer, Layer)
+    assert isinstance(layer, (ConvertibleToConnectableLayer, MarkerLayer))
     return not isinstance(layer, MarkerLayer)
 
 
@@ -418,27 +422,24 @@ class ConnectedPool2D(SingleInputLayer):
             pooling_type = params.pooling_type
             pool_size = (params.stride, params.stride)
 
-            match pooling_type:
-                case PoolType.MAX_POOLING:
-                    layer = kl.MaxPool2D(
-                        pool_size=pool_size,
-                        padding="same",
-                        name=params.name,
-                    )
-                    tensor = layer(source)
-                    known_tensores[self] = tensor
-
-                case PoolType.AVG_POOLING:
-                    layer = kl.AveragePooling2D(
-                        pool_size=pool_size,
-                        padding="same",
-                        name=params.name,
-                    )
-                    tensor = layer(source)
-                    known_tensores[self] = tensor
-
-                case unknown:
-                    raise ValueError(f"unknown pooling type: {unknown}")
+            if pooling_type == PoolType.MAX_POOLING:
+                layer = kl.MaxPool2D(
+                    pool_size=pool_size,
+                    padding="same",
+                    name=params.name,
+                )
+                tensor = layer(source)
+                known_tensores[self] = tensor
+            elif pooling_type == PoolType.AVG_POOLING:
+                layer = kl.AveragePooling2D(
+                    pool_size=pool_size,
+                    padding="same",
+                    name=params.name,
+                )
+                tensor = layer(source)
+                known_tensores[self] = tensor
+            else:
+                raise ValueError(f"unknown pooling type: {pooling_type}")
 
         return known_tensores[self]
 
@@ -535,7 +536,11 @@ class ConnectedConcatenate(MultiInputLayer):
 
         assert len(self.input_layers) > 1
 
-        for a, b in itertools.pairwise(self.input_layers):
+        # crude version of itertools.pairwise from py3.10
+        a_it, b_it = itertools.tee(self.input_layers)
+        next(b_it, None)
+
+        for a, b in zip(a_it, b_it):
             assert a.output_shape.width == b.output_shape.width
             assert a.output_shape.height == b.output_shape.height
 

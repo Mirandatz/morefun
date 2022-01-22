@@ -1,6 +1,7 @@
 import collections
 import dataclasses
 import functools
+import typing
 
 from loguru import logger
 
@@ -129,7 +130,9 @@ def map_to_tokenstream(genotype: Genotype, grammar: gg.Grammar) -> str:
 
     gene_consumption_tracker = {g: 0 for g in genotype.genes}
 
-    to_process: collections.deque[gg.Terminal | gg.NonTerminal] = collections.deque()
+    to_process: collections.deque[
+        typing.Union[gg.Terminal, gg.NonTerminal]
+    ] = collections.deque()
     to_process.append(grammar.start_symbol)
 
     while to_process:
@@ -137,7 +140,7 @@ def map_to_tokenstream(genotype: Genotype, grammar: gg.Grammar) -> str:
         logger.debug(f"Processing symbol=<{symbol}>")
 
         # sanity check
-        assert isinstance(symbol, gg.Terminal | gg.NonTerminal)
+        assert isinstance(symbol, (gg.Terminal, gg.NonTerminal))
 
         if isinstance(symbol, gg.Terminal):
             tokenstream.append(symbol.text)

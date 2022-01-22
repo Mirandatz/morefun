@@ -14,7 +14,7 @@ import gge.layers as gl
 import gge.neural_network as gnn
 import gge.redirection as redirection
 
-DataGen: typing.TypeAlias = keras.preprocessing.image.DirectoryIterator
+from keras.preprocessing.image import DirectoryIterator as DataGen
 
 
 class FitnessMetric(typing.Protocol):
@@ -41,7 +41,7 @@ class LayerCount:
         cool_layers = [
             layer
             for layer in layers
-            if isinstance(layer, gl.SingleInputLayer | gl.MultiInputLayer)
+            if isinstance(layer, (gl.SingleInputLayer, gl.MultiInputLayer))
         ]
         return len(cool_layers)
 

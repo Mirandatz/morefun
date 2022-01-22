@@ -1,3 +1,5 @@
+import typing
+
 import hypothesis
 import hypothesis.strategies as hs
 from hypothesis import given
@@ -13,7 +15,9 @@ import gge.tests.strategies as gge_hs
 end_to_end_settings = hypothesis.settings(max_examples=10)
 
 
-def make_backbone(raw_grammar: str, rng_seed: int | None = None) -> bb.Backbone:
+def make_backbone(
+    raw_grammar: str, rng_seed: typing.Optional[int] = None
+) -> bb.Backbone:
     grammar = gr.Grammar(raw_grammar)
     rng = rand.create_rng(rng_seed)
     genotype = sge.create_genotype(grammar, rng)
@@ -92,6 +96,7 @@ def test_multiple_option(seed: int, filter_counts: gge_hs.GrammarOption) -> None
 
     (conv,) = backbone.layers
 
+    assert isinstance(conv, gl.Conv2D)
     assert conv.filter_count in filter_counts.possible_values
 
 
@@ -114,5 +119,6 @@ def test_multiple_option_many_places(
 
     (conv,) = backbone.layers
 
+    assert isinstance(conv, gl.Conv2D)
     assert conv.filter_count in filter_counts.possible_values
     assert conv.stride in strides.possible_values

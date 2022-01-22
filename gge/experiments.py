@@ -1,5 +1,6 @@
 import functools
 import pathlib
+import typing
 
 import keras
 from loguru import logger
@@ -39,7 +40,7 @@ def try_create_individual(
     grammar: gr.Grammar,
     novelty_tracker: novel.NoveltyTracker,
     rng: rand.RNG,
-) -> cg.CompositeGenotype | None:
+) -> typing.Optional[cg.CompositeGenotype]:
     logger.trace("try_create_individual")
 
     genotype = cg.create_genotype(grammar, rng)

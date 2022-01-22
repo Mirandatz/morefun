@@ -105,7 +105,7 @@ class Terminal:
         return f"T({self.text})"
 
 
-Symbol: typing.TypeAlias = Terminal | NonTerminal
+Symbol = typing.Union[Terminal, NonTerminal]
 
 
 @dataclasses.dataclass(order=True, frozen=True)
@@ -125,7 +125,7 @@ class RuleOption:
     def __post_init__(self) -> None:
         assert isinstance(self.symbols, tuple)
         for s in self.symbols:
-            assert isinstance(s, Symbol)
+            assert isinstance(s, (Terminal, NonTerminal))
 
         assert len(self.symbols) >= 1
 
@@ -413,7 +413,7 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer[GrammarComponent
 
     def block_option(
         self,
-        repeated_symbols: list[list[Terminal | NonTerminal]],
+        repeated_symbols: list[list[Symbol]],
     ) -> list[RuleOption]:
         self._raise_if_not_running()
 

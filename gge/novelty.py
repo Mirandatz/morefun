@@ -1,3 +1,5 @@
+import typing
+
 import gge.composite_genotypes as cg
 import gge.neural_network as gnn
 
@@ -5,8 +7,8 @@ import gge.neural_network as gnn
 class NoveltyTracker:
     def __init__(
         self,
-        known_genotypes: set[cg.CompositeGenotype] | None = None,
-        known_phenotypes: set[gnn.NeuralNetwork] | None = None,
+        known_genotypes: typing.Optional[set[cg.CompositeGenotype]] = None,
+        known_phenotypes: typing.Optional[set[gnn.NeuralNetwork]] = None,
     ) -> None:
         self._genotypes = (known_genotypes or set()).copy()
         self._phenotypes = (known_phenotypes or set()).copy()
