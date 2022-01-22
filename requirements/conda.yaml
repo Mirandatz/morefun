@@ -1,10 +1,11 @@
 channels:
   - conda-forge
+  - nvidia
 dependencies:
-  - python=3.9
+  - python
   - pip
   - graphviz
-  - tensorflow-gpu
+  - cudnn
   - pip:
     - black
     - flake8
@@ -17,8 +18,8 @@ dependencies:
     - loguru
     - networkx
     - pillow
-    - pip-compile-multi
     - pydot
     - pytest
     - pytest-pspec
     - scipy
+    - tensorflow-gpu
