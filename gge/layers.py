@@ -16,7 +16,7 @@ class MarkerType(enum.Enum):
     MERGE_POINT = enum.auto()
 
 
-@attrs.frozen
+@attrs.frozen(cache_hash=True)
 class MarkerLayer:
     name: str
     mark_type: MarkerType
@@ -43,7 +43,7 @@ class ConvertibleToConnectableLayer(abc.ABC):
         raise NotImplementedError("this is an abstract method")
 
 
-@attrs.frozen
+@attrs.frozen(cache_hash=True)
 class Conv2D(ConvertibleToConnectableLayer):
     name: str
     filter_count: int
@@ -66,7 +66,7 @@ class Conv2D(ConvertibleToConnectableLayer):
 
 
 # MUST RENAME THIS LATER
-@attrs.frozen
+@attrs.frozen(cache_hash=True)
 class Conv2DTranspose(ConvertibleToConnectableLayer):
 
     name: str
@@ -95,7 +95,7 @@ class PoolType(enum.Enum):
     AVG_POOLING = enum.auto()
 
 
-@attrs.frozen
+@attrs.frozen(cache_hash=True)
 class Pool2D(ConvertibleToConnectableLayer):
     name: str
     pooling_type: PoolType
@@ -113,7 +113,7 @@ class Pool2D(ConvertibleToConnectableLayer):
         return ConnectedPool2D(input, self)
 
 
-@attrs.frozen
+@attrs.frozen(cache_hash=True)
 class BatchNorm(ConvertibleToConnectableLayer):
     name: str
 
@@ -125,7 +125,7 @@ class BatchNorm(ConvertibleToConnectableLayer):
         return ConnectedBatchNorm(input, self)
 
 
-@attrs.frozen
+@attrs.frozen(cache_hash=True)
 class Relu(ConvertibleToConnectableLayer):
     name: str
 
@@ -137,7 +137,7 @@ class Relu(ConvertibleToConnectableLayer):
         return ConnectedRelu(input, self)
 
 
-@attrs.frozen
+@attrs.frozen(cache_hash=True)
 class Gelu(ConvertibleToConnectableLayer):
     name: str
 
@@ -149,7 +149,7 @@ class Gelu(ConvertibleToConnectableLayer):
         return ConnectedGelu(input, self)
 
 
-@attrs.frozen
+@attrs.frozen(cache_hash=True)
 class Swish(ConvertibleToConnectableLayer):
     name: str
 
@@ -177,7 +177,7 @@ def is_merge_marker(layer: Layer) -> bool:
     return isinstance(layer, MarkerLayer) and layer.mark_type == MarkerType.MERGE_POINT
 
 
-@attrs.frozen
+@attrs.frozen(cache_hash=True)
 class Shape:
     width: int
     height: int
@@ -236,7 +236,7 @@ class MultiInputLayer(ConnectableLayer):
         ...
 
 
-@attrs.frozen
+@attrs.frozen(cache_hash=True)
 class Input(ConnectableLayer):
     NAME: typing.ClassVar[str] = "input"
 
@@ -277,7 +277,7 @@ def make_input(width: int, height: int, depth: int) -> Input:
     return Input(shape)
 
 
-@attrs.frozen
+@attrs.frozen(cache_hash=True)
 class ConnectedConv2D(SingleInputLayer):
     input_layer: ConnectableLayer
     params: Conv2D
@@ -326,7 +326,7 @@ class ConnectedConv2D(SingleInputLayer):
 
 
 # MUST RENAME THIS LATER
-@attrs.frozen
+@attrs.frozen(cache_hash=True)
 class ConnectedConv2DTranspose(SingleInputLayer):
     input_layer: ConnectableLayer
     params: Conv2DTranspose
@@ -385,7 +385,7 @@ class ConnectedConv2DTranspose(SingleInputLayer):
 
 
 # MUST REFACTOR THIS LATER
-@attrs.frozen
+@attrs.frozen(cache_hash=True)
 class ConnectedPool2D(SingleInputLayer):
     input_layer: ConnectableLayer
     params: Pool2D
@@ -446,7 +446,7 @@ class ConnectedPool2D(SingleInputLayer):
         return f"{self.params.name}: out_shape=[{self.output_shape}]"
 
 
-@attrs.frozen
+@attrs.frozen(cache_hash=True)
 class ConnectedBatchNorm(SingleInputLayer):
     input_layer: ConnectableLayer
     params: BatchNorm
@@ -478,7 +478,7 @@ class ConnectedBatchNorm(SingleInputLayer):
         return f"{self.params.name}: out_shape=[{self.output_shape}]"
 
 
-@attrs.frozen
+@attrs.frozen(cache_hash=True)
 class ConnectedAdd(MultiInputLayer):
     name: str
     input_layers: tuple[ConnectableLayer, ...]
@@ -520,7 +520,7 @@ class ConnectedAdd(MultiInputLayer):
         return f"{self.name}: out_shape=[{self.output_shape}]"
 
 
-@attrs.frozen
+@attrs.frozen(cache_hash=True)
 class ConnectedConcatenate(MultiInputLayer):
     name: str
     input_layers: tuple[ConnectableLayer, ...]
@@ -569,7 +569,7 @@ class ConnectedConcatenate(MultiInputLayer):
         return f"{self.name}: out_shape=[{self.output_shape}]"
 
 
-@attrs.frozen
+@attrs.frozen(cache_hash=True)
 class ConnectedRelu(SingleInputLayer):
     input_layer: ConnectableLayer
     params: Relu
@@ -604,7 +604,7 @@ class ConnectedRelu(SingleInputLayer):
         return f"{self.params.name}: out_shape=[{self.output_shape}]"
 
 
-@attrs.frozen
+@attrs.frozen(cache_hash=True)
 class ConnectedGelu(SingleInputLayer):
     input_layer: ConnectableLayer
     params: Gelu
@@ -639,7 +639,7 @@ class ConnectedGelu(SingleInputLayer):
         return f"{self.params.name}: out_shape=[{self.output_shape}]"
 
 
-@attrs.frozen
+@attrs.frozen(cache_hash=True)
 class ConnectedSwish(SingleInputLayer):
     input_layer: ConnectableLayer
     params: Swish
