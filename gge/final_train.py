@@ -19,32 +19,28 @@ def get_train_and_val(
     batch_size: int,
     input_shape: tuple[int, int],
     shuffle_seed: int,
-    validation_ratio: float,
 ) -> tuple[DataGen, DataGen]:
-    data_gen = keras.preprocessing.image.ImageDataGenerator(
-        zoom_range=0.15,
-        rotation_range=45,
-        width_shift_range=0.1,
-        height_shift_range=0.1,
+    train_data_gen = keras.preprocessing.image.ImageDataGenerator(
+        width_shift_range=0.2,
+        height_shift_range=0.2,
         horizontal_flip=True,
-        validation_split=validation_ratio,
     )
 
-    train = data_gen.flow_from_directory(
-        dataset_dir,
+    train = train_data_gen.flow_from_directory(
+        dataset_dir / "train",
         batch_size=batch_size,
         target_size=input_shape,
         shuffle=True,
         seed=shuffle_seed,
-        subset="training",
     )
 
-    val = data_gen.flow_from_directory(
-        dataset_dir,
+    val_data_gen = keras.preprocessing.image.ImageDataGenerator()
+    val = val_data_gen.flow_from_directory(
+        dataset_dir / "val",
         batch_size=batch_size,
         target_size=input_shape,
-        subset="validation",
     )
+
     return train, val
 
 
@@ -55,6 +51,15 @@ def main(
         "--genotype",
         file_okay=True,
         dir_okay=False,
+        readable=True,
+    ),
+    dataset_dir: pathlib.Path = typer.Option(
+        ...,
+        "-d",
+        "--dataset",
+        file_okay=False,
+        dir_okay=True,
+        exists=True,
         readable=True,
     ),
     output_dir: pathlib.Path = typer.Option(
@@ -75,6 +80,7 @@ def main(
     model = gfit.make_tf_model(network, exp.CLASS_COUNT)
 
     checkpoint = keras.callbacks.ModelCheckpoint(
+        save_best_only=True,
         filepath=output_dir / "checkpoint_{epoch:03d}_{val_loss:.2f}",
         monitor="val_loss",
     )
@@ -85,11 +91,10 @@ def main(
     )
 
     train, val = get_train_and_val(
-        dataset_dir=exp.DATASET_DIR,
+        dataset_dir=dataset_dir,
         batch_size=exp.BATCH_SIZE,
         input_shape=(exp.IMAGE_WIDTH, exp.IMAGE_HEIGHT),
         shuffle_seed=0,
-        validation_ratio=exp.VALIDATION_RATIO,
     )
 
     model.fit(
