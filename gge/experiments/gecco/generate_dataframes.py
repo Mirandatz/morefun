@@ -12,7 +12,7 @@ import tqdm
 from loguru import logger
 
 import gge.composite_genotypes as cg
-import gge.experiments as exp
+import gge.experiments.gecco.run_evolution as exp
 import gge.fitnesses as gfit
 import gge.layers as gl
 import gge.neural_network as gnn

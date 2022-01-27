@@ -5,7 +5,7 @@ import keras
 import tensorflow as tf
 import typer
 
-import gge.experiments as exp
+import gge.experiments.gecco.run_evolution as run_exp
 
 DataGen: typing.TypeAlias = keras.preprocessing.image.DirectoryIterator
 
@@ -49,8 +49,8 @@ def main(
     model: keras.Model = keras.models.load_model(model_path)
     test_data = get_test_data_gen(
         dataset_dir=dataset_dir,
-        batch_size=exp.BATCH_SIZE,
-        input_shape=(exp.IMAGE_WIDTH, exp.IMAGE_HEIGHT),
+        batch_size=run_exp.BATCH_SIZE,
+        input_shape=(run_exp.IMAGE_WIDTH, run_exp.IMAGE_HEIGHT),
     )
 
     model.evaluate(test_data)

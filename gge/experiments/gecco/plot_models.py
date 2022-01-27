@@ -6,7 +6,7 @@ import typer
 from loguru import logger
 
 import gge.composite_genotypes as cg
-import gge.experiments as exp
+import gge.experiments.gecco.run_evolution as run_exp
 import gge.fitnesses as gfit
 import gge.grammars as gr
 import gge.layers as gl
@@ -53,12 +53,12 @@ def main(
     logger.remove()
     output_path = output_dir / genotype_path.with_suffix(".png").name
     genotype: cg.CompositeGenotype = pickle.loads(genotype_path.read_bytes())
-    grammar = exp.get_grammar()
+    grammar = run_exp.get_grammar()
     plot_model(
         genotype,
         grammar,
-        exp.CLASS_COUNT,
-        exp.get_input_layer(),
+        run_exp.CLASS_COUNT,
+        run_exp.get_input_layer(),
         output_path,
     )
 
