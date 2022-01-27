@@ -6,6 +6,7 @@ import typing
 import keras
 import tensorflow as tf
 import typer
+from loguru import logger
 
 import gge.composite_genotypes as cg
 import gge.experiments.gecco.run_evolution as run_exp
@@ -72,10 +73,6 @@ def main(
         ...,
         "-o",
         "--output",
-        file_okay=False,
-        exists=True,
-        dir_okay=True,
-        writable=True,
     ),
     num_runs: int = typer.Option(
         ...,
@@ -83,12 +80,15 @@ def main(
         "--num-rums",
         min=1,
     ),
-    metric: EarlyStopMetric = typer.Option(
-        ...,
-    ),
+    metric: EarlyStopMetric = typer.Option(...),
 ) -> None:
     for gpu in tf.config.list_physical_devices("GPU"):
         tf.config.experimental.set_memory_growth(gpu, True)
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    if any(output_dir.iterdir()):
+        logger.error(f"output dir is not empty=<{output_dir}>")
+        exit(-1)
 
     genotype: cg.CompositeGenotype = pickle.loads(genotype_path.read_bytes())
     network = gnn.make_network(
