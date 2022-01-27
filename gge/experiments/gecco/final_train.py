@@ -97,16 +97,17 @@ def main(
 
     for run in range(num_runs):
         model = gfit.make_tf_model(network, run_exp.CLASS_COUNT)
+
         checkpoint = keras.callbacks.ModelCheckpoint(
             save_best_only=True,
             filepath=output_dir
             / f"run_{run}"
-            / "checkpoint_{epoch:03d}_{val_loss:.2f}",
-            monitor="val_loss",
+            / "checkpoint_{epoch:03d}_val_loss_{val_loss:.2f}_val_accuracy_{val_accuracy:.2f}",
+            monitor=str(metric.name),
         )
 
         early_stop = keras.callbacks.EarlyStopping(
-            monitor=str(metric),
+            monitor=str(metric.name),
             patience=12,
         )
 
