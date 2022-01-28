@@ -100,9 +100,7 @@ def main(
 
         checkpoint = keras.callbacks.ModelCheckpoint(
             save_best_only=True,
-            filepath=output_dir
-            / f"run_{run}"
-            / "checkpoint_{epoch:03d}_val_loss_{val_loss:.2f}_val_accuracy_{val_accuracy:.2f}",
+            filepath=output_dir / f"run_{run}" / "checkpoint",
             monitor=str(metric.name),
         )
 
