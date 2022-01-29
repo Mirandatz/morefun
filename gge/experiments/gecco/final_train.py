@@ -15,6 +15,8 @@ import gge.neural_network as gnn
 
 DataGen: typing.TypeAlias = keras.preprocessing.image.DirectoryIterator
 
+EARLY_STOP_PATIENCE = 12
+
 
 class EarlyStopMetric(str, enum.Enum):
     val_loss = "val_loss"
@@ -74,13 +76,6 @@ def main(
         "-o",
         "--output",
     ),
-    num_runs: int = typer.Option(
-        ...,
-        "-n",
-        "--num-rums",
-        min=1,
-    ),
-    metric: EarlyStopMetric = typer.Option(...),
 ) -> None:
     for gpu in tf.config.list_physical_devices("GPU"):
         tf.config.experimental.set_memory_growth(gpu, True)
@@ -95,36 +90,35 @@ def main(
         genotype, run_exp.get_grammar(), run_exp.get_input_layer()
     )
 
-    for run in range(num_runs):
-        model = gfit.make_tf_model(network, run_exp.CLASS_COUNT)
+    model = gfit.make_tf_model(network, run_exp.CLASS_COUNT)
 
-        checkpoint = keras.callbacks.ModelCheckpoint(
-            save_best_only=True,
-            filepath=output_dir / f"run_{run}" / "checkpoint",
-            monitor=str(metric.name),
-        )
+    checkpoint = keras.callbacks.ModelCheckpoint(
+        save_best_only=True,
+        filepath=output_dir / "checkpoint",
+        monitor="val_loss",
+    )
 
-        early_stop = keras.callbacks.EarlyStopping(
-            monitor=str(metric.name),
-            patience=12,
-        )
+    early_stop = keras.callbacks.EarlyStopping(
+        monitor="val_loss",
+        patience=EARLY_STOP_PATIENCE,
+    )
 
-        train, val = get_train_and_val(
-            dataset_dir=dataset_dir,
-            batch_size=run_exp.BATCH_SIZE,
-            input_shape=(run_exp.IMAGE_WIDTH, run_exp.IMAGE_HEIGHT),
-            shuffle_seed=0,
-        )
+    train, val = get_train_and_val(
+        dataset_dir=dataset_dir,
+        batch_size=run_exp.BATCH_SIZE,
+        input_shape=(run_exp.IMAGE_WIDTH, run_exp.IMAGE_HEIGHT),
+        shuffle_seed=0,
+    )
 
-        model.fit(
-            train,
-            epochs=123456,
-            steps_per_epoch=train.samples // run_exp.BATCH_SIZE,
-            validation_data=val,
-            validation_steps=val.samples // run_exp.BATCH_SIZE,
-            callbacks=[early_stop, checkpoint],
-            verbose=1,
-        )
+    model.fit(
+        train,
+        epochs=123456,
+        steps_per_epoch=train.samples // run_exp.BATCH_SIZE,
+        validation_data=val,
+        validation_steps=val.samples // run_exp.BATCH_SIZE,
+        callbacks=[early_stop, checkpoint],
+        verbose=1,
+    )
 
 
 if __name__ == "__main__":
