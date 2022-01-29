@@ -10,16 +10,17 @@ dependencies:
     - mypy
     - pip-compile-multi
     - attrs
+    - fastparquet
     - h5py
     - hypothesis
     - lark
     - loguru
     - networkx
     - pillow
+    - pandas
     - pydot
     - pytest
     - pytest-pspec
     - scipy
     - tensorflow-gpu
     - typer
-
