@@ -1,4 +1,3 @@
-import enum
 import pathlib
 import pickle
 import typing
@@ -16,11 +15,6 @@ import gge.neural_network as gnn
 DataGen: typing.TypeAlias = keras.preprocessing.image.DirectoryIterator
 
 EARLY_STOP_PATIENCE = 12
-
-
-class EarlyStopMetric(str, enum.Enum):
-    val_loss = "val_loss"
-    val_accuracy = "val_accuracy"
 
 
 def get_train_and_val(

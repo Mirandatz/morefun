@@ -22,7 +22,6 @@ def plot_model(
 ) -> None:
     network = gnn.make_network(genotype, grammar, input_layer)
     model = gfit.make_tf_model(network, class_count)
-    # print(model.count_params())
     tf.keras.utils.plot_model(
         model=model,
         to_file=path,
