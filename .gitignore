@@ -16,3 +16,6 @@ gge/playground.py
 
 # test history
 .hypothesis/
+
+# rsync scripts
+rsync_to_euler.bash
