@@ -283,7 +283,7 @@ def test_pooling_layer_in_block() -> None:
         start : block
         block : conv pool
         conv  : "conv2d" "filter_count" 1 "kernel_size" (2) "stride" (3 | 4)
-        pool  : "pooling" "type" "max" "stride" 2
+        pool  : "pool2d" "max" "stride" 2
         """
     )
 
