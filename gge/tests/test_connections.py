@@ -1,5 +1,4 @@
 import attrs
-import pytest
 from hypothesis import given
 
 import gge.backbones as bb
@@ -325,8 +324,11 @@ def test_select_target_shape_single_candidate() -> None:
 
 
 def test_connect_backbone_with_duplicate_merge_entries() -> None:
-    layers = gl.BatchNorm("bn0"), gl.make_fork("f0"), gl.make_merge("m0")
-    backbone = bb.Backbone(layers)
+    # setup
+    backbone = bb.Backbone(
+        (gl.BatchNorm("bn0"), gl.make_fork("f0"), gl.make_merge("m0")),
+    )
+
     merge_params = (
         conn.MergeParameters(
             forks_mask=(True,),
@@ -336,9 +338,18 @@ def test_connect_backbone_with_duplicate_merge_entries() -> None:
     )
     schema = conn.ConnectionsSchema(merge_params)
 
-    with pytest.raises(AssertionError):
-        _ = conn.connect_backbone(
-            backbone,
-            schema,
-            input_layer=gl.make_input(1, 2, 3),
-        )
+    # test
+    input = gl.make_input(1, 2, 3)
+    output_layer = conn.connect_backbone(backbone, schema, input_layer=input)
+
+    assert isinstance(output_layer, gl.ConnectedBatchNorm)
+    assert isinstance(output_layer.input_layer, gl.Input)
+    assert output_layer.input_layer == input
+
+
+def main() -> None:
+    test_connect_backbone_with_duplicate_merge_entries()
+
+
+if __name__ == "__main__":
+    main()
