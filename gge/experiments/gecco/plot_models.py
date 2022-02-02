@@ -18,6 +18,8 @@ def plot_model(
     grammar: gr.Grammar,
     class_count: int,
     input_layer: gl.Input,
+    show_shapes: bool,
+    dpi: int,
     path: pathlib.Path,
 ) -> None:
     network = gnn.make_network(genotype, grammar, input_layer)
@@ -25,8 +27,9 @@ def plot_model(
     tf.keras.utils.plot_model(
         model=model,
         to_file=path,
+        dpi=dpi,
         show_layer_names=False,
-        show_shapes=True,
+        show_shapes=show_shapes,
     )
 
 
@@ -39,6 +42,8 @@ def main(
         dir_okay=False,
         readable=True,
     ),
+    dpi: int = typer.Option(200, "-d", "--dpi"),
+    show_shapes: bool = typer.Option(True, "--show-shapes"),
     output_dir: pathlib.Path = typer.Option(
         ...,
         "-o",
@@ -58,7 +63,9 @@ def main(
         grammar,
         run_exp.CLASS_COUNT,
         run_exp.get_input_layer(),
-        output_path,
+        show_shapes=show_shapes,
+        dpi=dpi,
+        path=output_path,
     )
 
 
