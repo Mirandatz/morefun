@@ -13,7 +13,7 @@ RELU = gr.Terminal('"relu"')
 GELU = gr.Terminal('"gelu"')
 SWISH = gr.Terminal('"swish"')
 
-POOLING = gr.Terminal('"pooling"')
+POOL2D = gr.Terminal('"pool2d"')
 TYPE = gr.Terminal('"type"')
 MAX = gr.Terminal('"max"')
 
@@ -302,12 +302,12 @@ def test_pooling_layer_def() -> None:
         start : block
         block : conv pool
         conv  : "conv2d" "filter_count" 1 "kernel_size" (2) "stride" (3 | 4)
-        pool  : "pooling" "type" "max" "stride" 2
+        pool  : "pool2d" "max" "stride" 2
         """
     )
 
     (actual,) = grammar.expansions(gr.NonTerminal("pool"))
-    expected = gr.RuleOption((POOLING, TYPE, MAX, STRIDE, gr.Terminal("2")))
+    expected = gr.RuleOption((POOL2D, MAX, gr.Terminal("2")))
 
     assert expected == actual
 
