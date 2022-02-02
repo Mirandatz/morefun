@@ -132,7 +132,7 @@ def disable_gpu() -> None:
 def test_conv2d_tensor_shape(layer: gl.ConnectedConv2D) -> None:
     """Output shape of ConnectedConv2D layer should match the tensor equivalent."""
 
-    tensor_shape = layer.to_tensor().shape
+    tensor_shape = layer.to_tensor({}).shape
     _, expected_width, expected_height, expected_depth = tensor_shape
 
     actual_shape = layer.output_shape
