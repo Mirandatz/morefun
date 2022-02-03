@@ -68,7 +68,6 @@ class Conv2D(ConvertibleToConnectableLayer):
 # MUST RENAME THIS LATER
 @attrs.frozen(cache_hash=True)
 class Conv2DTranspose(ConvertibleToConnectableLayer):
-
     name: str
     filter_count: int
     kernel_size: int
@@ -89,28 +88,40 @@ class Conv2DTranspose(ConvertibleToConnectableLayer):
         return ConnectedConv2DTranspose(input, self)
 
 
-@enum.unique
-class PoolType(enum.Enum):
-    MAX_POOLING = enum.auto()
-    AVG_POOLING = enum.auto()
-
-
 @attrs.frozen(cache_hash=True)
-class Pool2D(ConvertibleToConnectableLayer):
+class MaxPooling2D(ConvertibleToConnectableLayer):
     name: str
-    pooling_type: PoolType
+    pool_size: int
     stride: int
 
     def __attrs_post_init__(self) -> None:
         assert isinstance(self.name, str)
-        assert isinstance(self.pooling_type, PoolType)
+        assert isinstance(self.pool_size, int)
         assert isinstance(self.stride, int)
 
-        assert self.name
+        assert self.pool_size > 0
         assert self.stride > 0
 
-    def to_connectable(self, input: "ConnectableLayer") -> "ConnectedPool2D":
-        return ConnectedPool2D(input, self)
+    def to_connectable(self, input: "ConnectableLayer") -> "ConnectedMaxPooling2D":
+        return ConnectedMaxPooling2D(input, self)
+
+
+@attrs.frozen(cache_hash=True)
+class AveragePooling2D(ConvertibleToConnectableLayer):
+    name: str
+    pool_size: int
+    stride: int
+
+    def __attrs_post_init__(self) -> None:
+        assert isinstance(self.name, str)
+        assert isinstance(self.pool_size, int)
+        assert isinstance(self.stride, int)
+
+        assert self.pool_size > 0
+        assert self.stride > 0
+
+    def to_connectable(self, input: "ConnectableLayer") -> "ConnectedAveragePooling2D":
+        return ConnectedAveragePooling2D(input, self)
 
 
 @attrs.frozen(cache_hash=True)
@@ -384,15 +395,14 @@ class ConnectedConv2DTranspose(SingleInputLayer):
         return f"{self.params.name}, params={self.params}, input={self.input_layer}, out_shape=[{self.output_shape}]"
 
 
-# MUST REFACTOR THIS LATER
 @attrs.frozen(cache_hash=True)
-class ConnectedPool2D(SingleInputLayer):
+class ConnectedMaxPooling2D(SingleInputLayer):
     input_layer: ConnectableLayer
-    params: Pool2D
+    params: MaxPooling2D
 
     def __attrs_post_init__(self) -> None:
         assert isinstance(self.input_layer, ConnectableLayer)
-        assert isinstance(self.params, Pool2D)
+        assert isinstance(self.params, MaxPooling2D)
 
     @property
     def name(self) -> str:
@@ -415,30 +425,67 @@ class ConnectedPool2D(SingleInputLayer):
             source = self.input_layer.to_tensor(known_tensores)
 
             params = self.params
-            pooling_type = params.pooling_type
-            pool_size = (params.stride, params.stride)
+            pool_size = (params.pool_size, params.pool_size)
+            stride = (params.stride, params.stride)
 
-            match pooling_type:
-                case PoolType.MAX_POOLING:
-                    layer = kl.MaxPool2D(
-                        pool_size=pool_size,
-                        padding="same",
-                        name=params.name,
-                    )
-                    tensor = layer(source)
-                    known_tensores[self] = tensor
+            layer = kl.MaxPooling2D(
+                pool_size=pool_size,
+                strides=stride,
+                padding="same",
+                name=params.name,
+            )
 
-                case PoolType.AVG_POOLING:
-                    layer = kl.AveragePooling2D(
-                        pool_size=pool_size,
-                        padding="same",
-                        name=params.name,
-                    )
-                    tensor = layer(source)
-                    known_tensores[self] = tensor
+            tensor = layer(source)
+            known_tensores[self] = tensor
 
-                case unknown:
-                    raise ValueError(f"unknown pooling type: {unknown}")
+        return known_tensores[self]
+
+    def __repr__(self) -> str:
+        return f"{self.params.name}: out_shape=[{self.output_shape}]"
+
+
+@attrs.frozen(cache_hash=True)
+class ConnectedAveragePooling2D(SingleInputLayer):
+    input_layer: ConnectableLayer
+    params: AveragePooling2D
+
+    def __attrs_post_init__(self) -> None:
+        assert isinstance(self.input_layer, ConnectableLayer)
+        assert isinstance(self.params, AveragePooling2D)
+
+    @property
+    def name(self) -> str:
+        return self.params.name
+
+    @property
+    def output_shape(self) -> Shape:
+        input_shape = self.input_layer.output_shape
+        params = self.params
+        out_width = int(math.ceil(input_shape.width / params.stride))
+        out_height = int(math.ceil(input_shape.height / params.stride))
+        out_depth = input_shape.depth
+        return Shape(width=out_width, height=out_height, depth=out_depth)
+
+    def to_tensor(
+        self,
+        known_tensores: dict["ConnectableLayer", tf.Tensor],
+    ) -> tf.Tensor:
+        if self not in known_tensores:
+            source = self.input_layer.to_tensor(known_tensores)
+
+            params = self.params
+            pool_size = (params.pool_size, params.pool_size)
+            stride = (params.stride, params.stride)
+
+            layer = kl.AveragePooling2D(
+                pool_size=pool_size,
+                strides=stride,
+                padding="same",
+                name=params.name,
+            )
+
+            tensor = layer(source)
+            known_tensores[self] = tensor
 
         return known_tensores[self]
 
