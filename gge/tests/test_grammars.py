@@ -1,4 +1,7 @@
+from hypothesis import given
+
 import gge.grammars as gr
+import gge.tests.metagrammar_strategies as ms
 
 START = gr.NonTerminal("start")
 
@@ -309,6 +312,16 @@ def test_pooling_layer_def() -> None:
     (actual,) = grammar.expansions(gr.NonTerminal("pool"))
     expected = gr.RuleOption((POOL2D, MAX, gr.Terminal("2")))
 
+    assert expected == actual
+
+
+@given(data=ms.pool2ds())
+def test_pool_layer_def(data: ms.Pool2DTestData) -> None:
+    raw_grammar = ms.make_raw_grammar(data)
+    grammar = gr.Grammar(raw_grammar)
+
+    (actual,) = grammar.expansions(data.nonterminal)
+    expected = data.expansion()
     assert expected == actual
 
 
