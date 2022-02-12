@@ -6,7 +6,6 @@ import pathlib
 import typing
 
 import lark
-
 from loguru import logger
 
 import gge.layers as gl
@@ -130,6 +129,7 @@ class BackboneSynthetizer(gge_transformers.SinglePassTransformer[Backbone]):
 
     def batchnorm_layer(self) -> gl.BatchNorm:
         self._raise_if_not_running()
+
         return gl.BatchNorm(self._create_layer_name(gl.BatchNorm))
 
     def pool_layer(self, pool_type: gl.PoolType, stride: int) -> gl.Pool2D:

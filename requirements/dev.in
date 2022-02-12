@@ -1,5 +1,3 @@
 -r test.in
 
-opencv-python
-
 pip-compile-multi

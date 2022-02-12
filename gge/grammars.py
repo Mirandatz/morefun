@@ -1,4 +1,5 @@
 import dataclasses
+import enum
 import functools
 import itertools
 import pathlib
@@ -340,6 +341,13 @@ class Grammar:
 MarkerValuePair = tuple[Terminal, Terminal]
 
 
+class ExpectedTerminals(enum.Enum):
+    MAX_POOL_MARKER = Terminal('"max_pool2d"')
+    AVG_POOL_MARKER = Terminal('"avg_pool2d"')
+    POOL_SIZE_MARKER = Terminal('"pool_size"')
+    STRIDE_MARKER = Terminal('"stride"')
+
+
 class GrammarTransformer(gge_transformers.SinglePassTransformer[GrammarComponents]):
     def __init__(self) -> None:
         super().__init__()
@@ -512,28 +520,70 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer[GrammarComponent
         return [RuleOption((term,))]
 
     @lark.v_args(inline=True)
-    def pooling_layer(
+    def max_pooling_layer(
         self,
-        marker: Terminal,
-        types: list[MarkerValuePair],
+        layer_marker: Terminal,
+        pool_sizes: list[MarkerValuePair],
         strides: list[MarkerValuePair],
     ) -> list[RuleOption]:
-        combinations = itertools.product(types, strides)
-        return [RuleOption((marker, *tp, *st)) for tp, st in combinations]
+        # sanity checking the runtime types
+        self._raise_if_not_running()
 
-    def pooling_type_seq(
-        self,
-        values: list[Terminal],
-    ) -> list[tuple[Terminal]]:
-        return [(v,) for v in values]
+        assert layer_marker == ExpectedTerminals.MAX_POOL_MARKER.value
+
+        assert isinstance(pool_sizes, list)
+        for ps_marker, ps_value in pool_sizes:
+            assert ps_marker == ExpectedTerminals.POOL_SIZE_MARKER.value
+            assert isinstance(ps_value, Terminal)
+
+        assert isinstance(strides, list)
+        for st_marker, st_value in strides:
+            assert st_marker == ExpectedTerminals.STRIDE_MARKER.value
+            assert isinstance(st_value, Terminal)
+
+        # actual code
+        combinations = itertools.product(pool_sizes, strides)
+        return [RuleOption((layer_marker, *ps, *st)) for ps, st in combinations]
 
     @lark.v_args(inline=True)
-    def pooling_stride_seq(
+    def avg_pooling_layer(
+        self,
+        layer_marker: Terminal,
+        pool_sizes: list[MarkerValuePair],
+        strides: list[MarkerValuePair],
+    ) -> list[RuleOption]:
+        # sanity checking the runtime types
+        self._raise_if_not_running()
+
+        assert layer_marker == ExpectedTerminals.AVG_POOL_MARKER.value
+
+        assert isinstance(pool_sizes, list)
+        for ps_marker, ps_value in pool_sizes:
+            assert ps_marker == ExpectedTerminals.POOL_SIZE_MARKER.value
+            assert isinstance(ps_value, Terminal)
+
+        assert isinstance(strides, list)
+        for st_marker, st_value in strides:
+            assert st_marker == ExpectedTerminals.STRIDE_MARKER.value
+            assert isinstance(st_value, Terminal)
+
+        # actual code
+        combinations = itertools.product(pool_sizes, strides)
+        return [RuleOption((layer_marker, *ps, *st)) for ps, st in combinations]
+
+    @lark.v_args(inline=True)
+    def pool_sizes(
         self,
         marker: Terminal,
-        *values: Terminal,
-    ) -> list[tuple[Terminal]]:
-        return [(v,) for v in values]
+        values: list[Terminal],
+    ) -> list[MarkerValuePair]:
+        self._raise_if_not_running()
+        assert marker == ExpectedTerminals.POOL_SIZE_MARKER.value
+        assert isinstance(values, list)
+        for v in values:
+            assert isinstance(v, Terminal)
+
+        return [(marker, s) for s in values]
 
     def BATCHNORM(self, token: lark.Token) -> Terminal:
         self._raise_if_not_running()
@@ -591,22 +641,20 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer[GrammarComponent
         self._raise_if_not_running()
         return self._register_terminal(token.value)
 
-    def POOLING_LAYER(self, token: lark.Token) -> Terminal:
+    def MAX_POOL2D(self, token: lark.Token) -> Terminal:
         self._raise_if_not_running()
+        assert isinstance(token, lark.Token)
+
         return self._register_terminal(token.value)
 
-    def POOLING_TYPE(self, token: lark.Token) -> Terminal:
+    def AVG_POOL2D(self, token: lark.Token) -> Terminal:
         self._raise_if_not_running()
+        assert isinstance(token, lark.Token)
+
         return self._register_terminal(token.value)
 
-    def POOLING_STRIDE(self, token: lark.Token) -> Terminal:
+    def POOL_SIZE(self, token: lark.Token) -> Terminal:
         self._raise_if_not_running()
-        return self._register_terminal(token.value)
+        assert isinstance(token, lark.Token)
 
-    def POOLING_MAX(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
-        return self._register_terminal(token.value)
-
-    def POOLING_AVG(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
         return self._register_terminal(token.value)

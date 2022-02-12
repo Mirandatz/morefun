@@ -17,17 +17,13 @@ activation_layer : RELU | GELU | SWISH
 conv_layer   : CONV2D filter_count kernel_size stride
 filter_count : FILTER_COUNT _int_args
 kernel_size  : KERNEL_SIZE _int_args
-
 stride       : STRIDE _int_args
-
 
 batchnorm_layer : BATCHNORM
 
-pooling_layer      : POOLING_LAYER pooling_type_seq pooling_stride_seq
-pooling_type_seq   :  _pooling_type
-                   | "(" _pooling_type ("|" _pooling_type)* ")" 
-_pooling_type      : POOLING_MAX | POOLING_AVG
-pooling_stride_seq : POOLING_STRIDE _int_args
+max_pooling_layer : MAX_POOL2D pool_sizes stride
+avg_pooling_layer : AVG_POOL2D pool_sizes strides
+pool_sizes        : POOL_SIZE _int_args
 
 _int_args : INT_ARG
           | "(" INT_ARG ("|" INT_ARG)* ")"
@@ -51,10 +47,9 @@ STRIDE       : /"stride"/
 
 BATCHNORM : /"batchnorm"/
 
-POOLING_LAYER  : /"pool2d"/
-POOLING_STRIDE : /"stride"/
-POOLING_MAX    : /"max"/
-POOLING_AVG    : /"avg"/
+MAX_POOL2D : /"max_pool2d"/
+AVG_POOL2D : /"avg_pool2d"/
+POOL_SIZE  : /"pool_size"/
 
 %import common (INT, FLOAT)
 %import common.NEWLINE -> _NL
