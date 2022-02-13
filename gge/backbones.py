@@ -134,18 +134,18 @@ class BackboneSynthetizer(gge_transformers.SinglePassTransformer[Backbone]):
 
         return gl.BatchNorm(self._create_layer_name(gl.BatchNorm))
 
-    def max_pool(self, pool_size: int, stride: int) -> gl.MaxPooling2D:
+    def max_pool(self, pool_size: int, stride: int) -> gl.MaxPool2D:
         self._raise_if_not_running()
-        return gl.MaxPooling2D(
-            name=self._create_layer_name(gl.MaxPooling2D),
+        return gl.MaxPool2D(
+            name=self._create_layer_name(gl.MaxPool2D),
             pool_size=pool_size,
             stride=stride,
         )
 
-    def avg_pool(self, pool_size: int, stride: int) -> gl.AveragePooling2D:
+    def avg_pool(self, pool_size: int, stride: int) -> gl.AvgPool2D:
         self._raise_if_not_running()
-        return gl.AveragePooling2D(
-            name=self._create_layer_name(gl.AveragePooling2D),
+        return gl.AvgPool2D(
+            name=self._create_layer_name(gl.AvgPool2D),
             pool_size=pool_size,
             stride=stride,
         )

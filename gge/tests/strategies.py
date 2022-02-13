@@ -104,20 +104,20 @@ def conv2d_grammar_layer(
 
 @hs.composite
 def max_pool_grammar_layer(draw: DrawStrat) -> GrammarLayer:
-    name = temporary_name(gl.MaxPooling2D)
+    name = temporary_name(gl.MaxPool2D)
     pool_size = draw(hs.integers(min_value=1, max_value=9999))
     stride = draw(hs.integers(min_value=1, max_value=9999))
-    layer = gl.MaxPooling2D(name, pool_size=pool_size, stride=stride)
+    layer = gl.MaxPool2D(name, pool_size=pool_size, stride=stride)
     mesa_str = f'"max_pool2d" "pool_size" {pool_size} "stride" {stride}'
     return GrammarLayer(layers=(layer,), mesagrammar_string=mesa_str)
 
 
 @hs.composite
 def avg_pool_grammar_layer(draw: DrawStrat) -> GrammarLayer:
-    name = temporary_name(gl.AveragePooling2D)
+    name = temporary_name(gl.AvgPool2D)
     pool_size = draw(hs.integers(min_value=1, max_value=9999))
     stride = draw(hs.integers(min_value=1, max_value=9999))
-    layer = gl.AveragePooling2D(name, pool_size=pool_size, stride=stride)
+    layer = gl.AvgPool2D(name, pool_size=pool_size, stride=stride)
     mesa_str = f'"avg_pool2d" "pool_size" {pool_size} "stride" {stride}'
     return GrammarLayer(layers=(layer,), mesagrammar_string=mesa_str)
 

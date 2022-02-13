@@ -89,7 +89,7 @@ class Conv2DTranspose(ConvertibleToConnectableLayer):
 
 
 @attrs.frozen(cache_hash=True)
-class MaxPooling2D(ConvertibleToConnectableLayer):
+class MaxPool2D(ConvertibleToConnectableLayer):
     name: str
     pool_size: int
     stride: int
@@ -107,7 +107,7 @@ class MaxPooling2D(ConvertibleToConnectableLayer):
 
 
 @attrs.frozen(cache_hash=True)
-class AveragePooling2D(ConvertibleToConnectableLayer):
+class AvgPool2D(ConvertibleToConnectableLayer):
     name: str
     pool_size: int
     stride: int
@@ -398,11 +398,11 @@ class ConnectedConv2DTranspose(SingleInputLayer):
 @attrs.frozen(cache_hash=True)
 class ConnectedMaxPooling2D(SingleInputLayer):
     input_layer: ConnectableLayer
-    params: MaxPooling2D
+    params: MaxPool2D
 
     def __attrs_post_init__(self) -> None:
         assert isinstance(self.input_layer, ConnectableLayer)
-        assert isinstance(self.params, MaxPooling2D)
+        assert isinstance(self.params, MaxPool2D)
 
     @property
     def name(self) -> str:
@@ -447,11 +447,11 @@ class ConnectedMaxPooling2D(SingleInputLayer):
 @attrs.frozen(cache_hash=True)
 class ConnectedAveragePooling2D(SingleInputLayer):
     input_layer: ConnectableLayer
-    params: AveragePooling2D
+    params: AvgPool2D
 
     def __attrs_post_init__(self) -> None:
         assert isinstance(self.input_layer, ConnectableLayer)
-        assert isinstance(self.params, AveragePooling2D)
+        assert isinstance(self.params, AvgPool2D)
 
     @property
     def name(self) -> str:
