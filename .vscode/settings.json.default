@@ -11,4 +11,7 @@
     "python.testing.pytestArgs": [
         "gge"
     ],
+    "files.watcherExclude": {
+        "**/target": true
+    },
 }
