@@ -5,7 +5,10 @@ import itertools
 import pathlib
 import typing
 
-import lark
+from lark.lark import Lark as LarkParser
+from lark.lexer import Token as LarkToken
+from lark.tree import Tree as LarkTree
+from lark.visitors import v_args
 from loguru import logger
 
 import gge.transformers as gge_transformers
@@ -18,11 +21,11 @@ def get_metagrammar() -> str:
     return METAGRAMMAR_PATH.read_text()
 
 
-def get_metagrammar_parser() -> lark.Lark:
-    return lark.Lark(get_metagrammar(), parser="lalr", maybe_placeholders=True)
+def get_metagrammar_parser() -> LarkParser:
+    return LarkParser(get_metagrammar(), parser="lalr", maybe_placeholders=True)
 
 
-def extract_ast(grammar_text: str) -> lark.Tree:
+def extract_ast(grammar_text: str) -> LarkTree[typing.Any]:
     parser = get_metagrammar_parser()
     return parser.parse(grammar_text)
 
@@ -357,7 +360,7 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer[GrammarComponent
         self._rules: list[ProductionRule] = []
         self._start: NonTerminal = NonTerminal("start")
 
-    def transform(self, tree: lark.Tree) -> GrammarComponents:
+    def transform(self, tree: LarkTree[GrammarComponents]) -> GrammarComponents:
         super().transform(tree)
 
         return GrammarComponents(
@@ -429,7 +432,7 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer[GrammarComponent
         unpacked = [itertools.chain(*inner) for inner in combinations]
         return [RuleOption(tuple(symbols)) for symbols in unpacked]
 
-    @lark.v_args(inline=True)
+    @v_args(inline=True)
     def maybe_merge(self, term: typing.Optional[Terminal]) -> list[list[Terminal]]:
         self._raise_if_not_running()
 
@@ -438,7 +441,7 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer[GrammarComponent
         else:
             return [[term]]
 
-    @lark.v_args(inline=True)
+    @v_args(inline=True)
     def maybe_fork(self, term: typing.Optional[Terminal]) -> list[list[Terminal]]:
         self._raise_if_not_running()
 
@@ -447,7 +450,7 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer[GrammarComponent
         else:
             return [[term]]
 
-    @lark.v_args(inline=True)
+    @v_args(inline=True)
     def symbol_range(
         self,
         nt: NonTerminal,
@@ -510,16 +513,16 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer[GrammarComponent
         marker, *strides = parts
         return [(marker, s) for s in strides]
 
-    @lark.v_args(inline=True)
+    @v_args(inline=True)
     def activation_layer(self, activation: NonTerminal) -> list[RuleOption]:
         self._raise_if_not_running()
         return [RuleOption((activation,))]
 
-    @lark.v_args(inline=True)
+    @v_args(inline=True)
     def batchnorm_layer(self, term: Terminal) -> list[RuleOption]:
         return [RuleOption((term,))]
 
-    @lark.v_args(inline=True)
+    @v_args(inline=True)
     def max_pooling_layer(
         self,
         layer_marker: Terminal,
@@ -545,7 +548,7 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer[GrammarComponent
         combinations = itertools.product(pool_sizes, strides)
         return [RuleOption((layer_marker, *ps, *st)) for ps, st in combinations]
 
-    @lark.v_args(inline=True)
+    @v_args(inline=True)
     def avg_pooling_layer(
         self,
         layer_marker: Terminal,
@@ -571,7 +574,7 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer[GrammarComponent
         combinations = itertools.product(pool_sizes, strides)
         return [RuleOption((layer_marker, *ps, *st)) for ps, st in combinations]
 
-    @lark.v_args(inline=True)
+    @v_args(inline=True)
     def pool_sizes(
         self,
         marker: Terminal,
@@ -585,76 +588,76 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer[GrammarComponent
 
         return [(marker, s) for s in values]
 
-    def BATCHNORM(self, token: lark.Token) -> Terminal:
+    def BATCHNORM(self, token: LarkToken) -> Terminal:
         self._raise_if_not_running()
         return self._register_terminal(token.value)
 
-    def NONTERMINAL(self, token: lark.Token) -> NonTerminal:
+    def NONTERMINAL(self, token: LarkToken) -> NonTerminal:
         self._raise_if_not_running()
         return self._register_nonterminal(token.value)
 
-    def MERGE(self, token: lark.Token) -> Terminal:
+    def MERGE(self, token: LarkToken) -> Terminal:
         self._raise_if_not_running()
         return self._register_terminal(token.value)
 
-    def FORK(self, token: lark.Token) -> Terminal:
+    def FORK(self, token: LarkToken) -> Terminal:
         self._raise_if_not_running()
         return self._register_terminal(token.value)
 
-    def CONV2D(self, token: lark.Token) -> Terminal:
+    def CONV2D(self, token: LarkToken) -> Terminal:
         self._raise_if_not_running()
         return self._register_terminal(token.value)
 
-    def FILTER_COUNT(self, token: lark.Token) -> Terminal:
+    def FILTER_COUNT(self, token: LarkToken) -> Terminal:
         self._raise_if_not_running()
         return self._register_terminal(token.value)
 
-    def KERNEL_SIZE(self, token: lark.Token) -> Terminal:
+    def KERNEL_SIZE(self, token: LarkToken) -> Terminal:
         self._raise_if_not_running()
         return self._register_terminal(token.value)
 
-    def STRIDE(self, token: lark.Token) -> Terminal:
+    def STRIDE(self, token: LarkToken) -> Terminal:
         self._raise_if_not_running()
         return self._register_terminal(token.value)
 
-    def RELU(self, token: lark.Token) -> Terminal:
+    def RELU(self, token: LarkToken) -> Terminal:
         self._raise_if_not_running()
         return self._register_terminal(token.value)
 
-    def GELU(self, token: lark.Token) -> Terminal:
+    def GELU(self, token: LarkToken) -> Terminal:
         self._raise_if_not_running()
         return self._register_terminal(token.value)
 
-    def SWISH(self, token: lark.Token) -> Terminal:
+    def SWISH(self, token: LarkToken) -> Terminal:
         self._raise_if_not_running()
         return self._register_terminal(token.value)
 
-    def RANGE_BOUND(self, token: lark.Token) -> int:
+    def RANGE_BOUND(self, token: LarkToken) -> int:
         self._raise_if_not_running()
         return int(token.value)
 
-    def INT_ARG(self, token: lark.Token) -> Terminal:
+    def INT_ARG(self, token: LarkToken) -> Terminal:
         self._raise_if_not_running()
         return self._register_terminal(token.value)
 
-    def FLOAT_ARG(self, token: lark.Token) -> Terminal:
+    def FLOAT_ARG(self, token: LarkToken) -> Terminal:
         self._raise_if_not_running()
         return self._register_terminal(token.value)
 
-    def MAX_POOL2D(self, token: lark.Token) -> Terminal:
+    def MAX_POOL2D(self, token: LarkToken) -> Terminal:
         self._raise_if_not_running()
-        assert isinstance(token, lark.Token)
+        assert isinstance(token, LarkToken)
 
         return self._register_terminal(token.value)
 
-    def AVG_POOL2D(self, token: lark.Token) -> Terminal:
+    def AVG_POOL2D(self, token: LarkToken) -> Terminal:
         self._raise_if_not_running()
-        assert isinstance(token, lark.Token)
+        assert isinstance(token, LarkToken)
 
         return self._register_terminal(token.value)
 
-    def POOL_SIZE(self, token: lark.Token) -> Terminal:
+    def POOL_SIZE(self, token: LarkToken) -> Terminal:
         self._raise_if_not_running()
-        assert isinstance(token, lark.Token)
+        assert isinstance(token, LarkToken)
 
         return self._register_terminal(token.value)
