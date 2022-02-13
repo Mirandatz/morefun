@@ -507,7 +507,7 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer[GrammarComponent
         marker, *sizes = parts
         return [(marker, s) for s in sizes]
 
-    def stride(self, parts: list[Terminal]) -> list[tuple[Terminal, Terminal]]:
+    def strides(self, parts: list[Terminal]) -> list[tuple[Terminal, Terminal]]:
         self._raise_if_not_running()
 
         marker, *strides = parts
