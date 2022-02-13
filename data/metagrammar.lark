@@ -10,18 +10,18 @@ maybe_fork   : [FORK]
 symbol_range : NONTERMINAL ["~" RANGE_BOUND [".." RANGE_BOUND]]
 RANGE_BOUND  : INT
 
-layer        : (conv_layer | pooling_layer | batchnorm_layer | activation_layer) _NL*
+layer        : (conv_layer | max_pooling_layer | avg_pooling_layer | batchnorm_layer | activation_layer) _NL*
 
 activation_layer : RELU | GELU | SWISH
 
-conv_layer   : CONV2D filter_count kernel_size stride
+conv_layer   : CONV2D filter_count kernel_size strides
 filter_count : FILTER_COUNT _int_args
 kernel_size  : KERNEL_SIZE _int_args
-stride       : STRIDE _int_args
+strides      : STRIDE _int_args
 
 batchnorm_layer : BATCHNORM
 
-max_pooling_layer : MAX_POOL2D pool_sizes stride
+max_pooling_layer : MAX_POOL2D pool_sizes strides
 avg_pooling_layer : AVG_POOL2D pool_sizes strides
 pool_sizes        : POOL_SIZE _int_args
 

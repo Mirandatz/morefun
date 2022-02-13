@@ -87,18 +87,38 @@ def conv2d_grammar_layer(
     return GrammarLayer(layers=(conv_layer,), mesagrammar_string=conv_str)
 
 
+# @hs.composite
+# def pool_grammar_layer(draw: DrawStrat) -> GrammarLayer:
+#     name = temporary_name(gl.Pool2D)
+#     pool_type = draw(hs.sampled_from(gl.PoolType))
+#     stride = draw(hs.integers(min_value=1, max_value=999999))
+#     layer = gl.Pool2D(name, pool_type, stride)
+
+#     pool_name = {gl.PoolType.MAX_POOLING: "max", gl.PoolType.AVG_POOLING: "avg"}[
+#         pool_type
+#     ]
+#     mesa_str = f'"pool2d" "{pool_name}" {stride}'
+
+#     return GrammarLayer(layers=(layer,), mesagrammar_string=mesa_str)
+
+
 @hs.composite
-def pool_grammar_layer(draw: DrawStrat) -> GrammarLayer:
-    name = temporary_name(gl.Pool2D)
-    pool_type = draw(hs.sampled_from(gl.PoolType))
-    stride = draw(hs.integers(min_value=1, max_value=999999))
-    layer = gl.Pool2D(name, pool_type, stride)
+def max_pool_grammar_layer(draw: DrawStrat) -> GrammarLayer:
+    name = temporary_name(gl.MaxPooling2D)
+    pool_size = draw(hs.integers(min_value=1, max_value=9999))
+    stride = draw(hs.integers(min_value=1, max_value=9999))
+    layer = gl.MaxPooling2D(name, pool_size=pool_size, stride=stride)
+    mesa_str = f'"max_pool2d" "pool_size" {pool_size} "stride" {stride}'
+    return GrammarLayer(layers=(layer,), mesagrammar_string=mesa_str)
 
-    pool_name = {gl.PoolType.MAX_POOLING: "max", gl.PoolType.AVG_POOLING: "avg"}[
-        pool_type
-    ]
-    mesa_str = f'"pool2d" "{pool_name}" {stride}'
 
+@hs.composite
+def avg_pool_grammar_layer(draw: DrawStrat) -> GrammarLayer:
+    name = temporary_name(gl.AveragePooling2D)
+    pool_size = draw(hs.integers(min_value=1, max_value=9999))
+    stride = draw(hs.integers(min_value=1, max_value=9999))
+    layer = gl.AveragePooling2D(name, pool_size=pool_size, stride=stride)
+    mesa_str = f'"avg_pool2d" "pool_size" {pool_size} "stride" {stride}'
     return GrammarLayer(layers=(layer,), mesagrammar_string=mesa_str)
 
 
@@ -133,7 +153,8 @@ def any_grammar_layer(
     can_mark: bool = True,
     valid_layers: list[typing.Callable[..., hs.SearchStrategy[GrammarLayer]]] = [
         conv2d_grammar_layer,
-        pool_grammar_layer,
+        max_pool_grammar_layer,
+        avg_pool_grammar_layer,
         batch_norm_grammar_layer,
         relu_grammar_layer,
         gelu_grammar_layer,

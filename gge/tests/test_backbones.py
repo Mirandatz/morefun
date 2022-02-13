@@ -1,8 +1,16 @@
+import pytest
 from hypothesis import example, given
 
 import gge.backbones as bb
 import gge.layers as gl
 import gge.tests.strategies as gge_hs
+
+
+@pytest.fixture(autouse=True)
+def disable_logger() -> None:
+    from loguru import logger
+
+    logger.remove()
 
 
 @given(gge_hs.backbone_grammar_layer(valid_layers=[gge_hs.conv2d_grammar_layer]))

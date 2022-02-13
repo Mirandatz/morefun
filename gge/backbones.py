@@ -5,7 +5,9 @@ import itertools
 import pathlib
 import typing
 
-import lark
+from lark.lark import Lark as LarkParser
+from lark.lexer import Token as LarkToken
+from lark.visitors import v_args
 from loguru import logger
 
 import gge.layers as gl
@@ -55,7 +57,7 @@ class Backbone:
         _raise_if_contains_repeated_names(self.layers)
 
 
-@lark.v_args(inline=True)
+@v_args(inline=True)
 class BackboneSynthetizer(gge_transformers.SinglePassTransformer[Backbone]):
     def __init__(self) -> None:
         super().__init__()
@@ -65,20 +67,20 @@ class BackboneSynthetizer(gge_transformers.SinglePassTransformer[Backbone]):
         self._raise_if_not_running()
         return self._name_generator.gen_name(prefix)
 
-    @lark.v_args(inline=False)
+    @v_args(inline=False)
     def start(self, blocks: list[list[gl.Layer]]) -> Backbone:
         self._raise_if_not_running()
 
         layers = tuple(layer for list_of_layers in blocks for layer in list_of_layers)
         return Backbone(layers)
 
-    @lark.v_args(inline=False)
+    @v_args(inline=False)
     def block(self, parts: typing.Any) -> list[gl.Layer]:
         self._raise_if_not_running()
 
         return [x for x in parts if x is not None]
 
-    def MERGE(self, token: lark.Token | None = None) -> gl.MarkerLayer | None:
+    def MERGE(self, token: LarkToken | None = None) -> gl.MarkerLayer | None:
         self._raise_if_not_running()
 
         if token is not None:
@@ -86,7 +88,7 @@ class BackboneSynthetizer(gge_transformers.SinglePassTransformer[Backbone]):
         else:
             return None
 
-    def FORK(self, token: lark.Token | None = None) -> gl.MarkerLayer | None:
+    def FORK(self, token: LarkToken | None = None) -> gl.MarkerLayer | None:
         self._raise_if_not_running()
 
         if token is not None:
@@ -99,7 +101,7 @@ class BackboneSynthetizer(gge_transformers.SinglePassTransformer[Backbone]):
 
         return layer
 
-    def conv_layer(self, filter_count: int, kernel_size: int, stride: int) -> gl.Conv2D:
+    def conv(self, filter_count: int, kernel_size: int, stride: int) -> gl.Conv2D:
         self._raise_if_not_running()
 
         return gl.Conv2D(
@@ -127,52 +129,53 @@ class BackboneSynthetizer(gge_transformers.SinglePassTransformer[Backbone]):
 
         return size
 
-    def batchnorm_layer(self) -> gl.BatchNorm:
+    def batchnorm(self) -> gl.BatchNorm:
         self._raise_if_not_running()
 
         return gl.BatchNorm(self._create_layer_name(gl.BatchNorm))
 
-    def pool_layer(self, pool_type: gl.PoolType, stride: int) -> gl.Pool2D:
+    def max_pool(self, pool_size: int, stride: int) -> gl.MaxPooling2D:
         self._raise_if_not_running()
-        return gl.Pool2D(
-            name=self._create_layer_name(gl.Pool2D),
-            pooling_type=pool_type,
+        return gl.MaxPooling2D(
+            name=self._create_layer_name(gl.MaxPooling2D),
+            pool_size=pool_size,
             stride=stride,
         )
 
-    def activation_layer(self, layer: gl.SingleInputLayer) -> gl.SingleInputLayer:
+    def avg_pool(self, pool_size: int, stride: int) -> gl.AveragePooling2D:
+        self._raise_if_not_running()
+        return gl.AveragePooling2D(
+            name=self._create_layer_name(gl.AveragePooling2D),
+            pool_size=pool_size,
+            stride=stride,
+        )
+
+    def pool_size(self, pool_size: int) -> int:
+        self._raise_if_not_running()
+        assert pool_size >= 1
+        return pool_size
+
+    def activation(self, layer: gl.SingleInputLayer) -> gl.SingleInputLayer:
         self._raise_if_not_running()
         return layer
 
-    def POOL_MAX(self, _: lark.Token) -> gl.PoolType:
-        self._raise_if_not_running()
-        return gl.PoolType.MAX_POOLING
-
-    def POOL_AVG(self, _: lark.Token) -> gl.PoolType:
-        self._raise_if_not_running()
-        return gl.PoolType.AVG_POOLING
-
-    def POOL_STRIDE(self, token: lark.Token) -> int:
-        self._raise_if_not_running()
-        return int(token.value)
-
-    def RELU(self, token: lark.Token) -> gl.Relu:
+    def RELU(self, token: LarkToken) -> gl.Relu:
         self._raise_if_not_running()
         return gl.Relu(name=self._create_layer_name(gl.Relu))
 
-    def GELU(self, token: lark.Token) -> gl.Gelu:
+    def GELU(self, token: LarkToken) -> gl.Gelu:
         self._raise_if_not_running()
         return gl.Gelu(name=self._create_layer_name(gl.Gelu))
 
-    def SWISH(self, token: lark.Token) -> gl.Swish:
+    def SWISH(self, token: LarkToken) -> gl.Swish:
         self._raise_if_not_running()
         return gl.Swish(name=self._create_layer_name(gl.Swish))
 
-    def INT(self, token: lark.Token) -> int:
+    def INT(self, token: LarkToken) -> int:
         self._raise_if_not_running()
         return int(token.value)
 
-    def FLOAT(self, token: lark.Token) -> float:
+    def FLOAT(self, token: LarkToken) -> float:
         self._raise_if_not_running()
         return float(token.value)
 
@@ -185,7 +188,7 @@ def parse(string: str) -> Backbone:
     be visited/transformed into a `Backbone`.
     """
 
-    parser = lark.Lark(grammar=get_mesagrammar(), parser="lalr")
+    parser = LarkParser(grammar=get_mesagrammar(), parser="lalr")
     tree = parser.parse(string)
     logger.success("Parsed the mesagrammar into an abstract syntax tree")
     return BackboneSynthetizer().transform(tree)
