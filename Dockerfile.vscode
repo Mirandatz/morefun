@@ -1,9 +1,8 @@
 FROM python:3.10.2-bullseye as reqs_builder
 
 COPY requirements requirements
-# uncomment to update requirements
-# RUN pip install pip-compile-multi
-# RUN pip-compile-multi
+RUN pip install pip-compile-multi
+RUN pip-compile-multi
 
 
 
