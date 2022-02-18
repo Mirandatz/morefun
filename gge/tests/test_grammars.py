@@ -1,3 +1,4 @@
+import pytest
 from hypothesis import given
 
 import gge.grammars as gr
@@ -19,6 +20,13 @@ SWISH = gr.Terminal('"swish"')
 POOL2D = gr.Terminal('"pool2d"')
 TYPE = gr.Terminal('"type"')
 MAX = gr.Terminal('"max"')
+
+
+@pytest.fixture(autouse=True)
+def disable_logger() -> None:
+    from loguru import logger
+
+    logger.remove()
 
 
 def test_start_symbol() -> None:
@@ -286,7 +294,7 @@ def test_pooling_layer_in_block() -> None:
         start : block
         block : conv pool
         conv  : "conv2d" "filter_count" 1 "kernel_size" (2) "stride" (3 | 4)
-        pool  : "pool2d" "max" "stride" 2
+        pool  : "max_pool2d" "pool_size" 2 "stride" 3
         """
     )
 
@@ -305,7 +313,7 @@ def test_pooling_layer_def() -> None:
         start : block
         block : conv pool
         conv  : "conv2d" "filter_count" 1 "kernel_size" (2) "stride" (3 | 4)
-        pool  : "pool2d" "max" "stride" 2
+        pool  : "max_pool2d" "pool_size" 2 "stride" 3
         """
     )
 
@@ -315,8 +323,8 @@ def test_pooling_layer_def() -> None:
     assert expected == actual
 
 
-@given(data=ms.pool2ds())
-def test_pool_layer_def(data: ms.Pool2DTestData) -> None:
+@given(data=ms.max_pool2ds())
+def test_pool_layer_def(data: ms.MaxPool2DTestData) -> None:
     raw_grammar = ms.make_raw_grammar(data)
     grammar = gr.Grammar(raw_grammar)
 

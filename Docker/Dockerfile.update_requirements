@@ -1,0 +1,7 @@
+FROM python:3.10.2-bullseye
+
+COPY requirements/base.in requirements/
+COPY requirements/test.in requirements/
+COPY requirements/dev.in requirements/
+RUN pip install pip-compile-multi
+RUN pip-compile-multi

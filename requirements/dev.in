@@ -1,3 +1,5 @@
 -r test.in
 
-pip-compile-multi
+black
+flake8
+git+https://github.com/python/mypy

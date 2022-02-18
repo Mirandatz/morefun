@@ -1,16 +1,7 @@
-FROM python:3.10.2-bullseye as reqs_builder
-
-COPY requirements requirements
-RUN pip install pip-compile-multi
-RUN pip-compile-multi
-
-
-
-FROM nvidia/cuda:11.5.1-cudnn8-runtime-ubuntu20.04
+FROM nvidia/cuda:11.4.2-cudnn8-runtime-ubuntu20.04
 
 ENV TZ=America/Sao_Paulo
 ENV DEBIAN_FRONTEND=noninteractive
-
 RUN apt-get update \
     && apt-get install --no-install-recommends --no-install-suggests -y \
     git \
@@ -29,5 +20,8 @@ RUN conda init bash
 RUN conda activate
 RUN conda install python=3.10
 
-COPY --from=reqs_builder requirements requirements
-RUN pip install -r requirements/dev.txt --no-cache-dir
+COPY ./requirements/ /requirements/
+RUN pip install -r /requirements/test.txt --no-cache-dir
+
+COPY ./data /gge/data/
+COPY ./gge /gge/gge/
