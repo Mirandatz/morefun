@@ -23,5 +23,6 @@ RUN conda install python=3.10
 COPY ./requirements/ /requirements/
 RUN pip install -r /requirements/test.txt --no-cache-dir
 
+COPY ./pyproject.toml /gge/
 COPY ./data /gge/data/
 COPY ./gge /gge/gge/

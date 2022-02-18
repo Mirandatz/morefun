@@ -6,16 +6,18 @@ export DOCKER_BUILDKIT=1
 
 .PHONY: run_tests
 run_tests: test_env
-	docker run --runtime=nvidia $(test_env_tag) pytest /gge/gge/tests
+	docker run --runtime=nvidia $(test_env_tag) pytest gge
 
 .PHONY: update_requirements
 update_requirements:
 	docker build -f Docker/Dockerfile.update_requirements -t $(update_requirements_tag) .
 	IMG_ID=$$(docker create $(update_requirements_tag)) \
-		&& docker cp $${IMG_ID}:/requirements/base.txt ./requirements \
-		&& docker cp $${IMG_ID}:/requirements/test.txt ./requirements \
-		&& docker cp $${IMG_ID}:/requirements/dev.txt ./requirements \
-		&& docker rm -v $${IMG_ID}
+		&& ( \
+			docker cp $${IMG_ID}:/requirements/base.txt ./requirements \
+			&& docker cp $${IMG_ID}:/requirements/test.txt ./requirements \
+			&& docker cp $${IMG_ID}:/requirements/dev.txt ./requirements \
+			) \
+		; docker rm -v $${IMG_ID}
 
 .PHONY: test_env
 test_env:
