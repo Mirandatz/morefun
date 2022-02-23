@@ -11,9 +11,7 @@ __pycache__/
 .python-version
 
 # playground & debugging
-gge/debug_playground.py
-debug_data/
-gge/playground.py
+gge/playground/
 
 # test history
 .hypothesis/

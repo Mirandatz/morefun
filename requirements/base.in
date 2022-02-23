@@ -4,3 +4,4 @@ loguru
 networkx
 numpy
 tensorflow-gpu
+typer
