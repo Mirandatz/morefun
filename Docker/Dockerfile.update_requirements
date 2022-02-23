@@ -1,7 +1,10 @@
-FROM python:3.10.2-bullseye
+FROM python:3.10.2-slim-bullseye
 
-COPY requirements/base.in requirements/
-COPY requirements/test.in requirements/
-COPY requirements/dev.in requirements/
+RUN apt-get update \
+    && apt-get install --no-install-recommends --no-install-suggests -y \
+    git \
+    && apt-get autoremove -y \
+    && apt-get clean -y \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN pip install pip-compile-multi
-RUN pip-compile-multi

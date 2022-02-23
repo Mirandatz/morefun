@@ -1,6 +1,6 @@
+attrs
 lark
 loguru
-numpy
 networkx
+numpy
 tensorflow-gpu
-attrs

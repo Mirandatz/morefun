@@ -12,7 +12,7 @@ absl-py==1.0.0
 astunparse==1.6.3
     # via tensorflow-gpu
 attrs==21.4.0
-    # via -r requirements/base.in
+    # via -r /tmp/requirements/base.in
 cachetools==5.0.0
     # via google-auth
 certifi==2021.10.8
@@ -44,18 +44,18 @@ keras==2.8.0
 keras-preprocessing==1.1.2
     # via tensorflow-gpu
 lark==1.1.1
-    # via -r requirements/base.in
+    # via -r /tmp/requirements/base.in
 libclang==13.0.0
     # via tensorflow-gpu
 loguru==0.6.0
-    # via -r requirements/base.in
+    # via -r /tmp/requirements/base.in
 markdown==3.3.6
     # via tensorboard
 networkx==2.6.3
-    # via -r requirements/base.in
+    # via -r /tmp/requirements/base.in
 numpy==1.22.2
     # via
-    #   -r requirements/base.in
+    #   -r /tmp/requirements/base.in
     #   h5py
     #   keras-preprocessing
     #   opt-einsum
@@ -99,7 +99,7 @@ tensorboard-data-server==0.6.1
 tensorboard-plugin-wit==1.8.1
     # via tensorboard
 tensorflow-gpu==2.8.0
-    # via -r requirements/base.in
+    # via -r /tmp/requirements/base.in
 tensorflow-io-gcs-filesystem==0.24.0
     # via tensorflow-gpu
 termcolor==1.1.0
