@@ -6,6 +6,7 @@
 
 # caches
 __pycache__/
+.gge_build_cache/
 
 # pyenv
 .python-version

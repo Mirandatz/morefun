@@ -1,18 +1,5 @@
 FROM nvidia/cuda:11.4.2-cudnn8-runtime-ubuntu20.04
-
-ENV TZ=America/Sao_Paulo
-ENV DEBIAN_FRONTEND=noninteractive
-RUN apt-get update \
-    && apt-get install --no-install-recommends --no-install-suggests -y \
-    git \
-    wget \
-    && apt-get autoremove -y \
-    && apt-get clean -y \
-    && rm -rf /var/lib/apt/lists/*
-
-RUN wget -O Miniforge3.sh "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh" \
-    && /bin/bash Miniforge3.sh -b \
-    && rm Miniforge3.sh
+RUN --mount=type=bind,source=.gge_build_cache/Miniforge3.sh,target=/Miniforge3.sh /bin/bash /Miniforge3.sh -b
 ENV PATH=/root/miniforge3/bin:$PATH
 
 SHELL ["/bin/bash", "-c", "-i"]

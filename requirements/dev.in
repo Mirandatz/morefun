@@ -2,4 +2,4 @@
 
 black
 flake8
-git+https://github.com/python/mypy
+mypy
