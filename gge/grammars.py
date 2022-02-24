@@ -574,13 +574,10 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
         combinations = itertools.product(pool_sizes, strides)
         return [RuleOption((layer_marker, *ps, *st)) for ps, st in combinations]
 
-    @v_args(inline=True)
-    def pool_sizes(
-        self,
-        marker: Terminal,
-        values: list[Terminal],
-    ) -> list[MarkerValuePair]:
+    def pool_sizes(self, parts: typing.Any) -> list[MarkerValuePair]:
         self._raise_if_not_running()
+
+        marker, *values = parts
         assert marker == ExpectedTerminals.POOL_SIZE_MARKER.value
         assert isinstance(values, list)
         for v in values:
