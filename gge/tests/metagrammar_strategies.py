@@ -1,4 +1,3 @@
-import typing
 
 import attrs
 import hypothesis.strategies as hs
@@ -47,12 +46,13 @@ def max_pool2ds(draw: ts.DrawStrat) -> MaxPool2DTestData:
 
 
 def make_raw_grammar(layers: list[MaxPool2DTestData] | None = None) -> str:
-    if layer is None:
-        raise NotImplementedError()
+    raise NotImplementedError()
+    # if layer is None:
+    #     raise NotImplementedError()
 
-    layer_names = [layer.name for layer in layers]
+    # layer_names = [layer.name for layer in layers]
 
-    start_rule = "start" + " ".join(layer_names)
+    # start_rule = "start" + " ".join(layer_names)
 
-    return f"""start : {data.name}
-               {data.str_definition()}"""
+    # return f"""start : {data.name}
+    #            {data.str_definition()}"""

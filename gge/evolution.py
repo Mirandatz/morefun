@@ -1,7 +1,6 @@
 import datetime as dt
 import pathlib
 import pickle
-import sys
 import typing
 
 import numpy as np

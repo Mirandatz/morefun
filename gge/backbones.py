@@ -58,7 +58,7 @@ class Backbone:
 
 
 @v_args(inline=True)
-class BackboneSynthetizer(gge_transformers.SinglePassTransformer[Backbone]):
+class BackboneSynthetizer(gge_transformers.SinglePassTransformer):
     def __init__(self) -> None:
         super().__init__()
         self._name_generator = gge.name_generator.NameGenerator()
@@ -191,4 +191,6 @@ def parse(string: str) -> Backbone:
     parser = LarkParser(grammar=get_mesagrammar(), parser="lalr")
     tree = parser.parse(string)
     logger.success("Parsed the mesagrammar into an abstract syntax tree")
-    return BackboneSynthetizer().transform(tree)
+    backbone = BackboneSynthetizer().transform(tree)
+    assert isinstance(backbone, Backbone)
+    return backbone

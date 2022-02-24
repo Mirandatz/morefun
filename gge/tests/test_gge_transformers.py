@@ -8,7 +8,7 @@ from lark.tree import Tree as LarkTree
 import gge.transformers as tr
 
 
-class BasicSinglePassDisposableTransformer(tr.SinglePassTransformer[None]):
+class BasicSinglePassDisposableTransformer(tr.SinglePassTransformer):
     def __init__(self) -> None:
         super().__init__()
 
@@ -66,8 +66,7 @@ def test_raise_on_default_token() -> None:
         ew
     """
     tree = extract_ast(text)
-    trans = tr.SinglePassTransformer()  # type: ignore
-
+    trans = tr.SinglePassTransformer()
     with pytest.raises(
         NotImplementedError,
         match="method not implemented for token with text: ew",

@@ -325,7 +325,7 @@ def test_pooling_layer_def() -> None:
 
 @given(data=ms.max_pool2ds())
 def test_pool_layer_def(data: ms.MaxPool2DTestData) -> None:
-    raw_grammar = ms.make_raw_grammar(data)
+    raw_grammar = ms.make_raw_grammar([data])
     grammar = gr.Grammar(raw_grammar)
 
     (actual,) = grammar.expansions(data.nonterminal)

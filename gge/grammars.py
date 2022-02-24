@@ -351,7 +351,7 @@ class ExpectedTerminals(enum.Enum):
     STRIDE_MARKER = Terminal('"stride"')
 
 
-class GrammarTransformer(gge_transformers.SinglePassTransformer[GrammarComponents]):
+class GrammarTransformer(gge_transformers.SinglePassTransformer):
     def __init__(self) -> None:
         super().__init__()
 
