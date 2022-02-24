@@ -101,9 +101,9 @@ def test_merge_downsample_add(shapes: gge_hs.ShapePair) -> None:
         params=gl.BatchNorm(name="bn"),
     )
 
-    source1 = gl.ConnectedPool2D(
+    source1 = gl.ConnectedMaxPooling2D(
         input_layer=input_layer,
-        params=gl.Pool2D("maxpool", gl.PoolType.MAX_POOLING, stride=shapes.ratio),
+        params=gl.MaxPool2D("maxpool", pool_size=1, stride=shapes.ratio),
     )
 
     name_gen = ng.NameGenerator()
@@ -130,9 +130,9 @@ def test_merge_downsample_concat(shapes: gge_hs.ShapePair) -> None:
         params=gl.BatchNorm(name="bn"),
     )
 
-    source1 = gl.ConnectedPool2D(
+    source1 = gl.ConnectedMaxPooling2D(
         input_layer=input_layer,
-        params=gl.Pool2D("maxpool", gl.PoolType.MAX_POOLING, stride=shapes.ratio),
+        params=gl.MaxPool2D("maxpool", pool_size=1, stride=shapes.ratio),
     )
 
     name_gen = ng.NameGenerator()
@@ -159,9 +159,9 @@ def test_merge_upsample_concat(shapes: gge_hs.ShapePair) -> None:
         params=gl.BatchNorm(name="bn"),
     )
 
-    source1 = gl.ConnectedPool2D(
+    source1 = gl.ConnectedMaxPooling2D(
         input_layer=input_layer,
-        params=gl.Pool2D("maxpool", gl.PoolType.MAX_POOLING, stride=shapes.ratio),
+        params=gl.MaxPool2D("maxpool", pool_size=1, stride=shapes.ratio),
     )
 
     name_gen = ng.NameGenerator()

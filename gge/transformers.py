@@ -1,7 +1,8 @@
 import enum
 import typing
 
-import lark
+from lark.tree import Tree as LarkTree
+from lark.visitors import Transformer as LarkTransformer
 
 _T = typing.TypeVar("_T")
 
@@ -12,7 +13,7 @@ class TransformerState(enum.Enum):
     PARSE_DONE = enum.auto()
 
 
-class SinglePassTransformer(lark.Transformer[_T]):
+class SinglePassTransformer(LarkTransformer[typing.Any, _T]):
     """
     Specialization of a base transformer that:
     - can only visit a tree if they start on the root node;
@@ -42,7 +43,7 @@ class SinglePassTransformer(lark.Transformer[_T]):
             f"method not implemented for token with text: {token_text}"
         )
 
-    def transform(self, tree: lark.Tree) -> _T:
+    def transform(self, tree: LarkTree[_T]) -> _T:
         assert self._state == TransformerState.READY
 
         self._state = TransformerState.PARSING
