@@ -301,7 +301,7 @@ def test_pooling_layer_in_block() -> None:
     assert nt == actual
 
 
-def test_pool_layer_def() -> None:
+def test_max_pool2d_def() -> None:
     grammar = gr.Grammar(
         """
         start : pool
@@ -312,6 +312,26 @@ def test_pool_layer_def() -> None:
     expected = gr.RuleOption(
         (
             gr.ExpectedTerminals.MAX_POOL_MARKER.value,
+            gr.ExpectedTerminals.POOL_SIZE_MARKER.value,
+            gr.Terminal("1"),
+            gr.ExpectedTerminals.STRIDE_MARKER.value,
+            gr.Terminal("2"),
+        )
+    )
+    assert expected == actual
+
+
+def test_avg_pool2d_def() -> None:
+    grammar = gr.Grammar(
+        """
+        start : pool
+        pool : "avg_pool2d" "pool_size" 1 "stride" 2
+        """
+    )
+    (actual,) = grammar.expansions(gr.NonTerminal("pool"))
+    expected = gr.RuleOption(
+        (
+            gr.ExpectedTerminals.AVG_POOL_MARKER.value,
             gr.ExpectedTerminals.POOL_SIZE_MARKER.value,
             gr.Terminal("1"),
             gr.ExpectedTerminals.STRIDE_MARKER.value,
