@@ -4,6 +4,7 @@ target-version = ['py310']
 [tool.pytest.ini_options]
 testpaths = ["/gge/gge/tests"]
 addopts = "--pspec"
+cache_dir = "/dev/shm/pytest_cache"
 filterwarnings = [
     "ignore::DeprecationWarning:tensorflow.*:",
     "ignore::DeprecationWarning:flatbuffers.*:"

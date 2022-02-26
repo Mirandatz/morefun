@@ -7,7 +7,7 @@ import gge.grammars as gr
 import gge.layers as gl
 import gge.randomness as rand
 import gge.structured_grammatical_evolution as sge
-import gge.tests.strategies as gge_hs
+import gge.tests.strategies.original_strategies as gge_hs
 
 # end-to-end tests may take a while
 end_to_end_settings = hypothesis.settings(max_examples=10)

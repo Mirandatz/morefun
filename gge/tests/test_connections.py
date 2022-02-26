@@ -5,7 +5,7 @@ import gge.backbones as bb
 import gge.connections as conn
 import gge.layers as gl
 import gge.name_generator as ng
-import gge.tests.strategies as gge_hs
+import gge.tests.strategies.original_strategies as gge_hs
 
 
 @given(shapes=gge_hs.same_aspect_shape_pair())

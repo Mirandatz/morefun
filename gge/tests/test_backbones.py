@@ -3,7 +3,7 @@ from hypothesis import example, given
 
 import gge.backbones as bb
 import gge.layers as gl
-import gge.tests.strategies as gge_hs
+import gge.tests.strategies.original_strategies as gge_hs
 
 
 @pytest.fixture(autouse=True)

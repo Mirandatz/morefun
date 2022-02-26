@@ -4,7 +4,7 @@ import pytest
 from hypothesis import assume, example, given
 
 import gge.layers as gl
-import gge.tests.strategies as gge_hs
+import gge.tests.strategies.original_strategies as gge_hs
 
 tensorflow_settings = hypothesis.settings(deadline=1000)
 

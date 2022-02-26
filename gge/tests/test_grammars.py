@@ -1,8 +1,6 @@
 import pytest
-from hypothesis import given
 
 import gge.grammars as gr
-import gge.tests.metagrammar_strategies as ms
 
 START = gr.NonTerminal("start")
 
@@ -16,10 +14,6 @@ BATCHRNOM = gr.Terminal('"batchnorm"')
 RELU = gr.Terminal('"relu"')
 GELU = gr.Terminal('"gelu"')
 SWISH = gr.Terminal('"swish"')
-
-POOL2D = gr.Terminal('"pool2d"')
-TYPE = gr.Terminal('"type"')
-MAX = gr.Terminal('"max"')
 
 
 @pytest.fixture(autouse=True)
@@ -307,29 +301,23 @@ def test_pooling_layer_in_block() -> None:
     assert nt == actual
 
 
-def test_pooling_layer_def() -> None:
+def test_pool_layer_def() -> None:
     grammar = gr.Grammar(
         """
-        start : block
-        block : conv pool
-        conv  : "conv2d" "filter_count" 1 "kernel_size" (2) "stride" (3 | 4)
-        pool  : "max_pool2d" "pool_size" 2 "stride" 3
+        start : pool
+        pool : "max_pool2d" "pool_size" 1 "stride" 2
         """
     )
-
     (actual,) = grammar.expansions(gr.NonTerminal("pool"))
-    expected = gr.RuleOption((POOL2D, MAX, gr.Terminal("2")))
-
-    assert expected == actual
-
-
-@given(data=ms.max_pool2ds())
-def test_pool_layer_def(data: ms.MaxPool2DTestData) -> None:
-    raw_grammar = ms.make_raw_grammar([data])
-    grammar = gr.Grammar(raw_grammar)
-
-    (actual,) = grammar.expansions(data.nonterminal)
-    expected = data.expansion()
+    expected = gr.RuleOption(
+        (
+            gr.ExpectedTerminals.MAX_POOL_MARKER.value,
+            gr.ExpectedTerminals.POOL_SIZE_MARKER.value,
+            gr.Terminal("1"),
+            gr.ExpectedTerminals.STRIDE_MARKER.value,
+            gr.Terminal("2"),
+        )
+    )
     assert expected == actual
 
 
