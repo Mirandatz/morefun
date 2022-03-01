@@ -1,12 +1,5 @@
-import itertools
-import typing
-
 import attrs
 import hypothesis.strategies as hs
-
-import gge.grammars as gr
-import gge.name_generator as namegen
-import gge.tests.strategies.original_strategies as gge_os
 
 
 @attrs.frozen
@@ -24,7 +17,11 @@ def parenthesized_arg(draw: hs.DrawFn, arg: str) -> str:
 
 
 @hs.composite
-def int_args(draw: hs.DrawFn, values: tuple[int, ...]) -> IntArgs:
+def int_args(
+    draw: hs.DrawFn,
+    values_strategy: hs.SearchStrategy[list[int]],
+) -> IntArgs:
+    values = draw(values_strategy)
     values_as_str = [str(v) for v in values]
 
     if len(values) == 1:
@@ -33,34 +30,4 @@ def int_args(draw: hs.DrawFn, values: tuple[int, ...]) -> IntArgs:
     else:
         text = f"({' | '.join(values_as_str)})"
 
-    return IntArgs(text=text, values=values)
-
-
-@attrs.frozen
-class GrammarLine:
-    text: str
-    parsed: tuple[gr.ProductionRule, ...]
-
-
-@attrs.frozen
-class GrammarTestData:
-    lines: tuple[GrammarLine, ...]
-
-
-@hs.composite
-def maxpool2d_def(draw: hs.DrawFn) -> GrammarLine:
-    pool_sizes = draw(
-        hs.lists(
-            elements=hs.integers(min_value=1, max_value=9),
-            min_size=1,
-            max_size=3,
-        )
-    )
-    strides = draw(
-        hs.lists(
-            elements=hs.integers(min_value=1, max_value=9),
-            min_size=1,
-            max_size=3,
-        )
-    )
-    raise NotImplementedError()
+    return IntArgs(text=text, values=tuple(values))

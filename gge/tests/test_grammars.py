@@ -1,6 +1,11 @@
+import itertools
+
+import hypothesis.strategies as hs
 import pytest
+from hypothesis import given
 
 import gge.grammars as gr
+import gge.tests.strategies.metagrammar as gge_ms
 
 START = gr.NonTerminal("start")
 
@@ -301,44 +306,84 @@ def test_pooling_layer_in_block() -> None:
     assert nt == actual
 
 
-def test_max_pool2d_def() -> None:
-    grammar = gr.Grammar(
-        """
-        start : pool
-        pool : "max_pool2d" "pool_size" 1 "stride" 2
-        """
-    )
-    (actual,) = grammar.expansions(gr.NonTerminal("pool"))
-    expected = gr.RuleOption(
-        (
-            gr.ExpectedTerminals.MAX_POOL_MARKER.value,
-            gr.ExpectedTerminals.POOL_SIZE_MARKER.value,
-            gr.Terminal("1"),
-            gr.ExpectedTerminals.STRIDE_MARKER.value,
-            gr.Terminal("2"),
+@given(
+    pool_sizes=gge_ms.int_args(
+        hs.lists(
+            elements=hs.integers(min_value=1, max_value=3),
+            min_size=1,
+            max_size=3,
         )
+    ),
+    strides=gge_ms.int_args(
+        hs.lists(
+            elements=hs.integers(min_value=1, max_value=3),
+            min_size=1,
+            max_size=3,
+        )
+    ),
+)
+def test_max_pool2d_def(pool_sizes: gge_ms.IntArgs, strides: gge_ms.IntArgs) -> None:
+    raw_grammar = (
+        'start : "max_pool2d"'
+        f' "pool_size" {pool_sizes.text}'
+        f' "stride" {strides.text}'
     )
-    assert expected == actual
+    grammar = gr.Grammar(raw_grammar)
+
+    expansions = grammar.expansions(gr.NonTerminal("start"))
+    test_values = itertools.product(pool_sizes.values, strides.values)
+
+    for expansion, (pool_size, stride) in zip(expansions, test_values):
+        expected = gr.RuleOption(
+            (
+                gr.ExpectedTerminals.MAX_POOL_MARKER.value,
+                gr.ExpectedTerminals.POOL_SIZE_MARKER.value,
+                gr.Terminal(str(pool_size)),
+                gr.ExpectedTerminals.STRIDE_MARKER.value,
+                gr.Terminal(str(stride)),
+            )
+        )
+        assert expected == expansion
 
 
-def test_avg_pool2d_def() -> None:
-    grammar = gr.Grammar(
-        """
-        start : pool
-        pool : "avg_pool2d" "pool_size" 1 "stride" 2
-        """
-    )
-    (actual,) = grammar.expansions(gr.NonTerminal("pool"))
-    expected = gr.RuleOption(
-        (
-            gr.ExpectedTerminals.AVG_POOL_MARKER.value,
-            gr.ExpectedTerminals.POOL_SIZE_MARKER.value,
-            gr.Terminal("1"),
-            gr.ExpectedTerminals.STRIDE_MARKER.value,
-            gr.Terminal("2"),
+@given(
+    pool_sizes=gge_ms.int_args(
+        hs.lists(
+            elements=hs.integers(min_value=1, max_value=3),
+            min_size=1,
+            max_size=3,
         )
+    ),
+    strides=gge_ms.int_args(
+        hs.lists(
+            elements=hs.integers(min_value=1, max_value=3),
+            min_size=1,
+            max_size=3,
+        )
+    ),
+)
+def test_avg_pool2d_def(pool_sizes: gge_ms.IntArgs, strides: gge_ms.IntArgs) -> None:
+    raw_grammar = (
+        'start : "avg_pool2d"'
+        f' "pool_size" {pool_sizes.text}'
+        f' "stride" {strides.text}'
     )
-    assert expected == actual
+    grammar = gr.Grammar(raw_grammar)
+
+    expansions = grammar.expansions(gr.NonTerminal("start"))
+    test_values = itertools.product(pool_sizes.values, strides.values)
+
+    for expansion, (pool_size, stride) in zip(expansions, test_values):
+        expected = gr.RuleOption(
+            (
+                gr.ExpectedTerminals.AVG_POOL_MARKER.value,
+                gr.ExpectedTerminals.POOL_SIZE_MARKER.value,
+                gr.Terminal(str(pool_size)),
+                gr.ExpectedTerminals.STRIDE_MARKER.value,
+                gr.Terminal(str(stride)),
+            )
+        )
+        assert expected == expansion
 
 
 def test_relu_def() -> None:
