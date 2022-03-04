@@ -12,6 +12,7 @@ from loguru import logger
 
 import gge.layers as gl
 import gge.name_generator
+import gge.optimizers as optimizers
 import gge.transformers as gge_transformers
 
 MESAGRAMMAR_PATH = pathlib.Path(__file__).parent.parent / "data" / "mesagrammar.lark"
@@ -67,18 +68,56 @@ class BackboneSynthetizer(gge_transformers.SinglePassTransformer):
         self._raise_if_not_running()
         return self._name_generator.gen_name(prefix)
 
-    @v_args(inline=False)
-    def start(self, blocks: list[list[gl.Layer]]) -> Backbone:
+    def start(
+        self,
+        blocks: list[list[gl.Layer]],
+        optimizer: optimizers.SGD,
+    ) -> tuple[Backbone, optimizers.SGD]:
         self._raise_if_not_running()
 
         layers = tuple(layer for list_of_layers in blocks for layer in list_of_layers)
-        return Backbone(layers)
+        backbone = Backbone(layers)
+        return backbone, optimizer
 
     @v_args(inline=False)
     def block(self, parts: typing.Any) -> list[gl.Layer]:
         self._raise_if_not_running()
 
         return [x for x in parts if x is not None]
+
+    def optimizer(self, sgd: optimizers.SGD) -> optimizers.SGD:
+        self._raise_if_not_running()
+
+        assert isinstance(sgd, optimizers.SGD)
+        return sgd
+
+    def sgd(
+        self, learning_rate: float, momentum: float, nesterov: bool
+    ) -> optimizers.SGD:
+        self._raise_if_not_running()
+
+        assert isinstance(learning_rate, float)
+        assert isinstance(momentum, float)
+        assert isinstance(nesterov, bool)
+
+        return optimizers.SGD(
+            learning_rate=learning_rate, momentum=momentum, nesterov=nesterov
+        )
+
+    def learning_rate(self, value: float) -> float:
+        self._raise_if_not_running()
+        assert isinstance(value, float)
+        return value
+
+    def momentum(self, value: float) -> float:
+        self._raise_if_not_running()
+        assert isinstance(value, float)
+        return value
+
+    def nesterov(self, value: bool) -> bool:
+        self._raise_if_not_running()
+        assert isinstance(value, bool)
+        return value
 
     def MERGE(self, token: LarkToken | None = None) -> gl.MarkerLayer | None:
         self._raise_if_not_running()
@@ -179,8 +218,20 @@ class BackboneSynthetizer(gge_transformers.SinglePassTransformer):
         self._raise_if_not_running()
         return float(token.value)
 
+    def BOOL(self, token: LarkToken) -> bool:
+        self._raise_if_not_running()
 
-def parse(string: str) -> Backbone:
+        if token.value == "true":
+            return True
+
+        elif token.value == "false":
+            return False
+
+        else:
+            raise ValueError(f"unexpected `BOOL` value=<{token.value}>")
+
+
+def parse(string: str) -> tuple[Backbone, optimizers.SGD]:
     """
     This is not a "string deserialization function";
     the input string is expected to be a "token stream"
@@ -191,6 +242,7 @@ def parse(string: str) -> Backbone:
     parser = LarkParser(grammar=get_mesagrammar(), parser="lalr")
     tree = parser.parse(string)
     logger.success("Parsed the mesagrammar into an abstract syntax tree")
-    backbone = BackboneSynthetizer().transform(tree)
+    backbone, optimizer = BackboneSynthetizer().transform(tree)
     assert isinstance(backbone, Backbone)
-    return backbone
+    assert isinstance(optimizers, optimizers.SGD)
+    return backbone, optimizer

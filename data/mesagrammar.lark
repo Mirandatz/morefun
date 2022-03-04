@@ -1,4 +1,11 @@
-start: block+
+start: block+ optimizer
+
+optimizer: sgd
+
+sgd           : _SGD learning_rate momentum nesterov
+learning_rate : _LEARNING_RATE FLOAT
+momentum      : _MOMENTUM FLOAT
+nesterov      : _NESTEROV BOOL
 
 block : MERGE? layer FORK?
 
@@ -38,6 +45,15 @@ _BATCHNORM    : /"batchnorm"/
 RELU  : /"relu"/
 GELU  : /"gelu"/
 SWISH : /"swish"/
+
+_SGD            : /"sgd"/
+_LEARNING_RATE  : /"learning_rate"/
+_MOMENTUM FLOAT : /"momentum"/
+_NESTEROV BOOL  : /"nesterov"/
+
+BOOL  : TRUE | FALSE
+TRUE  : /"true"/
+FALSE : /"false"/
 
 %import common (INT, FLOAT)
 %import common.WS
