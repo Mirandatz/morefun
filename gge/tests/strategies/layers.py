@@ -14,9 +14,9 @@ def conv2ds(
     name_gen = name_gen or NameGenerator()
     return gl.Conv2D(
         name=name_gen.gen_name(gl.Conv2D),
-        filter_count=draw(hs.integers(min_value=1, max_value=999)),
-        kernel_size=draw(hs.integers(min_value=1, max_value=999)),
-        stride=draw(hs.integers(min_value=1, max_value=999)),
+        filter_count=draw(hs.integers(min_value=1, max_value=9)),
+        kernel_size=draw(hs.integers(min_value=1, max_value=9)),
+        stride=draw(hs.integers(min_value=1, max_value=9)),
     )
 
 
