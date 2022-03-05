@@ -159,8 +159,18 @@ def sgds(draw: hs.DrawFn) -> SGDTestData:
         momentum=momentum,
         nesterov=nesterov,
     )
-    token_stream = f'sgd_test : "sgd" "learning_rate" {learning_rate} "momentum" {momentum} "nesterov" {nesterov}'
+    token_stream = f'"sgd" "learning_rate" {learning_rate} "momentum" {momentum} "nesterov" {str(nesterov).lower()}'
     return SGDTestData(token_stream, sgd)
+
+
+@hs.composite
+def add_dummy_layer_to(
+    draw: hs.DrawFn, strat: hs.SearchStrategy[SGDTestData]
+) -> SGDTestData:
+    test_data = draw(strat)
+    dummy_layer = '"batchnorm"'
+    updated_tokenstream = dummy_layer + test_data.token_stream
+    return attrs.evolve(test_data, token_stream=updated_tokenstream)
 
 
 # @hs.composite
