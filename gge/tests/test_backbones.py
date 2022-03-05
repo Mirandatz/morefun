@@ -2,7 +2,7 @@ import pytest
 from hypothesis import example, given  # noqa
 
 import gge.backbones as bb
-import gge.tests.strategies.mesagrammar as mesa
+import gge.tests.strategies.mesagrammars as mesa
 
 
 @pytest.fixture(autouse=True)

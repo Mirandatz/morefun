@@ -5,7 +5,7 @@ import pytest
 from hypothesis import given
 
 import gge.grammars as gr
-import gge.tests.strategies.metagrammar as gge_ms
+import gge.tests.strategies.metagrammars as gge_ms
 
 START = gr.NonTerminal("start")
 
