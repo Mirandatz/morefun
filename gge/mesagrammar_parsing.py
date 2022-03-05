@@ -7,9 +7,7 @@ from loguru import logger
 
 import gge.transformers
 
-MESAGRAMMAR_PATH = (
-    pathlib.Path(__file__).parent.parent.parent / "data" / "mesagrammar.lark"
-)
+MESAGRAMMAR_PATH = pathlib.Path(__file__).parent.parent / "data" / "mesagrammar.lark"
 
 
 @functools.cache
