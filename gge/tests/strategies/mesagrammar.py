@@ -1,5 +1,3 @@
-import dataclasses
-
 import attrs
 import hypothesis.strategies as hs
 
@@ -143,50 +141,6 @@ def add_dummy_optimizer_to(
     dummy_optimizer = '"sgd" "learning_rate" 0.1 "momentum" 0.05 "nesterov" false'
     updated_tokenstream = test_data.token_stream + dummy_optimizer
     return attrs.evolve(test_data, token_stream=updated_tokenstream)
-
-
-@hs.composite
-def shape(draw: hs.DrawFn) -> gl.Shape:
-    width = draw(hs.integers(min_value=1, max_value=8196))
-    height = draw(hs.integers(min_value=1, max_value=8196))
-    depth = draw(hs.integers(min_value=1, max_value=8196))
-    return gl.Shape(width=width, height=height, depth=depth)
-
-
-@dataclasses.dataclass(frozen=True)
-class ShapePair:
-    smaller: gl.Shape
-    bigger: gl.Shape
-    ratio: int
-
-
-@hs.composite
-def same_aspect_ratio_shape_pair(
-    draw: hs.DrawFn, *, same_depth: bool = False
-) -> ShapePair:
-    ratio = draw(hs.integers(min_value=2, max_value=1024))
-    smaller = draw(shape())
-    bigger = gl.Shape(
-        width=smaller.width * ratio,
-        height=smaller.height * ratio,
-        depth=smaller.depth,
-    )
-    if not same_depth:
-        bigger_depth = draw(hs.integers(min_value=1, max_value=1024))
-        bigger = attrs.evolve(bigger, depth=bigger_depth)
-    return ShapePair(smaller, bigger, ratio)
-
-
-@hs.composite
-def input_layers(draw: hs.DrawFn) -> gl.Input:
-    width = draw(hs.integers(min_value=1, max_value=256))
-    height = draw(hs.integers(min_value=1, max_value=256))
-    depth = draw(hs.integers(min_value=1, max_value=3))
-    return gl.make_input(
-        width=width,
-        height=height,
-        depth=depth,
-    )
 
 
 @attrs.frozen
