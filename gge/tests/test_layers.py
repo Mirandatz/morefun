@@ -4,7 +4,7 @@ import pytest
 from hypothesis import assume, example, given
 
 import gge.layers as gl
-import gge.tests.strategies.original_strategies as gge_hs
+import gge.tests.strategies.mesagrammar as mesa
 
 tensorflow_settings = hypothesis.settings(deadline=1000)
 
@@ -128,7 +128,7 @@ def disable_gpu() -> None:
 
 
 @tensorflow_settings
-@given(gge_hs.connected_conv2d())
+@given(mesa.connected_conv2d())
 def test_conv2d_tensor_shape(layer: gl.ConnectedConv2D) -> None:
     """Output shape of ConnectedConv2D layer should match the tensor equivalent."""
 
