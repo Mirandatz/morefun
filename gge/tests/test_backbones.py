@@ -103,7 +103,7 @@ def disable_logger() -> None:
 #     assert actual == expected
 
 
-@given(test_data=mesa.add_dummy_optimizer_to(mesa.conv2ds()))
+@given(test_data=mesa.add_dummy_optimizer_suffix_to(mesa.conv2ds()))
 def test_parse_conv2d(test_data: mesa.LayersTestData) -> None:
     """Can parse conv2d."""
     actual = bb.parse(test_data.token_stream)
@@ -111,7 +111,7 @@ def test_parse_conv2d(test_data: mesa.LayersTestData) -> None:
     assert expected == actual
 
 
-@given(test_data=mesa.add_dummy_optimizer_to(mesa.max_pool2ds()))
+@given(test_data=mesa.add_dummy_optimizer_suffix_to(mesa.max_pool2ds()))
 def test_parse_max_pool2d(test_data: mesa.LayersTestData) -> None:
     """Can parse max pool2d."""
     actual = bb.parse(test_data.token_stream)
@@ -119,7 +119,7 @@ def test_parse_max_pool2d(test_data: mesa.LayersTestData) -> None:
     assert expected == actual
 
 
-@given(test_data=mesa.add_dummy_optimizer_to(mesa.avg_pool2ds()))
+@given(test_data=mesa.add_dummy_optimizer_suffix_to(mesa.avg_pool2ds()))
 def test_parse_avg_pool2d(test_data: mesa.LayersTestData) -> None:
     """Can parse avg pool2d."""
     actual = bb.parse(test_data.token_stream)
@@ -127,7 +127,7 @@ def test_parse_avg_pool2d(test_data: mesa.LayersTestData) -> None:
     assert expected == actual
 
 
-@given(test_data=mesa.add_dummy_optimizer_to(mesa.batchnorms()))
+@given(test_data=mesa.add_dummy_optimizer_suffix_to(mesa.batchnorms()))
 def test_parse_batchnorm(test_data: mesa.LayersTestData) -> None:
     """Can parse batchnorm."""
     actual = bb.parse(test_data.token_stream)
@@ -135,7 +135,7 @@ def test_parse_batchnorm(test_data: mesa.LayersTestData) -> None:
     assert expected == actual
 
 
-@given(test_data=mesa.add_dummy_optimizer_to(mesa.relus()))
+@given(test_data=mesa.add_dummy_optimizer_suffix_to(mesa.relus()))
 def test_parse_relu(test_data: mesa.LayersTestData) -> None:
     """Can parse relu."""
     actual = bb.parse(test_data.token_stream)
@@ -143,7 +143,7 @@ def test_parse_relu(test_data: mesa.LayersTestData) -> None:
     assert expected == actual
 
 
-@given(test_data=mesa.add_dummy_optimizer_to(mesa.gelus()))
+@given(test_data=mesa.add_dummy_optimizer_suffix_to(mesa.gelus()))
 def test_parse_gelu(test_data: mesa.LayersTestData) -> None:
     """Can parse gelu."""
     actual = bb.parse(test_data.token_stream)
@@ -151,7 +151,7 @@ def test_parse_gelu(test_data: mesa.LayersTestData) -> None:
     assert expected == actual
 
 
-@given(test_data=mesa.add_dummy_optimizer_to(mesa.swishs()))
+@given(test_data=mesa.add_dummy_optimizer_suffix_to(mesa.swishs()))
 def test_parse_swish(test_data: mesa.LayersTestData) -> None:
     """Can parse swish."""
     actual = bb.parse(test_data.token_stream)

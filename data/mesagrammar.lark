@@ -1,11 +1,17 @@
 start: backbone optimizer
 
-optimizer: sgd
+optimizer: sgd | adam
 
 sgd           : _SGD learning_rate momentum nesterov
 learning_rate : _LEARNING_RATE FLOAT
 momentum      : _MOMENTUM FLOAT
 nesterov      : _NESTEROV BOOL
+
+adam    : _ADAM learning_rate beta1 beta2 epsilon amsgrad
+beta1   : _BETA1 FLOAT
+beta2   : _BETA2 FLOAT
+epsilon : _EPSILON FLOAT
+amsgrad : _AMSGRAD BOOL
 
 backbone : block+
 block    : MERGE? layer FORK?
@@ -50,6 +56,12 @@ _SGD           : /"sgd"/
 _LEARNING_RATE : /"learning_rate"/
 _MOMENTUM      : /"momentum"/
 _NESTEROV      : /"nesterov"/
+
+_ADAM    : /"adam"/
+_BETA1   : /"beta1"/
+_BETA2   : /"beta2"/
+_EPSILON : /"epsilon"/
+_AMSGRAD : /"amsgrad"/
 
 BOOL  : TRUE | FALSE
 TRUE  : "true"

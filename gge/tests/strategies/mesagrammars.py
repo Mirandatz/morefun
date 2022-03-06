@@ -133,7 +133,7 @@ def add_markers(
 
 
 @hs.composite
-def add_dummy_optimizer_to(
+def add_dummy_optimizer_suffix_to(
     draw: hs.DrawFn,
     strat: hs.SearchStrategy[LayersTestData],
 ) -> LayersTestData:
@@ -144,13 +144,13 @@ def add_dummy_optimizer_to(
 
 
 @attrs.frozen
-class SGDTestData:
+class OptimizerTestData:
     token_stream: str
-    parsed: optim.SGD
+    parsed: optim.Optimizer
 
 
 @hs.composite
-def sgds(draw: hs.DrawFn) -> SGDTestData:
+def sgds(draw: hs.DrawFn) -> OptimizerTestData:
     learning_rate = draw(hs.floats(min_value=0, max_value=9, exclude_min=True))
     momentum = draw(hs.floats(min_value=0, max_value=9))
     nesterov = draw(hs.booleans())
@@ -160,13 +160,37 @@ def sgds(draw: hs.DrawFn) -> SGDTestData:
         nesterov=nesterov,
     )
     token_stream = f'"sgd" "learning_rate" {learning_rate} "momentum" {momentum} "nesterov" {str(nesterov).lower()}'
-    return SGDTestData(token_stream, sgd)
+    return OptimizerTestData(token_stream, sgd)
 
 
 @hs.composite
-def add_dummy_layer_to(
-    draw: hs.DrawFn, strat: hs.SearchStrategy[SGDTestData]
-) -> SGDTestData:
+def adams(draw: hs.DrawFn) -> OptimizerTestData:
+    learning_rate = draw(hs.floats(min_value=0, max_value=9, exclude_min=True))
+    beta1 = draw(hs.floats(min_value=0, max_value=9, exclude_min=True))
+    beta2 = draw(hs.floats(min_value=0, max_value=9, exclude_min=True))
+    epsilon = draw(hs.floats(min_value=0, max_value=9, exclude_min=True))
+    amsgrad = draw(hs.booleans())
+    adam = optim.Adam(
+        learning_rate=learning_rate,
+        beta1=beta1,
+        beta2=beta2,
+        epsilon=epsilon,
+        amsgrad=amsgrad,
+    )
+    token_stream = (
+        f'"adam" "learning_rate" {learning_rate}'
+        f'"beta1" {beta1}'
+        f'"beta2" {beta2}'
+        f'"epsilon" {epsilon}'
+        f'"amsgrad" {str(amsgrad).lower()}'
+    )
+    return OptimizerTestData(token_stream=token_stream, parsed=adam)
+
+
+@hs.composite
+def add_dummy_layer_prefix_to(
+    draw: hs.DrawFn, strat: hs.SearchStrategy[OptimizerTestData]
+) -> OptimizerTestData:
     test_data = draw(strat)
     dummy_layer = '"batchnorm"'
     updated_tokenstream = dummy_layer + test_data.token_stream
