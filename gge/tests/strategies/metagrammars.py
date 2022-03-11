@@ -1,15 +1,19 @@
+import typing
+
 import attrs
 import hypothesis.strategies as hs
 
+T = typing.TypeVar("T", int, float, bool)
+
 
 @attrs.frozen
-class IntArgs:
+class GrammarArgs(typing.Generic[T]):
     text: str
-    values: tuple[int, ...]
+    values: tuple[T, ...]
 
 
 @hs.composite
-def parenthesized_arg(draw: hs.DrawFn, arg: str) -> str:
+def parenthesized(draw: hs.DrawFn, arg: str) -> str:
     if draw(hs.booleans()):
         return f"({arg})"
     else:
@@ -17,17 +21,20 @@ def parenthesized_arg(draw: hs.DrawFn, arg: str) -> str:
 
 
 @hs.composite
-def int_args(
+def grammar_args(
     draw: hs.DrawFn,
-    values_strategy: hs.SearchStrategy[list[int]],
-) -> IntArgs:
+    values_strategy: hs.SearchStrategy[list[T]],
+) -> GrammarArgs[T]:
     values = draw(values_strategy)
-    values_as_str = [str(v) for v in values]
+
+    # .lower() is only useful/necessary if T==bool
+    # but it doesn't change anythinf if T==int or T==float
+    values_as_str = [str(v).lower() for v in values]
 
     if len(values) == 1:
         arg = values_as_str[0]
-        text = draw(parenthesized_arg(arg))
+        text = draw(parenthesized(arg))
     else:
         text = f"({' | '.join(values_as_str)})"
 
-    return IntArgs(text=text, values=tuple(values))
+    return GrammarArgs(text=text, values=tuple(values))

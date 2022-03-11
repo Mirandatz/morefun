@@ -128,7 +128,7 @@ class OptimizerSynthetizer(mp.MesagrammarTransformer):
         return value
 
 
-def parse(token_stream: str) -> SGD:
+def parse(token_stream: str) -> Optimizer:
     """
     This is not a "string deserialization function".
     The input string is expected to be a "token stream"

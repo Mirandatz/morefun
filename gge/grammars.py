@@ -365,6 +365,11 @@ class ExpectedTerminals(enum.Enum):
     GELU = Terminal('"gelu"')
     SWISH = Terminal('"swish"')
 
+    SGD = Terminal('"sgd"')
+    LEARNING_RATE = Terminal('"learning_rate"')
+    MOMENTUM = Terminal('"momentum"')
+    NESTEROV = Terminal('"nesterov"')
+
 
 class GrammarTransformer(gge_transformers.SinglePassTransformer):
     def __init__(self) -> None:
