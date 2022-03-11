@@ -349,10 +349,21 @@ MarkerValuePair = tuple[Terminal, Terminal]
 
 
 class ExpectedTerminals(enum.Enum):
-    MAX_POOL_MARKER = Terminal('"max_pool2d"')
-    AVG_POOL_MARKER = Terminal('"avg_pool2d"')
-    POOL_SIZE_MARKER = Terminal('"pool_size"')
-    STRIDE_MARKER = Terminal('"stride"')
+
+    CONV2D = Terminal('"conv2d"')
+    FILTER_COUNT = Terminal('"filter_count"')
+    KERNEL_SIZE = Terminal('"kernel_size"')
+    STRIDE = Terminal('"stride"')
+
+    BATCHRNOM = Terminal('"batchnorm"')
+
+    MAX_POOL = Terminal('"max_pool2d"')
+    AVG_POOL = Terminal('"avg_pool2d"')
+    POOL_SIZE = Terminal('"pool_size"')
+
+    RELU = Terminal('"relu"')
+    GELU = Terminal('"gelu"')
+    SWISH = Terminal('"swish"')
 
 
 class GrammarTransformer(gge_transformers.SinglePassTransformer):
@@ -536,16 +547,16 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
         # sanity checking the runtime types
         self._raise_if_not_running()
 
-        assert layer_marker == ExpectedTerminals.MAX_POOL_MARKER.value
+        assert layer_marker == ExpectedTerminals.MAX_POOL.value
 
         assert isinstance(pool_sizes, list)
         for ps_marker, ps_value in pool_sizes:
-            assert ps_marker == ExpectedTerminals.POOL_SIZE_MARKER.value
+            assert ps_marker == ExpectedTerminals.POOL_SIZE.value
             assert isinstance(ps_value, Terminal)
 
         assert isinstance(strides, list)
         for st_marker, st_value in strides:
-            assert st_marker == ExpectedTerminals.STRIDE_MARKER.value
+            assert st_marker == ExpectedTerminals.STRIDE.value
             assert isinstance(st_value, Terminal)
 
         # actual code
@@ -562,16 +573,16 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
         # sanity checking the runtime types
         self._raise_if_not_running()
 
-        assert layer_marker == ExpectedTerminals.AVG_POOL_MARKER.value
+        assert layer_marker == ExpectedTerminals.AVG_POOL.value
 
         assert isinstance(pool_sizes, list)
         for ps_marker, ps_value in pool_sizes:
-            assert ps_marker == ExpectedTerminals.POOL_SIZE_MARKER.value
+            assert ps_marker == ExpectedTerminals.POOL_SIZE.value
             assert isinstance(ps_value, Terminal)
 
         assert isinstance(strides, list)
         for st_marker, st_value in strides:
-            assert st_marker == ExpectedTerminals.STRIDE_MARKER.value
+            assert st_marker == ExpectedTerminals.STRIDE.value
             assert isinstance(st_value, Terminal)
 
         # actual code
@@ -582,7 +593,7 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
         self._raise_if_not_running()
 
         marker, *values = parts
-        assert marker == ExpectedTerminals.POOL_SIZE_MARKER.value
+        assert marker == ExpectedTerminals.POOL_SIZE.value
         assert isinstance(values, list)
         for v in values:
             assert isinstance(v, Terminal)
