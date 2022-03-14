@@ -1,5 +1,5 @@
 start       : _NL* rule+
-rule        : NONTERMINAL ":" (layer | block)
+rule        : NONTERMINAL ":" (layer | block | optimizer)
 NONTERMINAL : NAME
 
 block        : block_option ("|" block_option)*
@@ -25,6 +25,13 @@ max_pooling_layer : MAX_POOL2D pool_sizes strides
 avg_pooling_layer : AVG_POOL2D pool_sizes strides
 pool_sizes        : POOL_SIZE _int_args
 
+optimizer : sgd 
+
+sgd           : SGD learning_rate momentum nesterov
+learning_rate : LEARNING_RATE _float_args
+momentum      : MOMENTUM _float_args
+nesterov      : NESTEROV _bool_args
+
 _int_args : INT_ARG
           | "(" INT_ARG ("|" INT_ARG)* ")"
 INT_ARG   : INT
@@ -32,6 +39,10 @@ INT_ARG   : INT
 _float_args : FLOAT_ARG
             | "(" FLOAT_ARG ("|" FLOAT_ARG)* ")"
 FLOAT_ARG   : FLOAT
+
+_bool_args : BOOL_ARG
+           | "(" BOOL_ARG ("|" BOOL_ARG)* ")"
+BOOL_ARG   : BOOL
 
 RELU  : /"relu"/
 GELU  : /"gelu"/
@@ -50,6 +61,15 @@ BATCHNORM : /"batchnorm"/
 MAX_POOL2D : /"max_pool2d"/
 AVG_POOL2D : /"avg_pool2d"/
 POOL_SIZE  : /"pool_size"/
+
+SGD           : /"sgd"/
+LEARNING_RATE : /"learning_rate"/
+MOMENTUM      : /"momentum"/
+NESTEROV      : /"nesterov"/
+
+BOOL  : TRUE | FALSE
+TRUE  : "true"
+FALSE : "false"
 
 %import common (INT, FLOAT)
 %import common.NEWLINE -> _NL

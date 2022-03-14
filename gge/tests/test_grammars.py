@@ -1,6 +1,5 @@
 import itertools
 
-import hypothesis.strategies as hs
 import pytest
 from hypothesis import given
 
@@ -303,25 +302,14 @@ def test_pooling_layer_in_block() -> None:
 
 
 @given(
-    pool_sizes=ms.grammar_args(
-        hs.lists(
-            elements=hs.integers(min_value=1, max_value=3),
-            min_size=1,
-            max_size=3,
-        )
-    ),
-    strides=ms.grammar_args(
-        hs.lists(
-            elements=hs.integers(min_value=1, max_value=3),
-            min_size=1,
-            max_size=3,
-        )
-    ),
+    pool_sizes=ms.int_args(min_value=1, max_value=9),
+    strides=ms.int_args(min_value=1, max_value=9),
 )
 def test_max_pool2d_def(
-    pool_sizes: ms.GrammarArgs[int],
-    strides: ms.GrammarArgs[int],
+    pool_sizes: ms.GrammarArgs,
+    strides: ms.GrammarArgs,
 ) -> None:
+    # setup
     raw_grammar = (
         'start : "max_pool2d"'
         f' "pool_size" {pool_sizes.text}'
@@ -329,42 +317,35 @@ def test_max_pool2d_def(
     )
     grammar = gr.Grammar(raw_grammar)
 
+    # function under test
     expansions = grammar.expansions(gr.NonTerminal("start"))
-    test_values = itertools.product(pool_sizes.values, strides.values)
 
-    for expansion, (pool_size, stride) in zip(expansions, test_values, strict=True):
+    # asserts
+    test_values = itertools.product(pool_sizes.terminals, strides.terminals)
+    for expansion, (pool_size_term, stride_term) in zip(
+        expansions, test_values, strict=True
+    ):
         expected = gr.RuleOption(
             (
                 gr.ExpectedTerminals.MAX_POOL.value,
                 gr.ExpectedTerminals.POOL_SIZE.value,
-                gr.Terminal(str(pool_size)),
+                pool_size_term,
                 gr.ExpectedTerminals.STRIDE.value,
-                gr.Terminal(str(stride)),
+                stride_term,
             )
         )
         assert expected == expansion
 
 
 @given(
-    pool_sizes=ms.grammar_args(
-        hs.lists(
-            elements=hs.integers(min_value=1, max_value=3),
-            min_size=1,
-            max_size=3,
-        )
-    ),
-    strides=ms.grammar_args(
-        hs.lists(
-            elements=hs.integers(min_value=1, max_value=3),
-            min_size=1,
-            max_size=3,
-        )
-    ),
+    pool_sizes=ms.int_args(min_value=1, max_value=9),
+    strides=ms.int_args(min_value=1, max_value=9),
 )
 def test_avg_pool2d_def(
-    pool_sizes: ms.GrammarArgs[int],
-    strides: ms.GrammarArgs[int],
+    pool_sizes: ms.GrammarArgs,
+    strides: ms.GrammarArgs,
 ) -> None:
+    # setup
     raw_grammar = (
         'start : "avg_pool2d"'
         f' "pool_size" {pool_sizes.text}'
@@ -372,17 +353,20 @@ def test_avg_pool2d_def(
     )
     grammar = gr.Grammar(raw_grammar)
 
+    # function under test
     expansions = grammar.expansions(gr.NonTerminal("start"))
-    test_values = itertools.product(pool_sizes.values, strides.values)
 
-    for expansion, (pool_size, stride) in zip(expansions, test_values, strict=True):
+    test_values = itertools.product(pool_sizes.terminals, strides.terminals)
+    for expansion, (pool_size_term, stride_term) in zip(
+        expansions, test_values, strict=True
+    ):
         expected = gr.RuleOption(
             (
                 gr.ExpectedTerminals.AVG_POOL.value,
                 gr.ExpectedTerminals.POOL_SIZE.value,
-                gr.Terminal(str(pool_size)),
+                pool_size_term,
                 gr.ExpectedTerminals.STRIDE.value,
-                gr.Terminal(str(stride)),
+                stride_term,
             )
         )
         assert expected == expansion
@@ -400,43 +384,16 @@ def test_relu_def() -> None:
 
 
 @given(
-    learning_rate=ms.grammar_args(
-        hs.lists(
-            elements=hs.floats(
-                min_value=0,
-                exclude_min=True,
-                allow_nan=False,
-                allow_infinity=False,
-            ),
-            min_size=1,
-            max_size=3,
-        )
-    ),
-    momentum=ms.grammar_args(
-        hs.lists(
-            elements=hs.floats(
-                min_value=0,
-                exclude_min=True,
-                allow_nan=False,
-                allow_infinity=False,
-            ),
-            min_size=1,
-            max_size=3,
-        )
-    ),
-    nesterov=ms.grammar_args(
-        hs.lists(
-            elements=hs.booleans(),
-            min_size=1,
-            max_size=3,
-        )
-    ),
+    learning_rate=ms.float_args(min_value=0, exclude_min=True),
+    momentum=ms.float_args(min_value=0, exclude_min=True),
+    nesterov=ms.bool_args(),
 )
 def test_sgd_def(
-    learning_rate: ms.GrammarArgs[float],
-    momentum: ms.GrammarArgs[float],
-    nesterov: ms.GrammarArgs[bool],
+    learning_rate: ms.GrammarArgs,
+    momentum: ms.GrammarArgs,
+    nesterov: ms.GrammarArgs,
 ) -> None:
+    # setup
     raw_grammar = (
         'start : "sgd"'
         f' "learning_rate" {learning_rate.text}'
@@ -444,22 +401,29 @@ def test_sgd_def(
         f' "nesterov" {nesterov.text}'
     )
     grammar = gr.Grammar(raw_grammar)
+
+    # function under test
     expansions = grammar.expansions(gr.NonTerminal("start"))
-    for actual_expansion, lr, mom, nest in zip(
+
+    test_values = itertools.product(
+        learning_rate.terminals,
+        momentum.terminals,
+        nesterov.terminals,
+    )
+
+    for actual_expansion, (lr_term, mom_term, nest_term) in zip(
         expansions,
-        learning_rate.values,
-        momentum.values,
-        nesterov.values,
+        test_values,
         strict=True,
     ):
         expected_symbols = (
             gr.ExpectedTerminals.SGD.value,
             gr.ExpectedTerminals.LEARNING_RATE.value,
-            gr.Terminal(str(lr)),
+            lr_term,
             gr.ExpectedTerminals.MOMENTUM.value,
-            gr.Terminal(str(mom)),
+            mom_term,
             gr.ExpectedTerminals.NESTEROV.value,
-            gr.Terminal(str(nest)),
+            nest_term,
         )
         expected_expansion = gr.RuleOption(expected_symbols)
         assert expected_expansion == actual_expansion
