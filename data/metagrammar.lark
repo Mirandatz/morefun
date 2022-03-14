@@ -25,12 +25,18 @@ max_pooling_layer : MAX_POOL2D pool_sizes strides
 avg_pooling_layer : AVG_POOL2D pool_sizes strides
 pool_sizes        : POOL_SIZE _int_args
 
-optimizer : sgd 
+optimizer : sgd | adam
 
 sgd           : SGD learning_rate momentum nesterov
 learning_rate : LEARNING_RATE _float_args
 momentum      : MOMENTUM _float_args
 nesterov      : NESTEROV _bool_args
+
+adam : ADAM learning_rate beta1 beta2 epsilon amsgrad
+beta1: BETA1 _float_args
+beta2: BETA2 _float_args
+epsilon: EPSILON _float_args
+amsgrad: AMSGRAD _bool_args
 
 _int_args : INT_ARG
           | "(" INT_ARG ("|" INT_ARG)* ")"
@@ -66,6 +72,12 @@ SGD           : /"sgd"/
 LEARNING_RATE : /"learning_rate"/
 MOMENTUM      : /"momentum"/
 NESTEROV      : /"nesterov"/
+
+ADAM    : /"adam"/
+BETA1   : /"beta1"/
+BETA2   : /"beta2"/
+EPSILON : /"epsilon"/
+AMSGRAD : /"amsgrad"/
 
 BOOL  : TRUE | FALSE
 TRUE  : "true"

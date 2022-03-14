@@ -342,9 +342,6 @@ class Grammar:
         return self._as_tuple == other._as_tuple
 
 
-MarkerValuePair = tuple[Terminal, Terminal]
-
-
 class ExpectedTerminals(enum.Enum):
 
     CONV2D = Terminal('"conv2d"')
@@ -366,6 +363,26 @@ class ExpectedTerminals(enum.Enum):
     LEARNING_RATE = Terminal('"learning_rate"')
     MOMENTUM = Terminal('"momentum"')
     NESTEROV = Terminal('"nesterov"')
+
+    ADAM = Terminal('"adam"')
+    BETA1 = Terminal('"beta1"')
+    BETA2 = Terminal('"beta2"')
+    EPSILON = Terminal('"epsilon"')
+    AMSGRAD = Terminal('"amsgrad"')
+
+
+MarkerValuePair = tuple[Terminal, Terminal]
+
+
+def _list_of_marker_value_pairs(parts: typing.Any) -> list[MarkerValuePair]:
+    marker, *values = parts
+
+    assert isinstance(marker, Terminal)
+    assert isinstance(values, list), type(values)
+    for v in values:
+        assert isinstance(v, Terminal)
+
+    return [(marker, v) for v in values]
 
 
 class GrammarTransformer(gge_transformers.SinglePassTransformer):
@@ -669,28 +686,84 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
     @lark.v_args(inline=False)
     def momentum(self, parts: typing.Any) -> list[MarkerValuePair]:
         self._raise_if_not_running()
-
-        marker, *values = parts
-
-        assert isinstance(marker, Terminal)
-        assert isinstance(values, list)
-        for v in values:
-            assert isinstance(v, Terminal)
-
-        return [(marker, v) for v in values]
+        return _list_of_marker_value_pairs(parts)
 
     @lark.v_args(inline=False)
     def nesterov(self, parts: typing.Any) -> list[MarkerValuePair]:
         self._raise_if_not_running()
+        return _list_of_marker_value_pairs(parts)
 
-        marker, *values = parts
+    @lark.v_args(inline=True)
+    def adam(
+        self,
+        marker: Terminal,
+        learning_rate: list[MarkerValuePair],
+        beta1: list[MarkerValuePair],
+        beta2: list[MarkerValuePair],
+        epsilon: list[MarkerValuePair],
+        amsgrad: list[MarkerValuePair],
+    ) -> list[RuleOption]:
+        self._raise_if_not_running()
 
         assert isinstance(marker, Terminal)
-        assert isinstance(values, list)
-        for v in values:
+
+        assert isinstance(learning_rate, list)
+        for m, v in learning_rate:
+            assert isinstance(m, Terminal)
             assert isinstance(v, Terminal)
 
-        return [(marker, v) for v in values]
+        assert isinstance(beta1, list)
+        for m, v in beta1:
+            assert isinstance(m, Terminal)
+            assert isinstance(v, Terminal)
+
+        assert isinstance(beta2, list)
+        for m, v in beta2:
+            assert isinstance(m, Terminal)
+            assert isinstance(v, Terminal)
+
+        assert isinstance(epsilon, list)
+        for m, v in epsilon:
+            assert isinstance(m, Terminal)
+            assert isinstance(v, Terminal)
+
+        assert isinstance(amsgrad, list)
+        for m, v in amsgrad:
+            assert isinstance(m, Terminal)
+            assert isinstance(v, Terminal)
+
+        combinations = itertools.product(
+            learning_rate,
+            beta1,
+            beta2,
+            epsilon,
+            amsgrad,
+        )
+
+        return [
+            RuleOption((marker, *lr, *b1, *b2, *eps, *ams))
+            for lr, b1, b2, eps, ams in combinations
+        ]
+
+    @lark.v_args(inline=False)
+    def beta1(self, parts: typing.Any) -> list[MarkerValuePair]:
+        self._raise_if_not_running()
+        return _list_of_marker_value_pairs(parts)
+
+    @lark.v_args(inline=False)
+    def beta2(self, parts: typing.Any) -> list[MarkerValuePair]:
+        self._raise_if_not_running()
+        return _list_of_marker_value_pairs(parts)
+
+    @lark.v_args(inline=False)
+    def epsilon(self, parts: typing.Any) -> list[MarkerValuePair]:
+        self._raise_if_not_running()
+        return _list_of_marker_value_pairs(parts)
+
+    @lark.v_args(inline=False)
+    def amsgrad(self, parts: typing.Any) -> list[MarkerValuePair]:
+        self._raise_if_not_running()
+        return _list_of_marker_value_pairs(parts)
 
     def BATCHNORM(self, token: lark.Token) -> Terminal:
         self._raise_if_not_running()
@@ -794,4 +867,29 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
         self._raise_if_not_running()
         assert isinstance(token, lark.Token)
 
+        return self._register_terminal(token.value)
+
+    def ADAM(self, token: lark.Token) -> Terminal:
+        self._raise_if_not_running()
+        assert isinstance(token, lark.Token)
+        return self._register_terminal(token.value)
+
+    def BETA1(self, token: lark.Token) -> Terminal:
+        self._raise_if_not_running()
+        assert isinstance(token, lark.Token)
+        return self._register_terminal(token.value)
+
+    def BETA2(self, token: lark.Token) -> Terminal:
+        self._raise_if_not_running()
+        assert isinstance(token, lark.Token)
+        return self._register_terminal(token.value)
+
+    def EPSILON(self, token: lark.Token) -> Terminal:
+        self._raise_if_not_running()
+        assert isinstance(token, lark.Token)
+        return self._register_terminal(token.value)
+
+    def AMSGRAD(self, token: lark.Token) -> Terminal:
+        self._raise_if_not_running()
+        assert isinstance(token, lark.Token)
         return self._register_terminal(token.value)

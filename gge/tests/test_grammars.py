@@ -427,3 +427,69 @@ def test_sgd_def(
         )
         expected_expansion = gr.RuleOption(expected_symbols)
         assert expected_expansion == actual_expansion
+
+
+@given(
+    learning_rate=ms.float_args(min_value=0, exclude_min=True),
+    beta1=ms.float_args(min_value=0, exclude_min=True),
+    beta2=ms.float_args(min_value=0, exclude_min=True),
+    epsilon=ms.float_args(min_value=0, exclude_min=True),
+    amsgrad=ms.bool_args(),
+)
+def test_adam_def(
+    learning_rate: ms.GrammarArgs,
+    beta1: ms.GrammarArgs,
+    beta2: ms.GrammarArgs,
+    epsilon: ms.GrammarArgs,
+    amsgrad: ms.GrammarArgs,
+) -> None:
+    # setup
+    raw_grammar = (
+        'start : "adam"'
+        f' "learning_rate" {learning_rate.text}'
+        f' "beta1" {beta1.text}'
+        f' "beta2" {beta2.text}'
+        f' "epsilon" {epsilon.text}'
+        f' "amsgrad" {amsgrad.text}'
+    )
+    grammar = gr.Grammar(raw_grammar)
+
+    # function under test
+    expansions = grammar.expansions(gr.NonTerminal("start"))
+
+    test_values = itertools.product(
+        learning_rate.terminals,
+        beta1.terminals,
+        beta2.terminals,
+        epsilon.terminals,
+        amsgrad.terminals,
+    )
+
+    for actual_expansion, terminals in zip(
+        expansions,
+        test_values,
+        strict=True,
+    ):
+        (
+            lr_term,
+            beta1_term,
+            beta2_term,
+            epsilon_term,
+            amsgrad_term,
+        ) = terminals
+
+        expected_symbols = (
+            gr.ExpectedTerminals.ADAM.value,
+            gr.ExpectedTerminals.LEARNING_RATE.value,
+            lr_term,
+            gr.ExpectedTerminals.BETA1.value,
+            beta1_term,
+            gr.ExpectedTerminals.BETA2.value,
+            beta2_term,
+            gr.ExpectedTerminals.EPSILON.value,
+            epsilon_term,
+            gr.ExpectedTerminals.AMSGRAD.value,
+            amsgrad_term,
+        )
+        expected_expansion = gr.RuleOption(expected_symbols)
+        assert expected_expansion == actual_expansion
