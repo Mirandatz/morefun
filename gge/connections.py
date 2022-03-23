@@ -47,6 +47,9 @@ class ConnectionsSchema:
         for ml in self.merge_params:
             assert isinstance(ml, MergeParameters)
 
+    def is_empty(self) -> bool:
+        return len(self.merge_params) == 0
+
 
 def extract_forks_masks_lengths(backbone: bb.Backbone) -> tuple[int, ...]:
     lengths = []
@@ -162,14 +165,14 @@ def make_shortcut(
         return downsampling_shortcut(
             source=source,
             target_shape=target_shape,
-            name=name_gen.gen_name(gl.Conv2D),
+            name="shortcut_" + name_gen.gen_name(gl.Conv2D),
         )
 
     elif mode == ReshapeStrategy.UPSAMPLE:
         return upsampling_shortcut(
             source=source,
             target_shape=target_shape,
-            name=name_gen.gen_name(gl.Conv2DTranspose),
+            name="shortcut_" + name_gen.gen_name(gl.Conv2DTranspose),
         )
 
     else:
@@ -200,7 +203,7 @@ def make_merge(
     merge_strategy: MergeStrategy,
     name_gen: ng.NameGenerator,
 ) -> gl.MultiInputLayer:
-    assert len(sources) >= 1
+    assert len(sources) > 1
 
     src_shapes = [src.output_shape for src in sources]
     target_shape = select_target_shape(
@@ -224,10 +227,16 @@ def make_merge(
     ]
 
     if merge_strategy == MergeStrategy.ADD:
-        return gl.ConnectedAdd(tuple(shorcuts))
+        return gl.ConnectedAdd(
+            input_layers=tuple(shorcuts),
+            name=name_gen.gen_name(gl.ConnectedAdd),
+        )
 
     elif merge_strategy == MergeStrategy.CONCAT:
-        return gl.ConnectedConcatenate(tuple(shorcuts))
+        return gl.ConnectedConcatenate(
+            input_layers=tuple(shorcuts),
+            name=name_gen.gen_name(gl.ConnectedConcatenate),
+        )
 
     else:
         raise ValueError(f"unknown MergeStrategy: {merge_strategy}")
@@ -248,33 +257,11 @@ class StatefulLayerConnector:
     def previous_layer(self) -> gl.ConnectableLayer:
         return self._previous_layer
 
-    def _connect_single_input_layer(self, layer: gl.Layer) -> None:
-        if isinstance(layer, gl.Conv2D):
-            self._previous_layer = gl.ConnectedConv2D(
-                self._previous_layer,
-                layer,
-            )
-
-        elif isinstance(layer, gl.Conv2DTranspose):
-            self._previous_layer = gl.ConnectedConv2DTranspose(
-                self._previous_layer,
-                layer,
-            )
-
-        elif isinstance(layer, gl.Pool2D):
-            self._previous_layer = gl.ConnectedPool2D(
-                self._previous_layer,
-                layer,
-            )
-
-        elif isinstance(layer, gl.BatchNorm):
-            self._previous_layer = gl.ConnectedBatchNorm(
-                self._previous_layer,
-                layer,
-            )
-
-        else:
-            raise ValueError(f"unknown layer type: {layer}")
+    def _connect_single_input_layer(
+        self,
+        layer: gl.ConvertibleToConnectableLayer,
+    ) -> None:
+        self._previous_layer = layer.to_connectable(self.previous_layer)
 
     def _register_fork_point(self) -> None:
         self._fork_points.append(self._previous_layer)
@@ -296,6 +283,11 @@ class StatefulLayerConnector:
         # same as traditional `list(set(sources))` but keeps the ordering
         sources_without_duplicates_and_in_same_order = list(dict.fromkeys(sources))
 
+        if len(sources_without_duplicates_and_in_same_order) == 1:
+            # we can't create and "merge layer" with only one input,
+            # so we just pass-through the output of the previous layer instead
+            return
+
         merge = make_merge(
             sources=sources_without_duplicates_and_in_same_order,
             reshape_strategy=merge_params.reshape_strategy,
@@ -306,7 +298,7 @@ class StatefulLayerConnector:
         self._previous_layer = merge
 
     def process_layer(self, layer: gl.Layer) -> None:
-        if gl.is_real_layer(layer):
+        if isinstance(layer, gl.ConvertibleToConnectableLayer):
             self._connect_single_input_layer(layer)
 
         elif gl.is_fork_marker(layer):

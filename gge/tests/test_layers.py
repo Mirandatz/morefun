@@ -1,7 +1,12 @@
-from hypothesis import assume, example, given
+import hypothesis
 import hypothesis.strategies as hs
+import pytest
+from hypothesis import assume, example, given
 
 import gge.layers as gl
+import gge.tests.strategies as gge_hs
+
+tensorflow_settings = hypothesis.settings(deadline=1000)
 
 
 @given(
@@ -111,3 +116,27 @@ def test_conv2d_output_shape(
     actual = connected.output_shape
     expected = gl.Shape(output_width, output_height, filter_count)
     assert expected == actual
+
+
+# This ensures that tensorflow allocates memory on the cpu,
+# which greatly reduces test run times (and resources required)
+@pytest.fixture(autouse=True)
+def disable_gpu() -> None:
+    import tensorflow
+
+    tensorflow.config.set_visible_devices([], "GPU")
+
+
+@tensorflow_settings
+@given(gge_hs.connected_conv2d())
+def test_conv2d_tensor_shape(layer: gl.ConnectedConv2D) -> None:
+    """Output shape of ConnectedConv2D layer should match the tensor equivalent."""
+
+    tensor_shape = layer.to_tensor().shape
+    _, expected_width, expected_height, expected_depth = tensor_shape
+
+    actual_shape = layer.output_shape
+
+    assert expected_width == actual_shape.width
+    assert expected_height == actual_shape.height
+    assert expected_depth == actual_shape.depth

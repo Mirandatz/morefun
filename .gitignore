@@ -9,9 +9,13 @@ __pycache__/
 # pyenv
 .python-version
 
-# playground
+# playground & debugging
+gge/debug_playground.py
+debug_data/
 gge/playground.py
 
 # test history
 .hypothesis/
 
+# rsync scripts
+rsync_to_euler.bash

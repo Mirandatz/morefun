@@ -5,7 +5,6 @@ import pathlib
 import typing
 
 import lark
-
 from loguru import logger
 
 import gge.transformers as gge_transformers
@@ -522,21 +521,19 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer[GrammarComponent
         combinations = itertools.product(types, strides)
         return [RuleOption((marker, *tp, *st)) for tp, st in combinations]
 
-    @lark.v_args(inline=True)
     def pooling_type_seq(
         self,
-        marker: Terminal,
-        *values: Terminal,
-    ) -> list[tuple[Terminal, Terminal]]:
-        return [(marker, v) for v in values]
+        values: list[Terminal],
+    ) -> list[tuple[Terminal]]:
+        return [(v,) for v in values]
 
     @lark.v_args(inline=True)
     def pooling_stride_seq(
         self,
         marker: Terminal,
         *values: Terminal,
-    ) -> list[tuple[Terminal, Terminal]]:
-        return [(marker, v) for v in values]
+    ) -> list[tuple[Terminal]]:
+        return [(v,) for v in values]
 
     def BATCHNORM(self, token: lark.Token) -> Terminal:
         self._raise_if_not_running()

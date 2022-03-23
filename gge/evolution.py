@@ -1,6 +1,7 @@
 import datetime as dt
 import pathlib
 import pickle
+import sys
 import typing
 
 import numpy as np
@@ -157,10 +158,12 @@ class PrintStatistics:
         std = np.std(fitnesses)
         max_ = np.max(fitnesses)
 
-        logger.success(
+        msg = (
             f"Finished generation=<{self._gen_nr}>,"
-            + f" mean fit=>{format_fitness(mean)} +/- {format_fitness(std)}>,"
+            + f" mean fit=<{format_fitness(mean)} +/- {format_fitness(std)}>,"
             + f" max fit=<{format_fitness(max_)}>"
         )
+
+        logger.success(msg)
 
         self._gen_nr += 1

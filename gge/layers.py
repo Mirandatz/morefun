@@ -1,9 +1,13 @@
-import dataclasses
+import abc
 import enum
 import fractions
 import itertools
 import math
 import typing
+
+import attrs
+import keras.layers as kl
+import tensorflow as tf
 
 
 @enum.unique
@@ -12,12 +16,12 @@ class MarkerType(enum.Enum):
     MERGE_POINT = enum.auto()
 
 
-@dataclasses.dataclass(frozen=True)
+@attrs.frozen(cache_hash=True)
 class MarkerLayer:
     name: str
     mark_type: MarkerType
 
-    def __post_init__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         assert isinstance(self.name, str)
         assert isinstance(self.mark_type, MarkerType)
 
@@ -33,14 +37,20 @@ def make_merge(name: str) -> MarkerLayer:
     return MarkerLayer(name, MarkerType.MERGE_POINT)
 
 
-@dataclasses.dataclass(frozen=True)
-class Conv2D:
+class ConvertibleToConnectableLayer(abc.ABC):
+    @abc.abstractmethod
+    def to_connectable(self, input: "ConnectableLayer") -> "ConnectableLayer":
+        raise NotImplementedError("this is an abstract method")
+
+
+@attrs.frozen(cache_hash=True)
+class Conv2D(ConvertibleToConnectableLayer):
     name: str
     filter_count: int
     kernel_size: int
     stride: int
 
-    def __post_init__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         assert isinstance(self.name, str)
         assert isinstance(self.filter_count, int)
         assert isinstance(self.kernel_size, int)
@@ -51,15 +61,20 @@ class Conv2D:
         assert self.kernel_size > 0
         assert self.stride > 0
 
+    def to_connectable(self, input: "ConnectableLayer") -> "ConnectedConv2D":
+        return ConnectedConv2D(input, self)
 
-@dataclasses.dataclass(frozen=True)
-class Conv2DTranspose:
+
+# MUST RENAME THIS LATER
+@attrs.frozen(cache_hash=True)
+class Conv2DTranspose(ConvertibleToConnectableLayer):
+
     name: str
     filter_count: int
     kernel_size: int
     stride: int
 
-    def __post_init__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         assert isinstance(self.name, str)
         assert isinstance(self.filter_count, int)
         assert isinstance(self.kernel_size, int)
@@ -69,6 +84,9 @@ class Conv2DTranspose:
         assert self.filter_count > 0
         assert self.kernel_size > 0
         assert self.stride > 0
+
+    def to_connectable(self, input: "ConnectableLayer") -> "ConnectedConv2DTranspose":
+        return ConnectedConv2DTranspose(input, self)
 
 
 @enum.unique
@@ -77,13 +95,13 @@ class PoolType(enum.Enum):
     AVG_POOLING = enum.auto()
 
 
-@dataclasses.dataclass(frozen=True)
-class Pool2D:
+@attrs.frozen(cache_hash=True)
+class Pool2D(ConvertibleToConnectableLayer):
     name: str
     pooling_type: PoolType
     stride: int
 
-    def __post_init__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         assert isinstance(self.name, str)
         assert isinstance(self.pooling_type, PoolType)
         assert isinstance(self.stride, int)
@@ -91,46 +109,59 @@ class Pool2D:
         assert self.name
         assert self.stride > 0
 
+    def to_connectable(self, input: "ConnectableLayer") -> "ConnectedPool2D":
+        return ConnectedPool2D(input, self)
 
-@dataclasses.dataclass(frozen=True)
-class BatchNorm:
+
+@attrs.frozen(cache_hash=True)
+class BatchNorm(ConvertibleToConnectableLayer):
     name: str
 
-    def __post_init__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         assert isinstance(self.name, str)
         assert self.name
 
+    def to_connectable(self, input: "ConnectableLayer") -> "ConnectedBatchNorm":
+        return ConnectedBatchNorm(input, self)
 
-@dataclasses.dataclass(frozen=True)
-class Relu:
+
+@attrs.frozen(cache_hash=True)
+class Relu(ConvertibleToConnectableLayer):
     name: str
 
-    def __post_init__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         assert isinstance(self.name, str)
         assert self.name
 
+    def to_connectable(self, input: "ConnectableLayer") -> "ConnectedRelu":
+        return ConnectedRelu(input, self)
 
-@dataclasses.dataclass(frozen=True)
-class Gelu:
+
+@attrs.frozen(cache_hash=True)
+class Gelu(ConvertibleToConnectableLayer):
     name: str
 
-    def __post_init__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         assert isinstance(self.name, str)
         assert self.name
 
+    def to_connectable(self, input: "ConnectableLayer") -> "ConnectedGelu":
+        return ConnectedGelu(input, self)
 
-@dataclasses.dataclass(frozen=True)
-class Swish:
+
+@attrs.frozen(cache_hash=True)
+class Swish(ConvertibleToConnectableLayer):
     name: str
 
-    def __post_init__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         assert isinstance(self.name, str)
         assert self.name
 
+    def to_connectable(self, input: "ConnectableLayer") -> "ConnectedSwish":
+        return ConnectedSwish(input, self)
 
-Layer: typing.TypeAlias = (
-    Conv2D | Pool2D | BatchNorm | MarkerLayer | Relu | Gelu | Swish
-)
+
+Layer: typing.TypeAlias = ConvertibleToConnectableLayer | MarkerLayer
 
 
 def is_real_layer(layer: Layer) -> bool:
@@ -146,13 +177,13 @@ def is_merge_marker(layer: Layer) -> bool:
     return isinstance(layer, MarkerLayer) and layer.mark_type == MarkerType.MERGE_POINT
 
 
-@dataclasses.dataclass(frozen=True)
+@attrs.frozen(cache_hash=True)
 class Shape:
     width: int
     height: int
     depth: int
 
-    def __post_int__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         assert isinstance(self.width, int)
         assert isinstance(self.height, int)
         assert isinstance(self.depth, int)
@@ -169,41 +200,76 @@ class Shape:
         return f"{self.width, self.height, self.depth}"
 
 
-@typing.runtime_checkable
-class ConnectableLayer(typing.Protocol):
+class ConnectableLayer(abc.ABC):
     @property
+    @abc.abstractmethod
     def output_shape(self) -> Shape:
-        ...
+        raise NotImplementedError("this is an abstract method")
 
+    @abc.abstractmethod
+    def to_tensor(
+        self,
+        known_tensores: dict["ConnectableLayer", tf.Tensor],
+    ) -> tf.Tensor:
+        """
+        DOCUMENT WHY THE API IS LIKE THIS.
+        """
+        raise NotImplementedError("this is an abstract method")
 
-@typing.runtime_checkable
-class SingleInputLayer(ConnectableLayer, typing.Protocol):
     @property
+    @abc.abstractmethod
+    def name(self) -> str:
+        raise NotImplementedError("this is an abstract method")
+
+
+class SingleInputLayer(ConnectableLayer):
+    @property
+    @abc.abstractmethod
     def input_layer(self) -> ConnectableLayer:
         ...
 
 
-@typing.runtime_checkable
-class MultiInputLayer(ConnectableLayer, typing.Protocol):
+class MultiInputLayer(ConnectableLayer):
     @property
+    @abc.abstractmethod
     def input_layers(self) -> tuple[ConnectableLayer, ...]:
         ...
 
 
-@dataclasses.dataclass(frozen=True)
-class Input:
+@attrs.frozen(cache_hash=True)
+class Input(ConnectableLayer):
+    NAME: typing.ClassVar[str] = "input"
+
     shape: Shape
 
-    def __post_int__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         assert isinstance(self.shape, Shape)
 
     @property
     def name(self) -> str:
-        return "input"
+        # We rely on this being a constant, do not change!
+        return Input.NAME
 
     @property
     def output_shape(self) -> Shape:
         return self.shape
+
+    def to_tensor(
+        self,
+        known_tensores: dict["ConnectableLayer", tf.Tensor],
+    ) -> tf.Tensor:
+        if self not in known_tensores:
+            tensor = kl.Input(
+                shape=(
+                    self.shape.width,
+                    self.shape.height,
+                    self.shape.depth,
+                ),
+                name=self.name,
+            )
+            known_tensores[self] = tensor
+
+        return known_tensores[self]
 
 
 def make_input(width: int, height: int, depth: int) -> Input:
@@ -211,14 +277,18 @@ def make_input(width: int, height: int, depth: int) -> Input:
     return Input(shape)
 
 
-@dataclasses.dataclass(frozen=True)
-class ConnectedConv2D:
+@attrs.frozen(cache_hash=True)
+class ConnectedConv2D(SingleInputLayer):
     input_layer: ConnectableLayer
     params: Conv2D
 
-    def __post_int__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         assert isinstance(self.input_layer, ConnectableLayer)
         assert isinstance(self.params, Conv2D)
+
+    @property
+    def name(self) -> str:
+        return self.params.name
 
     @property
     def output_shape(self) -> Shape:
@@ -229,18 +299,45 @@ class ConnectedConv2D:
         out_depth = self.params.filter_count
         return Shape(width=out_width, height=out_height, depth=out_depth)
 
+    def to_tensor(
+        self,
+        known_tensores: dict["ConnectableLayer", tf.Tensor],
+    ) -> tf.Tensor:
+        if self not in known_tensores:
+            source = self.input_layer.to_tensor(known_tensores)
+
+            params = self.params
+            strides = (params.stride, params.stride)
+
+            layer = kl.Conv2D(
+                filters=params.filter_count,
+                kernel_size=params.kernel_size,
+                strides=strides,
+                padding="same",
+                name=params.name,
+            )
+            tensor = layer(source)
+            known_tensores[self] = tensor
+
+        return known_tensores[self]
+
     def __repr__(self) -> str:
-        return f"{self.params.name}: out_shape=[{self.output_shape}]"
+        return f"{self.params.name}, params={self.params}, input={self.input_layer}, out_shape=[{self.output_shape}]"
 
 
-@dataclasses.dataclass(frozen=True)
-class ConnectedConv2DTranspose:
+# MUST RENAME THIS LATER
+@attrs.frozen(cache_hash=True)
+class ConnectedConv2DTranspose(SingleInputLayer):
     input_layer: ConnectableLayer
     params: Conv2DTranspose
 
-    def __post_int__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         assert isinstance(self.input_layer, ConnectableLayer)
         assert isinstance(self.params, Conv2DTranspose)
+
+    @property
+    def name(self) -> str:
+        return self.params.name
 
     @property
     def output_shape(self) -> Shape:
@@ -251,18 +348,55 @@ class ConnectedConv2DTranspose:
         out_depth = self.params.filter_count
         return Shape(width=out_width, height=out_height, depth=out_depth)
 
+    def to_tensor(
+        self,
+        known_tensores: dict["ConnectableLayer", tf.Tensor],
+    ) -> tf.Tensor:
+        if self not in known_tensores:
+            source = self.input_layer.to_tensor(known_tensores)
+
+            params = self.params
+            strides = (params.stride, params.stride)
+
+            # layer = kl.Conv2DTranspose(
+            #     filters=params.filter_count,
+            #     kernel_size=params.kernel_size,
+            #     strides=strides,
+            #     padding="same",
+            #     name=params.name,
+            # )
+            conv = kl.Conv2D(
+                filters=params.filter_count,
+                kernel_size=params.kernel_size,
+                strides=1,
+                padding="same",
+                name=params.name + "_conv",
+            )(source)
+            upsample = kl.UpSampling2D(
+                size=strides,
+                name=params.name + "_upsample",
+            )(conv)
+            known_tensores[self] = upsample
+
+        return known_tensores[self]
+
     def __repr__(self) -> str:
-        return f"{self.params.name}: out_shape=[{self.output_shape}]"
+        return f"{self.params.name}, params={self.params}, input={self.input_layer}, out_shape=[{self.output_shape}]"
 
 
-@dataclasses.dataclass(frozen=True)
-class ConnectedPool2D:
+# MUST REFACTOR THIS LATER
+@attrs.frozen(cache_hash=True)
+class ConnectedPool2D(SingleInputLayer):
     input_layer: ConnectableLayer
     params: Pool2D
 
-    def __post_int__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         assert isinstance(self.input_layer, ConnectableLayer)
         assert isinstance(self.params, Pool2D)
+
+    @property
+    def name(self) -> str:
+        return self.params.name
 
     @property
     def output_shape(self) -> Shape:
@@ -273,37 +407,91 @@ class ConnectedPool2D:
         out_depth = input_shape.depth
         return Shape(width=out_width, height=out_height, depth=out_depth)
 
+    def to_tensor(
+        self,
+        known_tensores: dict["ConnectableLayer", tf.Tensor],
+    ) -> tf.Tensor:
+        if self not in known_tensores:
+            source = self.input_layer.to_tensor(known_tensores)
+
+            params = self.params
+            pooling_type = params.pooling_type
+            pool_size = (params.stride, params.stride)
+
+            match pooling_type:
+                case PoolType.MAX_POOLING:
+                    layer = kl.MaxPool2D(
+                        pool_size=pool_size,
+                        padding="same",
+                        name=params.name,
+                    )
+                    tensor = layer(source)
+                    known_tensores[self] = tensor
+
+                case PoolType.AVG_POOLING:
+                    layer = kl.AveragePooling2D(
+                        pool_size=pool_size,
+                        padding="same",
+                        name=params.name,
+                    )
+                    tensor = layer(source)
+                    known_tensores[self] = tensor
+
+                case unknown:
+                    raise ValueError(f"unknown pooling type: {unknown}")
+
+        return known_tensores[self]
+
     def __repr__(self) -> str:
         return f"{self.params.name}: out_shape=[{self.output_shape}]"
 
 
-@dataclasses.dataclass(frozen=True)
-class ConnectedBatchNorm:
+@attrs.frozen(cache_hash=True)
+class ConnectedBatchNorm(SingleInputLayer):
     input_layer: ConnectableLayer
     params: BatchNorm
 
-    def __post_int__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         assert isinstance(self.input_layer, ConnectableLayer)
         assert isinstance(self.params, BatchNorm)
+
+    @property
+    def name(self) -> str:
+        return self.params.name
 
     @property
     def output_shape(self) -> Shape:
         return self.input_layer.output_shape
 
+    def to_tensor(
+        self,
+        known_tensores: dict["ConnectableLayer", tf.Tensor],
+    ) -> tf.Tensor:
+        if self not in known_tensores:
+            source = self.input_layer.to_tensor(known_tensores)
+            layer = kl.BatchNormalization(name=self.params.name)
+            tensor = layer(source)
+            known_tensores[self] = tensor
+        return known_tensores[self]
+
     def __repr__(self) -> str:
         return f"{self.params.name}: out_shape=[{self.output_shape}]"
 
 
-@dataclasses.dataclass(frozen=True)
-class ConnectedAdd:
+@attrs.frozen(cache_hash=True)
+class ConnectedAdd(MultiInputLayer):
+    name: str
     input_layers: tuple[ConnectableLayer, ...]
 
-    def __post_init__(self) -> None:
+    def __attrs_post_init__(self) -> None:
+        assert isinstance(self.name, str)
+        assert self.name
+
         assert isinstance(self.input_layers, tuple)
         for layer in self.input_layers:
             assert isinstance(layer, ConnectableLayer)
 
-        assert len(self.input_layers) >= 1
+        assert len(self.input_layers) > 1
 
         shapes = (layer.output_shape for layer in self.input_layers)
         if len(set(shapes)) != 1:
@@ -317,20 +505,36 @@ class ConnectedAdd:
         shape: Shape = self.input_layers[0].output_shape
         return shape
 
+    def to_tensor(
+        self,
+        known_tensores: dict["ConnectableLayer", tf.Tensor],
+    ) -> tf.Tensor:
+        if self not in known_tensores:
+            sources = [src.to_tensor(known_tensores) for src in self.input_layers]
+            layer = kl.Add(name=self.name)
+            tensor = layer(sources)
+            known_tensores[self] = tensor
+        return known_tensores[self]
+
     def __repr__(self) -> str:
-        return f"add: out_shape=[{self.output_shape}]"
+        return f"{self.name}: out_shape=[{self.output_shape}]"
 
 
-@dataclasses.dataclass(frozen=True)
-class ConnectedConcatenate:
+@attrs.frozen(cache_hash=True)
+class ConnectedConcatenate(MultiInputLayer):
+    name: str
     input_layers: tuple[ConnectableLayer, ...]
 
-    def __post_init__(self) -> None:
+    def __attrs_post_init__(self) -> None:
+        assert isinstance(self.name, str)
+        assert self.name
+
         assert isinstance(self.input_layers, tuple)
         for layer in self.input_layers:
             assert isinstance(layer, ConnectableLayer)
 
-        assert len(self.input_layers) >= 1
+        assert len(self.input_layers) > 1
+
         for a, b in itertools.pairwise(self.input_layers):
             assert a.output_shape.width == b.output_shape.width
             assert a.output_shape.height == b.output_shape.height
@@ -350,56 +554,121 @@ class ConnectedConcatenate:
             depth=total_depth,
         )
 
+    def to_tensor(
+        self,
+        known_tensores: dict["ConnectableLayer", tf.Tensor],
+    ) -> tf.Tensor:
+        if self not in known_tensores:
+            sources = [src.to_tensor(known_tensores) for src in self.input_layers]
+            layer = kl.Concatenate(name=self.name)
+            tensor = layer(sources)
+            known_tensores[self] = tensor
+        return known_tensores[self]
+
     def __repr__(self) -> str:
-        return f"concatenate: out_shape=[{self.output_shape}]"
+        return f"{self.name}: out_shape=[{self.output_shape}]"
 
 
-@dataclasses.dataclass(frozen=True)
-class ConnectedRelu:
+@attrs.frozen(cache_hash=True)
+class ConnectedRelu(SingleInputLayer):
     input_layer: ConnectableLayer
     params: Relu
 
-    def __post_int__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         assert isinstance(self.input_layer, ConnectableLayer)
         assert isinstance(self.params, Relu)
 
     @property
+    def name(self) -> str:
+        return self.params.name
+
+    @property
     def output_shape(self) -> Shape:
         return self.input_layer.output_shape
+
+    def to_tensor(
+        self,
+        known_tensores: dict["ConnectableLayer", tf.Tensor],
+    ) -> tf.Tensor:
+        if self not in known_tensores:
+            source = self.input_layer.to_tensor(known_tensores)
+            layer = kl.Activation(
+                activation=tf.nn.relu,
+                name=self.params.name,
+            )
+            tensor = layer(source)
+            known_tensores[self] = tensor
+        return known_tensores[self]
 
     def __repr__(self) -> str:
         return f"{self.params.name}: out_shape=[{self.output_shape}]"
 
 
-@dataclasses.dataclass(frozen=True)
-class ConnectedGelu:
+@attrs.frozen(cache_hash=True)
+class ConnectedGelu(SingleInputLayer):
     input_layer: ConnectableLayer
     params: Gelu
 
-    def __post_int__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         assert isinstance(self.input_layer, ConnectableLayer)
         assert isinstance(self.params, Gelu)
 
     @property
+    def name(self) -> str:
+        return self.params.name
+
+    @property
     def output_shape(self) -> Shape:
         return self.input_layer.output_shape
+
+    def to_tensor(
+        self,
+        known_tensores: dict["ConnectableLayer", tf.Tensor],
+    ) -> tf.Tensor:
+        if self not in known_tensores:
+            source = self.input_layer.to_tensor(known_tensores)
+            layer = kl.Activation(
+                activation=tf.nn.gelu,
+                name=self.params.name,
+            )
+            tensor = layer(source)
+            known_tensores[self] = tensor
+        return known_tensores[self]
 
     def __repr__(self) -> str:
         return f"{self.params.name}: out_shape=[{self.output_shape}]"
 
 
-@dataclasses.dataclass(frozen=True)
-class ConnectedSwish:
+@attrs.frozen(cache_hash=True)
+class ConnectedSwish(SingleInputLayer):
     input_layer: ConnectableLayer
     params: Swish
 
-    def __post_int__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         assert isinstance(self.input_layer, ConnectableLayer)
         assert isinstance(self.params, Swish)
 
     @property
+    def name(self) -> str:
+        return self.params.name
+
+    @property
     def output_shape(self) -> Shape:
         return self.input_layer.output_shape
+
+    def to_tensor(
+        self,
+        known_tensores: dict["ConnectableLayer", tf.Tensor],
+    ) -> tf.Tensor:
+        if self not in known_tensores:
+            source = self.input_layer.to_tensor(known_tensores)
+            layer = kl.Activation(
+                activation=tf.nn.swish,
+                name=self.params.name,
+            )
+            tensor = layer(source)
+            known_tensores[self] = tensor
+        return known_tensores[self]
 
     def __repr__(self) -> str:
         return f"{self.params.name}: out_shape=[{self.output_shape}]"

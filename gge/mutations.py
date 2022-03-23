@@ -45,11 +45,18 @@ def mutate(
     grammar: gr.Grammar,
     rng: rand.RNG,
 ) -> cg.CompositeGenotype:
-    options = ["backbone", "connections"]
+    BACKBONE = "backbone"
+    CONNECTIONS = "connections"
+    options = [BACKBONE, CONNECTIONS]
+
+    if genotype.connections_genotype.is_empty():
+        logger.debug("ConnectionsGenotype is empty, removing mutation possibility.")
+        options.remove(CONNECTIONS)
+
     chosen = rng.choice(options)
     logger.debug(f"Mutating individual on=<{chosen}>")
 
-    if chosen == "backbone":
+    if chosen == BACKBONE:
         skeleton = sge.make_genotype_skeleton(grammar)
         new_backbone_genotype = mutate_backbone_genotype(
             genotype.backbone_genotype, skeleton, rng

@@ -1,5 +1,5 @@
-import dataclasses
-
+import attrs
+import pytest
 from hypothesis import given
 
 import gge.backbones as bb
@@ -124,7 +124,7 @@ def test_merge_downsample_add(shapes: gge_hs.ShapePair) -> None:
 def test_merge_downsample_concat(shapes: gge_hs.ShapePair) -> None:
     """Concatenating sources sums the depths when downsampling preserving the smallest (width, height)."""
     input_layer = gl.Input(shapes.bigger)
-    expected = dataclasses.replace(shapes.smaller, depth=shapes.smaller.depth * 2)
+    expected = attrs.evolve(shapes.smaller, depth=shapes.smaller.depth * 2)
 
     source0 = gl.ConnectedBatchNorm(
         input_layer=input_layer,
@@ -153,7 +153,7 @@ def test_merge_downsample_concat(shapes: gge_hs.ShapePair) -> None:
 def test_merge_upsample_concat(shapes: gge_hs.ShapePair) -> None:
     """Concatenating sources adds the depths when upsampling preserving the biggest (width, height)."""
     input_layer = gl.Input(shapes.bigger)
-    expected = dataclasses.replace(shapes.bigger, depth=shapes.bigger.depth * 2)
+    expected = attrs.evolve(shapes.bigger, depth=shapes.bigger.depth * 2)
 
     source0 = gl.ConnectedBatchNorm(
         input_layer=input_layer,
@@ -336,13 +336,9 @@ def test_connect_backbone_with_duplicate_merge_entries() -> None:
     )
     schema = conn.ConnectionsSchema(merge_params)
 
-    output = conn.connect_backbone(
-        backbone,
-        schema,
-        input_layer=gl.make_input(1, 2, 3),
-    )
-
-    assert isinstance(output, gl.ConnectedAdd)
-
-    (input,) = output.input_layers
-    assert isinstance(input, gl.ConnectedBatchNorm)
+    with pytest.raises(AssertionError):
+        _ = conn.connect_backbone(
+            backbone,
+            schema,
+            input_layer=gl.make_input(1, 2, 3),
+        )

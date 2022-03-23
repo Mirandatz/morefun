@@ -3,6 +3,6 @@
 black
 flake8
 hypothesis
-mypy
+git+https://github.com/python/mypy
 pytest
 pytest-pspec

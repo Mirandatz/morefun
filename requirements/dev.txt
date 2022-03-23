@@ -6,18 +6,18 @@
 #    pip-compile-multi
 #
 -r test.txt
+mypy @ git+https://github.com/python/mypy
+    # via -r requirements/test.in
 opencv-python==4.5.5.62
     # via -r requirements/dev.in
 pep517==0.12.0
     # via pip-tools
-pip-compile-multi==2.4.2
+pip-compile-multi==2.4.3
     # via -r requirements/dev.in
 pip-tools==6.4.0
     # via pip-compile-multi
 toposort==1.7
     # via pip-compile-multi
-wheel==0.37.1
-    # via pip-tools
 
 # The following packages are considered to be unsafe in a requirements file:
 # pip

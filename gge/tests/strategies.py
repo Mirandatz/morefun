@@ -3,11 +3,11 @@ import operator
 import typing
 from functools import reduce
 
+import attrs
 import hypothesis.strategies as hs
 
 import gge.layers as gl
 import gge.name_generator
-
 
 # python type-system does not allow asserting the two Any's are the same;
 # adding TypeVar would make DrawStrat itself generic
@@ -72,7 +72,7 @@ def temporary_name(cls: type) -> str:
 
 
 @hs.composite
-def conv2d_layer(
+def conv2d_grammar_layer(
     draw: DrawStrat,
 ) -> GrammarLayer:
     name = temporary_name(gl.Conv2D)
@@ -88,7 +88,7 @@ def conv2d_layer(
 
 
 @hs.composite
-def pool_layer(draw: DrawStrat) -> GrammarLayer:
+def pool_grammar_layer(draw: DrawStrat) -> GrammarLayer:
     name = temporary_name(gl.Pool2D)
     pool_type = draw(hs.sampled_from(gl.PoolType))
     stride = draw(hs.integers(min_value=1, max_value=999999))
@@ -103,41 +103,41 @@ def pool_layer(draw: DrawStrat) -> GrammarLayer:
 
 
 @hs.composite
-def batch_norm_layer(draw: DrawStrat) -> GrammarLayer:
+def batch_norm_grammar_layer(draw: DrawStrat) -> GrammarLayer:
     name = temporary_name(gl.BatchNorm)
     return GrammarLayer(layers=(gl.BatchNorm(name),), mesagrammar_string='"batchnorm"')
 
 
 @hs.composite
-def relu_layer(draw: DrawStrat) -> GrammarLayer:
+def relu_grammar_layer(draw: DrawStrat) -> GrammarLayer:
     name = temporary_name(gl.Relu)
     return GrammarLayer(layers=(gl.Relu(name),), mesagrammar_string='"relu"')
 
 
 @hs.composite
-def gelu_layer(draw: DrawStrat) -> GrammarLayer:
+def gelu_grammar_layer(draw: DrawStrat) -> GrammarLayer:
     name = temporary_name(gl.Gelu)
     return GrammarLayer(layers=(gl.Gelu(name),), mesagrammar_string='"gelu"')
 
 
 @hs.composite
-def swish_layer(draw: DrawStrat) -> GrammarLayer:
+def swish_grammar_layer(draw: DrawStrat) -> GrammarLayer:
     name = temporary_name(gl.Swish)
     return GrammarLayer(layers=(gl.Swish(name),), mesagrammar_string='"swish"')
 
 
 @hs.composite
-def any_layer(
+def any_grammar_layer(
     draw: typing.Callable[..., GrammarLayer],
     *,
     can_mark: bool = True,
     valid_layers: list[typing.Callable[..., hs.SearchStrategy[GrammarLayer]]] = [
-        conv2d_layer,
-        pool_layer,
-        batch_norm_layer,
-        relu_layer,
-        gelu_layer,
-        swish_layer,
+        conv2d_grammar_layer,
+        pool_grammar_layer,
+        batch_norm_grammar_layer,
+        relu_grammar_layer,
+        gelu_grammar_layer,
+        swish_grammar_layer,
     ],
 ) -> GrammarLayer:
     layer = draw(hs.sampled_from([draw(valid()) for valid in valid_layers]))
@@ -146,7 +146,7 @@ def any_layer(
     return layer
 
 
-def uniquely_named(backbone: GrammarLayer) -> GrammarLayer:
+def uniquely_named_grammar_layer(backbone: GrammarLayer) -> GrammarLayer:
     """replaces names of a layer sequence for unique generated names"""
     gen = gge.name_generator.NameGenerator()
 
@@ -158,7 +158,7 @@ def uniquely_named(backbone: GrammarLayer) -> GrammarLayer:
         return gen.gen_name(type(layer))
 
     new_layers = (
-        dataclasses.replace(layer, name=get_name(layer)) for layer in backbone.layers
+        attrs.evolve(layer, name=get_name(layer)) for layer in backbone.layers
     )
     return GrammarLayer(
         layers=tuple(new_layers), mesagrammar_string=backbone.mesagrammar_string
@@ -166,7 +166,7 @@ def uniquely_named(backbone: GrammarLayer) -> GrammarLayer:
 
 
 @hs.composite
-def backbone(
+def backbone_grammar_layer(
     draw: DrawStrat,
     *,
     min_size: int = 1,
@@ -175,7 +175,9 @@ def backbone(
     | None = None,
 ) -> GrammarLayer:
     layer_strat = (
-        any_layer() if valid_layers is None else any_layer(valid_layers=valid_layers)
+        any_grammar_layer()
+        if valid_layers is None
+        else any_grammar_layer(valid_layers=valid_layers)
     )
     grammar_layers: list[GrammarLayer] = draw(
         hs.lists(
@@ -190,7 +192,7 @@ def backbone(
     )
 
     base_backbone = GrammarLayer(flattened_layers, concat_mesa_str)
-    return uniquely_named(base_backbone)
+    return uniquely_named_grammar_layer(base_backbone)
 
 
 @hs.composite
@@ -218,5 +220,37 @@ def same_aspect_shape_pair(draw: DrawStrat, *, same_depth: bool = False) -> Shap
     )
     if not same_depth:
         bigger_depth = draw(hs.integers(min_value=1, max_value=1024))
-        bigger = dataclasses.replace(bigger, depth=bigger_depth)
+        bigger = attrs.evolve(bigger, depth=bigger_depth)
     return ShapePair(smaller, bigger, ratio)
+
+
+@hs.composite
+def input_layer(draw: DrawStrat) -> gl.Input:
+    width = draw(hs.integers(min_value=1, max_value=256))
+    height = draw(hs.integers(min_value=1, max_value=256))
+    depth = draw(hs.integers(min_value=1, max_value=3))
+    return gl.make_input(
+        width=width,
+        height=height,
+        depth=depth,
+    )
+
+
+@hs.composite
+def conv2d(draw: DrawStrat) -> gl.Conv2D:
+    filter_count = draw(hs.integers(min_value=1, max_value=7))
+    kernel_size = draw(hs.integers(min_value=1, max_value=7))
+    stride = draw(hs.integers(min_value=1, max_value=7))
+    return gl.Conv2D(
+        name=temporary_name(gl.Conv2D),
+        filter_count=filter_count,
+        kernel_size=kernel_size,
+        stride=stride,
+    )
+
+
+@hs.composite
+def connected_conv2d(draw: DrawStrat) -> gl.ConnectedConv2D:
+    source = draw(input_layer())
+    params = draw(conv2d())
+    return gl.ConnectedConv2D(source, params)
