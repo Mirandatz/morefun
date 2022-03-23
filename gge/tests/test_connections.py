@@ -5,11 +5,11 @@ import gge.backbones as bb
 import gge.connections as conn
 import gge.layers as gl
 import gge.name_generator as ng
-import gge.tests.strategies.original_strategies as gge_hs
+import gge.tests.strategies.layers as ls
 
 
-@given(shapes=gge_hs.same_aspect_shape_pair())
-def test_downsampling(shapes: gge_hs.ShapePair) -> None:
+@given(shapes=ls.shape_pairs())
+def test_downsampling(shapes: ls.ShapePair) -> None:
     """Can downsample to exact fraction target output shape."""
     input_shape = shapes.bigger
     output_shape = shapes.smaller
@@ -23,8 +23,8 @@ def test_downsampling(shapes: gge_hs.ShapePair) -> None:
     assert shortcut.output_shape == output_shape
 
 
-@given(shapes=gge_hs.same_aspect_shape_pair())
-def test_upsampling(shapes: gge_hs.ShapePair) -> None:
+@given(shapes=ls.shape_pairs())
+def test_upsampling(shapes: ls.ShapePair) -> None:
     """Can upsample to exact fraction target output shape."""
     input_shape = shapes.smaller
     output_shape = shapes.bigger
@@ -37,8 +37,8 @@ def test_upsampling(shapes: gge_hs.ShapePair) -> None:
     assert shortcut.output_shape == output_shape
 
 
-@given(shapes=gge_hs.same_aspect_shape_pair())
-def test_downsampling_shortcut(shapes: gge_hs.ShapePair) -> None:
+@given(shapes=ls.shape_pairs())
+def test_downsampling_shortcut(shapes: ls.ShapePair) -> None:
     """Can downsample to exact fraction target output shape from enum."""
     input_shape = shapes.bigger
     output_shape = shapes.smaller
@@ -54,8 +54,8 @@ def test_downsampling_shortcut(shapes: gge_hs.ShapePair) -> None:
     assert shortcut.output_shape == output_shape
 
 
-@given(shapes=gge_hs.same_aspect_shape_pair())
-def test_upsampling_shortcut(shapes: gge_hs.ShapePair) -> None:
+@given(shapes=ls.shape_pairs())
+def test_upsampling_shortcut(shapes: ls.ShapePair) -> None:
     """Can upsample to exact fraction target output shape from enum."""
     input_shape = shapes.smaller
     output_shape = shapes.bigger
@@ -71,7 +71,7 @@ def test_upsampling_shortcut(shapes: gge_hs.ShapePair) -> None:
     assert shortcut.output_shape == output_shape
 
 
-@given(shape=gge_hs.shape())
+@given(shape=ls.shapes())
 def test_shortcut_identity(shape: gl.Shape) -> None:
     """Making a shortcut with same shape returns the same layer regardless of method."""
     source = gl.ConnectedBatchNorm(
@@ -91,8 +91,8 @@ def test_shortcut_identity(shape: gl.Shape) -> None:
     assert source == upsample_shortcut
 
 
-@given(shapes=gge_hs.same_aspect_shape_pair(same_depth=True))
-def test_merge_downsample_add(shapes: gge_hs.ShapePair) -> None:
+@given(shapes=ls.shape_pairs(same_depth=True))
+def test_merge_downsample_add(shapes: ls.ShapePair) -> None:
     """Can add-merge using a downsample."""
     input_layer = gl.Input(shapes.bigger)
 
@@ -119,8 +119,8 @@ def test_merge_downsample_add(shapes: gge_hs.ShapePair) -> None:
     assert add.output_shape == shapes.smaller
 
 
-@given(shapes=gge_hs.same_aspect_shape_pair(same_depth=True))
-def test_merge_downsample_concat(shapes: gge_hs.ShapePair) -> None:
+@given(shapes=ls.shape_pairs(same_depth=True))
+def test_merge_downsample_concat(shapes: ls.ShapePair) -> None:
     """Concatenating sources sums the depths when downsampling preserving the smallest (width, height)."""
     input_layer = gl.Input(shapes.bigger)
     expected = attrs.evolve(shapes.smaller, depth=shapes.smaller.depth * 2)
@@ -148,8 +148,8 @@ def test_merge_downsample_concat(shapes: gge_hs.ShapePair) -> None:
     assert add.output_shape == expected
 
 
-@given(shapes=gge_hs.same_aspect_shape_pair(same_depth=True))
-def test_merge_upsample_concat(shapes: gge_hs.ShapePair) -> None:
+@given(shapes=ls.shape_pairs(same_depth=True))
+def test_merge_upsample_concat(shapes: ls.ShapePair) -> None:
     """Concatenating sources adds the depths when upsampling preserving the biggest (width, height)."""
     input_layer = gl.Input(shapes.bigger)
     expected = attrs.evolve(shapes.bigger, depth=shapes.bigger.depth * 2)

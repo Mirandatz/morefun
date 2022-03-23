@@ -1,24 +1,12 @@
 import itertools
 
-import hypothesis.strategies as hs
 import pytest
 from hypothesis import given
 
 import gge.grammars as gr
-import gge.tests.strategies.metagrammar as gge_ms
+import gge.tests.strategies.metagrammars as ms
 
 START = gr.NonTerminal("start")
-
-CONV2D = gr.Terminal('"conv2d"')
-FILTER_COUNT = gr.Terminal('"filter_count"')
-KERNEL_SIZE = gr.Terminal('"kernel_size"')
-STRIDE = gr.Terminal('"stride"')
-
-BATCHRNOM = gr.Terminal('"batchnorm"')
-
-RELU = gr.Terminal('"relu"')
-GELU = gr.Terminal('"gelu"')
-SWISH = gr.Terminal('"swish"')
 
 
 @pytest.fixture(autouse=True)
@@ -51,7 +39,14 @@ def test_terminals() -> None:
     )
     actual = set(grammar.terminals)
 
-    names = {CONV2D, FILTER_COUNT, KERNEL_SIZE, STRIDE, RELU, SWISH}
+    names = {
+        gr.ExpectedTerminals.CONV2D.value,
+        gr.ExpectedTerminals.FILTER_COUNT.value,
+        gr.ExpectedTerminals.KERNEL_SIZE.value,
+        gr.ExpectedTerminals.STRIDE.value,
+        gr.ExpectedTerminals.RELU.value,
+        gr.ExpectedTerminals.SWISH.value,
+    }
     numbers = {gr.Terminal(str(i)) for i in range(1, 8)}
     expected = set.union(names, numbers)
 
@@ -198,12 +193,12 @@ def test_multiple_int_arg() -> None:
 
     expected_first = gr.RuleOption(
         (
-            CONV2D,
-            FILTER_COUNT,
+            gr.ExpectedTerminals.CONV2D.value,
+            gr.ExpectedTerminals.FILTER_COUNT.value,
             gr.Terminal("1"),
-            KERNEL_SIZE,
+            gr.ExpectedTerminals.KERNEL_SIZE.value,
             gr.Terminal("2"),
-            STRIDE,
+            gr.ExpectedTerminals.STRIDE.value,
             gr.Terminal("3"),
         )
     )
@@ -211,12 +206,12 @@ def test_multiple_int_arg() -> None:
 
     expected_second = gr.RuleOption(
         (
-            CONV2D,
-            FILTER_COUNT,
+            gr.ExpectedTerminals.CONV2D.value,
+            gr.ExpectedTerminals.FILTER_COUNT.value,
             gr.Terminal("2"),
-            KERNEL_SIZE,
+            gr.ExpectedTerminals.KERNEL_SIZE.value,
             gr.Terminal("2"),
-            STRIDE,
+            gr.ExpectedTerminals.STRIDE.value,
             gr.Terminal("3"),
         )
     )
@@ -238,12 +233,12 @@ def test_blockless_grammar() -> None:
     assert gr.NonTerminal("conv") == conv_def_rule.lhs
     expected_rhs = gr.RuleOption(
         (
-            CONV2D,
-            FILTER_COUNT,
+            gr.ExpectedTerminals.CONV2D.value,
+            gr.ExpectedTerminals.FILTER_COUNT.value,
             gr.Terminal("1"),
-            KERNEL_SIZE,
+            gr.ExpectedTerminals.KERNEL_SIZE.value,
             gr.Terminal("2"),
-            STRIDE,
+            gr.ExpectedTerminals.STRIDE.value,
             gr.Terminal("3"),
         )
     )
@@ -282,7 +277,7 @@ def test_batchnorm_def() -> None:
     nt = gr.NonTerminal("norm")
     (actual_expansion,) = grammar.expansions(nt)
 
-    expected_expansion = gr.RuleOption((BATCHRNOM,))
+    expected_expansion = gr.RuleOption((gr.ExpectedTerminals.BATCHRNOM.value,))
 
     assert expected_expansion == actual_expansion
 
@@ -307,22 +302,14 @@ def test_pooling_layer_in_block() -> None:
 
 
 @given(
-    pool_sizes=gge_ms.int_args(
-        hs.lists(
-            elements=hs.integers(min_value=1, max_value=3),
-            min_size=1,
-            max_size=3,
-        )
-    ),
-    strides=gge_ms.int_args(
-        hs.lists(
-            elements=hs.integers(min_value=1, max_value=3),
-            min_size=1,
-            max_size=3,
-        )
-    ),
+    pool_sizes=ms.int_args(min_value=1, max_value=9),
+    strides=ms.int_args(min_value=1, max_value=9),
 )
-def test_max_pool2d_def(pool_sizes: gge_ms.IntArgs, strides: gge_ms.IntArgs) -> None:
+def test_max_pool2d_def(
+    pool_sizes: ms.GrammarArgs,
+    strides: ms.GrammarArgs,
+) -> None:
+    # setup
     raw_grammar = (
         'start : "max_pool2d"'
         f' "pool_size" {pool_sizes.text}'
@@ -330,39 +317,35 @@ def test_max_pool2d_def(pool_sizes: gge_ms.IntArgs, strides: gge_ms.IntArgs) -> 
     )
     grammar = gr.Grammar(raw_grammar)
 
+    # function under test
     expansions = grammar.expansions(gr.NonTerminal("start"))
-    test_values = itertools.product(pool_sizes.values, strides.values)
 
-    for expansion, (pool_size, stride) in zip(expansions, test_values):
+    # asserts
+    test_values = itertools.product(pool_sizes.terminals, strides.terminals)
+    for expansion, (pool_size_term, stride_term) in zip(
+        expansions, test_values, strict=True
+    ):
         expected = gr.RuleOption(
             (
-                gr.ExpectedTerminals.MAX_POOL_MARKER.value,
-                gr.ExpectedTerminals.POOL_SIZE_MARKER.value,
-                gr.Terminal(str(pool_size)),
-                gr.ExpectedTerminals.STRIDE_MARKER.value,
-                gr.Terminal(str(stride)),
+                gr.ExpectedTerminals.MAX_POOL.value,
+                gr.ExpectedTerminals.POOL_SIZE.value,
+                pool_size_term,
+                gr.ExpectedTerminals.STRIDE.value,
+                stride_term,
             )
         )
         assert expected == expansion
 
 
 @given(
-    pool_sizes=gge_ms.int_args(
-        hs.lists(
-            elements=hs.integers(min_value=1, max_value=3),
-            min_size=1,
-            max_size=3,
-        )
-    ),
-    strides=gge_ms.int_args(
-        hs.lists(
-            elements=hs.integers(min_value=1, max_value=3),
-            min_size=1,
-            max_size=3,
-        )
-    ),
+    pool_sizes=ms.int_args(min_value=1, max_value=9),
+    strides=ms.int_args(min_value=1, max_value=9),
 )
-def test_avg_pool2d_def(pool_sizes: gge_ms.IntArgs, strides: gge_ms.IntArgs) -> None:
+def test_avg_pool2d_def(
+    pool_sizes: ms.GrammarArgs,
+    strides: ms.GrammarArgs,
+) -> None:
+    # setup
     raw_grammar = (
         'start : "avg_pool2d"'
         f' "pool_size" {pool_sizes.text}'
@@ -370,17 +353,20 @@ def test_avg_pool2d_def(pool_sizes: gge_ms.IntArgs, strides: gge_ms.IntArgs) -> 
     )
     grammar = gr.Grammar(raw_grammar)
 
+    # function under test
     expansions = grammar.expansions(gr.NonTerminal("start"))
-    test_values = itertools.product(pool_sizes.values, strides.values)
 
-    for expansion, (pool_size, stride) in zip(expansions, test_values):
+    test_values = itertools.product(pool_sizes.terminals, strides.terminals)
+    for expansion, (pool_size_term, stride_term) in zip(
+        expansions, test_values, strict=True
+    ):
         expected = gr.RuleOption(
             (
-                gr.ExpectedTerminals.AVG_POOL_MARKER.value,
-                gr.ExpectedTerminals.POOL_SIZE_MARKER.value,
-                gr.Terminal(str(pool_size)),
-                gr.ExpectedTerminals.STRIDE_MARKER.value,
-                gr.Terminal(str(stride)),
+                gr.ExpectedTerminals.AVG_POOL.value,
+                gr.ExpectedTerminals.POOL_SIZE.value,
+                pool_size_term,
+                gr.ExpectedTerminals.STRIDE.value,
+                stride_term,
             )
         )
         assert expected == expansion
@@ -393,5 +379,117 @@ def test_relu_def() -> None:
         """
     )
     (actual,) = grammar.expansions(gr.NonTerminal("start"))
-    expected = gr.RuleOption((RELU,))
+    expected = gr.RuleOption((gr.ExpectedTerminals.RELU.value,))
     assert expected == actual
+
+
+@given(
+    learning_rate=ms.float_args(min_value=0, exclude_min=True),
+    momentum=ms.float_args(min_value=0, exclude_min=True),
+    nesterov=ms.bool_args(),
+)
+def test_sgd_def(
+    learning_rate: ms.GrammarArgs,
+    momentum: ms.GrammarArgs,
+    nesterov: ms.GrammarArgs,
+) -> None:
+    # setup
+    raw_grammar = (
+        'start : "sgd"'
+        f' "learning_rate" {learning_rate.text}'
+        f' "momentum" {momentum.text}'
+        f' "nesterov" {nesterov.text}'
+    )
+    grammar = gr.Grammar(raw_grammar)
+
+    # function under test
+    expansions = grammar.expansions(gr.NonTerminal("start"))
+
+    test_values = itertools.product(
+        learning_rate.terminals,
+        momentum.terminals,
+        nesterov.terminals,
+    )
+
+    for actual_expansion, (lr_term, mom_term, nest_term) in zip(
+        expansions,
+        test_values,
+        strict=True,
+    ):
+        expected_symbols = (
+            gr.ExpectedTerminals.SGD.value,
+            gr.ExpectedTerminals.LEARNING_RATE.value,
+            lr_term,
+            gr.ExpectedTerminals.MOMENTUM.value,
+            mom_term,
+            gr.ExpectedTerminals.NESTEROV.value,
+            nest_term,
+        )
+        expected_expansion = gr.RuleOption(expected_symbols)
+        assert expected_expansion == actual_expansion
+
+
+@given(
+    learning_rate=ms.float_args(min_value=0, exclude_min=True),
+    beta1=ms.float_args(min_value=0, exclude_min=True),
+    beta2=ms.float_args(min_value=0, exclude_min=True),
+    epsilon=ms.float_args(min_value=0, exclude_min=True),
+    amsgrad=ms.bool_args(),
+)
+def test_adam_def(
+    learning_rate: ms.GrammarArgs,
+    beta1: ms.GrammarArgs,
+    beta2: ms.GrammarArgs,
+    epsilon: ms.GrammarArgs,
+    amsgrad: ms.GrammarArgs,
+) -> None:
+    # setup
+    raw_grammar = (
+        'start : "adam"'
+        f' "learning_rate" {learning_rate.text}'
+        f' "beta1" {beta1.text}'
+        f' "beta2" {beta2.text}'
+        f' "epsilon" {epsilon.text}'
+        f' "amsgrad" {amsgrad.text}'
+    )
+    grammar = gr.Grammar(raw_grammar)
+
+    # function under test
+    expansions = grammar.expansions(gr.NonTerminal("start"))
+
+    test_values = itertools.product(
+        learning_rate.terminals,
+        beta1.terminals,
+        beta2.terminals,
+        epsilon.terminals,
+        amsgrad.terminals,
+    )
+
+    for actual_expansion, terminals in zip(
+        expansions,
+        test_values,
+        strict=True,
+    ):
+        (
+            lr_term,
+            beta1_term,
+            beta2_term,
+            epsilon_term,
+            amsgrad_term,
+        ) = terminals
+
+        expected_symbols = (
+            gr.ExpectedTerminals.ADAM.value,
+            gr.ExpectedTerminals.LEARNING_RATE.value,
+            lr_term,
+            gr.ExpectedTerminals.BETA1.value,
+            beta1_term,
+            gr.ExpectedTerminals.BETA2.value,
+            beta2_term,
+            gr.ExpectedTerminals.EPSILON.value,
+            epsilon_term,
+            gr.ExpectedTerminals.AMSGRAD.value,
+            amsgrad_term,
+        )
+        expected_expansion = gr.RuleOption(expected_symbols)
+        assert expected_expansion == actual_expansion
