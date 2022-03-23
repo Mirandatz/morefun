@@ -195,29 +195,3 @@ def add_dummy_layer_prefix_to(
     dummy_layer = '"batchnorm"'
     updated_tokenstream = dummy_layer + test_data.token_stream
     return attrs.evolve(test_data, token_stream=updated_tokenstream)
-
-
-# @hs.composite
-# def with_markers(draw: hs.DrawFn, element: LayersTestData) -> LayersTestData:
-#     """randomly adds merge and fork points to a layer
-
-#     This should shrink towards having no markers."""
-#     name_gen = gge.name_generator.NameGenerator()
-#     merge_name = name_gen.gen_name("merge")
-#     fork_name = name_gen.gen_name("fork")
-
-#     merge = draw(hs.booleans())
-#     fork = draw(hs.booleans())
-#     merge_layer = gl.make_merge(merge_name)
-#     fork_layer = gl.make_fork(fork_name)
-
-#     layers: tuple[gl.Layer, ...] = element.layers
-#     mesa_str = element.mesagrammar_string
-#     if merge:
-#         layers = (merge_layer,) + layers
-#         mesa_str = '"merge"' + mesa_str
-#     if fork:
-#         layers = layers + (fork_layer,)
-#         mesa_str = mesa_str + '"fork"'
-
-#     return LayersTestData(layers, mesa_str)
