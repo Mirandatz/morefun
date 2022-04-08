@@ -1,5 +1,0 @@
-ARG test_env_tag
-FROM ${test_env_tag}
-
-COPY ./requirements/ /requirements/
-RUN pip install -r /requirements/dev.txt --no-cache-dir

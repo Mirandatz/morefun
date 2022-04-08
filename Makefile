@@ -1,44 +1,39 @@
 # we must use absolute paths because we want to mount them on containers
 root_dir := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
-reqs_dir := $(root_dir)/requirements
-build_cache_dir := $(root_dir)/.gge_build_cache
 
-test_env_tag=mirandatz/gge:test_env
-dev_env_tag=mirandatz/gge:dev_env
-update_requirements_tag=mirandatz/gge:update_requirements
-
+# used to ensure files/directories are created with the correct user:group
 uid := $(shell id -u)
 gid := $(shell id -g)
 
+# container tags
+dev_env_tag := mirandatz/gge:dev_env
 
+# using buildkit improves build times and decreases image sizes
 export DOCKER_BUILDKIT=1
 
-.PHONY: run_tests
-run_tests: test_env
-	docker run --rm --runtime=nvidia $(test_env_tag) pytest gge
-
-.PHONY: update_requirements
-update_requirements:
-	docker build -f Docker/Dockerfile.update_requirements -t $(update_requirements_tag) .
-	docker run --rm \
-		--user $(uid):$(gid) \
-		--mount type=bind,src=$(reqs_dir),dst=/tmp/requirements \
-		--mount type=tmpfs,dst=/.cache \
-		$(update_requirements_tag) pip-compile-multi -d /tmp/requirements
-
-$(build_cache_dir)/Miniforge3.sh:
-	mkdir -p $(build_cache_dir)
-	wget -O $(build_cache_dir)/Miniforge3.sh https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$$(uname)-$$(uname -m).sh
-	
-.PHONY: test_env
-test_env: $(build_cache_dir)/Miniforge3.sh
-	docker build -f Docker/Dockerfile.test_env -t $(test_env_tag) .	
-	
 .PHONY: dev_env
-dev_env: test_env
-	docker build --build-arg test_env_tag=$(test_env_tag) -f Docker/Dockerfile.dev_env -t $(dev_env_tag) .
+dev_env:
+	docker build -f Dockerfile -t $(dev_env_tag) .
+
+.PHONY: run_tests
+run_tests: dev_env
+	docker run \
+		--rm \
+		--user $(uid):$(gid) \
+		-v $(root_dir):/gge \
+		$(dev_env_tag) \
+		pytest
+
+.PHONY: playground
+playground: dev_env
+	docker run \
+		--rm \
+		--user $(uid):$(gid) \
+		-it \
+		-v $(root_dir):/gge \
+		$(dev_env_tag) \
+		/bin/bash
 
 .PHONY: clean
 clean:
-	rm -rf $(build_cache_dir)
-	
+	docker rmi $(dev_env_tag)
