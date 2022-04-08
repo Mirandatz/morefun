@@ -10,7 +10,7 @@ from loguru import logger
 
 import gge.transformers as gge_transformers
 
-METAGRAMMAR_PATH = pathlib.Path(__file__).parent.parent / "data" / "metagrammar.lark"
+METAGRAMMAR_PATH = pathlib.Path(__file__).parent / "grammar_files" / "metagrammar.lark"
 
 
 @functools.cache
