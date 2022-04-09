@@ -1,4 +1,6 @@
-import attr
+import uuid
+
+import attrs
 
 import gge.backbones as bb
 import gge.connections as conn
@@ -7,10 +9,14 @@ import gge.randomness as rand
 import gge.structured_grammatical_evolution as sge
 
 
-@attr.frozen
+@attrs.frozen(cache_hash=True)
 class CompositeGenotype:
-    backbone_genotype: sge.Genotype
-    connections_genotype: conn.ConnectionsSchema
+    backbone_genotype: sge.Genotype = attrs.field(repr=False)
+    connections_genotype: conn.ConnectionsSchema = attrs.field(repr=False)
+
+    unique_id: uuid.UUID = attrs.field(
+        eq=False, order=False, repr=True, init=False, default=uuid.uuid4()
+    )
 
     def __post_init__(self) -> None:
         assert isinstance(self.backbone_genotype, sge.Genotype)
