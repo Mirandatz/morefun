@@ -8,7 +8,7 @@ fi
 # customize for different machines
 GGE_SRC="${GGE_SRC:=/home/thiago/source/gge}"
 DATASETS_DIR="${DATASETS_DIR:=/home/thiago/source/datasets/cifar10}"
-OUTPUT_DIR="${OUTPUT_DIR:=/dev/shm/hehe}"
+OUTPUT_DIR="${OUTPUT_DIR:=$(mktemp -d -p /dev/shm)}"
 
 DOCKER_ENV_TAG=mirandatz/gge:dev_env
 

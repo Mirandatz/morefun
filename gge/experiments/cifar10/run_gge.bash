@@ -11,5 +11,5 @@ tar -xf /dataset/train_val_test.tar.gz -C /dev/shm/
 
 python -m gge.experiments.cifar10.run_evolution \
     -d /dev/shm/train_val_test \
-    -o /output
-    -s $RNG_SEED
+    -o /output \
+    --seed $RNG_SEED
