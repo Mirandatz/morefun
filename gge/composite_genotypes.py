@@ -1,4 +1,4 @@
-import dataclasses
+import attr
 
 import gge.backbones as bb
 import gge.connections as conn
@@ -7,7 +7,7 @@ import gge.randomness as rand
 import gge.structured_grammatical_evolution as sge
 
 
-@dataclasses.dataclass(frozen=True)
+@attr.frozen
 class CompositeGenotype:
     backbone_genotype: sge.Genotype
     connections_genotype: conn.ConnectionsSchema
