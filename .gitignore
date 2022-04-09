@@ -13,6 +13,7 @@ __pycache__/
 
 # playground & debugging
 gge/playground/
+playground/
 
 # test history
 .hypothesis/
