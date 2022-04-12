@@ -34,6 +34,18 @@ playground: dev_env
 		$(dev_env_tag) \
 		/bin/bash
 
+.PHONY: update_requirements
+update_requirements:
+	docker run \
+		--rm \
+		--env HOST_UID=$(uid) \
+		--env HOST_GID=$(gid) \
+		-v $(root_dir)/requirements:/requirements \
+		python:3.10.4-slim-bullseye \
+		/bin/bash -c 'python3 -m pip install pip-compile-multi \
+			&& pip-compile-multi \
+			&& chown -R "$${HOST_UID}":"$${HOST_GID}" /requirements'
+
 .PHONY: clean
 clean:
 	docker rmi $(dev_env_tag)

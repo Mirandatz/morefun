@@ -24,7 +24,8 @@
 		8000 // for debugger
 	],
 	"runArgs": [
-		"--runtime=nvidia"
+		"--runtime=nvidia",
+		"--shm-size=2G",
 	],
 	"mounts": [
 		"type=bind,source=${localWorkspaceFolder}/playground,target=/playground",

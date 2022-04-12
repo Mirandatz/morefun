@@ -3,5 +3,6 @@ lark
 loguru
 networkx
 numpy
+pillow
 tensorflow-gpu
 typer
