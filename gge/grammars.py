@@ -343,7 +343,6 @@ class Grammar:
 
 
 class ExpectedTerminals(enum.Enum):
-
     CONV2D = Terminal('"conv2d"')
     FILTER_COUNT = Terminal('"filter_count"')
     KERNEL_SIZE = Terminal('"kernel_size"')

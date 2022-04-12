@@ -30,13 +30,27 @@ EPOCHS = 10
 
 def get_grammar() -> gr.Grammar:
     raw_grammar = """
-    start      : conv_block~1..20
-    conv_block : "merge" conv norm act "fork"
-               | "merge" conv norm act pool "fork"
-    conv : "conv2d" "filter_count" (32 | 64 | 128 | 256 | 512 | 1024) "kernel_size" (1 | 3 | 5 | 7) "stride" (1 | 2)
-    norm : "batchnorm"
-    act  : "relu"
-    pool : "pool2d" ("max" | "avg") "stride" 2
+    start : first_block middle_block~2 optimizer
+
+    first_block  : conv_block "fork"
+    middle_block : "merge" conv_block "fork"
+
+    conv_block : "merge" conv_layer batchnorm activation "fork"
+               | "merge" conv_layer batchnorm activation pooling "fork"
+
+    conv_layer : "conv2d" "filter_count" (32 | 64) "kernel_size" (1 | 3 | 5 | 7) "stride" (1 | 2)
+
+    batchnorm  : "batchnorm"
+
+    activation : relu | swish
+    relu : "relu"
+    swish : "swish"
+
+    pooling : maxpool | avgpool
+    maxpool : "max_pool2d" "pool_size" (1 | 2) "stride" (1 | 2)
+    avgpool : "avg_pool2d" "pool_size" (1 | 2) "stride" (1 | 2)
+
+    optimizer : "adam" "learning_rate" (0.001 | 0.003 | 0.005) "beta1" 0.9 "beta2" 0.999 "epsilon" 1e-07 "amsgrad" false
     """
     return gr.Grammar(raw_grammar)
 
@@ -71,18 +85,19 @@ def get_input_layer() -> gl.Input:
 
 
 def validate_output_dir(path: pathlib.Path) -> None:
-    logger.debug(f"validating output dir, path=<{path}>")
+    ...
+    # logger.debug(f"validating output dir, path=<{path}>")
 
-    if not path.exists():
-        logger.info("output dir does not exist and will be created")
-        path.mkdir()
-        return
+    # if not path.exists():
+    #     logger.info("output dir does not exist and will be created")
+    #     path.mkdir()
+    #     return
 
-    else:
-        logger.info("output dir already exists, checking if empty")
-        for _ in path.iterdir():
-            logger.error("output dir is not empty")
-            exit(-1)
+    # else:
+    #     logger.info("output dir already exists, checking if empty")
+    #     for _ in path.iterdir():
+    #         logger.error("output dir is not empty")
+    #         exit(-1)
 
 
 def main(
@@ -160,4 +175,10 @@ def main(
 
 
 if __name__ == "__main__":
-    typer.run(main)
+    output_dir = pathlib.Path("/playground/output")
+    main(
+        dataset_dir=pathlib.Path("/playground/train_val_test"),
+        output_dir=pathlib.Path("/playground/output"),
+        rng_seed=0,
+    )
+    # typer.run(main)

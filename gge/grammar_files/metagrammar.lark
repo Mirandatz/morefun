@@ -25,7 +25,7 @@ max_pooling_layer : MAX_POOL2D pool_sizes strides
 avg_pooling_layer : AVG_POOL2D pool_sizes strides
 pool_sizes        : POOL_SIZE _int_args
 
-optimizer : sgd | adam
+optimizer : (sgd | adam) _NL*
 
 sgd           : SGD learning_rate momentum nesterov
 learning_rate : LEARNING_RATE _float_args
