@@ -183,7 +183,7 @@ class GrammarComponents:
         assert len(T) == len(set(T))
 
         # Uncomment to disallow the usage repeated rules.
-        # Repeating a rule increases its likelyhood of being chosen
+        # Repeating a rule increases its likelihood of being chosen
         # by SGE.
         # assert len(P) == len(set(P))
 
