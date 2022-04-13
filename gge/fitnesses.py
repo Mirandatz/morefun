@@ -1,4 +1,3 @@
-import dataclasses
 import pathlib
 import typing
 
@@ -136,7 +135,7 @@ class ValidationAccuracy:
         return val_acc
 
 
-@dataclasses.dataclass(frozen=True)
+@attrs.frozen
 class FitnessEvaluationParameters:
     metric: FitnessMetric
     grammar: gr.Grammar
