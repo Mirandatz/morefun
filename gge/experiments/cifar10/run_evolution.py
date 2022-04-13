@@ -87,19 +87,7 @@ def get_input_layer() -> gl.Input:
 
 
 def validate_output_dir(path: pathlib.Path) -> None:
-    ...
-    # logger.debug(f"validating output dir, path=<{path}>")
-
-    # if not path.exists():
-    #     logger.info("output dir does not exist and will be created")
-    #     path.mkdir()
-    #     return
-
-    # else:
-    #     logger.info("output dir already exists, checking if empty")
-    #     for _ in path.iterdir():
-    #         logger.error("output dir is not empty")
-    #         exit(-1)
+    raise NotImplementedError()
 
 
 def main(
@@ -177,10 +165,4 @@ def main(
 
 
 if __name__ == "__main__":
-    output_dir = pathlib.Path("/playground/output")
-    main(
-        dataset_dir=pathlib.Path("/playground/train_val_test"),
-        output_dir=pathlib.Path("/playground/output"),
-        rng_seed=0,
-    )
-    # typer.run(main)
+    typer.run(main)
