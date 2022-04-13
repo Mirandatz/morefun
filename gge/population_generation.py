@@ -72,5 +72,11 @@ def create_initial_population(
         max_failures=max_failures,
     )
 
-    assert initial_pop is not None
+    if initial_pop is None:
+        msg = (
+            f"unable to generate initial population with size=<{pop_size}>."
+            f" reason: maximum failures=<{max_failures}> reached during novel-only individual creation"
+        )
+        raise ValueError(msg)
+
     return initial_pop
