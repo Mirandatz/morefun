@@ -1,4 +1,8 @@
-#!/bin/bash -eux
+#!/usr/bin/env bash
+
+set -o errexit
+set -o nounset
+set -o xtrace
 
 SCRIPT_DIR=$(dirname $(realpath "$0"))
 GGE_SRC=$(realpath "${SCRIPT_DIR}/../../..")
