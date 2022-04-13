@@ -65,7 +65,7 @@ class Conv2D(ConvertibleToConnectableLayer):
         return ConnectedConv2D(input, self)
 
 
-# MUST RENAME THIS LATER
+# TODO: Must rename this later
 @attrs.frozen(cache_hash=True)
 class Conv2DTranspose(ConvertibleToConnectableLayer):
     name: str
