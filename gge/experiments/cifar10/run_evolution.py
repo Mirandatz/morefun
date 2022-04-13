@@ -61,7 +61,9 @@ def get_cifar10_train_and_val(
     keras.preprocessing.image.DirectoryIterator,
     keras.preprocessing.image.DirectoryIterator,
 ]:
-    data_gen = keras.preprocessing.image.ImageDataGenerator(validation_split=0.15)
+    data_gen = keras.preprocessing.image.ImageDataGenerator(
+        validation_split=VALIDATION_RATIO
+    )
 
     train = data_gen.flow_from_directory(
         dataset_dir,
