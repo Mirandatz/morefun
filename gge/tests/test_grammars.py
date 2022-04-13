@@ -40,12 +40,12 @@ def test_terminals() -> None:
     actual = set(grammar.terminals)
 
     names = {
-        gr.ExpectedTerminals.CONV2D.value,
-        gr.ExpectedTerminals.FILTER_COUNT.value,
-        gr.ExpectedTerminals.KERNEL_SIZE.value,
-        gr.ExpectedTerminals.STRIDE.value,
-        gr.ExpectedTerminals.RELU.value,
-        gr.ExpectedTerminals.SWISH.value,
+        gr.ExpectedTerminal.CONV2D.value,
+        gr.ExpectedTerminal.FILTER_COUNT.value,
+        gr.ExpectedTerminal.KERNEL_SIZE.value,
+        gr.ExpectedTerminal.STRIDE.value,
+        gr.ExpectedTerminal.RELU.value,
+        gr.ExpectedTerminal.SWISH.value,
     }
     numbers = {gr.Terminal(str(i)) for i in range(1, 8)}
     expected = set.union(names, numbers)
@@ -193,12 +193,12 @@ def test_multiple_int_arg() -> None:
 
     expected_first = gr.RuleOption(
         (
-            gr.ExpectedTerminals.CONV2D.value,
-            gr.ExpectedTerminals.FILTER_COUNT.value,
+            gr.ExpectedTerminal.CONV2D.value,
+            gr.ExpectedTerminal.FILTER_COUNT.value,
             gr.Terminal("1"),
-            gr.ExpectedTerminals.KERNEL_SIZE.value,
+            gr.ExpectedTerminal.KERNEL_SIZE.value,
             gr.Terminal("2"),
-            gr.ExpectedTerminals.STRIDE.value,
+            gr.ExpectedTerminal.STRIDE.value,
             gr.Terminal("3"),
         )
     )
@@ -206,12 +206,12 @@ def test_multiple_int_arg() -> None:
 
     expected_second = gr.RuleOption(
         (
-            gr.ExpectedTerminals.CONV2D.value,
-            gr.ExpectedTerminals.FILTER_COUNT.value,
+            gr.ExpectedTerminal.CONV2D.value,
+            gr.ExpectedTerminal.FILTER_COUNT.value,
             gr.Terminal("2"),
-            gr.ExpectedTerminals.KERNEL_SIZE.value,
+            gr.ExpectedTerminal.KERNEL_SIZE.value,
             gr.Terminal("2"),
-            gr.ExpectedTerminals.STRIDE.value,
+            gr.ExpectedTerminal.STRIDE.value,
             gr.Terminal("3"),
         )
     )
@@ -233,12 +233,12 @@ def test_blockless_grammar() -> None:
     assert gr.NonTerminal("conv") == conv_def_rule.lhs
     expected_rhs = gr.RuleOption(
         (
-            gr.ExpectedTerminals.CONV2D.value,
-            gr.ExpectedTerminals.FILTER_COUNT.value,
+            gr.ExpectedTerminal.CONV2D.value,
+            gr.ExpectedTerminal.FILTER_COUNT.value,
             gr.Terminal("1"),
-            gr.ExpectedTerminals.KERNEL_SIZE.value,
+            gr.ExpectedTerminal.KERNEL_SIZE.value,
             gr.Terminal("2"),
-            gr.ExpectedTerminals.STRIDE.value,
+            gr.ExpectedTerminal.STRIDE.value,
             gr.Terminal("3"),
         )
     )
@@ -277,7 +277,7 @@ def test_batchnorm_def() -> None:
     nt = gr.NonTerminal("norm")
     (actual_expansion,) = grammar.expansions(nt)
 
-    expected_expansion = gr.RuleOption((gr.ExpectedTerminals.BATCHRNOM.value,))
+    expected_expansion = gr.RuleOption((gr.ExpectedTerminal.BATCHRNOM.value,))
 
     assert expected_expansion == actual_expansion
 
@@ -327,10 +327,10 @@ def test_max_pool2d_def(
     ):
         expected = gr.RuleOption(
             (
-                gr.ExpectedTerminals.MAX_POOL.value,
-                gr.ExpectedTerminals.POOL_SIZE.value,
+                gr.ExpectedTerminal.MAX_POOL.value,
+                gr.ExpectedTerminal.POOL_SIZE.value,
                 pool_size_term,
-                gr.ExpectedTerminals.STRIDE.value,
+                gr.ExpectedTerminal.STRIDE.value,
                 stride_term,
             )
         )
@@ -362,10 +362,10 @@ def test_avg_pool2d_def(
     ):
         expected = gr.RuleOption(
             (
-                gr.ExpectedTerminals.AVG_POOL.value,
-                gr.ExpectedTerminals.POOL_SIZE.value,
+                gr.ExpectedTerminal.AVG_POOL.value,
+                gr.ExpectedTerminal.POOL_SIZE.value,
                 pool_size_term,
-                gr.ExpectedTerminals.STRIDE.value,
+                gr.ExpectedTerminal.STRIDE.value,
                 stride_term,
             )
         )
@@ -379,7 +379,7 @@ def test_relu_def() -> None:
         """
     )
     (actual,) = grammar.expansions(gr.NonTerminal("start"))
-    expected = gr.RuleOption((gr.ExpectedTerminals.RELU.value,))
+    expected = gr.RuleOption((gr.ExpectedTerminal.RELU.value,))
     assert expected == actual
 
 
@@ -417,12 +417,12 @@ def test_sgd_def(
         strict=True,
     ):
         expected_symbols = (
-            gr.ExpectedTerminals.SGD.value,
-            gr.ExpectedTerminals.LEARNING_RATE.value,
+            gr.ExpectedTerminal.SGD.value,
+            gr.ExpectedTerminal.LEARNING_RATE.value,
             lr_term,
-            gr.ExpectedTerminals.MOMENTUM.value,
+            gr.ExpectedTerminal.MOMENTUM.value,
             mom_term,
-            gr.ExpectedTerminals.NESTEROV.value,
+            gr.ExpectedTerminal.NESTEROV.value,
             nest_term,
         )
         expected_expansion = gr.RuleOption(expected_symbols)
@@ -479,16 +479,16 @@ def test_adam_def(
         ) = terminals
 
         expected_symbols = (
-            gr.ExpectedTerminals.ADAM.value,
-            gr.ExpectedTerminals.LEARNING_RATE.value,
+            gr.ExpectedTerminal.ADAM.value,
+            gr.ExpectedTerminal.LEARNING_RATE.value,
             lr_term,
-            gr.ExpectedTerminals.BETA1.value,
+            gr.ExpectedTerminal.BETA1.value,
             beta1_term,
-            gr.ExpectedTerminals.BETA2.value,
+            gr.ExpectedTerminal.BETA2.value,
             beta2_term,
-            gr.ExpectedTerminals.EPSILON.value,
+            gr.ExpectedTerminal.EPSILON.value,
             epsilon_term,
-            gr.ExpectedTerminals.AMSGRAD.value,
+            gr.ExpectedTerminal.AMSGRAD.value,
             amsgrad_term,
         )
         expected_expansion = gr.RuleOption(expected_symbols)

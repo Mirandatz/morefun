@@ -342,7 +342,7 @@ class Grammar:
         return self._as_tuple == other._as_tuple
 
 
-class ExpectedTerminals(enum.Enum):
+class ExpectedTerminal(enum.Enum):
     CONV2D = Terminal('"conv2d"')
     FILTER_COUNT = Terminal('"filter_count"')
     KERNEL_SIZE = Terminal('"kernel_size"')
@@ -565,16 +565,16 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
         # sanity checking the runtime types
         self._raise_if_not_running()
 
-        assert layer_marker == ExpectedTerminals.MAX_POOL.value
+        assert layer_marker == ExpectedTerminal.MAX_POOL.value
 
         assert isinstance(pool_sizes, list)
         for ps_marker, ps_value in pool_sizes:
-            assert ps_marker == ExpectedTerminals.POOL_SIZE.value
+            assert ps_marker == ExpectedTerminal.POOL_SIZE.value
             assert isinstance(ps_value, Terminal)
 
         assert isinstance(strides, list)
         for st_marker, st_value in strides:
-            assert st_marker == ExpectedTerminals.STRIDE.value
+            assert st_marker == ExpectedTerminal.STRIDE.value
             assert isinstance(st_value, Terminal)
 
         # actual code
@@ -591,16 +591,16 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
         # sanity checking the runtime types
         self._raise_if_not_running()
 
-        assert layer_marker == ExpectedTerminals.AVG_POOL.value
+        assert layer_marker == ExpectedTerminal.AVG_POOL.value
 
         assert isinstance(pool_sizes, list)
         for ps_marker, ps_value in pool_sizes:
-            assert ps_marker == ExpectedTerminals.POOL_SIZE.value
+            assert ps_marker == ExpectedTerminal.POOL_SIZE.value
             assert isinstance(ps_value, Terminal)
 
         assert isinstance(strides, list)
         for st_marker, st_value in strides:
-            assert st_marker == ExpectedTerminals.STRIDE.value
+            assert st_marker == ExpectedTerminal.STRIDE.value
             assert isinstance(st_value, Terminal)
 
         # actual code
@@ -611,7 +611,7 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
         self._raise_if_not_running()
 
         marker, *values = parts
-        assert marker == ExpectedTerminals.POOL_SIZE.value
+        assert marker == ExpectedTerminal.POOL_SIZE.value
         assert isinstance(values, list)
         for v in values:
             assert isinstance(v, Terminal)
