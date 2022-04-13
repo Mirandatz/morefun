@@ -1,0 +1,73 @@
+start: backbone optimizer
+
+optimizer: sgd | adam
+
+sgd           : _SGD learning_rate momentum nesterov
+learning_rate : _LEARNING_RATE FLOAT
+momentum      : _MOMENTUM FLOAT
+nesterov      : _NESTEROV BOOL
+
+adam    : _ADAM learning_rate beta1 beta2 epsilon amsgrad
+beta1   : _BETA1 FLOAT
+beta2   : _BETA2 FLOAT
+epsilon : _EPSILON FLOAT
+amsgrad : _AMSGRAD BOOL
+
+backbone : block+
+block    : MERGE? layer FORK?
+layer    : conv
+         | max_pool
+         | avg_pool
+         | batchnorm
+         | activation
+    
+conv         : _CONV filter_count kernel_size stride
+filter_count : _FILTER_COUNT INT
+kernel_size  : _KERNEL_SIZE INT
+stride       : _STRIDE INT
+
+max_pool  : _MAX_POOL pool_size stride
+avg_pool  : _AVG_POOL pool_size stride
+pool_size : _POOL_SIZE INT
+ 
+batchnorm : _BATCHNORM
+
+activation : RELU | GELU | SWISH
+
+MERGE         : /"merge"/
+FORK          : /"fork"/
+
+_CONV         : /"conv2d"/
+_FILTER_COUNT : /"filter_count"/
+_KERNEL_SIZE  : /"kernel_size"/
+_STRIDE       : /"stride"/
+
+_MAX_POOL  : /"max_pool2d"/
+_AVG_POOL  : /"avg_pool2d"/
+_POOL_SIZE : /"pool_size"/
+
+_BATCHNORM    : /"batchnorm"/
+
+RELU  : /"relu"/
+GELU  : /"gelu"/
+SWISH : /"swish"/
+
+_SGD           : /"sgd"/
+_LEARNING_RATE : /"learning_rate"/
+_MOMENTUM      : /"momentum"/
+_NESTEROV      : /"nesterov"/
+
+_ADAM    : /"adam"/
+_BETA1   : /"beta1"/
+_BETA2   : /"beta2"/
+_EPSILON : /"epsilon"/
+_AMSGRAD : /"amsgrad"/
+
+BOOL  : TRUE | FALSE
+TRUE  : "true"
+FALSE : "false"
+
+%import common (INT, FLOAT)
+%import common.WS
+
+%ignore WS

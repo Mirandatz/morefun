@@ -1,0 +1,32 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
+// https://github.com/microsoft/vscode-dev-containers/tree/v0.217.1/containers/docker-existing-dockerfile
+{
+	"image": "mirandatz/gge:dev_env",
+	"settings": {
+		"terminal.integrated.env.linux": {
+			"PYTHONPATH": "${workspaceFolder}/gge:${env:PYTHONPATH}"
+		},
+		"python.formatting.provider": "black",
+		"python.linting.enabled": true,
+		"python.linting.mypyEnabled": true,
+		"python.linting.flake8Enabled": true,
+		"python.testing.pytestEnabled": true,
+		"python.testing.pytestArgs": [
+			"gge"
+		],
+		"python.testing.unittestEnabled": false,
+	},
+	"extensions": [
+		"ms-python.python",
+		"ms-python.vscode-pylance"
+	],
+	"forwardPorts": [
+		8000 // for debugger
+	],
+	"runArgs": [
+		"--runtime=nvidia"
+	],
+	"mounts": [
+		"type=bind,source=${localWorkspaceFolder}/playground,target=/playground",
+	],
+}

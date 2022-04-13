@@ -1,16 +1,15 @@
 import attrs
-import pytest
 from hypothesis import given
 
 import gge.backbones as bb
 import gge.connections as conn
 import gge.layers as gl
 import gge.name_generator as ng
-import gge.tests.strategies as gge_hs
+import gge.tests.strategies.layers as ls
 
 
-@given(shapes=gge_hs.same_aspect_shape_pair())
-def test_downsampling(shapes: gge_hs.ShapePair) -> None:
+@given(shapes=ls.shape_pairs())
+def test_downsampling(shapes: ls.ShapePair) -> None:
     """Can downsample to exact fraction target output shape."""
     input_shape = shapes.bigger
     output_shape = shapes.smaller
@@ -24,8 +23,8 @@ def test_downsampling(shapes: gge_hs.ShapePair) -> None:
     assert shortcut.output_shape == output_shape
 
 
-@given(shapes=gge_hs.same_aspect_shape_pair())
-def test_upsampling(shapes: gge_hs.ShapePair) -> None:
+@given(shapes=ls.shape_pairs())
+def test_upsampling(shapes: ls.ShapePair) -> None:
     """Can upsample to exact fraction target output shape."""
     input_shape = shapes.smaller
     output_shape = shapes.bigger
@@ -38,8 +37,8 @@ def test_upsampling(shapes: gge_hs.ShapePair) -> None:
     assert shortcut.output_shape == output_shape
 
 
-@given(shapes=gge_hs.same_aspect_shape_pair())
-def test_downsampling_shortcut(shapes: gge_hs.ShapePair) -> None:
+@given(shapes=ls.shape_pairs())
+def test_downsampling_shortcut(shapes: ls.ShapePair) -> None:
     """Can downsample to exact fraction target output shape from enum."""
     input_shape = shapes.bigger
     output_shape = shapes.smaller
@@ -55,8 +54,8 @@ def test_downsampling_shortcut(shapes: gge_hs.ShapePair) -> None:
     assert shortcut.output_shape == output_shape
 
 
-@given(shapes=gge_hs.same_aspect_shape_pair())
-def test_upsampling_shortcut(shapes: gge_hs.ShapePair) -> None:
+@given(shapes=ls.shape_pairs())
+def test_upsampling_shortcut(shapes: ls.ShapePair) -> None:
     """Can upsample to exact fraction target output shape from enum."""
     input_shape = shapes.smaller
     output_shape = shapes.bigger
@@ -72,7 +71,7 @@ def test_upsampling_shortcut(shapes: gge_hs.ShapePair) -> None:
     assert shortcut.output_shape == output_shape
 
 
-@given(shape=gge_hs.shape())
+@given(shape=ls.shapes())
 def test_shortcut_identity(shape: gl.Shape) -> None:
     """Making a shortcut with same shape returns the same layer regardless of method."""
     source = gl.ConnectedBatchNorm(
@@ -92,8 +91,8 @@ def test_shortcut_identity(shape: gl.Shape) -> None:
     assert source == upsample_shortcut
 
 
-@given(shapes=gge_hs.same_aspect_shape_pair(same_depth=True))
-def test_merge_downsample_add(shapes: gge_hs.ShapePair) -> None:
+@given(shapes=ls.shape_pairs(same_depth=True))
+def test_merge_downsample_add(shapes: ls.ShapePair) -> None:
     """Can add-merge using a downsample."""
     input_layer = gl.Input(shapes.bigger)
 
@@ -102,9 +101,9 @@ def test_merge_downsample_add(shapes: gge_hs.ShapePair) -> None:
         params=gl.BatchNorm(name="bn"),
     )
 
-    source1 = gl.ConnectedPool2D(
+    source1 = gl.ConnectedMaxPooling2D(
         input_layer=input_layer,
-        params=gl.Pool2D("maxpool", gl.PoolType.MAX_POOLING, stride=shapes.ratio),
+        params=gl.MaxPool2D("maxpool", pool_size=1, stride=shapes.ratio),
     )
 
     name_gen = ng.NameGenerator()
@@ -120,8 +119,8 @@ def test_merge_downsample_add(shapes: gge_hs.ShapePair) -> None:
     assert add.output_shape == shapes.smaller
 
 
-@given(shapes=gge_hs.same_aspect_shape_pair(same_depth=True))
-def test_merge_downsample_concat(shapes: gge_hs.ShapePair) -> None:
+@given(shapes=ls.shape_pairs(same_depth=True))
+def test_merge_downsample_concat(shapes: ls.ShapePair) -> None:
     """Concatenating sources sums the depths when downsampling preserving the smallest (width, height)."""
     input_layer = gl.Input(shapes.bigger)
     expected = attrs.evolve(shapes.smaller, depth=shapes.smaller.depth * 2)
@@ -131,9 +130,9 @@ def test_merge_downsample_concat(shapes: gge_hs.ShapePair) -> None:
         params=gl.BatchNorm(name="bn"),
     )
 
-    source1 = gl.ConnectedPool2D(
+    source1 = gl.ConnectedMaxPooling2D(
         input_layer=input_layer,
-        params=gl.Pool2D("maxpool", gl.PoolType.MAX_POOLING, stride=shapes.ratio),
+        params=gl.MaxPool2D("maxpool", pool_size=1, stride=shapes.ratio),
     )
 
     name_gen = ng.NameGenerator()
@@ -149,8 +148,8 @@ def test_merge_downsample_concat(shapes: gge_hs.ShapePair) -> None:
     assert add.output_shape == expected
 
 
-@given(shapes=gge_hs.same_aspect_shape_pair(same_depth=True))
-def test_merge_upsample_concat(shapes: gge_hs.ShapePair) -> None:
+@given(shapes=ls.shape_pairs(same_depth=True))
+def test_merge_upsample_concat(shapes: ls.ShapePair) -> None:
     """Concatenating sources adds the depths when upsampling preserving the biggest (width, height)."""
     input_layer = gl.Input(shapes.bigger)
     expected = attrs.evolve(shapes.bigger, depth=shapes.bigger.depth * 2)
@@ -160,9 +159,9 @@ def test_merge_upsample_concat(shapes: gge_hs.ShapePair) -> None:
         params=gl.BatchNorm(name="bn"),
     )
 
-    source1 = gl.ConnectedPool2D(
+    source1 = gl.ConnectedMaxPooling2D(
         input_layer=input_layer,
-        params=gl.Pool2D("maxpool", gl.PoolType.MAX_POOLING, stride=shapes.ratio),
+        params=gl.MaxPool2D("maxpool", pool_size=1, stride=shapes.ratio),
     )
 
     name_gen = ng.NameGenerator()
@@ -325,8 +324,11 @@ def test_select_target_shape_single_candidate() -> None:
 
 
 def test_connect_backbone_with_duplicate_merge_entries() -> None:
-    layers = gl.BatchNorm("bn0"), gl.make_fork("f0"), gl.make_merge("m0")
-    backbone = bb.Backbone(layers)
+    # setup
+    backbone = bb.Backbone(
+        (gl.BatchNorm("bn0"), gl.make_fork("f0"), gl.make_merge("m0")),
+    )
+
     merge_params = (
         conn.MergeParameters(
             forks_mask=(True,),
@@ -336,9 +338,10 @@ def test_connect_backbone_with_duplicate_merge_entries() -> None:
     )
     schema = conn.ConnectionsSchema(merge_params)
 
-    with pytest.raises(AssertionError):
-        _ = conn.connect_backbone(
-            backbone,
-            schema,
-            input_layer=gl.make_input(1, 2, 3),
-        )
+    # test
+    input = gl.make_input(1, 2, 3)
+    output_layer = conn.connect_backbone(backbone, schema, input_layer=input)
+
+    assert isinstance(output_layer, gl.ConnectedBatchNorm)
+    assert isinstance(output_layer.input_layer, gl.Input)
+    assert output_layer.input_layer == input

@@ -1,0 +1,91 @@
+start       : _NL* rule+
+rule        : NONTERMINAL ":" (layer | block | optimizer)
+NONTERMINAL : NAME
+
+block        : block_option ("|" block_option)*
+block_option : maybe_merge symbol_range+ maybe_fork _NL*
+maybe_merge  : [MERGE]
+maybe_fork   : [FORK]
+
+symbol_range : NONTERMINAL ["~" RANGE_BOUND [".." RANGE_BOUND]]
+RANGE_BOUND  : INT
+
+layer        : (conv_layer | max_pooling_layer | avg_pooling_layer | batchnorm_layer | activation_layer) _NL*
+
+activation_layer : RELU | GELU | SWISH
+
+conv_layer   : CONV2D filter_count kernel_size strides
+filter_count : FILTER_COUNT _int_args
+kernel_size  : KERNEL_SIZE _int_args
+strides      : STRIDE _int_args
+
+batchnorm_layer : BATCHNORM
+
+max_pooling_layer : MAX_POOL2D pool_sizes strides
+avg_pooling_layer : AVG_POOL2D pool_sizes strides
+pool_sizes        : POOL_SIZE _int_args
+
+optimizer : (sgd | adam) _NL*
+
+sgd           : SGD learning_rate momentum nesterov
+learning_rate : LEARNING_RATE _float_args
+momentum      : MOMENTUM _float_args
+nesterov      : NESTEROV _bool_args
+
+adam : ADAM learning_rate beta1 beta2 epsilon amsgrad
+beta1: BETA1 _float_args
+beta2: BETA2 _float_args
+epsilon: EPSILON _float_args
+amsgrad: AMSGRAD _bool_args
+
+_int_args : INT_ARG
+          | "(" INT_ARG ("|" INT_ARG)* ")"
+INT_ARG   : INT
+
+_float_args : FLOAT_ARG
+            | "(" FLOAT_ARG ("|" FLOAT_ARG)* ")"
+FLOAT_ARG   : FLOAT
+
+_bool_args : BOOL_ARG
+           | "(" BOOL_ARG ("|" BOOL_ARG)* ")"
+BOOL_ARG   : BOOL
+
+RELU  : /"relu"/
+GELU  : /"gelu"/
+SWISH : /"swish"/
+
+MERGE : /"merge"/
+FORK  : /"fork"/
+
+CONV2D       : /"conv2d"/
+FILTER_COUNT : /"filter_count"/
+KERNEL_SIZE  : /"kernel_size"/
+STRIDE       : /"stride"/
+
+BATCHNORM : /"batchnorm"/
+
+MAX_POOL2D : /"max_pool2d"/
+AVG_POOL2D : /"avg_pool2d"/
+POOL_SIZE  : /"pool_size"/
+
+SGD           : /"sgd"/
+LEARNING_RATE : /"learning_rate"/
+MOMENTUM      : /"momentum"/
+NESTEROV      : /"nesterov"/
+
+ADAM    : /"adam"/
+BETA1   : /"beta1"/
+BETA2   : /"beta2"/
+EPSILON : /"epsilon"/
+AMSGRAD : /"amsgrad"/
+
+BOOL  : TRUE | FALSE
+TRUE  : "true"
+FALSE : "false"
+
+%import common (INT, FLOAT)
+%import common.NEWLINE -> _NL
+%import common.CNAME -> NAME
+%import common.WS_INLINE
+
+%ignore WS_INLINE

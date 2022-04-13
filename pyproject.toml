@@ -2,9 +2,11 @@
 target-version = ['py310']
 
 [tool.pytest.ini_options]
-testpaths = ["gge/tests"]
+testpaths = ["/gge/gge/tests"]
 addopts = "--pspec"
+cache_dir = "/dev/shm/pytest_cache"
 filterwarnings = [
+    "ignore::DeprecationWarning:flatbuffers.*:",
+    "ignore::DeprecationWarning:keras_preprocessing.*:",
     "ignore::DeprecationWarning:tensorflow.*:",
-    "ignore::DeprecationWarning:flatbuffers.*:"
 ]

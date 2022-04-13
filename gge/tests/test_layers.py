@@ -4,7 +4,7 @@ import pytest
 from hypothesis import assume, example, given
 
 import gge.layers as gl
-import gge.tests.strategies as gge_hs
+import gge.tests.strategies.layers as ls
 
 tensorflow_settings = hypothesis.settings(deadline=1000)
 
@@ -128,11 +128,11 @@ def disable_gpu() -> None:
 
 
 @tensorflow_settings
-@given(gge_hs.connected_conv2d())
+@given(ls.connected_conv2ds())
 def test_conv2d_tensor_shape(layer: gl.ConnectedConv2D) -> None:
     """Output shape of ConnectedConv2D layer should match the tensor equivalent."""
 
-    tensor_shape = layer.to_tensor().shape
+    tensor_shape = layer.to_tensor({}).shape
     _, expected_width, expected_height, expected_depth = tensor_shape
 
     actual_shape = layer.output_shape

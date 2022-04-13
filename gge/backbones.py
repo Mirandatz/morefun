@@ -1,24 +1,13 @@
 import collections
 import dataclasses
-import functools
 import itertools
-import pathlib
 import typing
 
 import lark
 
-from loguru import logger
-
 import gge.layers as gl
+import gge.mesagrammar_parsing as mp
 import gge.name_generator
-import gge.transformers as gge_transformers
-
-MESAGRAMMAR_PATH = pathlib.Path(__file__).parent.parent / "data" / "mesagrammar.lark"
-
-
-@functools.cache
-def get_mesagrammar() -> str:
-    return MESAGRAMMAR_PATH.read_text()
 
 
 def _raise_if_contains_repeated_names(layers: tuple[gl.Layer, ...]) -> None:
@@ -57,7 +46,7 @@ class Backbone:
 
 
 @lark.v_args(inline=True)
-class BackboneSynthetizer(gge_transformers.SinglePassTransformer[Backbone]):
+class BackboneSynthetizer(mp.MesagrammarTransformer):
     def __init__(self) -> None:
         super().__init__()
         self._name_generator = gge.name_generator.NameGenerator()
@@ -67,8 +56,14 @@ class BackboneSynthetizer(gge_transformers.SinglePassTransformer[Backbone]):
         return self._name_generator.gen_name(prefix)
 
     @lark.v_args(inline=False)
-    def start(self, blocks: list[list[gl.Layer]]) -> Backbone:
+    def backbone(self, blocks: typing.Any) -> Backbone:
         self._raise_if_not_running()
+
+        assert isinstance(blocks, list)
+        for list_of_layers in blocks:
+            assert isinstance(list_of_layers, list)
+            for layer in list_of_layers:
+                assert isinstance(layer, gl.Layer)
 
         layers = tuple(layer for list_of_layers in blocks for layer in list_of_layers)
         return Backbone(layers)
@@ -100,7 +95,7 @@ class BackboneSynthetizer(gge_transformers.SinglePassTransformer[Backbone]):
 
         return layer
 
-    def conv_layer(self, filter_count: int, kernel_size: int, stride: int) -> gl.Conv2D:
+    def conv(self, filter_count: int, kernel_size: int, stride: int) -> gl.Conv2D:
         self._raise_if_not_running()
 
         return gl.Conv2D(
@@ -128,33 +123,35 @@ class BackboneSynthetizer(gge_transformers.SinglePassTransformer[Backbone]):
 
         return size
 
-    def batchnorm_layer(self) -> gl.BatchNorm:
+    def batchnorm(self) -> gl.BatchNorm:
         self._raise_if_not_running()
+
         return gl.BatchNorm(self._create_layer_name(gl.BatchNorm))
 
-    def pool_layer(self, pool_type: gl.PoolType, stride: int) -> gl.Pool2D:
+    def max_pool(self, pool_size: int, stride: int) -> gl.MaxPool2D:
         self._raise_if_not_running()
-        return gl.Pool2D(
-            name=self._create_layer_name(gl.Pool2D),
-            pooling_type=pool_type,
+        return gl.MaxPool2D(
+            name=self._create_layer_name(gl.MaxPool2D),
+            pool_size=pool_size,
             stride=stride,
         )
 
-    def activation_layer(self, layer: gl.SingleInputLayer) -> gl.SingleInputLayer:
+    def avg_pool(self, pool_size: int, stride: int) -> gl.AvgPool2D:
+        self._raise_if_not_running()
+        return gl.AvgPool2D(
+            name=self._create_layer_name(gl.AvgPool2D),
+            pool_size=pool_size,
+            stride=stride,
+        )
+
+    def pool_size(self, pool_size: int) -> int:
+        self._raise_if_not_running()
+        assert pool_size >= 1
+        return pool_size
+
+    def activation(self, layer: gl.SingleInputLayer) -> gl.SingleInputLayer:
         self._raise_if_not_running()
         return layer
-
-    def POOL_MAX(self, _: lark.Token) -> gl.PoolType:
-        self._raise_if_not_running()
-        return gl.PoolType.MAX_POOLING
-
-    def POOL_AVG(self, _: lark.Token) -> gl.PoolType:
-        self._raise_if_not_running()
-        return gl.PoolType.AVG_POOLING
-
-    def POOL_STRIDE(self, token: lark.Token) -> int:
-        self._raise_if_not_running()
-        return int(token.value)
 
     def RELU(self, token: lark.Token) -> gl.Relu:
         self._raise_if_not_running()
@@ -168,16 +165,8 @@ class BackboneSynthetizer(gge_transformers.SinglePassTransformer[Backbone]):
         self._raise_if_not_running()
         return gl.Swish(name=self._create_layer_name(gl.Swish))
 
-    def INT(self, token: lark.Token) -> int:
-        self._raise_if_not_running()
-        return int(token.value)
 
-    def FLOAT(self, token: lark.Token) -> float:
-        self._raise_if_not_running()
-        return float(token.value)
-
-
-def parse(string: str) -> Backbone:
+def parse(token_stream: str) -> Backbone:
     """
     This is not a "string deserialization function";
     the input string is expected to be a "token stream"
@@ -185,7 +174,12 @@ def parse(string: str) -> Backbone:
     be visited/transformed into a `Backbone`.
     """
 
-    parser = lark.Lark(grammar=get_mesagrammar(), parser="lalr")
-    tree = parser.parse(string)
-    logger.success("Parsed the mesagrammar into an abstract syntax tree")
-    return BackboneSynthetizer().transform(tree)
+    tree = mp.parse_mesagrammar_tokenstream(token_stream)
+    relevant_subtrees = list(tree.find_data("backbone"))
+    assert len(relevant_subtrees) == 1
+
+    backbone_subtree = relevant_subtrees[0]
+
+    backbone = BackboneSynthetizer().transform(backbone_subtree)
+    assert isinstance(backbone, Backbone)
+    return backbone
