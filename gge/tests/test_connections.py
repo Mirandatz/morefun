@@ -345,11 +345,3 @@ def test_connect_backbone_with_duplicate_merge_entries() -> None:
     assert isinstance(output_layer, gl.ConnectedBatchNorm)
     assert isinstance(output_layer.input_layer, gl.Input)
     assert output_layer.input_layer == input
-
-
-def main() -> None:
-    test_connect_backbone_with_duplicate_merge_entries()
-
-
-if __name__ == "__main__":
-    main()
