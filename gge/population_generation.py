@@ -16,6 +16,16 @@ def try_create_individual(
     novelty_tracker: novel.NoveltyTracker,
     rng: rand.RNG,
 ) -> cg.CompositeGenotype | None:
+    """
+    Attempts to create a novel individual, that is,
+    a genotype that is not yet tracked by `novelty_tracker`
+    and whose phenotype is also not yet tracked by `novelty_tracker`.
+
+    On success, the novel genotype is returned.
+    If either the genotype or its phenotype is already tracked,
+    `None` is returned instead.
+    """
+
     logger.trace("try_create_individual")
 
     genotype = cg.create_genotype(grammar, rng)
