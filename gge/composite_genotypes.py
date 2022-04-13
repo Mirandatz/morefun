@@ -18,7 +18,7 @@ class CompositeGenotype:
         eq=False, order=False, repr=True, init=False, default=uuid.uuid4()
     )
 
-    def __post_init__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         assert isinstance(self.backbone_genotype, sge.Genotype)
         assert isinstance(self.connections_genotype, conn.ConnectionsSchema)
 
