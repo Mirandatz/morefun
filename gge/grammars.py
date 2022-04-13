@@ -577,7 +577,6 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
             assert st_marker == ExpectedTerminal.STRIDE.value
             assert isinstance(st_value, Terminal)
 
-        # actual code
         combinations = itertools.product(pool_sizes, strides)
         return [RuleOption((layer_marker, *ps, *st)) for ps, st in combinations]
 
@@ -603,7 +602,6 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
             assert st_marker == ExpectedTerminal.STRIDE.value
             assert isinstance(st_value, Terminal)
 
-        # actual code
         combinations = itertools.product(pool_sizes, strides)
         return [RuleOption((layer_marker, *ps, *st)) for ps, st in combinations]
 
