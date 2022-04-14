@@ -22,7 +22,7 @@ strides      : STRIDE _int_args
 batchnorm_layer : BATCHNORM
 
 max_pooling_layer : MAXPOOL pool_sizes strides
-avg_pooling_layer : AVG_POOL2D pool_sizes strides
+avg_pooling_layer : AVGPOOL pool_sizes strides
 pool_sizes        : POOL_SIZE _int_args
 
 optimizer : (sgd | adam) _NL*
