@@ -128,7 +128,7 @@ class BackboneSynthetizer(mp.MesagrammarTransformer):
 
         return gl.BatchNorm(self._create_layer_name(gl.BatchNorm))
 
-    def max_pool(self, pool_size: int, stride: int) -> gl.MaxPool2D:
+    def maxpool(self, pool_size: int, stride: int) -> gl.MaxPool2D:
         self._raise_if_not_running()
         return gl.MaxPool2D(
             name=self._create_layer_name(gl.MaxPool2D),
@@ -136,7 +136,7 @@ class BackboneSynthetizer(mp.MesagrammarTransformer):
             stride=stride,
         )
 
-    def avg_pool(self, pool_size: int, stride: int) -> gl.AvgPool2D:
+    def avgpool(self, pool_size: int, stride: int) -> gl.AvgPool2D:
         self._raise_if_not_running()
         return gl.AvgPool2D(
             name=self._create_layer_name(gl.AvgPool2D),
