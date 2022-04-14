@@ -10,13 +10,15 @@ from loguru import logger
 
 import gge.transformers as gge_transformers
 
-METAGRAMMAR_PATH = pathlib.Path(__file__).parent / "grammar_files" / "metagrammar.lark"
+UPPER_GRAMMAR_PATH = (
+    pathlib.Path(__file__).parent / "grammar_files" / "upper_grammar.lark"
+)
 
 
-def get_metagrammar_parser() -> lark.Lark:
+def get_upper_grammar_parser() -> lark.Lark:
     logger.debug("start parsing upper_grammar")
     parser = lark.Lark.open(
-        str(METAGRAMMAR_PATH),
+        str(UPPER_GRAMMAR_PATH),
         parser="lalr",
         maybe_placeholders=True,
     )
@@ -25,7 +27,7 @@ def get_metagrammar_parser() -> lark.Lark:
 
 
 def extract_ast(grammar_text: str) -> lark.Tree[typing.Any]:
-    parser = get_metagrammar_parser()
+    parser = get_upper_grammar_parser()
     return parser.parse(grammar_text)
 
 
