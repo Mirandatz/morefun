@@ -1,0 +1,32 @@
+MERGE         : /"merge"/
+FORK          : /"fork"/
+
+CONV         : /"conv2d"/
+FILTER_COUNT : /"filter_count"/
+KERNEL_SIZE  : /"kernel_size"/
+STRIDE       : /"stride"/
+
+MAX_POOL  : /"max_pool2d"/
+AVG_POOL  : /"avg_pool2d"/
+POOL_SIZE : /"pool_size"/
+
+BATCHNORM : /"batchnorm"/
+
+RELU  : /"relu"/
+GELU  : /"gelu"/
+SWISH : /"swish"/
+
+SGD           : /"sgd"/
+LEARNING_RATE : /"learning_rate"/
+MOMENTUM      : /"momentum"/
+NESTEROV      : /"nesterov"/
+
+ADAM    : /"adam"/
+BETA1   : /"beta1"/
+BETA2   : /"beta2"/
+EPSILON : /"epsilon"/
+AMSGRAD : /"amsgrad"/
+
+BOOL  : TRUE | FALSE
+TRUE  : "true"
+FALSE : "false"
