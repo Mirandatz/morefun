@@ -21,7 +21,7 @@ strides      : STRIDE _int_args
 
 batchnorm_layer : BATCHNORM
 
-max_pooling_layer : MAX_POOL2D pool_sizes strides
+max_pooling_layer : MAXPOOL pool_sizes strides
 avg_pooling_layer : AVG_POOL2D pool_sizes strides
 pool_sizes        : POOL_SIZE _int_args
 
@@ -58,8 +58,8 @@ BOOL_ARG   : BOOL
 %import .terminals.KERNEL_SIZE  -> KERNEL_SIZE
 %import .terminals.STRIDE       -> STRIDE
 
-%import .terminals.MAX_POOL  -> MAX_POOL2D
-%import .terminals.AVG_POOL  -> AVG_POOL2D
+%import .terminals.MAX_POOL  -> MAXPOOL
+%import .terminals.AVG_POOL  -> AVGPOOL
 %import .terminals.POOL_SIZE -> POOL_SIZE
 
 %import .terminals.BATCHNORM -> BATCHNORM
