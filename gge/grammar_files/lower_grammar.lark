@@ -16,8 +16,8 @@ amsgrad : _AMSGRAD BOOL
 backbone : block+
 block    : MERGE? layer FORK?
 layer    : conv
-         | max_pool
-         | avg_pool
+         | maxpool
+         | avgpool
          | batchnorm
          | activation
     
@@ -26,8 +26,8 @@ filter_count : _FILTER_COUNT INT
 kernel_size  : _KERNEL_SIZE INT
 stride       : _STRIDE INT
 
-max_pool  : _MAX_POOL pool_size stride
-avg_pool  : _AVG_POOL pool_size stride
+maxpool  : _MAXPOOL pool_size stride
+avgpool  : _AVGPOOL pool_size stride
 pool_size : _POOL_SIZE INT
  
 batchnorm : _BATCHNORM
@@ -41,8 +41,8 @@ activation : RELU | GELU | SWISH
 %import .terminals.KERNEL_SIZE  -> _KERNEL_SIZE
 %import .terminals.STRIDE       -> _STRIDE
 
-%import .terminals.MAX_POOL  -> _MAX_POOL
-%import .terminals.AVG_POOL  -> _AVG_POOL
+%import .terminals.MAX_POOL  -> _MAXPOOL
+%import .terminals.AVG_POOL  -> _AVGPOOL
 %import .terminals.POOL_SIZE -> _POOL_SIZE
 
 %import .terminals.BATCHNORM -> _BATCHNORM
