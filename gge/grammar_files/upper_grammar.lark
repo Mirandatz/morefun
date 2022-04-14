@@ -50,38 +50,31 @@ _bool_args : BOOL_ARG
            | "(" BOOL_ARG ("|" BOOL_ARG)* ")"
 BOOL_ARG   : BOOL
 
-RELU  : /"relu"/
-GELU  : /"gelu"/
-SWISH : /"swish"/
 
-MERGE : /"merge"/
-FORK  : /"fork"/
+%import .terminals (MERGE, FORK, BOOL, RELU, GELU, SWISH)
 
-CONV2D       : /"conv2d"/
-FILTER_COUNT : /"filter_count"/
-KERNEL_SIZE  : /"kernel_size"/
-STRIDE       : /"stride"/
+%import .terminals.CONV         -> CONV2D
+%import .terminals.FILTER_COUNT -> FILTER_COUNT 
+%import .terminals.KERNEL_SIZE  -> KERNEL_SIZE
+%import .terminals.STRIDE       -> STRIDE
 
-BATCHNORM : /"batchnorm"/
+%import .terminals.MAX_POOL  -> MAX_POOL2D
+%import .terminals.AVG_POOL  -> AVG_POOL2D
+%import .terminals.POOL_SIZE -> POOL_SIZE
 
-MAX_POOL2D : /"max_pool2d"/
-AVG_POOL2D : /"avg_pool2d"/
-POOL_SIZE  : /"pool_size"/
+%import .terminals.BATCHNORM -> BATCHNORM
 
-SGD           : /"sgd"/
-LEARNING_RATE : /"learning_rate"/
-MOMENTUM      : /"momentum"/
-NESTEROV      : /"nesterov"/
+%import .terminals.SGD           -> SGD
+%import .terminals.LEARNING_RATE -> LEARNING_RATE
+%import .terminals.MOMENTUM      -> MOMENTUM
+%import .terminals.NESTEROV      -> NESTEROV
 
-ADAM    : /"adam"/
-BETA1   : /"beta1"/
-BETA2   : /"beta2"/
-EPSILON : /"epsilon"/
-AMSGRAD : /"amsgrad"/
+%import .terminals.ADAM    -> ADAM
+%import .terminals.BETA1   -> BETA1
+%import .terminals.BETA2   -> BETA2
+%import .terminals.EPSILON -> EPSILON
+%import .terminals.AMSGRAD -> AMSGRAD
 
-BOOL  : TRUE | FALSE
-TRUE  : "true"
-FALSE : "false"
 
 %import common (INT, FLOAT)
 %import common.NEWLINE -> _NL
