@@ -822,7 +822,7 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
         self._raise_if_not_running()
         return self._register_terminal(token.value)
 
-    def MAX_POOL2D(self, token: lark.Token) -> Terminal:
+    def MAXPOOL(self, token: lark.Token) -> Terminal:
         self._raise_if_not_running()
         assert isinstance(token, lark.Token)
 
