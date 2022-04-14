@@ -13,13 +13,15 @@ import gge.transformers as gge_transformers
 METAGRAMMAR_PATH = pathlib.Path(__file__).parent / "grammar_files" / "metagrammar.lark"
 
 
-@functools.cache
-def get_metagrammar() -> str:
-    return METAGRAMMAR_PATH.read_text()
-
-
 def get_metagrammar_parser() -> lark.Lark:
-    return lark.Lark(get_metagrammar(), parser="lalr", maybe_placeholders=True)
+    logger.debug("start parsing upper_grammar")
+    parser = lark.Lark.open(
+        str(METAGRAMMAR_PATH),
+        parser="lalr",
+        maybe_placeholders=True,
+    )
+    logger.debug("finished parsing upper_grammar")
+    return parser
 
 
 def extract_ast(grammar_text: str) -> lark.Tree[typing.Any]:
