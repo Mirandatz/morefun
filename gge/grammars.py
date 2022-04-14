@@ -828,7 +828,7 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
 
         return self._register_terminal(token.value)
 
-    def AVG_POOL2D(self, token: lark.Token) -> Terminal:
+    def AVGPOOL(self, token: lark.Token) -> Terminal:
         self._raise_if_not_running()
         assert isinstance(token, lark.Token)
 
