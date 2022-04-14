@@ -6,7 +6,7 @@ import typing
 import lark
 
 import gge.layers as gl
-import gge.mesagrammar_parsing as mp
+import gge.lower_gramamar_parsing as mp
 import gge.name_generator
 
 

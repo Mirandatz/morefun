@@ -3,7 +3,7 @@ import abc
 import attrs
 import lark
 
-import gge.mesagrammar_parsing as mp
+import gge.lower_gramamar_parsing as mp
 
 
 class Optimizer(abc.ABC):
