@@ -1,4 +1,3 @@
-import functools
 import pathlib
 import typing
 
@@ -7,17 +6,14 @@ from loguru import logger
 
 import gge.transformers
 
-MESAGRAMMAR_PATH = pathlib.Path(__file__).parent / "grammar_files" / "mesagrammar.lark"
-
-
-@functools.cache
-def get_mesagrammar() -> str:
-    return MESAGRAMMAR_PATH.read_text()
+LOWER_GRAMMAR_PATH = (
+    pathlib.Path(__file__).parent / "grammar_files" / "lower_grammar.lark"
+)
 
 
 def get_parser() -> lark.Lark:
     logger.debug("starting parsing mesagrammar")
-    parser = lark.Lark(grammar=get_mesagrammar(), parser="lalr")
+    parser = lark.Lark.open(grammar_filename=str(LOWER_GRAMMAR_PATH), parser="lalr")
     logger.debug("finished parsing mesagrammar")
     return parser
 

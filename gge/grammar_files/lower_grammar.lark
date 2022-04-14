@@ -34,38 +34,29 @@ batchnorm : _BATCHNORM
 
 activation : RELU | GELU | SWISH
 
-MERGE         : /"merge"/
-FORK          : /"fork"/
+%import .terminals (MERGE, FORK, BOOL, RELU, GELU, SWISH)
 
-_CONV         : /"conv2d"/
-_FILTER_COUNT : /"filter_count"/
-_KERNEL_SIZE  : /"kernel_size"/
-_STRIDE       : /"stride"/
+%import .terminals.CONV         -> _CONV
+%import .terminals.FILTER_COUNT -> _FILTER_COUNT 
+%import .terminals.KERNEL_SIZE  -> _KERNEL_SIZE
+%import .terminals.STRIDE       -> _STRIDE
 
-_MAX_POOL  : /"max_pool2d"/
-_AVG_POOL  : /"avg_pool2d"/
-_POOL_SIZE : /"pool_size"/
+%import .terminals.MAX_POOL  -> _MAX_POOL
+%import .terminals.AVG_POOL  -> _AVG_POOL
+%import .terminals.POOL_SIZE -> _POOL_SIZE
 
-_BATCHNORM    : /"batchnorm"/
+%import .terminals.BATCHNORM -> _BATCHNORM
 
-RELU  : /"relu"/
-GELU  : /"gelu"/
-SWISH : /"swish"/
+%import .terminals.SGD           -> _SGD
+%import .terminals.LEARNING_RATE -> _LEARNING_RATE
+%import .terminals.MOMENTUM      -> _MOMENTUM
+%import .terminals.NESTEROV      -> _NESTEROV
 
-_SGD           : /"sgd"/
-_LEARNING_RATE : /"learning_rate"/
-_MOMENTUM      : /"momentum"/
-_NESTEROV      : /"nesterov"/
-
-_ADAM    : /"adam"/
-_BETA1   : /"beta1"/
-_BETA2   : /"beta2"/
-_EPSILON : /"epsilon"/
-_AMSGRAD : /"amsgrad"/
-
-BOOL  : TRUE | FALSE
-TRUE  : "true"
-FALSE : "false"
+%import .terminals.ADAM    -> _ADAM
+%import .terminals.BETA1   -> _BETA1
+%import .terminals.BETA2   -> _BETA2
+%import .terminals.EPSILON -> _EPSILON
+%import .terminals.AMSGRAD -> _AMSGRAD
 
 %import common (INT, FLOAT)
 %import common.WS
