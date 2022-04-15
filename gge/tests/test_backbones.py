@@ -20,9 +20,9 @@ def test_parse_conv2d(test_data: mesa.LayersTestData) -> None:
     assert expected == actual
 
 
-@given(test_data=mesa.add_dummy_optimizer_suffix_to(mesa.max_pool2ds()))
-def test_parse_max_pool2d(test_data: mesa.LayersTestData) -> None:
-    """Can parse max pool2d."""
+@given(test_data=mesa.add_dummy_optimizer_suffix_to(mesa.maxpools()))
+def test_parse_maxpool(test_data: mesa.LayersTestData) -> None:
+    """Can parse maxpool."""
     actual = bb.parse(test_data.token_stream)
     expected = bb.Backbone(test_data.parsed)
     assert expected == actual

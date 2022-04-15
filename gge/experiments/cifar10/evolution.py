@@ -45,7 +45,7 @@ def get_grammar() -> gr.Grammar:
     swish : "swish"
 
     pooling : maxpool | avgpool
-    maxpool : "max_pool2d" "pool_size" (1 | 2) "stride" (1 | 2)
+    maxpool : "maxpool" "pool_size" (1 | 2) "stride" (1 | 2)
     avgpool : "avg_pool2d" "pool_size" (1 | 2) "stride" (1 | 2)
 
     optimizer : "adam" "learning_rate" (0.001 | 0.003 | 0.005) "beta1" 0.9 "beta2" 0.999 "epsilon" 1e-07 "amsgrad" false

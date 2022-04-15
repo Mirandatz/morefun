@@ -27,7 +27,7 @@ def conv2ds(
 
 
 @hs.composite
-def max_pool2ds(
+def maxpools(
     draw: hs.DrawFn, *, name_gen: NameGenerator | None = None
 ) -> LayersTestData:
     name_gen = name_gen or NameGenerator()
@@ -35,7 +35,7 @@ def max_pool2ds(
     pool_size = draw(hs.integers(min_value=1, max_value=9999))
     stride = draw(hs.integers(min_value=1, max_value=9999))
     layer = gl.MaxPool2D(name, pool_size=pool_size, stride=stride)
-    token_stream = f'"max_pool2d" "pool_size" {pool_size} "stride" {stride}'
+    token_stream = f'"maxpool" "pool_size" {pool_size} "stride" {stride}'
     return LayersTestData(token_stream, (layer,))
 
 
