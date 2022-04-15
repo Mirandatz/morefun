@@ -4,7 +4,7 @@ import pytest
 from hypothesis import given
 
 import gge.grammars as gr
-import gge.tests.strategies.metagrammars as ms
+import gge.tests.strategies.upper_grammar as ugs
 
 START = gr.NonTerminal("start")
 
@@ -302,12 +302,12 @@ def test_pooling_layer_in_block() -> None:
 
 
 @given(
-    pool_sizes=ms.int_args(min_value=1, max_value=9),
-    strides=ms.int_args(min_value=1, max_value=9),
+    pool_sizes=ugs.int_args(min_value=1, max_value=9),
+    strides=ugs.int_args(min_value=1, max_value=9),
 )
 def test_maxpool_def(
-    pool_sizes: ms.GrammarArgs,
-    strides: ms.GrammarArgs,
+    pool_sizes: ugs.GrammarArgs,
+    strides: ugs.GrammarArgs,
 ) -> None:
     # setup
     raw_grammar = (
@@ -338,12 +338,12 @@ def test_maxpool_def(
 
 
 @given(
-    pool_sizes=ms.int_args(min_value=1, max_value=9),
-    strides=ms.int_args(min_value=1, max_value=9),
+    pool_sizes=ugs.int_args(min_value=1, max_value=9),
+    strides=ugs.int_args(min_value=1, max_value=9),
 )
 def test_avgpool_def(
-    pool_sizes: ms.GrammarArgs,
-    strides: ms.GrammarArgs,
+    pool_sizes: ugs.GrammarArgs,
+    strides: ugs.GrammarArgs,
 ) -> None:
     # setup
     raw_grammar = (
@@ -384,14 +384,14 @@ def test_relu_def() -> None:
 
 
 @given(
-    learning_rate=ms.float_args(min_value=0, exclude_min=True),
-    momentum=ms.float_args(min_value=0, exclude_min=True),
-    nesterov=ms.bool_args(),
+    learning_rate=ugs.float_args(min_value=0, exclude_min=True),
+    momentum=ugs.float_args(min_value=0, exclude_min=True),
+    nesterov=ugs.bool_args(),
 )
 def test_sgd_def(
-    learning_rate: ms.GrammarArgs,
-    momentum: ms.GrammarArgs,
-    nesterov: ms.GrammarArgs,
+    learning_rate: ugs.GrammarArgs,
+    momentum: ugs.GrammarArgs,
+    nesterov: ugs.GrammarArgs,
 ) -> None:
     # setup
     raw_grammar = (
@@ -430,18 +430,18 @@ def test_sgd_def(
 
 
 @given(
-    learning_rate=ms.float_args(min_value=0, exclude_min=True),
-    beta1=ms.float_args(min_value=0, exclude_min=True),
-    beta2=ms.float_args(min_value=0, exclude_min=True),
-    epsilon=ms.float_args(min_value=0, exclude_min=True),
-    amsgrad=ms.bool_args(),
+    learning_rate=ugs.float_args(min_value=0, exclude_min=True),
+    beta1=ugs.float_args(min_value=0, exclude_min=True),
+    beta2=ugs.float_args(min_value=0, exclude_min=True),
+    epsilon=ugs.float_args(min_value=0, exclude_min=True),
+    amsgrad=ugs.bool_args(),
 )
 def test_adam_def(
-    learning_rate: ms.GrammarArgs,
-    beta1: ms.GrammarArgs,
-    beta2: ms.GrammarArgs,
-    epsilon: ms.GrammarArgs,
-    amsgrad: ms.GrammarArgs,
+    learning_rate: ugs.GrammarArgs,
+    beta1: ugs.GrammarArgs,
+    beta2: ugs.GrammarArgs,
+    epsilon: ugs.GrammarArgs,
+    amsgrad: ugs.GrammarArgs,
 ) -> None:
     # setup
     raw_grammar = (
