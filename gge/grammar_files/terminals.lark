@@ -6,7 +6,7 @@ FILTER_COUNT : /"filter_count"/
 KERNEL_SIZE  : /"kernel_size"/
 STRIDE       : /"stride"/
 
-MAX_POOL  : /"max_pool2d"/
+MAXPOOL  : /"maxpool"/
 AVG_POOL  : /"avg_pool2d"/
 POOL_SIZE : /"pool_size"/
 

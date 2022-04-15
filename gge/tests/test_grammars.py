@@ -288,7 +288,7 @@ def test_pooling_layer_in_block() -> None:
         start : block
         block : conv pool
         conv  : "conv2d" "filter_count" 1 "kernel_size" (2) "stride" (3 | 4)
-        pool  : "max_pool2d" "pool_size" 2 "stride" 3
+        pool  : "maxpool" "pool_size" 2 "stride" 3
         """
     )
 
@@ -305,13 +305,13 @@ def test_pooling_layer_in_block() -> None:
     pool_sizes=ms.int_args(min_value=1, max_value=9),
     strides=ms.int_args(min_value=1, max_value=9),
 )
-def test_max_pool2d_def(
+def test_maxpool_def(
     pool_sizes: ms.GrammarArgs,
     strides: ms.GrammarArgs,
 ) -> None:
     # setup
     raw_grammar = (
-        'start : "max_pool2d"'
+        'start : "maxpool"'
         f' "pool_size" {pool_sizes.text}'
         f' "stride" {strides.text}'
     )
