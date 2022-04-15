@@ -58,9 +58,7 @@ BOOL_ARG   : BOOL
 %import .terminals.KERNEL_SIZE  -> KERNEL_SIZE
 %import .terminals.STRIDE       -> STRIDE
 
-%import .terminals.MAXPOOL
-%import .terminals.AVG_POOL  -> AVGPOOL
-%import .terminals.POOL_SIZE -> POOL_SIZE
+%import .terminals (MAXPOOL, AVGPOOL, POOL_SIZE)
 
 %import .terminals.BATCHNORM -> BATCHNORM
 

@@ -7,7 +7,7 @@ KERNEL_SIZE  : /"kernel_size"/
 STRIDE       : /"stride"/
 
 MAXPOOL  : /"maxpool"/
-AVG_POOL  : /"avg_pool2d"/
+AVGPOOL  : /"avgpool"/
 POOL_SIZE : /"pool_size"/
 
 BATCHNORM : /"batchnorm"/
