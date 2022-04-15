@@ -12,9 +12,9 @@ def disable_logger() -> None:
     logger.remove()
 
 
-@given(test_data=mesa.add_dummy_optimizer_suffix_to(mesa.conv2ds()))
-def test_parse_conv2d(test_data: mesa.LayersTestData) -> None:
-    """Can parse conv2d."""
+@given(test_data=mesa.add_dummy_optimizer_suffix_to(mesa.convs()))
+def test_parse_conv(test_data: mesa.LayersTestData) -> None:
+    """Can parse conv."""
     actual = bb.parse(test_data.token_stream)
     expected = bb.Backbone(test_data.parsed)
     assert expected == actual

@@ -347,15 +347,15 @@ class Grammar:
 
 
 class ExpectedTerminal(enum.Enum):
-    CONV2D = Terminal('"conv2d"')
+    CONV = Terminal('"conv"')
     FILTER_COUNT = Terminal('"filter_count"')
     KERNEL_SIZE = Terminal('"kernel_size"')
     STRIDE = Terminal('"stride"')
 
     BATCHRNOM = Terminal('"batchnorm"')
 
-    MAX_POOL = Terminal('"maxpool"')
-    AVG_POOL = Terminal('"avgpool"')
+    MAXPOOL = Terminal('"maxpool"')
+    AVGPOOL = Terminal('"avgpool"')
     POOL_SIZE = Terminal('"pool_size"')
 
     RELU = Terminal('"relu"')
@@ -569,7 +569,7 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
         # sanity checking the runtime types
         self._raise_if_not_running()
 
-        assert layer_marker == ExpectedTerminal.MAX_POOL.value
+        assert layer_marker == ExpectedTerminal.MAXPOOL.value
 
         assert isinstance(pool_sizes, list)
         for ps_marker, ps_value in pool_sizes:
@@ -594,7 +594,7 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
         # sanity checking the runtime types
         self._raise_if_not_running()
 
-        assert layer_marker == ExpectedTerminal.AVG_POOL.value
+        assert layer_marker == ExpectedTerminal.AVGPOOL.value
 
         assert isinstance(pool_sizes, list)
         for ps_marker, ps_value in pool_sizes:
@@ -782,7 +782,7 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
         self._raise_if_not_running()
         return self._register_terminal(token.value)
 
-    def CONV2D(self, token: lark.Token) -> Terminal:
+    def CONV(self, token: lark.Token) -> Terminal:
         self._raise_if_not_running()
         return self._register_terminal(token.value)
 

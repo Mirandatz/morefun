@@ -14,7 +14,7 @@ layer        : (conv_layer | max_pooling_layer | avg_pooling_layer | batchnorm_l
 
 activation_layer : RELU | GELU | SWISH
 
-conv_layer   : CONV2D filter_count kernel_size strides
+conv_layer   : CONV filter_count kernel_size strides
 filter_count : FILTER_COUNT _int_args
 kernel_size  : KERNEL_SIZE _int_args
 strides      : STRIDE _int_args
@@ -52,12 +52,7 @@ BOOL_ARG   : BOOL
 
 
 %import .terminals (MERGE, FORK, BOOL, RELU, GELU, SWISH)
-
-%import .terminals.CONV         -> CONV2D
-%import .terminals.FILTER_COUNT -> FILTER_COUNT 
-%import .terminals.KERNEL_SIZE  -> KERNEL_SIZE
-%import .terminals.STRIDE       -> STRIDE
-
+%import .terminals (CONV, FILTER_COUNT, KERNEL_SIZE, STRIDE)
 %import .terminals (MAXPOOL, AVGPOOL, POOL_SIZE)
 
 %import .terminals.BATCHNORM -> BATCHNORM

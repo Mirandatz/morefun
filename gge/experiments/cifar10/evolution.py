@@ -36,7 +36,7 @@ def get_grammar() -> gr.Grammar:
     conv_block : conv_layer batchnorm activation
                | conv_layer batchnorm activation pooling
 
-    conv_layer : "conv2d" "filter_count" (32 | 64) "kernel_size" (1 | 3 | 5 | 7) "stride" (1 | 2)
+    conv_layer : "conv" "filter_count" (32 | 64) "kernel_size" (1 | 3 | 5 | 7) "stride" (1 | 2)
 
     batchnorm  : "batchnorm"
 
