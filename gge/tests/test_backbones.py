@@ -28,8 +28,8 @@ def test_parse_maxpool(test_data: mesa.LayersTestData) -> None:
     assert expected == actual
 
 
-@given(test_data=mesa.add_dummy_optimizer_suffix_to(mesa.avg_pool2ds()))
-def test_parse_avg_pool2d(test_data: mesa.LayersTestData) -> None:
+@given(test_data=mesa.add_dummy_optimizer_suffix_to(mesa.avgpools()))
+def test_parse_avgpools(test_data: mesa.LayersTestData) -> None:
     """Can parse avg pool2d."""
     actual = bb.parse(test_data.token_stream)
     expected = bb.Backbone(test_data.parsed)

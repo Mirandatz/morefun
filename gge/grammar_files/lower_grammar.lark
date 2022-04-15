@@ -42,7 +42,7 @@ activation : RELU | GELU | SWISH
 %import .terminals.STRIDE       -> _STRIDE
 
 %import .terminals.MAXPOOL  -> _MAXPOOL
-%import .terminals.AVG_POOL  -> _AVGPOOL
+%import .terminals.AVGPOOL  -> _AVGPOOL
 %import .terminals.POOL_SIZE -> _POOL_SIZE
 
 %import .terminals.BATCHNORM -> _BATCHNORM
