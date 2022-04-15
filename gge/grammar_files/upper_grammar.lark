@@ -54,20 +54,9 @@ BOOL_ARG   : BOOL
 %import .terminals (MERGE, FORK, BOOL, RELU, GELU, SWISH)
 %import .terminals (CONV, FILTER_COUNT, KERNEL_SIZE, STRIDE)
 %import .terminals (MAXPOOL, AVGPOOL, POOL_SIZE)
-
 %import .terminals.BATCHNORM -> BATCHNORM
-
-%import .terminals.SGD           -> SGD
-%import .terminals.LEARNING_RATE -> LEARNING_RATE
-%import .terminals.MOMENTUM      -> MOMENTUM
-%import .terminals.NESTEROV      -> NESTEROV
-
-%import .terminals.ADAM    -> ADAM
-%import .terminals.BETA1   -> BETA1
-%import .terminals.BETA2   -> BETA2
-%import .terminals.EPSILON -> EPSILON
-%import .terminals.AMSGRAD -> AMSGRAD
-
+%import .terminals (SGD, LEARNING_RATE, MOMENTUM, NESTEROV)
+%import .terminals (ADAM, BETA1, BETA2, EPSILON, AMSGRAD)
 
 %import common (INT, FLOAT)
 %import common.NEWLINE -> _NL
