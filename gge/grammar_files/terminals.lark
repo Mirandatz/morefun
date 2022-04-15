@@ -1,7 +1,7 @@
 MERGE         : /"merge"/
 FORK          : /"fork"/
 
-CONV         : /"conv2d"/
+CONV         : /"conv"/
 FILTER_COUNT : /"filter_count"/
 KERNEL_SIZE  : /"kernel_size"/
 STRIDE       : /"stride"/
