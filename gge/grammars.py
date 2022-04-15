@@ -130,7 +130,7 @@ class RuleOption:
     def __post_init__(self) -> None:
         assert isinstance(self.symbols, tuple)
         for s in self.symbols:
-            assert isinstance(s, Symbol)
+            assert isinstance(s, Symbol)  # type: ignore
 
         assert len(self.symbols) >= 1
 
