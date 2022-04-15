@@ -341,13 +341,13 @@ def test_maxpool_def(
     pool_sizes=ms.int_args(min_value=1, max_value=9),
     strides=ms.int_args(min_value=1, max_value=9),
 )
-def test_avg_pool2d_def(
+def test_avgpool_def(
     pool_sizes: ms.GrammarArgs,
     strides: ms.GrammarArgs,
 ) -> None:
     # setup
     raw_grammar = (
-        'start : "avg_pool2d"'
+        'start : "avgpool"'
         f' "pool_size" {pool_sizes.text}'
         f' "stride" {strides.text}'
     )

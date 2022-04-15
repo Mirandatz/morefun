@@ -40,7 +40,7 @@ def maxpools(
 
 
 @hs.composite
-def avg_pool2ds(
+def avgpools(
     draw: hs.DrawFn, *, name_gen: NameGenerator | None = None
 ) -> LayersTestData:
     name_gen = name_gen or NameGenerator()
@@ -48,7 +48,7 @@ def avg_pool2ds(
     pool_size = draw(hs.integers(min_value=1, max_value=9999))
     stride = draw(hs.integers(min_value=1, max_value=9999))
     layer = gl.AvgPool2D(name, pool_size=pool_size, stride=stride)
-    token_stream = f'"avg_pool2d" "pool_size" {pool_size} "stride" {stride}'
+    token_stream = f'"avgpool" "pool_size" {pool_size} "stride" {stride}'
     return LayersTestData(token_stream, (layer,))
 
 

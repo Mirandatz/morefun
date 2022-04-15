@@ -355,7 +355,7 @@ class ExpectedTerminal(enum.Enum):
     BATCHRNOM = Terminal('"batchnorm"')
 
     MAX_POOL = Terminal('"maxpool"')
-    AVG_POOL = Terminal('"avg_pool2d"')
+    AVG_POOL = Terminal('"avgpool"')
     POOL_SIZE = Terminal('"pool_size"')
 
     RELU = Terminal('"relu"')
