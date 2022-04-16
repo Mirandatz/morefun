@@ -176,7 +176,7 @@ Layer: typing.TypeAlias = ConvertibleToConnectableLayer | MarkerLayer
 
 
 def is_real_layer(layer: Layer) -> bool:
-    assert isinstance(layer, Layer)
+    assert isinstance(layer, Layer)  # type: ignore
     return not isinstance(layer, MarkerLayer)
 
 

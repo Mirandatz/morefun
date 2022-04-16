@@ -11,7 +11,7 @@ import gge.name_generator
 
 
 def _raise_if_contains_repeated_names(layers: tuple[gl.Layer, ...]) -> None:
-    names = collections.Counter(layer.name for layer in layers)
+    names = collections.Counter(layer.name for layer in layers)  # type: ignore
     repeated = [name for name, times in names.items() if times > 1]
     if repeated:
         raise ValueError(
@@ -32,7 +32,7 @@ class Backbone:
     def __post_init__(self) -> None:
         assert isinstance(self.layers, tuple)
         for layer in self.layers:
-            assert isinstance(layer, gl.Layer)
+            assert isinstance(layer, gl.Layer)  # type: ignore
 
         real_layers = filter(gl.is_real_layer, self.layers)
         if not any(real_layers):
@@ -63,7 +63,7 @@ class BackboneSynthetizer(mp.MesagrammarTransformer):
         for list_of_layers in blocks:
             assert isinstance(list_of_layers, list)
             for layer in list_of_layers:
-                assert isinstance(layer, gl.Layer)
+                assert isinstance(layer, gl.Layer)  # type: ignore
 
         layers = tuple(layer for list_of_layers in blocks for layer in list_of_layers)
         return Backbone(layers)
