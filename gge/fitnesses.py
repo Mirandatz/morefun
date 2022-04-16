@@ -1,7 +1,7 @@
-import dataclasses
 import pathlib
 import typing
 
+import attrs
 import keras
 import keras.layers as kl
 import tensorflow as tf
@@ -74,70 +74,59 @@ def make_tf_model(
     return tf_model
 
 
+@attrs.frozen
 class ValidationAccuracy:
-    def __init__(
-        self,
-        dataset_dir: pathlib.Path,
-        input_shape: gl.Shape,
-        batch_size: int,
-        epochs: int,
-        class_count: int,
-        shuffle_seed: int,
-        validation_ratio: float,
-    ) -> None:
-        assert batch_size > 0
-        assert epochs > 0
-        assert class_count > 1
-        assert dataset_dir.is_dir()
-        assert 0 < validation_ratio < 1
+    train_dir: pathlib.Path
+    validation_dir: pathlib.Path
+    input_shape: gl.Shape
+    batch_size: int
+    epochs: int
+    class_count: int
+    shuffle_seed: int
 
-        self._dataset_dir = dataset_dir
-        self._input_shape = input_shape
-        self._batch_size = batch_size
-        self._epochs = epochs
-        self._class_count = class_count
-        self._shuffle_seed = shuffle_seed
-        self._validation_ratio = validation_ratio
+    def __attrs_post_init__(self) -> None:
+        assert self.batch_size > 0, self.batch_size
+        assert self.epochs > 0, self.epochs
+        assert self.class_count > 1, self.class_count
+        assert self.train_dir.is_dir(), self.train_dir
+        assert self.validation_dir.is_dir(), self.validation_dir
+        assert self.train_dir != self.validation_dir
 
     @property
     def should_be_maximized(self) -> bool:
         return True
 
-    def get_train_and_val(self) -> tuple[DataGen, DataGen]:
+    def get_train_generator(self) -> DataGen:
         with redirection.discard_stderr_and_stdout():
-            data_gen = keras.preprocessing.image.ImageDataGenerator(
-                validation_split=self._validation_ratio,
-            )
-
-            train = data_gen.flow_from_directory(
-                self._dataset_dir,
-                batch_size=self._batch_size,
-                target_size=(self._input_shape.width, self._input_shape.height),
+            return keras.preprocessing.image.ImageDataGenerator().flow_from_directory(
+                self.train_dir,
+                batch_size=self.batch_size,
+                target_size=(self.input_shape.width, self.input_shape.height),
                 shuffle=True,
-                seed=self._shuffle_seed,
-                subset="training",
+                seed=self.shuffle_seed,
             )
 
-            val = data_gen.flow_from_directory(
-                self._dataset_dir,
-                batch_size=self._batch_size,
-                target_size=(self._input_shape.width, self._input_shape.height),
-                subset="validation",
+    def get_validation_generator(self) -> DataGen:
+        with redirection.discard_stderr_and_stdout():
+            return keras.preprocessing.image.ImageDataGenerator().flow_from_directory(
+                self.validation_dir,
+                batch_size=self.batch_size,
+                target_size=(self.input_shape.width, self.input_shape.height),
             )
-        return train, val
 
     def evaluate(self, model: gnn.NeuralNetwork) -> float:
         logger.trace("evaluate")
 
-        train, val = self.get_train_and_val()
-        tf_model = make_tf_model(model, self._class_count)
+        train = self.get_train_generator()
+        val = self.get_validation_generator()
+        tf_model = make_tf_model(model, self.class_count)
 
         fitting_result = tf_model.fit(
             train,
-            epochs=self._epochs,
-            steps_per_epoch=train.samples // self._batch_size,
+            epochs=self.epochs,
+            steps_per_epoch=train.samples // self.batch_size,
             validation_data=val,
-            validation_steps=val.samples // self._batch_size,
+            validation_steps=val.samples // self.batch_size,
             verbose=0,
         )
 
@@ -146,7 +135,7 @@ class ValidationAccuracy:
         return val_acc
 
 
-@dataclasses.dataclass(frozen=True)
+@attrs.frozen
 class FitnessEvaluationParameters:
     metric: FitnessMetric
     grammar: gr.Grammar

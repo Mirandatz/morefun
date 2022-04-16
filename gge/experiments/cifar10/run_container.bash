@@ -1,25 +1,25 @@
-#!/bin/bash -x
+#!/usr/bin/env bash
 
-if [[ -z $RNG_SEED ]]; then
-    echo "RNG_SEED not defined"
-    exit -1
-fi
+set -o errexit
+set -o nounset
+set -o xtrace
 
-# customize for different machines
-GGE_SRC="${GGE_SRC:=/home/thiago/source/gge}"
-DATASETS_DIR="${DATASETS_DIR:=/home/thiago/source/datasets/cifar10}"
-OUTPUT_DIR="${OUTPUT_DIR:=$(mktemp -d -p /dev/shm)}"
-
-DOCKER_ENV_TAG=mirandatz/gge:dev_env
+SCRIPT_DIR=$(dirname $(realpath "$0"))
+GGE_SRC=$(realpath "${SCRIPT_DIR}/../../..")
 
 docker run \
+	--user $(id -u):$(id -g) \
 	--rm \
 	--runtime=nvidia \
 	--shm-size=8G \
 	--workdir=/src \
 	--env RNG_SEED=$RNG_SEED \
 	-v "$GGE_SRC":/src:ro \
-	-v "$DATASETS_DIR":/dataset:ro \
+	-v "$DATASETS_DIR/cifar10":/dataset:ro \
 	-v "$OUTPUT_DIR":/output \
-	"$DOCKER_ENV_TAG" \
-	bash /src/gge/experiments/cifar10/run_gge.bash
+	mirandatz/gge:dev_env \
+	python -m gge.experiments.cifar10.evolution \
+		--train /dataset/train \
+		--validation /dataset/val \
+		--output /output \
+		--seed $RNG_SEED

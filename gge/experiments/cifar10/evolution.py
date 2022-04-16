@@ -1,6 +1,5 @@
 import pathlib
 
-import keras
 import typer
 from loguru import logger
 
@@ -17,7 +16,6 @@ IMAGE_WIDTH = 32
 IMAGE_HEIGHT = 32
 IMAGE_DEPTH = 3
 CLASS_COUNT = 10
-VALIDATION_RATIO = 0.15
 
 POPULATION_SIZE = 5
 MAX_GENERATIONS = 100
@@ -35,8 +33,8 @@ def get_grammar() -> gr.Grammar:
     first_block  : conv_block "fork"
     middle_block : "merge" conv_block "fork"
 
-    conv_block : "merge" conv_layer batchnorm activation "fork"
-               | "merge" conv_layer batchnorm activation pooling "fork"
+    conv_block : conv_layer batchnorm activation
+               | conv_layer batchnorm activation pooling
 
     conv_layer : "conv2d" "filter_count" (32 | 64) "kernel_size" (1 | 3 | 5 | 7) "stride" (1 | 2)
 
@@ -55,45 +53,34 @@ def get_grammar() -> gr.Grammar:
     return gr.Grammar(raw_grammar)
 
 
-def get_cifar10_train_and_val(
-    dataset_dir: pathlib.Path,
-) -> tuple[
-    keras.preprocessing.image.DirectoryIterator,
-    keras.preprocessing.image.DirectoryIterator,
-]:
-    data_gen = keras.preprocessing.image.ImageDataGenerator(
-        validation_split=VALIDATION_RATIO
-    )
-
-    train = data_gen.flow_from_directory(
-        dataset_dir,
-        batch_size=BATCH_SIZE,
-        target_size=(IMAGE_WIDTH, IMAGE_HEIGHT),
-        subset="training",
-    )
-
-    val = data_gen.flow_from_directory(
-        dataset_dir,
-        batch_size=BATCH_SIZE,
-        target_size=(IMAGE_WIDTH, IMAGE_HEIGHT),
-        subset="validation",
-    )
-
-    return train, val
-
-
 def get_input_layer() -> gl.Input:
     return gl.make_input(IMAGE_WIDTH, IMAGE_HEIGHT, IMAGE_DEPTH)
 
 
 def validate_output_dir(path: pathlib.Path) -> None:
-    raise NotImplementedError()
+    logger.debug(f"validating output dir, path=<{path}>")
+
+    path.mkdir(parents=True, exist_ok=True)
+
+    for _ in path.iterdir():
+        logger.error("output dir is not empty")
+        exit(-1)
+
+    logger.success("output dir okay")
 
 
 def main(
-    dataset_dir: pathlib.Path = typer.Option(
+    train_dir: pathlib.Path = typer.Option(
         ...,
-        "-d",
+        "--train",
+        file_okay=False,
+        dir_okay=True,
+        exists=True,
+        readable=True,
+    ),
+    validation_dir: pathlib.Path = typer.Option(
+        ...,
+        "--validation",
         file_okay=False,
         dir_okay=True,
         exists=True,
@@ -101,13 +88,18 @@ def main(
     ),
     output_dir: pathlib.Path = typer.Option(
         ...,
-        "-o",
+        "--output",
         file_okay=False,
         dir_okay=True,
     ),
     rng_seed: int = typer.Option(rand.get_rng_seed(), "--seed"),
+    clobber: bool = typer.Option(
+        False,
+        "--clobber",
+    ),
 ) -> None:
-    validate_output_dir(output_dir)
+    if not clobber:
+        validate_output_dir(output_dir)
 
     logger.add(output_dir / "log.txt")
     logger.info(
@@ -119,13 +111,13 @@ def main(
 
     fit_params = gfit.FitnessEvaluationParameters(
         gfit.ValidationAccuracy(
-            dataset_dir=dataset_dir,
+            train_dir=train_dir,
+            validation_dir=validation_dir,
             input_shape=input_layer.shape,
             batch_size=BATCH_SIZE,
             epochs=EPOCHS,
             class_count=CLASS_COUNT,
             shuffle_seed=rand.get_rng_seed(),
-            validation_ratio=VALIDATION_RATIO,
         ),
         grammar,
         input_layer,
