@@ -3,7 +3,7 @@ import abc
 import attrs
 import lark
 
-import gge.lower_gramamar_parsing as mp
+import gge.lower_gramamar_parsing as lgp
 
 
 class Optimizer(abc.ABC):
@@ -47,7 +47,7 @@ class Adam(Optimizer):
 
 
 @lark.v_args(inline=True)
-class OptimizerSynthetizer(mp.MesagrammarTransformer):
+class OptimizerSynthetizer(lgp.MesagrammarTransformer):
     def optimizer(self, optimizer: Optimizer) -> Optimizer:
         self._raise_if_not_running()
 
@@ -136,7 +136,7 @@ def parse(token_stream: str) -> Optimizer:
     be visited/transformed into a `SGD`.
     """
 
-    tree = mp.parse_mesagrammar_tokenstream(token_stream)
+    tree = lgp.parse_mesagrammar_tokenstream(token_stream)
     relevant_subtrees = list(tree.find_data("optimizer"))
     assert len(relevant_subtrees) == 1
 
