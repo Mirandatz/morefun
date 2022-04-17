@@ -2,6 +2,7 @@ import typing
 
 import attrs
 import hypothesis.strategies as hs
+import pytest
 from hypothesis import given
 
 import gge.composite_genotypes as cg
@@ -95,6 +96,7 @@ def adam_grammar(draw: hs.DrawFn) -> GrammarToPhenotypeTestData[optim.Adam]:
 
 @hs.composite
 def neural_network(draw: hs.DrawFn) -> GrammarToPhenotypeTestData[gnn.NeuralNetwork]:
+    # TODO: Implement this.
     raise NotImplementedError()
 
 
@@ -122,6 +124,7 @@ def test_adam(test_data: GrammarToPhenotypeTestData[optim.Adam]) -> None:
     assert expected == actual
 
 
+@pytest.mark.xfail(reason="Not implemented")
 @given(test_data=neural_network())
 def test_network(test_data: GrammarToPhenotypeTestData[gnn.NeuralNetwork]) -> None:
     """Can process a middle-grammar to generate a NeuralNetwork."""
@@ -131,5 +134,4 @@ def test_network(test_data: GrammarToPhenotypeTestData[gnn.NeuralNetwork]) -> No
 
     actual = gnn.make_network(composite_genotype, grammar, input_layer)
     expected = test_data.phenotype
-
     assert expected == actual
