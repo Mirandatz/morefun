@@ -1,5 +1,5 @@
 import pytest
-from hypothesis import example, given  # noqa
+from hypothesis import given
 
 import gge.backbones as bb
 import gge.tests.strategies.lower_grammar as lgs
