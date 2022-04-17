@@ -1,18 +1,5 @@
 start: backbone optimizer
 
-optimizer: sgd | adam
-
-sgd           : SGD learning_rate momentum nesterov
-learning_rate : LEARNING_RATE FLOAT
-momentum      : MOMENTUM FLOAT
-nesterov      : NESTEROV BOOL
-
-adam    : ADAM learning_rate beta1 beta2 epsilon amsgrad
-beta1   : BETA1 FLOAT
-beta2   : BETA2 FLOAT
-epsilon : EPSILON FLOAT
-amsgrad : AMSGRAD BOOL
-
 backbone : block+
 block    : MERGE? layer FORK?
 layer    : conv
@@ -34,12 +21,28 @@ batchnorm : BATCHNORM
 
 activation : RELU | GELU | SWISH
 
-%import .terminals (MERGE, FORK, BOOL, RELU, GELU, SWISH)
+optimizer: sgd | adam
+
+sgd           : SGD learning_rate momentum nesterov
+learning_rate : LEARNING_RATE FLOAT
+momentum      : MOMENTUM FLOAT
+nesterov      : NESTEROV BOOL
+
+adam    : ADAM learning_rate beta1 beta2 epsilon amsgrad
+beta1   : BETA1 FLOAT
+beta2   : BETA2 FLOAT
+epsilon : EPSILON FLOAT
+amsgrad : AMSGRAD BOOL
+
+// using multiple imports just for aesthetic reasons
+%import .terminals (MERGE, FORK)
+%import .terminals (RELU, GELU, SWISH)
 %import .terminals (CONV, FILTER_COUNT, KERNEL_SIZE, STRIDE)
 %import .terminals (MAXPOOL, AVGPOOL, POOL_SIZE)
 %import .terminals (BATCHNORM)
 %import .terminals (SGD, LEARNING_RATE, MOMENTUM, NESTEROV)
 %import .terminals (ADAM, BETA1, BETA2, EPSILON, AMSGRAD)
+%import .terminals (BOOL)
 
 %import common (INT, FLOAT)
 %import common.WS
