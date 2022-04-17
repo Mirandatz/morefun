@@ -7,11 +7,11 @@ learning_rate : LEARNING_RATE FLOAT
 momentum      : MOMENTUM FLOAT
 nesterov      : NESTEROV BOOL
 
-adam    : _ADAM learning_rate beta1 beta2 epsilon amsgrad
-beta1   : _BETA1 FLOAT
-beta2   : _BETA2 FLOAT
-epsilon : _EPSILON FLOAT
-amsgrad : _AMSGRAD BOOL
+adam    : ADAM learning_rate beta1 beta2 epsilon amsgrad
+beta1   : BETA1 FLOAT
+beta2   : BETA2 FLOAT
+epsilon : EPSILON FLOAT
+amsgrad : AMSGRAD BOOL
 
 backbone : block+
 block    : MERGE? layer FORK?
@@ -35,18 +35,11 @@ batchnorm : BATCHNORM
 activation : RELU | GELU | SWISH
 
 %import .terminals (MERGE, FORK, BOOL, RELU, GELU, SWISH)
-
 %import .terminals (CONV, FILTER_COUNT, KERNEL_SIZE, STRIDE)
 %import .terminals (MAXPOOL, AVGPOOL, POOL_SIZE)
 %import .terminals (BATCHNORM)
-
 %import .terminals (SGD, LEARNING_RATE, MOMENTUM, NESTEROV)
-
-%import .terminals.ADAM    -> _ADAM
-%import .terminals.BETA1   -> _BETA1
-%import .terminals.BETA2   -> _BETA2
-%import .terminals.EPSILON -> _EPSILON
-%import .terminals.AMSGRAD -> _AMSGRAD
+%import .terminals (ADAM, BETA1, BETA2, EPSILON, AMSGRAD)
 
 %import common (INT, FLOAT)
 %import common.WS

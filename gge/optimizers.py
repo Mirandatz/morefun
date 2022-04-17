@@ -71,6 +71,7 @@ class OptimizerSynthetizer(lgp.MesagrammarTransformer):
 
     def adam(
         self,
+        marker: None,
         learning_rate: float,
         beta1: float,
         beta2: float,
@@ -108,22 +109,22 @@ class OptimizerSynthetizer(lgp.MesagrammarTransformer):
         assert isinstance(value, bool)
         return value
 
-    def beta1(self, value: float) -> float:
+    def beta1(self, marker: None, value: float) -> float:
         self._raise_if_not_running()
         assert isinstance(value, float)
         return value
 
-    def beta2(self, value: float) -> float:
+    def beta2(self, marker: None, value: float) -> float:
         self._raise_if_not_running()
         assert isinstance(value, float)
         return value
 
-    def epsilon(self, value: float) -> float:
+    def epsilon(self, arker: None, value: float) -> float:
         self._raise_if_not_running()
         assert isinstance(value, float)
         return value
 
-    def amsgrad(self, value: bool) -> bool:
+    def amsgrad(self, marker: None, value: bool) -> bool:
         self._raise_if_not_running()
         assert isinstance(value, bool)
         return value
@@ -141,6 +142,26 @@ class OptimizerSynthetizer(lgp.MesagrammarTransformer):
         return None
 
     def NESTEROV(self, token: lark.Token) -> None:
+        self._raise_if_not_running()
+        return None
+
+    def ADAM(self, token: lark.Token) -> None:
+        self._raise_if_not_running()
+        return None
+
+    def BETA1(self, token: lark.Token) -> None:
+        self._raise_if_not_running()
+        return None
+
+    def BETA2(self, token: lark.Token) -> None:
+        self._raise_if_not_running()
+        return None
+
+    def EPSILON(self, token: lark.Token) -> None:
+        self._raise_if_not_running()
+        return None
+
+    def AMSGRAD(self, token: lark.Token) -> None:
         self._raise_if_not_running()
         return None
 
