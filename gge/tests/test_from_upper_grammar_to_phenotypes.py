@@ -33,7 +33,7 @@ DUMMY_LAYER = DummyLayerDef(
 @hs.composite
 def sgd_grammar(draw: hs.DrawFn) -> GrammarToPhenotypeTestData[optim.SGD]:
     learning_rate = draw(hs.floats(min_value=0, max_value=9, exclude_min=True))
-    momentum = draw(hs.floats(min_value=0, max_value=9))
+    momentum = draw(hs.floats(min_value=0, max_value=1))
     nesterov = draw(hs.booleans())
 
     # must inject a dummy layer data to enable parsing

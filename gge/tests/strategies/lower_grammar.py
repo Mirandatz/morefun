@@ -151,7 +151,7 @@ class OptimizerTestData:
 @hs.composite
 def sgds(draw: hs.DrawFn) -> OptimizerTestData:
     learning_rate = draw(hs.floats(min_value=0, max_value=9, exclude_min=True))
-    momentum = draw(hs.floats(min_value=0, max_value=9))
+    momentum = draw(hs.floats(min_value=0, max_value=1))
     nesterov = draw(hs.booleans())
     sgd = optim.SGD(
         learning_rate=learning_rate,
