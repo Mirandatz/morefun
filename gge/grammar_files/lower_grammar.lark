@@ -26,9 +26,9 @@ filter_count : FILTER_COUNT INT
 kernel_size  : KERNEL_SIZE INT
 stride       : STRIDE INT
 
-maxpool  : _MAXPOOL pool_size stride
-avgpool  : _AVGPOOL pool_size stride
-pool_size : _POOL_SIZE INT
+maxpool  : MAXPOOL pool_size stride
+avgpool  : AVGPOOL pool_size stride
+pool_size : POOL_SIZE INT
  
 batchnorm : _BATCHNORM
 
@@ -37,10 +37,7 @@ activation : RELU | GELU | SWISH
 %import .terminals (MERGE, FORK, BOOL, RELU, GELU, SWISH)
 
 %import .terminals (CONV, FILTER_COUNT, KERNEL_SIZE, STRIDE)
-
-%import .terminals.MAXPOOL  -> _MAXPOOL
-%import .terminals.AVGPOOL  -> _AVGPOOL
-%import .terminals.POOL_SIZE -> _POOL_SIZE
+%import .terminals (MAXPOOL, AVGPOOL, POOL_SIZE)
 
 %import .terminals.BATCHNORM -> _BATCHNORM
 

@@ -130,7 +130,7 @@ class BackboneSynthetizer(lgp.MesagrammarTransformer):
 
         return gl.BatchNorm(self._create_layer_name(gl.BatchNorm))
 
-    def maxpool(self, pool_size: int, stride: int) -> gl.MaxPool2D:
+    def maxpool(self, marker: None, pool_size: int, stride: int) -> gl.MaxPool2D:
         self._raise_if_not_running()
         return gl.MaxPool2D(
             name=self._create_layer_name(gl.MaxPool2D),
@@ -138,7 +138,7 @@ class BackboneSynthetizer(lgp.MesagrammarTransformer):
             stride=stride,
         )
 
-    def avgpool(self, pool_size: int, stride: int) -> gl.AvgPool2D:
+    def avgpool(self, marker: None, pool_size: int, stride: int) -> gl.AvgPool2D:
         self._raise_if_not_running()
         return gl.AvgPool2D(
             name=self._create_layer_name(gl.AvgPool2D),
@@ -146,7 +146,7 @@ class BackboneSynthetizer(lgp.MesagrammarTransformer):
             stride=stride,
         )
 
-    def pool_size(self, pool_size: int) -> int:
+    def pool_size(self, marker: None, pool_size: int) -> int:
         self._raise_if_not_running()
         assert pool_size >= 1
         return pool_size
@@ -168,6 +168,18 @@ class BackboneSynthetizer(lgp.MesagrammarTransformer):
         return None
 
     def STRIDE(self, token: lark.Token) -> None:
+        self._raise_if_not_running()
+        return None
+
+    def MAXPOOL(self, token: lark.Token) -> None:
+        self._raise_if_not_running()
+        return None
+
+    def AVGPOOL(self, token: lark.Token) -> None:
+        self._raise_if_not_running()
+        return None
+
+    def POOL_SIZE(self, token: lark.Token) -> None:
         self._raise_if_not_running()
         return None
 
