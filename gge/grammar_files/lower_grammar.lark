@@ -2,10 +2,10 @@ start: backbone optimizer
 
 optimizer: sgd | adam
 
-sgd           : _SGD learning_rate momentum nesterov
-learning_rate : _LEARNING_RATE FLOAT
-momentum      : _MOMENTUM FLOAT
-nesterov      : _NESTEROV BOOL
+sgd           : SGD learning_rate momentum nesterov
+learning_rate : LEARNING_RATE FLOAT
+momentum      : MOMENTUM FLOAT
+nesterov      : NESTEROV BOOL
 
 adam    : _ADAM learning_rate beta1 beta2 epsilon amsgrad
 beta1   : _BETA1 FLOAT
@@ -44,10 +44,7 @@ activation : RELU | GELU | SWISH
 
 %import .terminals.BATCHNORM -> _BATCHNORM
 
-%import .terminals.SGD           -> _SGD
-%import .terminals.LEARNING_RATE -> _LEARNING_RATE
-%import .terminals.MOMENTUM      -> _MOMENTUM
-%import .terminals.NESTEROV      -> _NESTEROV
+%import .terminals (SGD, LEARNING_RATE, MOMENTUM, NESTEROV)
 
 %import .terminals.ADAM    -> _ADAM
 %import .terminals.BETA1   -> _BETA1

@@ -56,6 +56,7 @@ class OptimizerSynthetizer(lgp.MesagrammarTransformer):
 
     def sgd(
         self,
+        marker: None,
         learning_rate: float,
         momentum: float,
         nesterov: bool,
@@ -92,17 +93,17 @@ class OptimizerSynthetizer(lgp.MesagrammarTransformer):
             amsgrad=amsgrad,
         )
 
-    def learning_rate(self, value: float) -> float:
+    def learning_rate(self, marker: None, value: float) -> float:
         self._raise_if_not_running()
         assert isinstance(value, float)
         return value
 
-    def momentum(self, value: float) -> float:
+    def momentum(self, marker: None, value: float) -> float:
         self._raise_if_not_running()
         assert isinstance(value, float)
         return value
 
-    def nesterov(self, value: bool) -> bool:
+    def nesterov(self, marker: None, value: bool) -> bool:
         self._raise_if_not_running()
         assert isinstance(value, bool)
         return value
@@ -126,6 +127,22 @@ class OptimizerSynthetizer(lgp.MesagrammarTransformer):
         self._raise_if_not_running()
         assert isinstance(value, bool)
         return value
+
+    def SGD(self, token: lark.Token) -> None:
+        self._raise_if_not_running()
+        return None
+
+    def LEARNING_RATE(self, token: lark.Token) -> None:
+        self._raise_if_not_running()
+        return None
+
+    def MOMENTUM(self, token: lark.Token) -> None:
+        self._raise_if_not_running()
+        return None
+
+    def NESTEROV(self, token: lark.Token) -> None:
+        self._raise_if_not_running()
+        return None
 
 
 def parse(token_stream: str) -> Optimizer:
