@@ -17,32 +17,27 @@ dev_env:
 
 .PHONY: run_tests
 run_tests: dev_env
-	docker run \
-		--rm \
-		--user $(uid):$(gid) \
-		-v $(root_dir):/gge \
-		$(dev_env_tag) \
+	docker run --rm --user $(uid):$(gid) -v $(root_dir):/gge $(dev_env_tag) \
 		pytest
+
+.PHONY: run_tests_parallel
+run_tests_parallel: dev_env
+	docker run --rm --user $(uid):$(gid) -v $(root_dir):/gge $(dev_env_tag) \
+		pytest --numprocesses=auto --hypothesis-profile=parallel
 
 .PHONY: playground
 playground: dev_env
-	docker run \
-		--rm \
-		--user $(uid):$(gid) \
-		-it \
-		-v $(root_dir):/gge \
-		$(dev_env_tag) \
+	docker run --rm --user $(uid):$(gid) -it -v $(root_dir):/gge $(dev_env_tag) \
 		/bin/bash
 
 .PHONY: update_requirements
 update_requirements:
-	docker run \
-		--rm \
+	docker run --rm \
 		--env HOST_UID=$(uid) \
 		--env HOST_GID=$(gid) \
 		-v $(root_dir)/requirements:/requirements \
 		python:3.10.4-slim-bullseye \
-		/bin/bash -c 'python3 -m pip install pip-compile-multi==2.4.5 \
+			/bin/bash -c 'python3 -m pip install pip-compile-multi==2.4.5 \
 			&& pip-compile-multi \
 			&& chown -R "$${HOST_UID}":"$${HOST_GID}" /requirements'
 
