@@ -50,13 +50,15 @@ _bool_args : BOOL_ARG
            | "(" BOOL_ARG ("|" BOOL_ARG)* ")"
 BOOL_ARG   : BOOL
 
-
-%import .terminals (MERGE, FORK, BOOL, RELU, GELU, SWISH)
+// using multiple imports just for aesthetic reasons
+%import .terminals (MERGE, FORK)
+%import .terminals (RELU, GELU, SWISH)
 %import .terminals (CONV, FILTER_COUNT, KERNEL_SIZE, STRIDE)
 %import .terminals (MAXPOOL, AVGPOOL, POOL_SIZE)
-%import .terminals.BATCHNORM -> BATCHNORM
+%import .terminals (BATCHNORM)
 %import .terminals (SGD, LEARNING_RATE, MOMENTUM, NESTEROV)
 %import .terminals (ADAM, BETA1, BETA2, EPSILON, AMSGRAD)
+%import .terminals (BOOL)
 
 %import common (INT, FLOAT)
 %import common.NEWLINE -> _NL
