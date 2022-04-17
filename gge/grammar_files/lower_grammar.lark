@@ -30,7 +30,7 @@ maxpool  : MAXPOOL pool_size stride
 avgpool  : AVGPOOL pool_size stride
 pool_size : POOL_SIZE INT
  
-batchnorm : _BATCHNORM
+batchnorm : BATCHNORM
 
 activation : RELU | GELU | SWISH
 
@@ -38,8 +38,7 @@ activation : RELU | GELU | SWISH
 
 %import .terminals (CONV, FILTER_COUNT, KERNEL_SIZE, STRIDE)
 %import .terminals (MAXPOOL, AVGPOOL, POOL_SIZE)
-
-%import .terminals.BATCHNORM -> _BATCHNORM
+%import .terminals (BATCHNORM)
 
 %import .terminals (SGD, LEARNING_RATE, MOMENTUM, NESTEROV)
 

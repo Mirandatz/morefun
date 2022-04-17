@@ -125,7 +125,7 @@ class BackboneSynthetizer(lgp.MesagrammarTransformer):
 
         return size
 
-    def batchnorm(self) -> gl.BatchNorm:
+    def batchnorm(self, marker: None) -> gl.BatchNorm:
         self._raise_if_not_running()
 
         return gl.BatchNorm(self._create_layer_name(gl.BatchNorm))
@@ -180,6 +180,10 @@ class BackboneSynthetizer(lgp.MesagrammarTransformer):
         return None
 
     def POOL_SIZE(self, token: lark.Token) -> None:
+        self._raise_if_not_running()
+        return None
+
+    def BATCHNORM(self, token: lark.Token) -> None:
         self._raise_if_not_running()
         return None
 
