@@ -1,20 +1,20 @@
 from hypothesis import given
 
-import gge.optimizers as go
-import gge.tests.strategies.mesagrammars as ms
+import gge.optimizers as optim
+import gge.tests.strategies.lower_grammar as lgs
 
 
-@given(test_data=ms.add_dummy_layer_prefix_to(ms.sgds()))
-def test_parse_sgd(test_data: ms.OptimizerTestData) -> None:
+@given(test_data=lgs.add_dummy_layer_prefix_to(lgs.sgds()))
+def test_parse_sgd(test_data: lgs.OptimizerTestData) -> None:
     """Can parse SGD optimizer."""
-    actual = go.parse(test_data.token_stream)
+    actual = optim.parse(test_data.token_stream)
     expected = test_data.parsed
     assert expected == actual
 
 
-@given(test_data=ms.add_dummy_layer_prefix_to(ms.adams()))
-def test_parse_adam(test_data: ms.OptimizerTestData) -> None:
+@given(test_data=lgs.add_dummy_layer_prefix_to(lgs.adams()))
+def test_parse_adam(test_data: lgs.OptimizerTestData) -> None:
     """Can parse Adam optimizer."""
-    actual = go.parse(test_data.token_stream)
+    actual = optim.parse(test_data.token_stream)
     expected = test_data.parsed
     assert expected == actual

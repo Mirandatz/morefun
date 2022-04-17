@@ -3,7 +3,7 @@ import abc
 import attrs
 import lark
 
-import gge.mesagrammar_parsing as mp
+import gge.lower_gramamar_parsing as lgp
 
 
 class Optimizer(abc.ABC):
@@ -47,7 +47,7 @@ class Adam(Optimizer):
 
 
 @lark.v_args(inline=True)
-class OptimizerSynthetizer(mp.MesagrammarTransformer):
+class OptimizerSynthetizer(lgp.MesagrammarTransformer):
     def optimizer(self, optimizer: Optimizer) -> Optimizer:
         self._raise_if_not_running()
 
@@ -56,6 +56,7 @@ class OptimizerSynthetizer(mp.MesagrammarTransformer):
 
     def sgd(
         self,
+        marker: None,
         learning_rate: float,
         momentum: float,
         nesterov: bool,
@@ -70,6 +71,7 @@ class OptimizerSynthetizer(mp.MesagrammarTransformer):
 
     def adam(
         self,
+        marker: None,
         learning_rate: float,
         beta1: float,
         beta2: float,
@@ -92,40 +94,76 @@ class OptimizerSynthetizer(mp.MesagrammarTransformer):
             amsgrad=amsgrad,
         )
 
-    def learning_rate(self, value: float) -> float:
+    def learning_rate(self, marker: None, value: float) -> float:
         self._raise_if_not_running()
         assert isinstance(value, float)
         return value
 
-    def momentum(self, value: float) -> float:
+    def momentum(self, marker: None, value: float) -> float:
         self._raise_if_not_running()
         assert isinstance(value, float)
         return value
 
-    def nesterov(self, value: bool) -> bool:
+    def nesterov(self, marker: None, value: bool) -> bool:
         self._raise_if_not_running()
         assert isinstance(value, bool)
         return value
 
-    def beta1(self, value: float) -> float:
+    def beta1(self, marker: None, value: float) -> float:
         self._raise_if_not_running()
         assert isinstance(value, float)
         return value
 
-    def beta2(self, value: float) -> float:
+    def beta2(self, marker: None, value: float) -> float:
         self._raise_if_not_running()
         assert isinstance(value, float)
         return value
 
-    def epsilon(self, value: float) -> float:
+    def epsilon(self, arker: None, value: float) -> float:
         self._raise_if_not_running()
         assert isinstance(value, float)
         return value
 
-    def amsgrad(self, value: bool) -> bool:
+    def amsgrad(self, marker: None, value: bool) -> bool:
         self._raise_if_not_running()
         assert isinstance(value, bool)
         return value
+
+    def SGD(self, token: lark.Token) -> None:
+        self._raise_if_not_running()
+        return None
+
+    def LEARNING_RATE(self, token: lark.Token) -> None:
+        self._raise_if_not_running()
+        return None
+
+    def MOMENTUM(self, token: lark.Token) -> None:
+        self._raise_if_not_running()
+        return None
+
+    def NESTEROV(self, token: lark.Token) -> None:
+        self._raise_if_not_running()
+        return None
+
+    def ADAM(self, token: lark.Token) -> None:
+        self._raise_if_not_running()
+        return None
+
+    def BETA1(self, token: lark.Token) -> None:
+        self._raise_if_not_running()
+        return None
+
+    def BETA2(self, token: lark.Token) -> None:
+        self._raise_if_not_running()
+        return None
+
+    def EPSILON(self, token: lark.Token) -> None:
+        self._raise_if_not_running()
+        return None
+
+    def AMSGRAD(self, token: lark.Token) -> None:
+        self._raise_if_not_running()
+        return None
 
 
 def parse(token_stream: str) -> Optimizer:
@@ -136,7 +174,7 @@ def parse(token_stream: str) -> Optimizer:
     be visited/transformed into a `SGD`.
     """
 
-    tree = mp.parse_mesagrammar_tokenstream(token_stream)
+    tree = lgp.parse_mesagrammar_tokenstream(token_stream)
     relevant_subtrees = list(tree.find_data("optimizer"))
     assert len(relevant_subtrees) == 1
 

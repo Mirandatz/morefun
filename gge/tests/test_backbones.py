@@ -1,8 +1,8 @@
 import pytest
-from hypothesis import example, given  # noqa
+from hypothesis import given
 
 import gge.backbones as bb
-import gge.tests.strategies.mesagrammars as mesa
+import gge.tests.strategies.lower_grammar as lgs
 
 
 @pytest.fixture(autouse=True)
@@ -12,56 +12,56 @@ def disable_logger() -> None:
     logger.remove()
 
 
-@given(test_data=mesa.add_dummy_optimizer_suffix_to(mesa.conv2ds()))
-def test_parse_conv2d(test_data: mesa.LayersTestData) -> None:
-    """Can parse conv2d."""
+@given(test_data=lgs.add_dummy_optimizer_suffix_to(lgs.convs()))
+def test_parse_conv(test_data: lgs.LayersTestData) -> None:
+    """Can parse conv."""
     actual = bb.parse(test_data.token_stream)
     expected = bb.Backbone(test_data.parsed)
     assert expected == actual
 
 
-@given(test_data=mesa.add_dummy_optimizer_suffix_to(mesa.max_pool2ds()))
-def test_parse_max_pool2d(test_data: mesa.LayersTestData) -> None:
-    """Can parse max pool2d."""
+@given(test_data=lgs.add_dummy_optimizer_suffix_to(lgs.maxpools()))
+def test_parse_maxpool(test_data: lgs.LayersTestData) -> None:
+    """Can parse maxpool."""
     actual = bb.parse(test_data.token_stream)
     expected = bb.Backbone(test_data.parsed)
     assert expected == actual
 
 
-@given(test_data=mesa.add_dummy_optimizer_suffix_to(mesa.avg_pool2ds()))
-def test_parse_avg_pool2d(test_data: mesa.LayersTestData) -> None:
+@given(test_data=lgs.add_dummy_optimizer_suffix_to(lgs.avgpools()))
+def test_parse_avgpools(test_data: lgs.LayersTestData) -> None:
     """Can parse avg pool2d."""
     actual = bb.parse(test_data.token_stream)
     expected = bb.Backbone(test_data.parsed)
     assert expected == actual
 
 
-@given(test_data=mesa.add_dummy_optimizer_suffix_to(mesa.batchnorms()))
-def test_parse_batchnorm(test_data: mesa.LayersTestData) -> None:
+@given(test_data=lgs.add_dummy_optimizer_suffix_to(lgs.batchnorms()))
+def test_parse_batchnorm(test_data: lgs.LayersTestData) -> None:
     """Can parse batchnorm."""
     actual = bb.parse(test_data.token_stream)
     expected = bb.Backbone(test_data.parsed)
     assert expected == actual
 
 
-@given(test_data=mesa.add_dummy_optimizer_suffix_to(mesa.relus()))
-def test_parse_relu(test_data: mesa.LayersTestData) -> None:
+@given(test_data=lgs.add_dummy_optimizer_suffix_to(lgs.relus()))
+def test_parse_relu(test_data: lgs.LayersTestData) -> None:
     """Can parse relu."""
     actual = bb.parse(test_data.token_stream)
     expected = bb.Backbone(test_data.parsed)
     assert expected == actual
 
 
-@given(test_data=mesa.add_dummy_optimizer_suffix_to(mesa.gelus()))
-def test_parse_gelu(test_data: mesa.LayersTestData) -> None:
+@given(test_data=lgs.add_dummy_optimizer_suffix_to(lgs.gelus()))
+def test_parse_gelu(test_data: lgs.LayersTestData) -> None:
     """Can parse gelu."""
     actual = bb.parse(test_data.token_stream)
     expected = bb.Backbone(test_data.parsed)
     assert expected == actual
 
 
-@given(test_data=mesa.add_dummy_optimizer_suffix_to(mesa.swishs()))
-def test_parse_swish(test_data: mesa.LayersTestData) -> None:
+@given(test_data=lgs.add_dummy_optimizer_suffix_to(lgs.swishs()))
+def test_parse_swish(test_data: lgs.LayersTestData) -> None:
     """Can parse swish."""
     actual = bb.parse(test_data.token_stream)
     expected = bb.Backbone(test_data.parsed)

@@ -13,21 +13,19 @@ class LayersTestData:
 
 
 @hs.composite
-def conv2ds(
-    draw: hs.DrawFn, *, name_gen: NameGenerator | None = None
-) -> LayersTestData:
+def convs(draw: hs.DrawFn, *, name_gen: NameGenerator | None = None) -> LayersTestData:
     name_gen = name_gen or NameGenerator()
     name = name_gen.gen_name(gl.Conv2D)
     filter_count = draw(hs.integers(min_value=1))
     kernel_size = draw(hs.integers(min_value=1))
     stride = draw(hs.integers(min_value=1))
     layer = gl.Conv2D(name, filter_count, kernel_size, stride)
-    token_stream = f'"conv2d" "filter_count" {filter_count} "kernel_size" {kernel_size} "stride" {stride}'
+    token_stream = f'"conv" "filter_count" {filter_count} "kernel_size" {kernel_size} "stride" {stride}'
     return LayersTestData(token_stream, (layer,))
 
 
 @hs.composite
-def max_pool2ds(
+def maxpools(
     draw: hs.DrawFn, *, name_gen: NameGenerator | None = None
 ) -> LayersTestData:
     name_gen = name_gen or NameGenerator()
@@ -35,12 +33,12 @@ def max_pool2ds(
     pool_size = draw(hs.integers(min_value=1, max_value=9999))
     stride = draw(hs.integers(min_value=1, max_value=9999))
     layer = gl.MaxPool2D(name, pool_size=pool_size, stride=stride)
-    token_stream = f'"max_pool2d" "pool_size" {pool_size} "stride" {stride}'
+    token_stream = f'"maxpool" "pool_size" {pool_size} "stride" {stride}'
     return LayersTestData(token_stream, (layer,))
 
 
 @hs.composite
-def avg_pool2ds(
+def avgpools(
     draw: hs.DrawFn, *, name_gen: NameGenerator | None = None
 ) -> LayersTestData:
     name_gen = name_gen or NameGenerator()
@@ -48,7 +46,7 @@ def avg_pool2ds(
     pool_size = draw(hs.integers(min_value=1, max_value=9999))
     stride = draw(hs.integers(min_value=1, max_value=9999))
     layer = gl.AvgPool2D(name, pool_size=pool_size, stride=stride)
-    token_stream = f'"avg_pool2d" "pool_size" {pool_size} "stride" {stride}'
+    token_stream = f'"avgpool" "pool_size" {pool_size} "stride" {stride}'
     return LayersTestData(token_stream, (layer,))
 
 

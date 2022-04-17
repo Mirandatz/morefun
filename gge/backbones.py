@@ -6,12 +6,12 @@ import typing
 import lark
 
 import gge.layers as gl
-import gge.mesagrammar_parsing as mp
+import gge.lower_gramamar_parsing as lgp
 import gge.name_generator
 
 
 def _raise_if_contains_repeated_names(layers: tuple[gl.Layer, ...]) -> None:
-    names = collections.Counter(layer.name for layer in layers)
+    names = collections.Counter(layer.name for layer in layers)  # type: ignore
     repeated = [name for name, times in names.items() if times > 1]
     if repeated:
         raise ValueError(
@@ -32,7 +32,7 @@ class Backbone:
     def __post_init__(self) -> None:
         assert isinstance(self.layers, tuple)
         for layer in self.layers:
-            assert isinstance(layer, gl.Layer)
+            assert isinstance(layer, gl.Layer)  # type: ignore
 
         real_layers = filter(gl.is_real_layer, self.layers)
         if not any(real_layers):
@@ -46,7 +46,7 @@ class Backbone:
 
 
 @lark.v_args(inline=True)
-class BackboneSynthetizer(mp.MesagrammarTransformer):
+class BackboneSynthetizer(lgp.MesagrammarTransformer):
     def __init__(self) -> None:
         super().__init__()
         self._name_generator = gge.name_generator.NameGenerator()
@@ -63,7 +63,7 @@ class BackboneSynthetizer(mp.MesagrammarTransformer):
         for list_of_layers in blocks:
             assert isinstance(list_of_layers, list)
             for layer in list_of_layers:
-                assert isinstance(layer, gl.Layer)
+                assert isinstance(layer, gl.Layer)  # type: ignore
 
         layers = tuple(layer for list_of_layers in blocks for layer in list_of_layers)
         return Backbone(layers)
@@ -95,7 +95,9 @@ class BackboneSynthetizer(mp.MesagrammarTransformer):
 
         return layer
 
-    def conv(self, filter_count: int, kernel_size: int, stride: int) -> gl.Conv2D:
+    def conv(
+        self, marker: None, filter_count: int, kernel_size: int, stride: int
+    ) -> gl.Conv2D:
         self._raise_if_not_running()
 
         return gl.Conv2D(
@@ -105,30 +107,30 @@ class BackboneSynthetizer(mp.MesagrammarTransformer):
             stride=stride,
         )
 
-    def filter_count(self, count: int) -> int:
+    def filter_count(self, marker: None, count: int) -> int:
         self._raise_if_not_running()
         assert count >= 1
 
         return count
 
-    def kernel_size(self, stride: int) -> int:
+    def kernel_size(self, marker: None, stride: int) -> int:
         self._raise_if_not_running()
         assert stride >= 1
 
         return stride
 
-    def stride(self, size: int) -> int:
+    def stride(self, marker: None, size: int) -> int:
         self._raise_if_not_running()
         assert size >= 1
 
         return size
 
-    def batchnorm(self) -> gl.BatchNorm:
+    def batchnorm(self, marker: None) -> gl.BatchNorm:
         self._raise_if_not_running()
 
         return gl.BatchNorm(self._create_layer_name(gl.BatchNorm))
 
-    def max_pool(self, pool_size: int, stride: int) -> gl.MaxPool2D:
+    def maxpool(self, marker: None, pool_size: int, stride: int) -> gl.MaxPool2D:
         self._raise_if_not_running()
         return gl.MaxPool2D(
             name=self._create_layer_name(gl.MaxPool2D),
@@ -136,7 +138,7 @@ class BackboneSynthetizer(mp.MesagrammarTransformer):
             stride=stride,
         )
 
-    def avg_pool(self, pool_size: int, stride: int) -> gl.AvgPool2D:
+    def avgpool(self, marker: None, pool_size: int, stride: int) -> gl.AvgPool2D:
         self._raise_if_not_running()
         return gl.AvgPool2D(
             name=self._create_layer_name(gl.AvgPool2D),
@@ -144,7 +146,7 @@ class BackboneSynthetizer(mp.MesagrammarTransformer):
             stride=stride,
         )
 
-    def pool_size(self, pool_size: int) -> int:
+    def pool_size(self, marker: None, pool_size: int) -> int:
         self._raise_if_not_running()
         assert pool_size >= 1
         return pool_size
@@ -152,6 +154,38 @@ class BackboneSynthetizer(mp.MesagrammarTransformer):
     def activation(self, layer: gl.SingleInputLayer) -> gl.SingleInputLayer:
         self._raise_if_not_running()
         return layer
+
+    def CONV(self, token: lark.Token) -> None:
+        self._raise_if_not_running()
+        return None
+
+    def FILTER_COUNT(self, token: lark.Token) -> None:
+        self._raise_if_not_running()
+        return None
+
+    def KERNEL_SIZE(self, token: lark.Token) -> None:
+        self._raise_if_not_running()
+        return None
+
+    def STRIDE(self, token: lark.Token) -> None:
+        self._raise_if_not_running()
+        return None
+
+    def MAXPOOL(self, token: lark.Token) -> None:
+        self._raise_if_not_running()
+        return None
+
+    def AVGPOOL(self, token: lark.Token) -> None:
+        self._raise_if_not_running()
+        return None
+
+    def POOL_SIZE(self, token: lark.Token) -> None:
+        self._raise_if_not_running()
+        return None
+
+    def BATCHNORM(self, token: lark.Token) -> None:
+        self._raise_if_not_running()
+        return None
 
     def RELU(self, token: lark.Token) -> gl.Relu:
         self._raise_if_not_running()
@@ -174,7 +208,7 @@ def parse(token_stream: str) -> Backbone:
     be visited/transformed into a `Backbone`.
     """
 
-    tree = mp.parse_mesagrammar_tokenstream(token_stream)
+    tree = lgp.parse_mesagrammar_tokenstream(token_stream)
     relevant_subtrees = list(tree.find_data("backbone"))
     assert len(relevant_subtrees) == 1
 

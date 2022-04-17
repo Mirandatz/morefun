@@ -12,18 +12,18 @@ RANGE_BOUND  : INT
 
 layer        : (conv_layer | max_pooling_layer | avg_pooling_layer | batchnorm_layer | activation_layer) _NL*
 
-activation_layer : RELU | GELU | SWISH
-
-conv_layer   : CONV2D filter_count kernel_size strides
+conv_layer   : CONV filter_count kernel_size strides
 filter_count : FILTER_COUNT _int_args
 kernel_size  : KERNEL_SIZE _int_args
 strides      : STRIDE _int_args
 
 batchnorm_layer : BATCHNORM
 
-max_pooling_layer : MAX_POOL2D pool_sizes strides
-avg_pooling_layer : AVG_POOL2D pool_sizes strides
+max_pooling_layer : MAXPOOL pool_sizes strides
+avg_pooling_layer : AVGPOOL pool_sizes strides
 pool_sizes        : POOL_SIZE _int_args
+
+activation_layer : RELU | GELU | SWISH
 
 optimizer : (sgd | adam) _NL*
 
@@ -50,38 +50,15 @@ _bool_args : BOOL_ARG
            | "(" BOOL_ARG ("|" BOOL_ARG)* ")"
 BOOL_ARG   : BOOL
 
-RELU  : /"relu"/
-GELU  : /"gelu"/
-SWISH : /"swish"/
-
-MERGE : /"merge"/
-FORK  : /"fork"/
-
-CONV2D       : /"conv2d"/
-FILTER_COUNT : /"filter_count"/
-KERNEL_SIZE  : /"kernel_size"/
-STRIDE       : /"stride"/
-
-BATCHNORM : /"batchnorm"/
-
-MAX_POOL2D : /"max_pool2d"/
-AVG_POOL2D : /"avg_pool2d"/
-POOL_SIZE  : /"pool_size"/
-
-SGD           : /"sgd"/
-LEARNING_RATE : /"learning_rate"/
-MOMENTUM      : /"momentum"/
-NESTEROV      : /"nesterov"/
-
-ADAM    : /"adam"/
-BETA1   : /"beta1"/
-BETA2   : /"beta2"/
-EPSILON : /"epsilon"/
-AMSGRAD : /"amsgrad"/
-
-BOOL  : TRUE | FALSE
-TRUE  : "true"
-FALSE : "false"
+// using multiple imports just for aesthetic reasons
+%import .terminals (MERGE, FORK)
+%import .terminals (RELU, GELU, SWISH)
+%import .terminals (CONV, FILTER_COUNT, KERNEL_SIZE, STRIDE)
+%import .terminals (MAXPOOL, AVGPOOL, POOL_SIZE)
+%import .terminals (BATCHNORM)
+%import .terminals (SGD, LEARNING_RATE, MOMENTUM, NESTEROV)
+%import .terminals (ADAM, BETA1, BETA2, EPSILON, AMSGRAD)
+%import .terminals (BOOL)
 
 %import common (INT, FLOAT)
 %import common.NEWLINE -> _NL

@@ -10,20 +10,24 @@ from loguru import logger
 
 import gge.transformers as gge_transformers
 
-METAGRAMMAR_PATH = pathlib.Path(__file__).parent / "grammar_files" / "metagrammar.lark"
+UPPER_GRAMMAR_PATH = (
+    pathlib.Path(__file__).parent / "grammar_files" / "upper_grammar.lark"
+)
 
 
-@functools.cache
-def get_metagrammar() -> str:
-    return METAGRAMMAR_PATH.read_text()
-
-
-def get_metagrammar_parser() -> lark.Lark:
-    return lark.Lark(get_metagrammar(), parser="lalr", maybe_placeholders=True)
+def get_upper_grammar_parser() -> lark.Lark:
+    logger.debug("start parsing upper_grammar")
+    parser = lark.Lark.open(
+        str(UPPER_GRAMMAR_PATH),
+        parser="lalr",
+        maybe_placeholders=True,
+    )
+    logger.debug("finished parsing upper_grammar")
+    return parser
 
 
 def extract_ast(grammar_text: str) -> lark.Tree[typing.Any]:
-    parser = get_metagrammar_parser()
+    parser = get_upper_grammar_parser()
     return parser.parse(grammar_text)
 
 
@@ -126,7 +130,7 @@ class RuleOption:
     def __post_init__(self) -> None:
         assert isinstance(self.symbols, tuple)
         for s in self.symbols:
-            assert isinstance(s, Symbol)
+            assert isinstance(s, Symbol)  # type: ignore
 
         assert len(self.symbols) >= 1
 
@@ -343,15 +347,15 @@ class Grammar:
 
 
 class ExpectedTerminal(enum.Enum):
-    CONV2D = Terminal('"conv2d"')
+    CONV = Terminal('"conv"')
     FILTER_COUNT = Terminal('"filter_count"')
     KERNEL_SIZE = Terminal('"kernel_size"')
     STRIDE = Terminal('"stride"')
 
     BATCHRNOM = Terminal('"batchnorm"')
 
-    MAX_POOL = Terminal('"max_pool2d"')
-    AVG_POOL = Terminal('"avg_pool2d"')
+    MAXPOOL = Terminal('"maxpool"')
+    AVGPOOL = Terminal('"avgpool"')
     POOL_SIZE = Terminal('"pool_size"')
 
     RELU = Terminal('"relu"')
@@ -565,7 +569,7 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
         # sanity checking the runtime types
         self._raise_if_not_running()
 
-        assert layer_marker == ExpectedTerminal.MAX_POOL.value
+        assert layer_marker == ExpectedTerminal.MAXPOOL.value
 
         assert isinstance(pool_sizes, list)
         for ps_marker, ps_value in pool_sizes:
@@ -590,7 +594,7 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
         # sanity checking the runtime types
         self._raise_if_not_running()
 
-        assert layer_marker == ExpectedTerminal.AVG_POOL.value
+        assert layer_marker == ExpectedTerminal.AVGPOOL.value
 
         assert isinstance(pool_sizes, list)
         for ps_marker, ps_value in pool_sizes:
@@ -778,7 +782,7 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
         self._raise_if_not_running()
         return self._register_terminal(token.value)
 
-    def CONV2D(self, token: lark.Token) -> Terminal:
+    def CONV(self, token: lark.Token) -> Terminal:
         self._raise_if_not_running()
         return self._register_terminal(token.value)
 
@@ -818,13 +822,13 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
         self._raise_if_not_running()
         return self._register_terminal(token.value)
 
-    def MAX_POOL2D(self, token: lark.Token) -> Terminal:
+    def MAXPOOL(self, token: lark.Token) -> Terminal:
         self._raise_if_not_running()
         assert isinstance(token, lark.Token)
 
         return self._register_terminal(token.value)
 
-    def AVG_POOL2D(self, token: lark.Token) -> Terminal:
+    def AVGPOOL(self, token: lark.Token) -> Terminal:
         self._raise_if_not_running()
         assert isinstance(token, lark.Token)
 
