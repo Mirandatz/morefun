@@ -21,10 +21,10 @@ layer    : conv
          | batchnorm
          | activation
     
-conv         : _CONV filter_count kernel_size stride
-filter_count : _FILTER_COUNT INT
-kernel_size  : _KERNEL_SIZE INT
-stride       : _STRIDE INT
+conv         : CONV filter_count kernel_size stride
+filter_count : FILTER_COUNT INT
+kernel_size  : KERNEL_SIZE INT
+stride       : STRIDE INT
 
 maxpool  : _MAXPOOL pool_size stride
 avgpool  : _AVGPOOL pool_size stride
@@ -36,10 +36,7 @@ activation : RELU | GELU | SWISH
 
 %import .terminals (MERGE, FORK, BOOL, RELU, GELU, SWISH)
 
-%import .terminals.CONV         -> _CONV
-%import .terminals.FILTER_COUNT -> _FILTER_COUNT 
-%import .terminals.KERNEL_SIZE  -> _KERNEL_SIZE
-%import .terminals.STRIDE       -> _STRIDE
+%import .terminals (CONV, FILTER_COUNT, KERNEL_SIZE, STRIDE)
 
 %import .terminals.MAXPOOL  -> _MAXPOOL
 %import .terminals.AVGPOOL  -> _AVGPOOL

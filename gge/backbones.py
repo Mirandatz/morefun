@@ -95,7 +95,9 @@ class BackboneSynthetizer(lgp.MesagrammarTransformer):
 
         return layer
 
-    def conv(self, filter_count: int, kernel_size: int, stride: int) -> gl.Conv2D:
+    def conv(
+        self, marker: None, filter_count: int, kernel_size: int, stride: int
+    ) -> gl.Conv2D:
         self._raise_if_not_running()
 
         return gl.Conv2D(
@@ -105,19 +107,19 @@ class BackboneSynthetizer(lgp.MesagrammarTransformer):
             stride=stride,
         )
 
-    def filter_count(self, count: int) -> int:
+    def filter_count(self, marker: None, count: int) -> int:
         self._raise_if_not_running()
         assert count >= 1
 
         return count
 
-    def kernel_size(self, stride: int) -> int:
+    def kernel_size(self, marker: None, stride: int) -> int:
         self._raise_if_not_running()
         assert stride >= 1
 
         return stride
 
-    def stride(self, size: int) -> int:
+    def stride(self, marker: None, size: int) -> int:
         self._raise_if_not_running()
         assert size >= 1
 
@@ -152,6 +154,22 @@ class BackboneSynthetizer(lgp.MesagrammarTransformer):
     def activation(self, layer: gl.SingleInputLayer) -> gl.SingleInputLayer:
         self._raise_if_not_running()
         return layer
+
+    def CONV(self, token: lark.Token) -> None:
+        self._raise_if_not_running()
+        return None
+
+    def FILTER_COUNT(self, token: lark.Token) -> None:
+        self._raise_if_not_running()
+        return None
+
+    def KERNEL_SIZE(self, token: lark.Token) -> None:
+        self._raise_if_not_running()
+        return None
+
+    def STRIDE(self, token: lark.Token) -> None:
+        self._raise_if_not_running()
+        return None
 
     def RELU(self, token: lark.Token) -> gl.Relu:
         self._raise_if_not_running()
