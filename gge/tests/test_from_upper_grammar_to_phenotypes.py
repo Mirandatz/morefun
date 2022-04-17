@@ -4,7 +4,10 @@ import attrs
 import hypothesis.strategies as hs
 from hypothesis import given
 
+import gge.composite_genotypes as cg
 import gge.grammars as gr
+import gge.layers as gl
+import gge.neural_network as gnn
 import gge.optimizers as optim
 import gge.randomness as rand
 import gge.structured_grammatical_evolution as sge
@@ -90,6 +93,11 @@ def adam_grammar(draw: hs.DrawFn) -> GrammarToPhenotypeTestData[optim.Adam]:
     )
 
 
+@hs.composite
+def neural_network(draw: hs.DrawFn) -> GrammarToPhenotypeTestData[gnn.NeuralNetwork]:
+    raise NotImplementedError()
+
+
 @given(test_data=sgd_grammar())
 def test_sgd(test_data: GrammarToPhenotypeTestData[optim.SGD]) -> None:
     """Can process a middle-grammar to generate a SGD optimizer."""
@@ -111,4 +119,17 @@ def test_adam(test_data: GrammarToPhenotypeTestData[optim.Adam]) -> None:
 
     actual = optim.parse(tokenstream)
     expected = test_data.phenotype
+    assert expected == actual
+
+
+@given(test_data=neural_network())
+def test_network(test_data: GrammarToPhenotypeTestData[gnn.NeuralNetwork]) -> None:
+    """Can process a middle-grammar to generate a NeuralNetwork."""
+    grammar = gr.Grammar(test_data.grammar)
+    composite_genotype = cg.create_genotype(grammar, rng=rand.create_rng())
+    input_layer = gl.make_input(1, 1, 1)
+
+    actual = gnn.make_network(composite_genotype, grammar, input_layer)
+    expected = test_data.phenotype
+
     assert expected == actual

@@ -63,12 +63,13 @@ def make_tf_model(
     network_skeleton: gnn.NeuralNetwork,
     class_count: int,
 ) -> keras.Model:
-    input_tensor, output_tensor = network_skeleton.to_input_output_tensores()
+    input_tensor, output_tensor = network_skeleton.to_input_output_tensor()
     classification_head = make_classification_head(class_count, output_tensor)
+    optimizer = network_skeleton.optimizer.to_keras()
     tf_model = keras.Model(inputs=input_tensor, outputs=classification_head)
     tf_model.compile(
         loss="categorical_crossentropy",
-        optimizer="nadam",
+        optimizer=optimizer,
         metrics=["accuracy"],
     )
     return tf_model
