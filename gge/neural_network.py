@@ -1,3 +1,4 @@
+import attr
 import networkx as nx
 import tensorflow as tf
 
@@ -10,39 +11,14 @@ import gge.optimizers as optim
 import gge.structured_grammatical_evolution as sge
 
 
+@attr.frozen(kw_only=True)
 class NeuralNetwork:
-    def __init__(
-        self,
-        output_layer: gl.ConnectableLayer,
-        optimizer: optim.Optimizer,
-    ) -> None:
-        assert not isinstance(output_layer, gl.Input)
+    input_layer: gl.Input
+    output_layer: gl.ConnectableLayer
+    optimizer: optim.Optimizer
 
-        graph = convert_to_digraph(output_layer)
-        assert nx.is_directed_acyclic_graph(graph)
-
-        layers = [node for node in graph.nodes]
-        layer_names = [layer.name for layer in layers]
-        assert len(set(layer_names)) == len(layer_names)
-
-        inputs = [layer for layer in layers if isinstance(layer, gl.Input)]
-        assert len(inputs) == 1
-
-        self._input_layer = inputs[0]
-        self._output_layer = output_layer
-        self._optimizer = optimizer
-
-    @property
-    def input_layer(self) -> gl.Input:
-        return self._input_layer
-
-    @property
-    def output_layer(self) -> gl.ConnectableLayer:
-        return self._output_layer
-
-    @property
-    def optimizer(self) -> optim.Optimizer:
-        return self._optimizer
+    def __attrs_post_init__(self) -> None:
+        validate_layers(self.input_layer, self.output_layer)
 
     def to_input_output_tensor(self) -> tuple[tf.Tensor, tf.Tensor]:
         tensores: dict[gl.ConnectableLayer, tf.Tensor] = {}
@@ -62,8 +38,31 @@ def make_network(
         genotype.connections_genotype,
         input_layer=input_layer,
     )
+
     optimizer = optim.parse(tokenstream)
-    return NeuralNetwork(output_layer, optimizer)
+
+    return NeuralNetwork(
+        input_layer=input_layer,
+        output_layer=output_layer,
+        optimizer=optimizer,
+    )
+
+
+def validate_layers(
+    input_layer: gl.Input,
+    output_layer: gl.ConnectableLayer,
+) -> None:
+    graph = convert_to_digraph(output_layer)
+    if nx.is_directed_acyclic_graph(graph):
+        # TODO: pickle output_layer to enable postmortem debug
+        raise ValueError(
+            "the graph described by tracing `output_layer`'s inputs is cyclic"
+        )
+
+    layers = [node for node in graph.nodes]
+
+    validate_input_layers(input_layer, layers)
+    validate_layer_names(layers)
 
 
 def convert_to_digraph(output_layer: gl.ConnectableLayer) -> nx.DiGraph:
@@ -78,3 +77,35 @@ def convert_to_digraph(output_layer: gl.ConnectableLayer) -> nx.DiGraph:
             to_visit.append(src)
 
     return graph
+
+
+def validate_layer_names(layers: list[gl.ConnectableLayer]) -> None:
+    layer_names = [layer.name for layer in layers]
+    unique_names = set()
+    repeated_names = set()
+
+    for name in layer_names:
+        if name not in unique_names:
+            unique_names.add(name)
+        else:
+            repeated_names.add(name)
+
+    if repeated_names:
+        raise ValueError(
+            f"a network must contain only uniquely named layers, repeated names=<{repeated_names}>"
+        )
+
+
+def validate_input_layers(
+    input_layer: gl.Input,
+    layers: list[gl.ConnectableLayer],
+) -> None:
+    inputs = [layer for layer in layers if isinstance(layer, gl.Input)]
+    if len(inputs) != 1:
+        raise ValueError("the network must contain one and only one`Input` layer")
+
+    if inputs[0] != input_layer:
+        raise ValueError(
+            "mismatch between provided `input_layer` and the one found by"
+            " tracing the inputs back"
+        )
