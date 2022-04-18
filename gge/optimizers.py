@@ -195,7 +195,7 @@ def parse(tokenstream: str) -> Optimizer:
     be visited/transformed into a `SGD`.
     """
 
-    logger.debug("start parsing optimizer tokenstream")
+    logger.debug("parsing optimizer tokenstream")
 
     tree = lgp.parse_lower_grammar_tokenstream(tokenstream)
     relevant_subtrees = list(tree.find_data("optimizer"))

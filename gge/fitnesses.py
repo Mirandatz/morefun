@@ -93,14 +93,15 @@ class ValidationAccuracy:
         val = self.get_validation_generator()
         tf_model = make_tf_model(model, self.class_count)
 
-        fitting_result = tf_model.fit(
-            train,
-            epochs=self.epochs,
-            steps_per_epoch=train.samples // self.batch_size,
-            validation_data=val,
-            validation_steps=val.samples // self.batch_size,
-            verbose=0,
-        )
+        with redirection.discard_stderr_and_stdout():
+            fitting_result = tf_model.fit(
+                train,
+                epochs=self.epochs,
+                steps_per_epoch=train.samples // self.batch_size,
+                validation_data=val,
+                validation_steps=val.samples // self.batch_size,
+                verbose=0,
+            )
 
         val_acc = max(fitting_result.history["val_accuracy"])
         assert isinstance(val_acc, float)

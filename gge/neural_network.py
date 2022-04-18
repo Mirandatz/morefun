@@ -3,6 +3,7 @@ import uuid
 import attrs
 import networkx as nx
 import tensorflow as tf
+from loguru import logger
 
 import gge.backbones as bb
 import gge.composite_genotypes as cg
@@ -35,6 +36,8 @@ def make_network(
     grammar: gr.Grammar,
     input_layer: gl.Input,
 ) -> NeuralNetwork:
+    logger.debug(f"making network from genotype=<{genotype}>")
+
     tokenstream = sge.map_to_tokenstream(genotype.backbone_genotype, grammar)
     backbone = bb.parse(tokenstream)
     output_layer = conn.connect_backbone(
@@ -45,12 +48,15 @@ def make_network(
 
     optimizer = optim.parse(tokenstream)
 
-    return NeuralNetwork(
+    network = NeuralNetwork(
         input_layer=input_layer,
         output_layer=output_layer,
         optimizer=optimizer,
         unique_id=genotype.unique_id,
     )
+
+    logger.debug("finished making network")
+    return network
 
 
 def validate_layers(

@@ -209,7 +209,7 @@ def parse(tokenstream: str) -> Backbone:
     be visited/transformed into a `Backbone`.
     """
 
-    logger.debug("started parsing backbone tokestream")
+    logger.debug("parsing backbone tokestream")
 
     tree = lgp.parse_lower_grammar_tokenstream(tokenstream)
     relevant_subtrees = list(tree.find_data("backbone"))
