@@ -53,7 +53,7 @@ def validate_layers(
     output_layer: gl.ConnectableLayer,
 ) -> None:
     graph = convert_to_digraph(output_layer)
-    if nx.is_directed_acyclic_graph(graph):
+    if not nx.is_directed_acyclic_graph(graph):
         # TODO: pickle output_layer to enable postmortem debug
         raise ValueError(
             "the graph described by tracing `output_layer`'s inputs is cyclic"
