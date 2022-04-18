@@ -17,35 +17,6 @@ import gge.redirection as redirection
 DataGen: typing.TypeAlias = keras.preprocessing.image.DirectoryIterator
 
 
-class FitnessMetric(typing.Protocol):
-    @property
-    def should_be_maximized(self) -> bool:
-        ...
-
-    def evaluate(self, model: gnn.NeuralNetwork) -> float:
-        ...
-
-
-class LayerCount:
-    """
-    This is a dummy fitness metric used for debugging/testing purposes.
-    """
-
-    @property
-    def should_be_maximized(self) -> bool:
-        return False
-
-    def evaluate(self, model: gnn.NeuralNetwork) -> float:
-        graph = gnn.convert_to_digraph(model.output_layer)
-        layers = graph.nodes
-        cool_layers = [
-            layer
-            for layer in layers
-            if isinstance(layer, gl.SingleInputLayer | gl.MultiInputLayer)
-        ]
-        return len(cool_layers)
-
-
 def make_classification_head(class_count: int, input_tensor: tf.Tensor) -> tf.Tensor:
     _, width, height, _ = input_tensor.shape
 
@@ -143,7 +114,7 @@ class ValidationAccuracy:
 
 @attrs.frozen
 class FitnessEvaluationParameters:
-    metric: FitnessMetric
+    metric: ValidationAccuracy
     grammar: gr.Grammar
     input_layer: gl.Input
 
