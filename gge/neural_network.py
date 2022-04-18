@@ -1,3 +1,5 @@
+import uuid
+
 import attrs
 import networkx as nx
 import tensorflow as tf
@@ -11,11 +13,13 @@ import gge.optimizers as optim
 import gge.structured_grammatical_evolution as sge
 
 
-@attrs.frozen(kw_only=True)
+@attrs.frozen(cache_hash=True, kw_only=True)
 class NeuralNetwork:
-    input_layer: gl.Input
-    output_layer: gl.ConnectableLayer
-    optimizer: optim.Optimizer
+    input_layer: gl.Input = attrs.field(repr=False)
+    output_layer: gl.ConnectableLayer = attrs.field(repr=False)
+    optimizer: optim.Optimizer = attrs.field(repr=False)
+
+    unique_id: uuid.UUID = attrs.field(eq=False, order=False, repr=True)
 
     def __attrs_post_init__(self) -> None:
         validate_layers(self.input_layer, self.output_layer)
@@ -45,6 +49,7 @@ def make_network(
         input_layer=input_layer,
         output_layer=output_layer,
         optimizer=optimizer,
+        unique_id=genotype.unique_id,
     )
 
 

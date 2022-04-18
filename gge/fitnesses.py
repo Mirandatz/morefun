@@ -116,7 +116,7 @@ class ValidationAccuracy:
             )
 
     def evaluate(self, model: gnn.NeuralNetwork) -> float:
-        logger.trace("evaluate")
+        logger.debug(f"starting fitness evaluation, model=<{model}>")
 
         train = self.get_train_generator()
         val = self.get_validation_generator()
@@ -133,6 +133,11 @@ class ValidationAccuracy:
 
         val_acc = max(fitting_result.history["val_accuracy"])
         assert isinstance(val_acc, float)
+
+        logger.debug(
+            f"finished fitness evaluation, model=<{model}>, accuracy=<{val_acc}>"
+        )
+
         return val_acc
 
 
@@ -147,7 +152,7 @@ def evaluate(
     genotype: cg.CompositeGenotype,
     params: FitnessEvaluationParameters,
 ) -> float:
-    logger.trace("evaluate")
+    logger.debug(f"starting fitness evaluation of genotype=<{genotype}>")
 
     phenotype = gnn.make_network(
         genotype,
@@ -156,18 +161,20 @@ def evaluate(
     )
 
     try:
-        return params.metric.evaluate(phenotype)
+        fitness = params.metric.evaluate(phenotype)
+        logger.debug(f"finished fitness evaluation of genotype=<{genotype}>")
+        return fitness
 
     except tf.errors.ResourceExhaustedError:
         logger.warning(
-            f"Unable to evalute genotype due to resource exhaustion; genotype=<{genotype}>"
+            f"unable to evalute genotype due to resource exhaustion; genotype=<{genotype}>"
         )
         return float("-inf")
 
     except (ValueError, tf.errors.InvalidArgumentError):
         filename = debug.save_genotype(genotype)
         logger.error(
-            f"Unable to evaluate genotype because the phenotype is malformed; saved as=<{filename}>"
+            f"unable to evaluate genotype because the phenotype is malformed; saved as=<{filename}>"
         )
         raise
 
@@ -185,6 +192,8 @@ def select_fittest(
     assert len(population) >= fittest_count
     assert fittest_count > 0
 
+    logger.debug("starting fittest selection")
+
     best_to_worst = sorted(
         population.keys(),
         key=lambda g: population[g],
@@ -192,4 +201,9 @@ def select_fittest(
     )
 
     fittest = best_to_worst[:fittest_count]
-    return {g: population[g] for g in fittest}
+    assert len(fittest) == fittest_count
+
+    keyed_fittest = {g: population[g] for g in fittest}
+
+    logger.debug("finished fittest selection")
+    return keyed_fittest
