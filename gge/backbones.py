@@ -46,7 +46,7 @@ class Backbone:
 
 
 @lark.v_args(inline=True)
-class BackboneSynthetizer(lgp.MesagrammarTransformer):
+class BackboneSynthetizer(lgp.LowerGrammarTransformer):
     def __init__(self) -> None:
         super().__init__()
         self._name_generator = gge.name_generator.NameGenerator()
@@ -208,7 +208,7 @@ def parse(token_stream: str) -> Backbone:
     be visited/transformed into a `Backbone`.
     """
 
-    tree = lgp.parse_mesagrammar_tokenstream(token_stream)
+    tree = lgp.parse_lower_grammar_tokenstream(token_stream)
     relevant_subtrees = list(tree.find_data("backbone"))
     assert len(relevant_subtrees) == 1
 

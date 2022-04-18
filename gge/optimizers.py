@@ -3,6 +3,7 @@ import abc
 import attrs
 import lark
 import tensorflow as tf
+from loguru import logger
 
 import gge.lower_gramamar_parsing as lgp
 
@@ -67,7 +68,7 @@ class Adam(Optimizer):
 
 
 @lark.v_args(inline=True)
-class OptimizerSynthetizer(lgp.MesagrammarTransformer):
+class OptimizerSynthetizer(lgp.LowerGrammarTransformer):
     def optimizer(self, optimizer: Optimizer) -> Optimizer:
         self._raise_if_not_running()
 
@@ -186,7 +187,7 @@ class OptimizerSynthetizer(lgp.MesagrammarTransformer):
         return None
 
 
-def parse(token_stream: str) -> Optimizer:
+def parse(tokenstream: str) -> Optimizer:
     """
     This is not a "string deserialization function".
     The input string is expected to be a "token stream"
@@ -194,7 +195,9 @@ def parse(token_stream: str) -> Optimizer:
     be visited/transformed into a `SGD`.
     """
 
-    tree = lgp.parse_mesagrammar_tokenstream(token_stream)
+    logger.debug("start parsing optimizer tokenstream")
+
+    tree = lgp.parse_lower_grammar_tokenstream(tokenstream)
     relevant_subtrees = list(tree.find_data("optimizer"))
     assert len(relevant_subtrees) == 1
 
@@ -202,4 +205,6 @@ def parse(token_stream: str) -> Optimizer:
 
     optimizer = OptimizerSynthetizer().transform(optimizer_tree)
     assert isinstance(optimizer, Optimizer)
+
+    logger.debug("finished parsing optimizer tokenstream")
     return optimizer
