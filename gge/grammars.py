@@ -1,10 +1,10 @@
-import dataclasses
 import enum
 import functools
 import itertools
 import pathlib
 import typing
 
+import attrs
 import lark
 from loguru import logger
 
@@ -50,11 +50,11 @@ def _is_valid_name(value: str) -> bool:
     return all(chars_are_valid)
 
 
-@dataclasses.dataclass(order=True, frozen=True)
+@attrs.frozen(cache_hash=True)
 class NonTerminal:
     text: str
 
-    def __post_init__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         assert isinstance(self.text, str)
 
         error_msg = (
@@ -74,11 +74,11 @@ class NonTerminal:
         return f"NT({self.text})"
 
 
-@dataclasses.dataclass(order=True, frozen=True)
+@attrs.frozen(cache_hash=True)
 class Terminal:
     text: str
 
-    def __post_init__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         assert isinstance(self.text, str)
 
         if _can_be_parsed_as_float(self.text):
@@ -113,7 +113,7 @@ class Terminal:
 Symbol: typing.TypeAlias = Terminal | NonTerminal
 
 
-@dataclasses.dataclass(order=True, frozen=True)
+@attrs.frozen(cache_hash=True)
 class RuleOption:
     """
     represents one possible expansion of a rule, i.e. "the stuff separated by `|`"
@@ -127,7 +127,7 @@ class RuleOption:
 
     symbols: tuple[Symbol, ...]
 
-    def __post_init__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         assert isinstance(self.symbols, tuple)
         for s in self.symbols:
             assert isinstance(s, Symbol)  # type: ignore
@@ -139,12 +139,12 @@ class RuleOption:
         return f"RuleOption({all_options})"
 
 
-@dataclasses.dataclass(order=True, frozen=True)
+@attrs.frozen(cache_hash=True)
 class ProductionRule:
     lhs: NonTerminal
     rhs: RuleOption
 
-    def __post_init__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         assert isinstance(self.lhs, NonTerminal)
         assert isinstance(self.rhs, RuleOption)
 
@@ -152,14 +152,14 @@ class ProductionRule:
         return f"Rule({self.lhs}->{self.rhs})"
 
 
-@dataclasses.dataclass(frozen=True)
+@attrs.frozen(cache_hash=True)
 class GrammarComponents:
     nonterminals: tuple[NonTerminal, ...]
     terminals: tuple[Terminal, ...]
     rules: tuple[ProductionRule, ...]
     start_symbol: NonTerminal
 
-    def __post_init__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         assert isinstance(self.nonterminals, tuple)
         for nt in self.nonterminals:
             assert isinstance(nt, NonTerminal)
