@@ -69,6 +69,7 @@ def validate_output_dir(path: pathlib.Path) -> None:
     logger.success("output dir okay")
 
 
+@logger.catch(reraise=True)
 def main(
     train_dir: pathlib.Path = typer.Option(
         ...,
