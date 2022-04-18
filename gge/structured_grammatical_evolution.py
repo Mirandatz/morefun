@@ -26,7 +26,8 @@ class Gene:
         assert all(i >= 0 for i in self.expansions_indices)
 
 
-@attrs.frozen(cache_hash=True)
+# slots=False to enable functools.cache_property
+@attrs.frozen(cache_hash=True, slots=False)
 class Genotype:
     genes: tuple[Gene, ...]
 
