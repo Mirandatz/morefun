@@ -17,35 +17,6 @@ import gge.redirection as redirection
 DataGen: typing.TypeAlias = keras.preprocessing.image.DirectoryIterator
 
 
-class FitnessMetric(typing.Protocol):
-    @property
-    def should_be_maximized(self) -> bool:
-        ...
-
-    def evaluate(self, model: gnn.NeuralNetwork) -> float:
-        ...
-
-
-class LayerCount:
-    """
-    This is a dummy fitness metric used for debugging/testing purposes.
-    """
-
-    @property
-    def should_be_maximized(self) -> bool:
-        return False
-
-    def evaluate(self, model: gnn.NeuralNetwork) -> float:
-        graph = gnn.convert_to_digraph(model.output_layer)
-        layers = graph.nodes
-        cool_layers = [
-            layer
-            for layer in layers
-            if isinstance(layer, gl.SingleInputLayer | gl.MultiInputLayer)
-        ]
-        return len(cool_layers)
-
-
 def make_classification_head(class_count: int, input_tensor: tf.Tensor) -> tf.Tensor:
     _, width, height, _ = input_tensor.shape
 
@@ -63,12 +34,13 @@ def make_tf_model(
     network_skeleton: gnn.NeuralNetwork,
     class_count: int,
 ) -> keras.Model:
-    input_tensor, output_tensor = network_skeleton.to_input_output_tensores()
+    input_tensor, output_tensor = network_skeleton.to_input_output_tensor()
     classification_head = make_classification_head(class_count, output_tensor)
+    optimizer = network_skeleton.optimizer.to_keras()
     tf_model = keras.Model(inputs=input_tensor, outputs=classification_head)
     tf_model.compile(
         loss="categorical_crossentropy",
-        optimizer="nadam",
+        optimizer=optimizer,
         metrics=["accuracy"],
     )
     return tf_model
@@ -115,29 +87,35 @@ class ValidationAccuracy:
             )
 
     def evaluate(self, model: gnn.NeuralNetwork) -> float:
-        logger.trace("evaluate")
+        logger.debug(f"starting fitness evaluation, model=<{model}>")
 
         train = self.get_train_generator()
         val = self.get_validation_generator()
         tf_model = make_tf_model(model, self.class_count)
 
-        fitting_result = tf_model.fit(
-            train,
-            epochs=self.epochs,
-            steps_per_epoch=train.samples // self.batch_size,
-            validation_data=val,
-            validation_steps=val.samples // self.batch_size,
-            verbose=0,
-        )
+        with redirection.discard_stderr_and_stdout():
+            fitting_result = tf_model.fit(
+                train,
+                epochs=self.epochs,
+                steps_per_epoch=train.samples // self.batch_size,
+                validation_data=val,
+                validation_steps=val.samples // self.batch_size,
+                verbose=0,
+            )
 
         val_acc = max(fitting_result.history["val_accuracy"])
         assert isinstance(val_acc, float)
+
+        logger.debug(
+            f"finished fitness evaluation, model=<{model}>, accuracy=<{val_acc}>"
+        )
+
         return val_acc
 
 
 @attrs.frozen
 class FitnessEvaluationParameters:
-    metric: FitnessMetric
+    metric: ValidationAccuracy
     grammar: gr.Grammar
     input_layer: gl.Input
 
@@ -146,7 +124,7 @@ def evaluate(
     genotype: cg.CompositeGenotype,
     params: FitnessEvaluationParameters,
 ) -> float:
-    logger.trace("evaluate")
+    logger.debug(f"starting fitness evaluation of genotype=<{genotype}>")
 
     phenotype = gnn.make_network(
         genotype,
@@ -155,18 +133,20 @@ def evaluate(
     )
 
     try:
-        return params.metric.evaluate(phenotype)
+        fitness = params.metric.evaluate(phenotype)
+        logger.debug(f"finished fitness evaluation of genotype=<{genotype}>")
+        return fitness
 
     except tf.errors.ResourceExhaustedError:
         logger.warning(
-            f"Unable to evalute genotype due to resource exhaustion; genotype=<{genotype}>"
+            f"unable to evalute genotype due to resource exhaustion; genotype=<{genotype}>"
         )
         return float("-inf")
 
     except (ValueError, tf.errors.InvalidArgumentError):
         filename = debug.save_genotype(genotype)
         logger.error(
-            f"Unable to evaluate genotype because the phenotype is malformed; saved as=<{filename}>"
+            f"unable to evaluate genotype because the phenotype is malformed; saved as=<{filename}>"
         )
         raise
 
@@ -184,6 +164,8 @@ def select_fittest(
     assert len(population) >= fittest_count
     assert fittest_count > 0
 
+    logger.debug("starting fittest selection")
+
     best_to_worst = sorted(
         population.keys(),
         key=lambda g: population[g],
@@ -191,4 +173,9 @@ def select_fittest(
     )
 
     fittest = best_to_worst[:fittest_count]
-    return {g: population[g] for g in fittest}
+    assert len(fittest) == fittest_count
+
+    keyed_fittest = {g: population[g] for g in fittest}
+
+    logger.debug("finished fittest selection")
+    return keyed_fittest

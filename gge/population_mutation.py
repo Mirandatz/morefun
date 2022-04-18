@@ -1,6 +1,6 @@
-import dataclasses
 import functools
 
+import attrs
 from loguru import logger
 
 import gge.composite_genotypes as cg
@@ -15,13 +15,13 @@ import gge.randomness as rand
 DUMMY_INPUT = gl.make_input(1, 1, 1)
 
 
-@dataclasses.dataclass(frozen=True)
+@attrs.frozen(cache_hash=True)
 class PopulationMutationParameters:
     mutants_to_generate: int
     max_failures: int
     grammar: gr.Grammar
 
-    def __post_init__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         assert self.mutants_to_generate > 1
         assert self.max_failures >= 0
 

@@ -1,8 +1,8 @@
-import dataclasses
 import enum
 import itertools
 import typing
 
+import attrs
 from loguru import logger
 
 import gge.backbones as bb
@@ -23,13 +23,13 @@ class MergeStrategy(enum.Enum):
     CONCAT = enum.auto()
 
 
-@dataclasses.dataclass(frozen=True)
+@attrs.frozen(cache_hash=True)
 class MergeParameters:
     forks_mask: tuple[bool, ...]
     merge_strategy: MergeStrategy
     reshape_strategy: ReshapeStrategy
 
-    def __post_init__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         assert isinstance(self.forks_mask, tuple)
         for value in self.forks_mask:
             assert isinstance(value, bool)
@@ -38,11 +38,11 @@ class MergeParameters:
         assert isinstance(self.reshape_strategy, ReshapeStrategy)
 
 
-@dataclasses.dataclass(frozen=True)
+@attrs.frozen(cache_hash=True)
 class ConnectionsSchema:
     merge_params: tuple[MergeParameters, ...]
 
-    def __post_init__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         assert isinstance(self.merge_params, tuple)
         for ml in self.merge_params:
             assert isinstance(ml, MergeParameters)

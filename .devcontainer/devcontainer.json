@@ -24,7 +24,6 @@
 		8000 // for debugger
 	],
 	"runArgs": [
-		"--runtime=nvidia",
 		"--shm-size=2G",
 	],
 	"mounts": [

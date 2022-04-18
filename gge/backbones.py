@@ -1,9 +1,10 @@
 import collections
-import dataclasses
 import itertools
 import typing
 
+import attrs
 import lark
+from loguru import logger
 
 import gge.layers as gl
 import gge.lower_gramamar_parsing as lgp
@@ -25,11 +26,11 @@ def _raise_if_contains_sequences_of_forks(layers: tuple[gl.Layer, ...]) -> None:
             raise ValueError("backbone must not contain sequences of forks")
 
 
-@dataclasses.dataclass(frozen=True)
+@attrs.frozen(cache_hash=True)
 class Backbone:
     layers: tuple[gl.Layer, ...]
 
-    def __post_init__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         assert isinstance(self.layers, tuple)
         for layer in self.layers:
             assert isinstance(layer, gl.Layer)  # type: ignore
@@ -46,7 +47,7 @@ class Backbone:
 
 
 @lark.v_args(inline=True)
-class BackboneSynthetizer(lgp.MesagrammarTransformer):
+class BackboneSynthetizer(lgp.LowerGrammarTransformer):
     def __init__(self) -> None:
         super().__init__()
         self._name_generator = gge.name_generator.NameGenerator()
@@ -200,7 +201,7 @@ class BackboneSynthetizer(lgp.MesagrammarTransformer):
         return gl.Swish(name=self._create_layer_name(gl.Swish))
 
 
-def parse(token_stream: str) -> Backbone:
+def parse(tokenstream: str) -> Backbone:
     """
     This is not a "string deserialization function";
     the input string is expected to be a "token stream"
@@ -208,7 +209,9 @@ def parse(token_stream: str) -> Backbone:
     be visited/transformed into a `Backbone`.
     """
 
-    tree = lgp.parse_mesagrammar_tokenstream(token_stream)
+    logger.debug("parsing backbone tokestream")
+
+    tree = lgp.parse_lower_grammar_tokenstream(tokenstream)
     relevant_subtrees = list(tree.find_data("backbone"))
     assert len(relevant_subtrees) == 1
 
@@ -216,4 +219,6 @@ def parse(token_stream: str) -> Backbone:
 
     backbone = BackboneSynthetizer().transform(backbone_subtree)
     assert isinstance(backbone, Backbone)
+
+    logger.debug("finished parsing backbone tokenstream")
     return backbone

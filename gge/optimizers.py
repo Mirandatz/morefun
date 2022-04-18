@@ -2,12 +2,17 @@ import abc
 
 import attrs
 import lark
+import tensorflow as tf
+from loguru import logger
 
 import gge.lower_gramamar_parsing as lgp
 
 
 class Optimizer(abc.ABC):
     ...
+
+    def to_keras(self) -> tf.keras.optimizers.Optimizer:
+        ...
 
 
 @attrs.frozen
@@ -22,7 +27,14 @@ class SGD(Optimizer):
         assert isinstance(self.nesterov, bool)
 
         assert self.learning_rate > 0
-        assert self.momentum >= 0
+        assert 0 <= self.momentum <= 1
+
+    def to_keras(self) -> tf.keras.optimizers.SGD:
+        return tf.keras.optimizers.SGD(
+            learning_rate=self.learning_rate,
+            momentum=self.momentum,
+            nesterov=self.nesterov,
+        )
 
 
 @attrs.frozen
@@ -45,9 +57,18 @@ class Adam(Optimizer):
         assert self.beta2 > 0
         assert self.epsilon > 0
 
+    def to_keras(self) -> tf.keras.optimizers.Adam:
+        return tf.keras.optimizers.Adam(
+            learning_rate=self.learning_rate,
+            beta_1=self.beta1,
+            beta_2=self.beta2,
+            epsilon=self.epsilon,
+            amsgrad=self.amsgrad,
+        )
+
 
 @lark.v_args(inline=True)
-class OptimizerSynthetizer(lgp.MesagrammarTransformer):
+class OptimizerSynthetizer(lgp.LowerGrammarTransformer):
     def optimizer(self, optimizer: Optimizer) -> Optimizer:
         self._raise_if_not_running()
 
@@ -166,7 +187,7 @@ class OptimizerSynthetizer(lgp.MesagrammarTransformer):
         return None
 
 
-def parse(token_stream: str) -> Optimizer:
+def parse(tokenstream: str) -> Optimizer:
     """
     This is not a "string deserialization function".
     The input string is expected to be a "token stream"
@@ -174,7 +195,9 @@ def parse(token_stream: str) -> Optimizer:
     be visited/transformed into a `SGD`.
     """
 
-    tree = lgp.parse_mesagrammar_tokenstream(token_stream)
+    logger.debug("parsing optimizer tokenstream")
+
+    tree = lgp.parse_lower_grammar_tokenstream(tokenstream)
     relevant_subtrees = list(tree.find_data("optimizer"))
     assert len(relevant_subtrees) == 1
 
@@ -182,4 +205,6 @@ def parse(token_stream: str) -> Optimizer:
 
     optimizer = OptimizerSynthetizer().transform(optimizer_tree)
     assert isinstance(optimizer, Optimizer)
+
+    logger.debug("finished parsing optimizer tokenstream")
     return optimizer

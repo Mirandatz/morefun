@@ -12,21 +12,21 @@ LOWER_GRAMMAR_PATH = (
 
 
 def get_parser() -> lark.Lark:
-    logger.debug("starting parsing mesagrammar")
+    logger.debug("starting parsing lower grammar")
     parser = lark.Lark.open(grammar_filename=str(LOWER_GRAMMAR_PATH), parser="lalr")
-    logger.debug("finished parsing mesagrammar")
+    logger.debug("finished parsing lower grammar")
     return parser
 
 
-def parse_mesagrammar_tokenstream(token_stream: str) -> lark.Tree[typing.Any]:
-    logger.debug("starting parsing mesagrammar token stream")
-    tree = get_parser().parse(token_stream)
-    logger.debug("finished parsing mesagrammar token stream")
+def parse_lower_grammar_tokenstream(tokenstream: str) -> lark.Tree[typing.Any]:
+    logger.debug("starting parsing lower grammar tokenstream")
+    tree = get_parser().parse(tokenstream)
+    logger.debug("finished parsing lower grammar tokenstream")
     return tree
 
 
 @lark.v_args(inline=True)
-class MesagrammarTransformer(gge.transformers.SinglePassTransformer):
+class LowerGrammarTransformer(gge.transformers.SinglePassTransformer):
     def INT(self, token: lark.Token) -> int:
         self._raise_if_not_running()
         return int(token.value)

@@ -1,20 +1,21 @@
 import collections
-import dataclasses
 import functools
 
+import attrs
 from loguru import logger
 
 import gge.grammars as gg
 import gge.randomness as rand
 
-
 # order=True because we want to store genes in a consistent order
-@dataclasses.dataclass(frozen=True, order=True)
+
+
+@attrs.frozen(cache_hash=True, order=True)
 class Gene:
     nonterminal: gg.NonTerminal
     expansions_indices: tuple[int, ...]
 
-    def __post_init__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         assert isinstance(self.nonterminal, gg.NonTerminal)
 
         assert isinstance(self.expansions_indices, tuple)
@@ -25,11 +26,12 @@ class Gene:
         assert all(i >= 0 for i in self.expansions_indices)
 
 
-@dataclasses.dataclass(frozen=True)
+# slots=False to enable functools.cache_property
+@attrs.frozen(cache_hash=True, slots=False)
 class Genotype:
     genes: tuple[Gene, ...]
 
-    def __post_init__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         sorted_genes = tuple(sorted(self.genes))
         if sorted_genes != self.genes:
             raise ValueError("genes must be sorted")
@@ -68,7 +70,7 @@ class GenotypeSkeleton:
         return self._max_values[nt]
 
 
-@dataclasses.dataclass(frozen=True)
+@attrs.frozen(cache_hash=True)
 class SGEParameters:
     grammar: gg.Grammar
 

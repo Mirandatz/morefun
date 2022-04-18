@@ -1,6 +1,6 @@
-import dataclasses
 import typing
 
+import attrs
 import hypothesis.strategies as hs
 from hypothesis import given
 
@@ -9,7 +9,7 @@ import gge.fitnesses as gfit
 DrawStrat = typing.Callable[..., typing.Any]
 
 
-@dataclasses.dataclass(frozen=True)
+@attrs.frozen
 class FitnessTestData:
     population: dict[int, float]
     fittest_count: int

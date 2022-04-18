@@ -18,12 +18,12 @@ dev_env:
 .PHONY: run_tests
 run_tests: dev_env
 	docker run --rm --user $(uid):$(gid) -v $(root_dir):/gge $(dev_env_tag) \
-		pytest
-
-.PHONY: run_tests_parallel
-run_tests_parallel: dev_env
-	docker run --rm --user $(uid):$(gid) -v $(root_dir):/gge $(dev_env_tag) \
 		pytest --numprocesses=auto --hypothesis-profile=parallel
+
+.PHONY: run_tests_sequential
+run_tests_sequential: dev_env
+	docker run --rm --user $(uid):$(gid) -v $(root_dir):/gge $(dev_env_tag) \
+		pytest --pspec
 
 .PHONY: playground
 playground: dev_env

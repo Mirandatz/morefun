@@ -2,9 +2,13 @@ import typing
 
 import attrs
 import hypothesis.strategies as hs
+import pytest
 from hypothesis import given
 
+import gge.composite_genotypes as cg
 import gge.grammars as gr
+import gge.layers as gl
+import gge.neural_network as gnn
 import gge.optimizers as optim
 import gge.randomness as rand
 import gge.structured_grammatical_evolution as sge
@@ -33,7 +37,7 @@ DUMMY_LAYER = DummyLayerDef(
 @hs.composite
 def sgd_grammar(draw: hs.DrawFn) -> GrammarToPhenotypeTestData[optim.SGD]:
     learning_rate = draw(hs.floats(min_value=0, max_value=9, exclude_min=True))
-    momentum = draw(hs.floats(min_value=0, max_value=9))
+    momentum = draw(hs.floats(min_value=0, max_value=1))
     nesterov = draw(hs.booleans())
 
     # must inject a dummy layer data to enable parsing
@@ -90,6 +94,12 @@ def adam_grammar(draw: hs.DrawFn) -> GrammarToPhenotypeTestData[optim.Adam]:
     )
 
 
+@hs.composite
+def neural_network(draw: hs.DrawFn) -> GrammarToPhenotypeTestData[gnn.NeuralNetwork]:
+    # TODO: Implement this.
+    raise NotImplementedError()
+
+
 @given(test_data=sgd_grammar())
 def test_sgd(test_data: GrammarToPhenotypeTestData[optim.SGD]) -> None:
     """Can process a middle-grammar to generate a SGD optimizer."""
@@ -110,5 +120,18 @@ def test_adam(test_data: GrammarToPhenotypeTestData[optim.Adam]) -> None:
     tokenstream = sge.map_to_tokenstream(genotype, grammar)
 
     actual = optim.parse(tokenstream)
+    expected = test_data.phenotype
+    assert expected == actual
+
+
+@pytest.mark.xfail(reason="Not implemented")
+@given(test_data=neural_network())
+def test_network(test_data: GrammarToPhenotypeTestData[gnn.NeuralNetwork]) -> None:
+    """Can process a middle-grammar to generate a NeuralNetwork."""
+    grammar = gr.Grammar(test_data.grammar)
+    composite_genotype = cg.create_genotype(grammar, rng=rand.create_rng())
+    input_layer = gl.make_input(1, 1, 1)
+
+    actual = gnn.make_network(composite_genotype, grammar, input_layer)
     expected = test_data.phenotype
     assert expected == actual
