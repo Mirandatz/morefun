@@ -1,7 +1,7 @@
-import dataclasses as dc
 import functools
 import typing
 
+import attrs
 from loguru import logger
 
 import gge.composite_genotypes as cg
@@ -72,7 +72,7 @@ def mutate(
             genotype.connections_genotype,
             rng,
         )
-        return dc.replace(
+        return attrs.evolve(
             genotype,
             connections_genotype=new_connections,
         )
@@ -119,7 +119,7 @@ def mutate_connections_schema(
         "Mutating connection schema from old=<{old_params}> to new=<{new_params}>"
     )
 
-    return dc.replace(schema, merge_params=new_params)
+    return attrs.evolve(schema, merge_params=new_params)
 
 
 def mutate_merge_parameters(
@@ -135,15 +135,15 @@ def mutate_merge_parameters(
 
     if mutation_type == "forks":
         new_forks_mask = mutate_forks_mask(params.forks_mask, rng)
-        return dc.replace(params, forks_mask=new_forks_mask)
+        return attrs.evolve(params, forks_mask=new_forks_mask)
 
     elif mutation_type == "reshape":
         new_reshape_strategy = mutate_reshape_strategy(params.reshape_strategy)
-        return dc.replace(params, reshape_strategy=new_reshape_strategy)
+        return attrs.evolve(params, reshape_strategy=new_reshape_strategy)
 
     else:
         new_merge_strategy = mutate_merge_strategy(params.merge_strategy)
-        return dc.replace(params, merge_strategy=new_merge_strategy)
+        return attrs.evolve(params, merge_strategy=new_merge_strategy)
 
 
 def mutate_forks_mask(mask: tuple[bool, ...], rng: rand.RNG) -> tuple[bool, ...]:
