@@ -1,8 +1,8 @@
 import collections
-import dataclasses
 import itertools
 import typing
 
+import attrs
 import lark
 
 import gge.layers as gl
@@ -25,11 +25,11 @@ def _raise_if_contains_sequences_of_forks(layers: tuple[gl.Layer, ...]) -> None:
             raise ValueError("backbone must not contain sequences of forks")
 
 
-@dataclasses.dataclass(frozen=True)
+@attrs.frozen(cache_hash=True)
 class Backbone:
     layers: tuple[gl.Layer, ...]
 
-    def __post_init__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         assert isinstance(self.layers, tuple)
         for layer in self.layers:
             assert isinstance(layer, gl.Layer)  # type: ignore
