@@ -1,4 +1,4 @@
-import attr
+import attrs
 import networkx as nx
 import tensorflow as tf
 
@@ -11,7 +11,7 @@ import gge.optimizers as optim
 import gge.structured_grammatical_evolution as sge
 
 
-@attr.frozen(kw_only=True)
+@attrs.frozen(kw_only=True)
 class NeuralNetwork:
     input_layer: gl.Input
     output_layer: gl.ConnectableLayer
