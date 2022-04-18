@@ -1,7 +1,7 @@
-import dataclasses
 import functools
 import typing
 
+import attrs
 import hypothesis.strategies as hs
 from hypothesis import given
 
@@ -15,7 +15,7 @@ def identity(x: T) -> T:
     return x
 
 
-@dataclasses.dataclass
+@attrs.frozen
 class FallibleResultsSequence:
     data: list[str | None]
     num_results: int
