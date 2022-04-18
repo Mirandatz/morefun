@@ -50,7 +50,7 @@ def _is_valid_name(value: str) -> bool:
     return all(chars_are_valid)
 
 
-@attrs.frozen(cache_hash=True)
+@attrs.frozen(cache_hash=True, order=True)
 class NonTerminal:
     text: str
 
@@ -74,7 +74,7 @@ class NonTerminal:
         return f"NT({self.text})"
 
 
-@attrs.frozen(cache_hash=True)
+@attrs.frozen(cache_hash=True, order=True)
 class Terminal:
     text: str
 
@@ -113,7 +113,7 @@ class Terminal:
 Symbol: typing.TypeAlias = Terminal | NonTerminal
 
 
-@attrs.frozen(cache_hash=True)
+@attrs.frozen(cache_hash=True, order=True)
 class RuleOption:
     """
     represents one possible expansion of a rule, i.e. "the stuff separated by `|`"
@@ -139,7 +139,7 @@ class RuleOption:
         return f"RuleOption({all_options})"
 
 
-@attrs.frozen(cache_hash=True)
+@attrs.frozen(cache_hash=True, order=True)
 class ProductionRule:
     lhs: NonTerminal
     rhs: RuleOption
