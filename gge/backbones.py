@@ -7,7 +7,7 @@ import lark
 from loguru import logger
 
 import gge.layers as gl
-import gge.lower_gramamar_parsing as lgp
+import gge.lower_grammar_parsing as lgp
 import gge.name_generator
 
 

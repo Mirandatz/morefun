@@ -5,7 +5,7 @@ import lark
 import tensorflow as tf
 from loguru import logger
 
-import gge.lower_gramamar_parsing as lgp
+import gge.lower_grammar_parsing as lgp
 
 
 class Optimizer(abc.ABC):
