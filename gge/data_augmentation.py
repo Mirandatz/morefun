@@ -57,7 +57,7 @@ class Transformer(lgp.LowerGrammarTransformer):
     def height_shift(self, marker: None, value: float) -> float:
         return value
 
-    def zoom_shift(self, marker: None, value: float) -> float:
+    def zoom(self, marker: None, value: float) -> float:
         return value
 
     def horizontal_flip(self, marker: None, value: bool) -> bool:
