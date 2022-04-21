@@ -2,7 +2,7 @@ import attrs
 import hypothesis.strategies as hs
 from hypothesis import given
 
-import gge.data_augmentation as gda
+import gge.data_augmentations as gda
 
 
 @attrs.frozen
