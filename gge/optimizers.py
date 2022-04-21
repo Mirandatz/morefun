@@ -1,4 +1,5 @@
 import abc
+import typing
 
 import attrs
 import lark
@@ -187,16 +188,15 @@ class OptimizerSynthetizer(lgp.LowerGrammarTransformer):
         return None
 
 
-def parse(tokenstream: str, just_optimizer: bool) -> Optimizer:
+def parse(tokenstream: str, start: typing.Literal["start", "optimizer"]) -> Optimizer:
     """
-    `just_optimizer` indicates whether `tokenstream` contains
-    just the optimizer tokens of if it also contains other
-    lower_grammar tokens.
+    `start` indicates whether `tokenstream`'s first symbol is
+    the optimizer start symbol or the grammar start symbol.
     """
 
     logger.debug("parsing optimizer tokenstream")
 
-    start = "optimizer" if just_optimizer else "start"
+    assert start in ("start", "optimizer")
     tree = lgp.parse_tokenstream(
         tokenstream,
         start=start,

@@ -103,7 +103,7 @@ def test_sgd(test_data: GrammarToPhenotypeTestData[optim.SGD]) -> None:
     genotype = sge.create_genotype(grammar, rng=rand.create_rng())
     tokenstream = sge.map_to_tokenstream(genotype, grammar)
 
-    actual = optim.parse(tokenstream, just_optimizer=True)
+    actual = optim.parse(tokenstream, start="optimizer")
     expected = test_data.phenotype
     assert expected == actual
 
@@ -115,7 +115,7 @@ def test_adam(test_data: GrammarToPhenotypeTestData[optim.Adam]) -> None:
     genotype = sge.create_genotype(grammar, rng=rand.create_rng())
     tokenstream = sge.map_to_tokenstream(genotype, grammar)
 
-    actual = optim.parse(tokenstream, just_optimizer=True)
+    actual = optim.parse(tokenstream, start="optimizer")
     expected = test_data.phenotype
     assert expected == actual
 

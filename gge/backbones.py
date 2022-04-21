@@ -201,16 +201,15 @@ class BackboneSynthetizer(lgp.LowerGrammarTransformer):
         return gl.Swish(name=self._create_layer_name(gl.Swish))
 
 
-def parse(tokenstream: str, just_backbone: bool) -> Backbone:
+def parse(tokenstream: str, start: typing.Literal["start", "backbone"]) -> Backbone:
     """
-    `just_backbone` indicates whether `tokenstream` contains
-    just the backbone tokens of if it also contains other
-    lower_grammar tokens.
+    `start` indicates whether `tokenstream`'s first symbol is
+    the backbone start symbol or the grammar start symbol.
     """
 
     logger.debug("parsing backbone tokenstream")
 
-    start = "backbone" if just_backbone else "start"
+    assert start in ("start", "backbone")
     tree = lgp.parse_tokenstream(
         tokenstream,
         start=start,
