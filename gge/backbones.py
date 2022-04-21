@@ -7,7 +7,7 @@ import lark
 from loguru import logger
 
 import gge.layers as gl
-import gge.lower_gramamar_parsing as lgp
+import gge.lower_grammar_parsing as lgp
 import gge.name_generator
 
 
@@ -201,23 +201,21 @@ class BackboneSynthetizer(lgp.LowerGrammarTransformer):
         return gl.Swish(name=self._create_layer_name(gl.Swish))
 
 
-def parse(tokenstream: str) -> Backbone:
+def parse(tokenstream: str, start: typing.Literal["start", "backbone"]) -> Backbone:
     """
-    This is not a "string deserialization function";
-    the input string is expected to be a "token stream"
-    that can be translated into an abstract syntax tree that can
-    be visited/transformed into a `Backbone`.
+    `start` indicates whether `tokenstream`'s first symbol is
+    the backbone start symbol or the grammar start symbol.
     """
 
-    logger.debug("parsing backbone tokestream")
+    logger.debug("parsing backbone tokenstream")
 
-    tree = lgp.parse_lower_grammar_tokenstream(tokenstream)
-    relevant_subtrees = list(tree.find_data("backbone"))
-    assert len(relevant_subtrees) == 1
-
-    backbone_subtree = relevant_subtrees[0]
-
-    backbone = BackboneSynthetizer().transform(backbone_subtree)
+    assert start in ("start", "backbone")
+    tree = lgp.parse_tokenstream(
+        tokenstream,
+        start=start,
+        relevant_subtree="backbone",
+    )
+    backbone = BackboneSynthetizer().transform(tree)
     assert isinstance(backbone, Backbone)
 
     logger.debug("finished parsing backbone tokenstream")

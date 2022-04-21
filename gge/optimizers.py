@@ -1,11 +1,12 @@
 import abc
+import typing
 
 import attrs
 import lark
 import tensorflow as tf
 from loguru import logger
 
-import gge.lower_gramamar_parsing as lgp
+import gge.lower_grammar_parsing as lgp
 
 
 class Optimizer(abc.ABC):
@@ -187,23 +188,21 @@ class OptimizerSynthetizer(lgp.LowerGrammarTransformer):
         return None
 
 
-def parse(tokenstream: str) -> Optimizer:
+def parse(tokenstream: str, start: typing.Literal["start", "optimizer"]) -> Optimizer:
     """
-    This is not a "string deserialization function".
-    The input string is expected to be a "token stream"
-    that can be translated into an abstract syntax tree that can
-    be visited/transformed into a `SGD`.
+    `start` indicates whether `tokenstream`'s first symbol is
+    the optimizer start symbol or the grammar start symbol.
     """
 
     logger.debug("parsing optimizer tokenstream")
 
-    tree = lgp.parse_lower_grammar_tokenstream(tokenstream)
-    relevant_subtrees = list(tree.find_data("optimizer"))
-    assert len(relevant_subtrees) == 1
-
-    optimizer_tree = relevant_subtrees[0]
-
-    optimizer = OptimizerSynthetizer().transform(optimizer_tree)
+    assert start in ("start", "optimizer")
+    tree = lgp.parse_tokenstream(
+        tokenstream,
+        start=start,
+        relevant_subtree="optimizer",
+    )
+    optimizer = OptimizerSynthetizer().transform(tree)
     assert isinstance(optimizer, Optimizer)
 
     logger.debug("finished parsing optimizer tokenstream")
