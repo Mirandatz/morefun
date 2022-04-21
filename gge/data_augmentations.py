@@ -2,6 +2,7 @@ import typing
 
 import attrs
 import lark
+import tensorflow as tf
 
 import gge.lower_grammar_parsing as lgp
 
@@ -24,7 +25,19 @@ class DataAugmentation:
         assert 0 <= self.rotation_range <= 360
         assert 0 <= self.width_shift_range <= 1
         assert 0 <= self.height_shift_range <= 1
-        assert 0 <= self.zoom_range <= 1
+        assert 0 <= self.zoom_range < 1
+
+    def to_tensorflow_data_generator(
+        self,
+    ) -> tf.keras.preprocessing.image.ImageDataGenerator:
+        return tf.keras.preprocessing.image.ImageDataGenerator(
+            rotation_range=self.rotation_range,
+            width_shift_range=self.width_shift_range,
+            height_shift_range=self.height_shift_range,
+            zoom_range=self.zoom_range,
+            horizontal_flip=self.horizontal_flip,
+            vertical_flip=self.vertical_flip,
+        )
 
 
 @lark.v_args(inline=True)
