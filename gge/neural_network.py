@@ -10,7 +10,6 @@ import gge.composite_genotypes as cg
 import gge.connections as conn
 import gge.grammars as gr
 import gge.layers as gl
-import gge.optimizers as optim
 import gge.structured_grammatical_evolution as sge
 
 
@@ -18,17 +17,16 @@ import gge.structured_grammatical_evolution as sge
 class NeuralNetwork:
     input_layer: gl.Input = attrs.field(repr=False)
     output_layer: gl.ConnectableLayer = attrs.field(repr=False)
-    optimizer: optim.Optimizer = attrs.field(repr=False)
 
-    unique_id: uuid.UUID = attrs.field(eq=False, order=False, repr=True)
+    genotype_uuid: uuid.UUID = attrs.field(eq=False, order=False, repr=True)
 
     def __attrs_post_init__(self) -> None:
         validate_layers(self.input_layer, self.output_layer)
 
     def to_input_output_tensor(self) -> tuple[tf.Tensor, tf.Tensor]:
-        tensores: dict[gl.ConnectableLayer, tf.Tensor] = {}
-        self.output_layer.to_tensor(tensores)
-        return tensores[self.input_layer], tensores[self.output_layer]
+        tensors: dict[gl.ConnectableLayer, tf.Tensor] = {}
+        self.output_layer.to_tensor(tensors)
+        return tensors[self.input_layer], tensors[self.output_layer]
 
 
 def make_network(
@@ -39,20 +37,17 @@ def make_network(
     logger.debug(f"making network from genotype=<{genotype}>")
 
     tokenstream = sge.map_to_tokenstream(genotype.backbone_genotype, grammar)
-    backbone = bb.parse(tokenstream)
+    backbone = bb.parse(tokenstream, start="start")
     output_layer = conn.connect_backbone(
         backbone,
         genotype.connections_genotype,
         input_layer=input_layer,
     )
 
-    optimizer = optim.parse(tokenstream)
-
     network = NeuralNetwork(
         input_layer=input_layer,
         output_layer=output_layer,
-        optimizer=optimizer,
-        unique_id=genotype.unique_id,
+        genotype_uuid=genotype.unique_id,
     )
 
     logger.debug("finished making network")
