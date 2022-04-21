@@ -6,6 +6,7 @@ testpaths = ["/gge/gge/tests"]
 cache_dir = "/dev/shm/pytest_cache"
 filterwarnings = [
     "ignore::DeprecationWarning:flatbuffers.*:",
+    "ignore::DeprecationWarning:keras.*:",
     "ignore::DeprecationWarning:keras_preprocessing.*:",
     "ignore::DeprecationWarning:tensorflow.*:",
 ]
