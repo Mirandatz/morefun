@@ -1,4 +1,12 @@
-start: backbone optimizer
+start: data_augmentation backbone optimizer
+
+data_augmentation : DATA_AUGMENTATION rotation width_shift height_shift zoom horizontal_flip vertical_flip
+rotation          : ROTATION FLOAT
+width_shift       : WIDTH_SHIFT FLOAT
+height_shift      : HEIGHT_SHIFT FLOAT
+zoom              : ZOOM FLOAT
+horizontal_flip   : HORIZONTAL_FLIP BOOL
+vertical_flip     : VERTICAL_FLIP BOOL
 
 backbone : block+
 block    : MERGE? layer FORK?
@@ -35,6 +43,8 @@ epsilon : EPSILON FLOAT
 amsgrad : AMSGRAD BOOL
 
 // using multiple imports just for aesthetic reasons
+%import .terminals (DATA_AUGMENTATION, ROTATION, WIDTH_SHIFT, HEIGHT_SHIFT)
+%import .terminals (ZOOM, HORIZONTAL_FLIP, VERTICAL_FLIP)
 %import .terminals (MERGE, FORK)
 %import .terminals (RELU, GELU, SWISH)
 %import .terminals (CONV, FILTER_COUNT, KERNEL_SIZE, STRIDE)
