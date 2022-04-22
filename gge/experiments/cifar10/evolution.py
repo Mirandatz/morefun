@@ -112,11 +112,11 @@ def main(
 
     fit_params = gfit.FitnessEvaluationParameters(
         gfit.ValidationAccuracy(
-            train_dir=train_dir,
-            validation_dir=validation_dir,
+            train_directory=train_dir,
+            validation_directory=validation_dir,
             input_shape=input_layer.shape,
             batch_size=BATCH_SIZE,
-            epochs=EPOCHS,
+            max_epochs=EPOCHS,
             class_count=CLASS_COUNT,
             shuffle_seed=rand.get_rng_seed(),
         ),
