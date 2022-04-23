@@ -1,6 +1,7 @@
 import hypothesis.strategies as hs
 
 import gge.optimizers as optim
+import gge.tests.strategies.data_structures as ds
 
 
 @hs.composite
@@ -12,7 +13,7 @@ def sgds(draw: hs.DrawFn) -> optim.SGD:
     )
 
 
-def sgd_grammar(sgd: optim.SGD) -> tuple[str, optim.SGD]:
+def sgd_grammar(sgd: optim.SGD) -> ds.ParsingTestData[optim.SGD]:
     grammar = (
         'start : "sgd"'
         f'"learning_rate" {sgd.learning_rate}'
@@ -20,7 +21,7 @@ def sgd_grammar(sgd: optim.SGD) -> tuple[str, optim.SGD]:
         f'"nesterov" {str(sgd.nesterov).lower()}'
     )
 
-    return grammar, sgd
+    return ds.ParsingTestData(grammar, sgd)
 
 
 @hs.composite
@@ -61,7 +62,7 @@ def adams(draw: hs.DrawFn) -> optim.Adam:
     )
 
 
-def adam_grammar(adam: optim.Adam) -> tuple[str, optim.Adam]:
+def adam_grammar(adam: optim.Adam) -> ds.ParsingTestData[optim.Adam]:
     grammar = (
         'start : "adam"'
         f'"learning_rate" {adam.learning_rate}'
@@ -71,4 +72,4 @@ def adam_grammar(adam: optim.Adam) -> tuple[str, optim.Adam]:
         f'"amsgrad" {str(adam.amsgrad).lower()}'
     )
 
-    return grammar, adam
+    return ds.ParsingTestData(grammar, adam)

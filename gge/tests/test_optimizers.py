@@ -4,20 +4,20 @@ import gge.grammars as gr
 import gge.optimizers as optim
 import gge.randomness as rand
 import gge.structured_grammatical_evolution as sge
+import gge.tests.strategies.data_structures as ds
 import gge.tests.strategies.optimizers as gos
 
 
 @given(test_data=gos.sgds().map(gos.sgd_grammar))
-def test_sgds_middle_grammar(test_data: tuple[str, optim.SGD]) -> None:
+def test_sgds_middle_grammar(test_data: ds.ParsingTestData[optim.SGD]) -> None:
     """Can process a middle_grammar to generate a SGD optimizer."""
-    raw_grammar, expected_phenotype = test_data
 
-    grammar = gr.Grammar(raw_grammar)
+    grammar = gr.Grammar(test_data.tokenstream)
     genotype = sge.create_genotype(grammar, rng=rand.create_rng())
     tokenstream = sge.map_to_tokenstream(genotype, grammar)
-    actual_phenotype = optim.parse(tokenstream, start="optimizer")
+    phenotype = optim.parse(tokenstream, start="optimizer")
 
-    assert expected_phenotype == actual_phenotype
+    assert test_data.parsed == phenotype
 
 
 @given(sgd=gos.sgds())
@@ -32,16 +32,15 @@ def test_sgd_to_tensorflow(sgd: optim.SGD) -> None:
 
 
 @given(test_data=gos.adams().map(gos.adam_grammar))
-def test_adams_middle_grammar(test_data: tuple[str, optim.Adam]) -> None:
+def test_adams_middle_grammar(test_data: ds.ParsingTestData[optim.Adam]) -> None:
     """Can process a middle_grammar to generate an Adam optimizer."""
-    raw_grammar, expected_phenotype = test_data
 
-    grammar = gr.Grammar(raw_grammar)
+    grammar = gr.Grammar(test_data.tokenstream)
     genotype = sge.create_genotype(grammar, rng=rand.create_rng())
     tokenstream = sge.map_to_tokenstream(genotype, grammar)
-    actual_phenotype = optim.parse(tokenstream, start="optimizer")
+    phenotype = optim.parse(tokenstream, start="optimizer")
 
-    assert expected_phenotype == actual_phenotype
+    assert test_data.parsed == phenotype
 
 
 @given(adam=gos.adams())
