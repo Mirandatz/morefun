@@ -3,12 +3,7 @@ import hypothesis.strategies as hs
 from hypothesis import given
 
 import gge.data_augmentations as gda
-
-
-@attrs.frozen
-class ParsingTestData:
-    tokenstream: str
-    expected: gda.DataAugmentation
+import gge.tests.strategies.data_structures as ds
 
 
 @hs.composite
@@ -23,7 +18,9 @@ def data_augmentations(draw: hs.DrawFn) -> gda.DataAugmentation:
     )
 
 
-def make_parsing_test_data(data_aug: gda.DataAugmentation) -> ParsingTestData:
+def make_parsing_test_data(
+    data_aug: gda.DataAugmentation,
+) -> ds.ParsingTestData[gda.DataAugmentation]:
     tokenstream = (
         '"data_augmentation"'
         f'"rotation" {data_aug.rotation_range}'
@@ -33,13 +30,13 @@ def make_parsing_test_data(data_aug: gda.DataAugmentation) -> ParsingTestData:
         f'"horizontal_flip" {str(data_aug.horizontal_flip).lower()}'
         f'"vertical_flip" {str(data_aug.vertical_flip).lower()}'
     )
-    return ParsingTestData(tokenstream, data_aug)
+    return ds.ParsingTestData(tokenstream, data_aug)
 
 
 @given(test_data=data_augmentations().map(make_parsing_test_data))
-def test_parse(test_data: ParsingTestData) -> None:
+def test_parse(test_data: ds.ParsingTestData[gda.DataAugmentation]) -> None:
     """Can parse lower gramar tokenstream into DataAugmentation."""
-    assert test_data.expected == gda.parse(
+    assert test_data.parsed == gda.parse(
         test_data.tokenstream,
         start="data_augmentation",
     )
