@@ -396,18 +396,68 @@ def _list_of_marker_value_pairs(parts: typing.Any) -> list[MarkerValuePair]:
     return [(marker, v) for v in values]
 
 
+def make_list_of_lists_of_options(parts: typing.Any) -> list[RuleOption]:
+    raise NotImplementedError()
+
+
 class GrammarTransformer(gge_transformers.SinglePassTransformer):
     def __init__(self) -> None:
         super().__init__()
 
+        # set of known terminals, used to simplify 'terminal registration'.
+        # see self.__default_token__
         self._expected_tokens: set[str] = {
             terminal.value.text for terminal in ExpectedTerminal
         }
+
+        # set of terminals that are always in the form '"marker" value',
+        # used to simplify generation of pairs of tokens.
+        # see self.__default__
+        data_aug_params = {
+            "rotation",
+            "width_shift",
+            "height_shift",
+            "zoom",
+            "horizontal_flip",
+            "vertical_flip",
+        }
+        conv_params = {"filter_count", "kernel_size", "strides"}
+        pooling_params = {"pool_sizes"}
+        sgd_params = {"learning_rate", "momentum", "nesterov"}
+        adam_params = {"beta1", "beta2", "epsilon", "amsgrad"}
+        self.known_marker_value_pairs = set.union(
+            data_aug_params,
+            conv_params,
+            pooling_params,
+            sgd_params,
+            adam_params,
+        )
 
         self._terminals: list[Terminal] = []
         self._nonterminals: list[NonTerminal] = []
         self._rules: list[ProductionRule] = []
         self._start: NonTerminal = NonTerminal("start")
+
+    def __default__(
+        self,
+        data: lark.Token,
+        children: list[typing.Any],
+        meta: typing.Any,
+    ) -> typing.Any:
+        self._raise_if_not_running()
+
+        if data.value in self.known_marker_value_pairs:
+            return _list_of_marker_value_pairs(children)
+
+        return super().__default__(data, children, meta)
+
+    def __default_token__(self, token: lark.Token) -> typing.Any:
+        self._raise_if_not_running()
+
+        if token.value in self._expected_tokens:
+            return self._register_terminal(token.value)
+
+        return super().__default_token__(token)
 
     def transform(self, tree: lark.Tree[GrammarComponents]) -> GrammarComponents:
         super().transform(tree)
@@ -527,44 +577,6 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
         assert stop >= start
 
         return [[nt] * count for count in range(start, stop + 1)]
-
-    def __default__(
-        self,
-        data: lark.Token,
-        children: list[typing.Any],
-        meta: typing.Any,
-    ) -> typing.Any:
-        self._raise_if_not_running()
-
-        marker_value_pairs = {
-            # data augmentation
-            "rotation",
-            "width_shift",
-            "height_shift",
-            "zoom",
-            "horizontal_flip",
-            "vertical_flip",
-            # conv
-            "filter_count",
-            "kernel_size",
-            "strides",
-            # pooling
-            "pool_sizes",
-            # sgd
-            "learning_rate",
-            "momentum",
-            "nesterov",
-            # adam
-            "beta1",
-            "beta2",
-            "epsilon",
-            "amsgrad",
-        }
-
-        if data.value in marker_value_pairs:
-            return _list_of_marker_value_pairs(children)
-
-        return super().__default__(data, children, meta)
 
     def data_augmentation(self, parts: typing.Any) -> list[RuleOption]:
         self._raise_if_not_running()
@@ -690,16 +702,6 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
             RuleOption((marker, *lr, *b1, *b2, *eps, *ams))
             for lr, b1, b2, eps, ams in combinations
         ]
-
-    def __default_token__(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
-
-        if token.value not in self._expected_tokens:
-            raise NotImplementedError(
-                f"method not implemented for token with text=<{token.value}>"
-            )
-
-        return self._register_terminal(token.value)
 
     def NONTERMINAL(self, token: lark.Token) -> NonTerminal:
         self._raise_if_not_running()

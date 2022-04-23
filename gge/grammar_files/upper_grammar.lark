@@ -11,7 +11,7 @@ symbol_range : NONTERMINAL ["~" RANGE_BOUND [".." RANGE_BOUND]]
 RANGE_BOUND  : INT
 
 data_augmentation : DATA_AUGMENTATION rotation width_shift height_shift zoom horizontal_flip vertical_flip _NL*
-rotation          : ROTATION _int_args
+rotation          : ROTATION _float_args
 width_shift       : WIDTH_SHIFT _float_args
 height_shift      : HEIGHT_SHIFT _float_args
 zoom              : ZOOM _float_args
@@ -52,7 +52,7 @@ INT_ARG   : INT
 
 _float_args : FLOAT_ARG
             | "(" FLOAT_ARG ("|" FLOAT_ARG)* ")"
-FLOAT_ARG.2   : FLOAT
+FLOAT_ARG : FLOAT
 
 _bool_args : BOOL_ARG
            | "(" BOOL_ARG ("|" BOOL_ARG)* ")"

@@ -24,7 +24,7 @@ def make_parsing_test_data(
     data_aug: gda.DataAugmentation,
 ) -> ds.ParsingTestData[gda.DataAugmentation]:
     tokenstream = (
-        '"start: data_augmentation"'
+        'start: "data_augmentation"'
         f'"rotation" {data_aug.rotation_range}'
         f'"width_shift" {data_aug.width_shift_range}'
         f'"height_shift" {data_aug.height_shift_range}'
