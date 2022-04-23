@@ -385,19 +385,61 @@ class ExpectedTerminal(enum.Enum):
 MarkerValuePair = tuple[Terminal, Terminal]
 
 
-def _list_of_marker_value_pairs(parts: typing.Any) -> list[MarkerValuePair]:
+def make_list_of_marker_value_pairs(parts: list[Terminal]) -> list[MarkerValuePair]:
+    """
+    During the "tree visit/transformation" we often must transform
+    lists that look like `["a", 1, 2, 3]`
+    into lists that look like `[["a", 1], ["a", 2], ["a", 3]]`.
+    This function performs such transformation.
+    """
+
     marker, *values = parts
 
     assert isinstance(marker, Terminal)
-    assert isinstance(values, list), type(values)
+    assert isinstance(values, list)
     for v in values:
         assert isinstance(v, Terminal)
 
     return [(marker, v) for v in values]
 
 
-def make_list_of_lists_of_options(parts: typing.Any) -> list[RuleOption]:
-    raise NotImplementedError()
+def make_list_of_options(parts: typing.Any) -> list[RuleOption]:
+    """
+    During the "tree visit/transformation" we often must transform
+    lists that look like
+    [
+        "a",
+        [("b", 1), ("b", 2), ("b", 3)],
+        [("c", 7), ("c", 8), ("c", 8)]
+    ]
+    into lists that look like
+    [
+        RuleOption(("a", "b", 1, "c", 7)),
+        RuleOption(("a", "b", 1, "c", 8)),
+        RuleOption(("a", "b", 1, "c", 9)),
+        ...
+    ]
+    This function performs such transformation.
+    """
+
+    marker, *params = parts
+
+    assert isinstance(marker, Terminal)
+    assert isinstance(params, list)
+    for param_mvps in params:
+        assert isinstance(param_mvps, list)
+        for pvmp in param_mvps:
+            param_marker, param_value = pvmp
+            assert isinstance(param_marker, Terminal)
+            assert isinstance(param_value, Terminal)
+
+    rule_options = []
+    for combination in itertools.product(*params):
+        expanded = list(itertools.chain.from_iterable(combination))
+        opt = RuleOption((marker, *expanded))
+        rule_options.append(opt)
+
+    return rule_options
 
 
 class GrammarTransformer(gge_transformers.SinglePassTransformer):
@@ -410,7 +452,7 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
             terminal.value.text for terminal in ExpectedTerminal
         }
 
-        # set of terminals that are always in the form '"marker" value',
+        # set of terminals that are always in the form `"marker" value`,
         # used to simplify generation of pairs of tokens.
         # see self.__default__
         data_aug_params = {
@@ -447,7 +489,7 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
         self._raise_if_not_running()
 
         if data.value in self.known_marker_value_pairs:
-            return _list_of_marker_value_pairs(children)
+            return make_list_of_marker_value_pairs(children)
 
         return super().__default__(data, children, meta)
 
@@ -491,7 +533,9 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
 
         return nonterm
 
-    def start(self, list_of_list_of_rules: typing.Any) -> list[ProductionRule]:
+    def start(
+        self, list_of_list_of_rules: list[list[ProductionRule]]
+    ) -> list[ProductionRule]:
         self._raise_if_not_running()
 
         flattened = [
@@ -512,7 +556,9 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
             for rhs in list_of_options
         ]
 
-    def block(self, list_of_list_of_options: typing.Any) -> list[RuleOption]:
+    def block(
+        self, list_of_list_of_options: list[list[RuleOption]]
+    ) -> list[RuleOption]:
         self._raise_if_not_running()
 
         return [
@@ -580,25 +626,11 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
 
     def data_augmentation(self, parts: typing.Any) -> list[RuleOption]:
         self._raise_if_not_running()
+        return make_list_of_options(parts)
 
-        marker, *params = parts
-        combinations = itertools.product(*params)
-        return [
-            RuleOption(
-                (
-                    marker,
-                    *rotation,
-                    *width_shift,
-                    *height_shift,
-                    *zoom,
-                    *horizontal_flip,
-                    *vertical_flip,
-                )
-            )
-            for rotation, width_shift, height_shift, zoom, horizontal_flip, vertical_flip in combinations
-        ]
-
-    def layer(self, list_of_lists_of_options: typing.Any) -> list[RuleOption]:
+    def layer(
+        self, list_of_lists_of_options: list[list[RuleOption]]
+    ) -> list[RuleOption]:
         self._raise_if_not_running()
 
         return [
@@ -609,10 +641,7 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
 
     def conv_layer(self, parts: typing.Any) -> list[RuleOption]:
         self._raise_if_not_running()
-
-        marker, *params = parts
-        combinations = itertools.product(*params)
-        return [RuleOption((marker, *fc, *ks, *st)) for fc, ks, st in combinations]
+        return make_list_of_options(parts)
 
     @lark.v_args(inline=True)
     def activation_layer(self, activation: NonTerminal) -> list[RuleOption]:
@@ -623,33 +652,13 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
     def batchnorm_layer(self, term: Terminal) -> list[RuleOption]:
         return [RuleOption((term,))]
 
-    @lark.v_args(inline=True)
-    def max_pooling_layer(
-        self,
-        layer_marker: Terminal,
-        pool_sizes: list[MarkerValuePair],
-        strides: list[MarkerValuePair],
-    ) -> list[RuleOption]:
-        # sanity checking the runtime types
+    def max_pooling_layer(self, parts: typing.Any) -> list[RuleOption]:
         self._raise_if_not_running()
-        combinations = itertools.product(pool_sizes, strides)
-        return [RuleOption((layer_marker, *ps, *st)) for ps, st in combinations]
+        return make_list_of_options(parts)
 
-    @lark.v_args(inline=True)
-    def avg_pooling_layer(
-        self,
-        layer_marker: Terminal,
-        pool_sizes: list[MarkerValuePair],
-        strides: list[MarkerValuePair],
-    ) -> list[RuleOption]:
+    def avg_pooling_layer(self, parts: typing.Any) -> list[RuleOption]:
         self._raise_if_not_running()
-        combinations = itertools.product(pool_sizes, strides)
-        return [RuleOption((layer_marker, *ps, *st)) for ps, st in combinations]
-
-    def pool_sizes(self, parts: typing.Any) -> list[MarkerValuePair]:
-        self._raise_if_not_running()
-        marker, *values = parts
-        return [(marker, s) for s in values]
+        return make_list_of_options(parts)
 
     @lark.v_args(inline=False)
     def optimizer(
@@ -663,45 +672,13 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
             for opt in list_of_options
         ]
 
-    @lark.v_args(inline=True)
-    def sgd(
-        self,
-        marker: Terminal,
-        learning_rate: list[MarkerValuePair],
-        momentum: list[MarkerValuePair],
-        nesterov: list[MarkerValuePair],
-    ) -> list[RuleOption]:
+    def sgd(self, parts: typing.Any) -> list[RuleOption]:
         self._raise_if_not_running()
+        return make_list_of_options(parts)
 
-        combinations = itertools.product(learning_rate, momentum, nesterov)
-        return [
-            RuleOption((marker, *lr, *mom, *nest)) for lr, mom, nest in combinations
-        ]
-
-    @lark.v_args(inline=True)
-    def adam(
-        self,
-        marker: Terminal,
-        learning_rate: list[MarkerValuePair],
-        beta1: list[MarkerValuePair],
-        beta2: list[MarkerValuePair],
-        epsilon: list[MarkerValuePair],
-        amsgrad: list[MarkerValuePair],
-    ) -> list[RuleOption]:
+    def adam(self, parts: typing.Any) -> list[RuleOption]:
         self._raise_if_not_running()
-
-        combinations = itertools.product(
-            learning_rate,
-            beta1,
-            beta2,
-            epsilon,
-            amsgrad,
-        )
-
-        return [
-            RuleOption((marker, *lr, *b1, *b2, *eps, *ams))
-            for lr, b1, b2, eps, ams in combinations
-        ]
+        return make_list_of_options(parts)
 
     def NONTERMINAL(self, token: lark.Token) -> NonTerminal:
         self._raise_if_not_running()
