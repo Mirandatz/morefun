@@ -1,8 +1,10 @@
-import attrs
 import hypothesis.strategies as hs
 from hypothesis import given
 
 import gge.data_augmentations as gda
+import gge.grammars as gr
+import gge.randomness as rand
+import gge.structured_grammatical_evolution as sge
 import gge.tests.strategies.data_structures as ds
 
 
@@ -22,7 +24,7 @@ def make_parsing_test_data(
     data_aug: gda.DataAugmentation,
 ) -> ds.ParsingTestData[gda.DataAugmentation]:
     tokenstream = (
-        '"data_augmentation"'
+        '"start: data_augmentation"'
         f'"rotation" {data_aug.rotation_range}'
         f'"width_shift" {data_aug.width_shift_range}'
         f'"height_shift" {data_aug.height_shift_range}'
@@ -35,11 +37,14 @@ def make_parsing_test_data(
 
 @given(test_data=data_augmentations().map(make_parsing_test_data))
 def test_parse(test_data: ds.ParsingTestData[gda.DataAugmentation]) -> None:
-    """Can parse lower gramar tokenstream into DataAugmentation."""
-    assert test_data.parsed == gda.parse(
-        test_data.tokenstream,
-        start="data_augmentation",
-    )
+    """Can process middle grammar to generate instances of DataAugmentation."""
+
+    grammar = gr.Grammar(test_data.tokenstream)
+    genotype = sge.create_genotype(grammar, rng=rand.create_rng())
+    tokenstream = sge.map_to_tokenstream(genotype, grammar)
+    phenotype = gda.parse(tokenstream, start="data_augmentation")
+
+    assert test_data.parsed == phenotype
 
 
 @given(data_aug=data_augmentations())
