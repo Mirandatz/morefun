@@ -5,9 +5,8 @@ from loguru import logger
 import gge.composite_genotypes as cg
 import gge.fallible as fallible
 import gge.grammars as gr
-import gge.layers as gl
-import gge.neural_network as gnn
 import gge.novelty as novel
+import gge.phenotypes as gph
 import gge.randomness as rand
 
 
@@ -31,19 +30,19 @@ def try_create_individual(
     genotype = cg.create_genotype(grammar, rng)
 
     if novelty_tracker.is_genotype_novel(genotype):
-        logger.debug(f"Created novel genotype for initial population=<{genotype}>")
+        logger.debug(f"created individual has novel genotype=<{genotype}>")
         novelty_tracker.register_genotype(genotype)
     else:
-        logger.debug("Failed to produce a novel individual")
+        logger.debug(f"created individual does not have novel genotype=<{genotype}>")
         return None
 
-    dummy_input = gl.make_input(1, 1, 1)
-    phenotype = gnn.make_network(genotype, grammar, dummy_input)
+    phenotype = gph.translate(genotype, grammar)
+
     if novelty_tracker.is_phenotype_novel(phenotype):
-        logger.debug(f"Created novel phenotype for initial population=<{phenotype}>")
+        logger.debug(f"created individual has novel phenotype=<{phenotype}>")
         novelty_tracker.register_phenotype(phenotype)
     else:
-        logger.debug("Failed to produce a novel phenotype")
+        logger.debug(f"created individual does not have novel phenotype=<{phenotype}>")
         return None
 
     return genotype
