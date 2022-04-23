@@ -530,8 +530,8 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
 
     def __default__(
         self,
-        data: str,
-        children: typing.Any,
+        data: lark.Token,
+        children: list[typing.Any],
         meta: typing.Any,
     ) -> typing.Any:
         self._raise_if_not_running()
@@ -543,9 +543,18 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
             "zoom",
             "horizontal_flip",
             "vertical_flip",
+            # sgd
+            "learning_rate",
+            "momentum",
+            "nesterov",
+            # adam
+            "beta1",
+            "beta2",
+            "epsilon",
+            "amsgrad",
         }
 
-        if data in marker_value_pairs:
+        if data.value in marker_value_pairs:
             return _list_of_marker_value_pairs(children)
 
         return super().__default__(data, children, meta)
