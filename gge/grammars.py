@@ -537,6 +537,7 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
         self._raise_if_not_running()
 
         marker_value_pairs = {
+            # data augmentation
             "rotation",
             "width_shift",
             "height_shift",
@@ -547,6 +548,8 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
             "filter_count",
             "kernel_size",
             "strides",
+            # pooling
+            "pool_sizes",
             # sgd
             "learning_rate",
             "momentum",
@@ -617,19 +620,6 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
     ) -> list[RuleOption]:
         # sanity checking the runtime types
         self._raise_if_not_running()
-
-        assert layer_marker == ExpectedTerminal.MAXPOOL.value
-
-        assert isinstance(pool_sizes, list)
-        for ps_marker, ps_value in pool_sizes:
-            assert ps_marker == ExpectedTerminal.POOL_SIZE.value
-            assert isinstance(ps_value, Terminal)
-
-        assert isinstance(strides, list)
-        for st_marker, st_value in strides:
-            assert st_marker == ExpectedTerminal.STRIDE.value
-            assert isinstance(st_value, Terminal)
-
         combinations = itertools.product(pool_sizes, strides)
         return [RuleOption((layer_marker, *ps, *st)) for ps, st in combinations]
 
@@ -640,33 +630,13 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
         pool_sizes: list[MarkerValuePair],
         strides: list[MarkerValuePair],
     ) -> list[RuleOption]:
-        # sanity checking the runtime types
         self._raise_if_not_running()
-
-        assert layer_marker == ExpectedTerminal.AVGPOOL.value
-
-        assert isinstance(pool_sizes, list)
-        for ps_marker, ps_value in pool_sizes:
-            assert ps_marker == ExpectedTerminal.POOL_SIZE.value
-            assert isinstance(ps_value, Terminal)
-
-        assert isinstance(strides, list)
-        for st_marker, st_value in strides:
-            assert st_marker == ExpectedTerminal.STRIDE.value
-            assert isinstance(st_value, Terminal)
-
         combinations = itertools.product(pool_sizes, strides)
         return [RuleOption((layer_marker, *ps, *st)) for ps, st in combinations]
 
     def pool_sizes(self, parts: typing.Any) -> list[MarkerValuePair]:
         self._raise_if_not_running()
-
         marker, *values = parts
-        assert marker == ExpectedTerminal.POOL_SIZE.value
-        assert isinstance(values, list)
-        for v in values:
-            assert isinstance(v, Terminal)
-
         return [(marker, s) for s in values]
 
     @lark.v_args(inline=False)
@@ -675,13 +645,6 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
         list_of_lists_of_options: list[list[RuleOption]],
     ) -> list[RuleOption]:
         self._raise_if_not_running()
-
-        assert isinstance(list_of_lists_of_options, list)
-        for list_of_options in list_of_lists_of_options:
-            assert isinstance(list_of_options, list)
-            for option in list_of_options:
-                assert isinstance(option, RuleOption)
-
         return [
             opt
             for list_of_options in list_of_lists_of_options
@@ -698,40 +661,10 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
     ) -> list[RuleOption]:
         self._raise_if_not_running()
 
-        assert isinstance(marker, Terminal)
-
-        assert isinstance(learning_rate, list)
-        for m, v in learning_rate:
-            assert isinstance(m, Terminal)
-            assert isinstance(v, Terminal)
-
-        assert isinstance(momentum, list)
-        for m, v in momentum:
-            assert isinstance(m, Terminal)
-            assert isinstance(v, Terminal)
-
-        assert isinstance(nesterov, list)
-        for m, v in nesterov:
-            assert isinstance(m, Terminal)
-            assert isinstance(v, Terminal)
-
         combinations = itertools.product(learning_rate, momentum, nesterov)
         return [
             RuleOption((marker, *lr, *mom, *nest)) for lr, mom, nest in combinations
         ]
-
-    @lark.v_args(inline=False)
-    def learning_rate(self, parts: typing.Any) -> list[MarkerValuePair]:
-        self._raise_if_not_running()
-
-        marker, *values = parts
-
-        assert isinstance(marker, Terminal)
-        assert isinstance(values, list), type(values)
-        for v in values:
-            assert isinstance(v, Terminal)
-
-        return [(marker, v) for v in values]
 
     @lark.v_args(inline=True)
     def adam(
@@ -744,33 +677,6 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
         amsgrad: list[MarkerValuePair],
     ) -> list[RuleOption]:
         self._raise_if_not_running()
-
-        assert isinstance(marker, Terminal)
-
-        assert isinstance(learning_rate, list)
-        for m, v in learning_rate:
-            assert isinstance(m, Terminal)
-            assert isinstance(v, Terminal)
-
-        assert isinstance(beta1, list)
-        for m, v in beta1:
-            assert isinstance(m, Terminal)
-            assert isinstance(v, Terminal)
-
-        assert isinstance(beta2, list)
-        for m, v in beta2:
-            assert isinstance(m, Terminal)
-            assert isinstance(v, Terminal)
-
-        assert isinstance(epsilon, list)
-        for m, v in epsilon:
-            assert isinstance(m, Terminal)
-            assert isinstance(v, Terminal)
-
-        assert isinstance(amsgrad, list)
-        for m, v in amsgrad:
-            assert isinstance(m, Terminal)
-            assert isinstance(v, Terminal)
 
         combinations = itertools.product(
             learning_rate,
