@@ -126,7 +126,6 @@ class ValidationAccuracy:
 class FitnessEvaluationParameters:
     metric: ValidationAccuracy
     grammar: gr.Grammar
-    input_layer: gl.Input
 
 
 def evaluate(
