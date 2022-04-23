@@ -6,6 +6,7 @@ import tensorflow as tf
 from loguru import logger
 
 import gge.composite_genotypes as cg
+import gge.data_augmentations as gda
 import gge.debugging as debug
 import gge.grammars as gr
 import gge.layers as gl
@@ -56,6 +57,7 @@ def make_classification_model(
 class ValidationAccuracy:
     train_directory: pathlib.Path
     validation_directory: pathlib.Path
+    data_augmentation: gda.DataAugmentation
     input_shape: gl.Shape
     batch_size: int
     max_epochs: int
@@ -70,26 +72,25 @@ class ValidationAccuracy:
         assert self.train_directory != self.validation_directory
 
     def get_train_generator(self) -> DataGen:
-        # TODO: implement
-        raise NotImplementedError()
-        # with redirection.discard_stderr_and_stdout():
-        #     return keras.preprocessing.image.ImageDataGenerator().flow_from_directory(
-        #         self.train_dir,
-        #         batch_size=self.batch_size,
-        #         target_size=(self.input_shape.width, self.input_shape.height),
-        #         shuffle=True,
-        #         seed=self.shuffle_seed,
-        #     )
+        with redirection.discard_stderr_and_stdout():
+            data_generator = self.data_augmentation.to_tensorflow_data_generator()
+            return data_generator.flow_from_directory(
+                directory=self.train_directory,
+                batch_size=self.batch_size,
+                target_size=(self.input_shape.width, self.input_shape.height),
+                shuffle=True,
+                seed=0,
+            )
 
     def get_validation_generator(self) -> DataGen:
-        # TODO: implement
-        raise NotImplementedError()
-        # with redirection.discard_stderr_and_stdout():
-        #     return keras.preprocessing.image.ImageDataGenerator().flow_from_directory(
-        #         self.validation_dir,
-        #         batch_size=self.batch_size,
-        #         target_size=(self.input_shape.width, self.input_shape.height),
-        #     )
+        with redirection.discard_stderr_and_stdout():
+            return (
+                tf.keras.preprocessing.image.ImageDataGenerator().flow_from_directory(
+                    directory=self.validation_directory,
+                    batch_size=self.batch_size,
+                    target_size=(self.input_shape.width, self.input_shape.height),
+                )
+            )
 
     def evaluate(self, phenotype: phenos.Phenotype) -> float:
         logger.debug(f"starting fitness evaluation, phenotype=<{phenotype}>")
