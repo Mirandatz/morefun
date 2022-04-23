@@ -543,6 +543,10 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
             "zoom",
             "horizontal_flip",
             "vertical_flip",
+            # conv
+            "filter_count",
+            "kernel_size",
+            "strides",
             # sgd
             "learning_rate",
             "momentum",
@@ -594,24 +598,6 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
         marker, *params = parts
         combinations = itertools.product(*params)
         return [RuleOption((marker, *fc, *ks, *st)) for fc, ks, st in combinations]
-
-    def filter_count(self, parts: list[Terminal]) -> list[tuple[Terminal, Terminal]]:
-        self._raise_if_not_running()
-
-        marker, *counts = parts
-        return [(marker, c) for c in counts]
-
-    def kernel_size(self, parts: list[Terminal]) -> list[tuple[Terminal, Terminal]]:
-        self._raise_if_not_running()
-
-        marker, *sizes = parts
-        return [(marker, s) for s in sizes]
-
-    def strides(self, parts: list[Terminal]) -> list[tuple[Terminal, Terminal]]:
-        self._raise_if_not_running()
-
-        marker, *strides = parts
-        return [(marker, s) for s in strides]
 
     @lark.v_args(inline=True)
     def activation_layer(self, activation: NonTerminal) -> list[RuleOption]:
