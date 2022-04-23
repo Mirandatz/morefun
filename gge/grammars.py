@@ -347,6 +347,14 @@ class Grammar:
 
 
 class ExpectedTerminal(enum.Enum):
+    DATA_AUGMENTATION = Terminal('"data_augmentation"')
+    ROTATION = Terminal('"rotation"')
+    WIDTH_SHIFT = Terminal('"width_shift"')
+    HEIGHT_SHIFT = Terminal('"height_shift"')
+    ZOOM = Terminal('"zoom"')
+    HORIZONTAL_FLIP = Terminal('"horizontal_flip"')
+    VERTICAL_FLIP = Terminal('"vertical_flip"')
+
     CONV = Terminal('"conv"')
     FILTER_COUNT = Terminal('"filter_count"')
     KERNEL_SIZE = Terminal('"kernel_size"')
@@ -391,6 +399,10 @@ def _list_of_marker_value_pairs(parts: typing.Any) -> list[MarkerValuePair]:
 class GrammarTransformer(gge_transformers.SinglePassTransformer):
     def __init__(self) -> None:
         super().__init__()
+
+        self._expected_tokens: set[str] = {
+            terminal.value.text for terminal in ExpectedTerminal
+        }
 
         self._terminals: list[Terminal] = []
         self._nonterminals: list[NonTerminal] = []
@@ -515,6 +527,48 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
         assert stop >= start
 
         return [[nt] * count for count in range(start, stop + 1)]
+
+    def __default__(
+        self,
+        data: str,
+        children: typing.Any,
+        meta: typing.Any,
+    ) -> typing.Any:
+        self._raise_if_not_running()
+
+        marker_value_pairs = {
+            "rotation",
+            "width_shift",
+            "height_shift",
+            "zoom",
+            "horizontal_flip",
+            "vertical_flip",
+        }
+
+        if data in marker_value_pairs:
+            return _list_of_marker_value_pairs(children)
+
+        return super().__default__(data, children, meta)
+
+    def data_augmentation(self, parts: typing.Any) -> list[RuleOption]:
+        self._raise_if_not_running()
+
+        marker, *params = parts
+        combinations = itertools.product(*params)
+        return [
+            RuleOption(
+                (
+                    marker,
+                    *rotation,
+                    *width_shift,
+                    *height_shift,
+                    *zoom,
+                    *horizontal_flip,
+                    *vertical_flip,
+                )
+            )
+            for rotation, width_shift, height_shift, zoom, horizontal_flip, vertical_flip in combinations
+        ]
 
     def layer(self, list_of_lists_of_options: typing.Any) -> list[RuleOption]:
         self._raise_if_not_running()
@@ -684,16 +738,6 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
 
         return [(marker, v) for v in values]
 
-    @lark.v_args(inline=False)
-    def momentum(self, parts: typing.Any) -> list[MarkerValuePair]:
-        self._raise_if_not_running()
-        return _list_of_marker_value_pairs(parts)
-
-    @lark.v_args(inline=False)
-    def nesterov(self, parts: typing.Any) -> list[MarkerValuePair]:
-        self._raise_if_not_running()
-        return _list_of_marker_value_pairs(parts)
-
     @lark.v_args(inline=True)
     def adam(
         self,
@@ -746,69 +790,19 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
             for lr, b1, b2, eps, ams in combinations
         ]
 
-    @lark.v_args(inline=False)
-    def beta1(self, parts: typing.Any) -> list[MarkerValuePair]:
+    def __default_token__(self, token: lark.Token) -> Terminal:
         self._raise_if_not_running()
-        return _list_of_marker_value_pairs(parts)
 
-    @lark.v_args(inline=False)
-    def beta2(self, parts: typing.Any) -> list[MarkerValuePair]:
-        self._raise_if_not_running()
-        return _list_of_marker_value_pairs(parts)
+        if token.value not in self._expected_tokens:
+            raise NotImplementedError(
+                f"method not implemented for token with text=<{token.value}>"
+            )
 
-    @lark.v_args(inline=False)
-    def epsilon(self, parts: typing.Any) -> list[MarkerValuePair]:
-        self._raise_if_not_running()
-        return _list_of_marker_value_pairs(parts)
-
-    @lark.v_args(inline=False)
-    def amsgrad(self, parts: typing.Any) -> list[MarkerValuePair]:
-        self._raise_if_not_running()
-        return _list_of_marker_value_pairs(parts)
-
-    def BATCHNORM(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
         return self._register_terminal(token.value)
 
     def NONTERMINAL(self, token: lark.Token) -> NonTerminal:
         self._raise_if_not_running()
         return self._register_nonterminal(token.value)
-
-    def MERGE(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
-        return self._register_terminal(token.value)
-
-    def FORK(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
-        return self._register_terminal(token.value)
-
-    def CONV(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
-        return self._register_terminal(token.value)
-
-    def FILTER_COUNT(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
-        return self._register_terminal(token.value)
-
-    def KERNEL_SIZE(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
-        return self._register_terminal(token.value)
-
-    def STRIDE(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
-        return self._register_terminal(token.value)
-
-    def RELU(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
-        return self._register_terminal(token.value)
-
-    def GELU(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
-        return self._register_terminal(token.value)
-
-    def SWISH(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
-        return self._register_terminal(token.value)
 
     def RANGE_BOUND(self, token: lark.Token) -> int:
         self._raise_if_not_running()
@@ -822,75 +816,7 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
         self._raise_if_not_running()
         return self._register_terminal(token.value)
 
-    def MAXPOOL(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
-        assert isinstance(token, lark.Token)
-
-        return self._register_terminal(token.value)
-
-    def AVGPOOL(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
-        assert isinstance(token, lark.Token)
-
-        return self._register_terminal(token.value)
-
-    def POOL_SIZE(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
-        assert isinstance(token, lark.Token)
-
-        return self._register_terminal(token.value)
-
-    def SGD(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
-        assert isinstance(token, lark.Token)
-
-        return self._register_terminal(token.value)
-
-    def LEARNING_RATE(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
-        assert isinstance(token, lark.Token)
-
-        return self._register_terminal(token.value)
-
-    def MOMENTUM(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
-        assert isinstance(token, lark.Token)
-
-        return self._register_terminal(token.value)
-
-    def NESTEROV(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
-        assert isinstance(token, lark.Token)
-
-        return self._register_terminal(token.value)
-
     def BOOL_ARG(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
-        assert isinstance(token, lark.Token)
-
-        return self._register_terminal(token.value)
-
-    def ADAM(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
-        assert isinstance(token, lark.Token)
-        return self._register_terminal(token.value)
-
-    def BETA1(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
-        assert isinstance(token, lark.Token)
-        return self._register_terminal(token.value)
-
-    def BETA2(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
-        assert isinstance(token, lark.Token)
-        return self._register_terminal(token.value)
-
-    def EPSILON(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
-        assert isinstance(token, lark.Token)
-        return self._register_terminal(token.value)
-
-    def AMSGRAD(self, token: lark.Token) -> Terminal:
         self._raise_if_not_running()
         assert isinstance(token, lark.Token)
         return self._register_terminal(token.value)

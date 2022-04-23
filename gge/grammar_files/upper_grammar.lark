@@ -1,5 +1,5 @@
 start       : _NL* rule+
-rule        : NONTERMINAL ":" (layer | block | optimizer)
+rule        : NONTERMINAL ":" (data_augmentation | layer | block | optimizer)
 NONTERMINAL : NAME
 
 block        : block_option ("|" block_option)*
@@ -9,6 +9,14 @@ maybe_fork   : [FORK]
 
 symbol_range : NONTERMINAL ["~" RANGE_BOUND [".." RANGE_BOUND]]
 RANGE_BOUND  : INT
+
+data_augmentation : DATA_AUGMENTATION rotation width_shift height_shift zoom horizontal_flip vertical_flip _NL*
+rotation          : ROTATION _int_args
+width_shift       : WIDTH_SHIFT _float_args
+height_shift      : HEIGHT_SHIFT _float_args
+zoom              : ZOOM _float_args
+horizontal_flip   : HORIZONTAL_FLIP _bool_args
+vertical_flip     : VERTICAL_FLIP _bool_args
 
 layer        : (conv_layer | max_pooling_layer | avg_pooling_layer | batchnorm_layer | activation_layer) _NL*
 
@@ -44,13 +52,14 @@ INT_ARG   : INT
 
 _float_args : FLOAT_ARG
             | "(" FLOAT_ARG ("|" FLOAT_ARG)* ")"
-FLOAT_ARG   : FLOAT
+FLOAT_ARG.2   : FLOAT
 
 _bool_args : BOOL_ARG
            | "(" BOOL_ARG ("|" BOOL_ARG)* ")"
 BOOL_ARG   : BOOL
 
 // using multiple imports just for aesthetic reasons
+%import .terminals (DATA_AUGMENTATION, ROTATION, WIDTH_SHIFT, HEIGHT_SHIFT, ZOOM, HORIZONTAL_FLIP, VERTICAL_FLIP)
 %import .terminals (MERGE, FORK)
 %import .terminals (RELU, GELU, SWISH)
 %import .terminals (CONV, FILTER_COUNT, KERNEL_SIZE, STRIDE)
