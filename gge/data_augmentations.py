@@ -22,7 +22,7 @@ class DataAugmentation:
     vertical_flip: bool
 
     def __attrs_post_init__(self) -> None:
-        assert 0 <= self.rotation_range <= 360
+        assert 0 <= self.rotation_range < 360
         assert 0 <= self.width_shift_range <= 1
         assert 0 <= self.height_shift_range <= 1
         assert 0 <= self.zoom_range < 1

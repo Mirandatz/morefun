@@ -11,6 +11,7 @@ import gge.debugging as debug
 import gge.grammars as gr
 import gge.layers as gl
 import gge.phenotypes as phenos
+import gge.randomness as rand
 import gge.redirection as redirection
 
 DataGen: typing.TypeAlias = tf.keras.preprocessing.image.DirectoryIterator
@@ -79,7 +80,7 @@ class ValidationAccuracy:
                 batch_size=self.batch_size,
                 target_size=(self.input_shape.width, self.input_shape.height),
                 shuffle=True,
-                seed=0,
+                seed=rand.get_rng_seed(),
             )
 
     def get_validation_generator(self) -> DataGen:

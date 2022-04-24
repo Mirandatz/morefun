@@ -11,7 +11,7 @@ import gge.tests.strategies.data_structures as ds
 @hs.composite
 def data_augmentations(draw: hs.DrawFn) -> gda.DataAugmentation:
     return gda.DataAugmentation(
-        rotation_range=draw(hs.floats(min_value=0, max_value=360)),
+        rotation_range=draw(hs.floats(min_value=0, max_value=360, exclude_max=True)),
         width_shift_range=draw(hs.floats(min_value=0, max_value=1)),
         height_shift_range=draw(hs.floats(min_value=0, max_value=1)),
         zoom_range=draw(hs.floats(min_value=0, max_value=1, exclude_max=True)),
