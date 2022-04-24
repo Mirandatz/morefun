@@ -54,10 +54,7 @@ def test_raise_on_default_tree() -> None:
     """
     tree = extract_ast(text)
     trans = BasicSinglePassDisposableTransformer()
-    with pytest.raises(
-        NotImplementedError,
-        match="method not implemented for tree.data: example_nonterminal",
-    ):
+    with pytest.raises(NotImplementedError):
         trans.transform(tree)
 
 
@@ -67,8 +64,5 @@ def test_raise_on_default_token() -> None:
     """
     tree = extract_ast(text)
     trans = tr.SinglePassTransformer()
-    with pytest.raises(
-        NotImplementedError,
-        match="method not implemented for token with text: ew",
-    ):
+    with pytest.raises(NotImplementedError):
         trans.transform(tree)

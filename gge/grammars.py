@@ -347,6 +347,14 @@ class Grammar:
 
 
 class ExpectedTerminal(enum.Enum):
+    DATA_AUGMENTATION = Terminal('"data_augmentation"')
+    ROTATION = Terminal('"rotation"')
+    WIDTH_SHIFT = Terminal('"width_shift"')
+    HEIGHT_SHIFT = Terminal('"height_shift"')
+    ZOOM = Terminal('"zoom"')
+    HORIZONTAL_FLIP = Terminal('"horizontal_flip"')
+    VERTICAL_FLIP = Terminal('"vertical_flip"')
+
     CONV = Terminal('"conv"')
     FILTER_COUNT = Terminal('"filter_count"')
     KERNEL_SIZE = Terminal('"kernel_size"')
@@ -377,25 +385,121 @@ class ExpectedTerminal(enum.Enum):
 MarkerValuePair = tuple[Terminal, Terminal]
 
 
-def _list_of_marker_value_pairs(parts: typing.Any) -> list[MarkerValuePair]:
+def make_list_of_marker_value_pairs(parts: list[Terminal]) -> list[MarkerValuePair]:
+    """
+    During the "tree visit/transformation" we often must transform
+    lists that look like `["a", 1, 2, 3]`
+    into lists that look like `[["a", 1], ["a", 2], ["a", 3]]`.
+    This function performs such transformation.
+    """
+
     marker, *values = parts
 
     assert isinstance(marker, Terminal)
-    assert isinstance(values, list), type(values)
+    assert isinstance(values, list)
     for v in values:
         assert isinstance(v, Terminal)
 
     return [(marker, v) for v in values]
 
 
+def make_list_of_options(parts: typing.Any) -> list[RuleOption]:
+    """
+    During the "tree visit/transformation" we often must transform
+    lists that look like
+    [
+        "a",
+        [("b", 1), ("b", 2), ("b", 3)],
+        [("c", 7), ("c", 8), ("c", 8)]
+    ]
+    into lists that look like
+    [
+        RuleOption(("a", "b", 1, "c", 7)),
+        RuleOption(("a", "b", 1, "c", 8)),
+        RuleOption(("a", "b", 1, "c", 9)),
+        ...
+    ]
+    This function performs such transformation.
+    """
+
+    marker, *params = parts
+
+    assert isinstance(marker, Terminal)
+    assert isinstance(params, list)
+    for param_mvps in params:
+        assert isinstance(param_mvps, list)
+        for pvmp in param_mvps:
+            param_marker, param_value = pvmp
+            assert isinstance(param_marker, Terminal)
+            assert isinstance(param_value, Terminal)
+
+    rule_options = []
+    for combination in itertools.product(*params):
+        expanded = list(itertools.chain.from_iterable(combination))
+        opt = RuleOption((marker, *expanded))
+        rule_options.append(opt)
+
+    return rule_options
+
+
 class GrammarTransformer(gge_transformers.SinglePassTransformer):
     def __init__(self) -> None:
         super().__init__()
+
+        # set of known terminals, used to simplify 'terminal registration'.
+        # see self.__default_token__
+        self._expected_tokens: set[str] = {
+            terminal.value.text for terminal in ExpectedTerminal
+        }
+
+        # set of terminals that are always in the form `"marker" value`,
+        # used to simplify generation of pairs of tokens.
+        # see self.__default__
+        data_aug_params = {
+            "rotation",
+            "width_shift",
+            "height_shift",
+            "zoom",
+            "horizontal_flip",
+            "vertical_flip",
+        }
+        conv_params = {"filter_count", "kernel_size", "strides"}
+        pooling_params = {"pool_sizes"}
+        sgd_params = {"learning_rate", "momentum", "nesterov"}
+        adam_params = {"beta1", "beta2", "epsilon", "amsgrad"}
+        self.known_marker_value_pairs = set.union(
+            data_aug_params,
+            conv_params,
+            pooling_params,
+            sgd_params,
+            adam_params,
+        )
 
         self._terminals: list[Terminal] = []
         self._nonterminals: list[NonTerminal] = []
         self._rules: list[ProductionRule] = []
         self._start: NonTerminal = NonTerminal("start")
+
+    def __default__(
+        self,
+        data: lark.Token,
+        children: list[typing.Any],
+        meta: typing.Any,
+    ) -> typing.Any:
+        self._raise_if_not_running()
+
+        if data.value in self.known_marker_value_pairs:
+            return make_list_of_marker_value_pairs(children)
+
+        return super().__default__(data, children, meta)
+
+    def __default_token__(self, token: lark.Token) -> typing.Any:
+        self._raise_if_not_running()
+
+        if token.value in self._expected_tokens:
+            return self._register_terminal(token.value)
+
+        return super().__default_token__(token)
 
     def transform(self, tree: lark.Tree[GrammarComponents]) -> GrammarComponents:
         super().transform(tree)
@@ -429,7 +533,9 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
 
         return nonterm
 
-    def start(self, list_of_list_of_rules: typing.Any) -> list[ProductionRule]:
+    def start(
+        self, list_of_list_of_rules: list[list[ProductionRule]]
+    ) -> list[ProductionRule]:
         self._raise_if_not_running()
 
         flattened = [
@@ -450,7 +556,9 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
             for rhs in list_of_options
         ]
 
-    def block(self, list_of_list_of_options: typing.Any) -> list[RuleOption]:
+    def block(
+        self, list_of_list_of_options: list[list[RuleOption]]
+    ) -> list[RuleOption]:
         self._raise_if_not_running()
 
         return [
@@ -516,7 +624,13 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
 
         return [[nt] * count for count in range(start, stop + 1)]
 
-    def layer(self, list_of_lists_of_options: typing.Any) -> list[RuleOption]:
+    def data_augmentation(self, parts: typing.Any) -> list[RuleOption]:
+        self._raise_if_not_running()
+        return make_list_of_options(parts)
+
+    def layer(
+        self, list_of_lists_of_options: list[list[RuleOption]]
+    ) -> list[RuleOption]:
         self._raise_if_not_running()
 
         return [
@@ -527,28 +641,7 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
 
     def conv_layer(self, parts: typing.Any) -> list[RuleOption]:
         self._raise_if_not_running()
-
-        marker, *params = parts
-        combinations = itertools.product(*params)
-        return [RuleOption((marker, *fc, *ks, *st)) for fc, ks, st in combinations]
-
-    def filter_count(self, parts: list[Terminal]) -> list[tuple[Terminal, Terminal]]:
-        self._raise_if_not_running()
-
-        marker, *counts = parts
-        return [(marker, c) for c in counts]
-
-    def kernel_size(self, parts: list[Terminal]) -> list[tuple[Terminal, Terminal]]:
-        self._raise_if_not_running()
-
-        marker, *sizes = parts
-        return [(marker, s) for s in sizes]
-
-    def strides(self, parts: list[Terminal]) -> list[tuple[Terminal, Terminal]]:
-        self._raise_if_not_running()
-
-        marker, *strides = parts
-        return [(marker, s) for s in strides]
+        return make_list_of_options(parts)
 
     @lark.v_args(inline=True)
     def activation_layer(self, activation: NonTerminal) -> list[RuleOption]:
@@ -559,66 +652,13 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
     def batchnorm_layer(self, term: Terminal) -> list[RuleOption]:
         return [RuleOption((term,))]
 
-    @lark.v_args(inline=True)
-    def max_pooling_layer(
-        self,
-        layer_marker: Terminal,
-        pool_sizes: list[MarkerValuePair],
-        strides: list[MarkerValuePair],
-    ) -> list[RuleOption]:
-        # sanity checking the runtime types
+    def max_pooling_layer(self, parts: typing.Any) -> list[RuleOption]:
         self._raise_if_not_running()
+        return make_list_of_options(parts)
 
-        assert layer_marker == ExpectedTerminal.MAXPOOL.value
-
-        assert isinstance(pool_sizes, list)
-        for ps_marker, ps_value in pool_sizes:
-            assert ps_marker == ExpectedTerminal.POOL_SIZE.value
-            assert isinstance(ps_value, Terminal)
-
-        assert isinstance(strides, list)
-        for st_marker, st_value in strides:
-            assert st_marker == ExpectedTerminal.STRIDE.value
-            assert isinstance(st_value, Terminal)
-
-        combinations = itertools.product(pool_sizes, strides)
-        return [RuleOption((layer_marker, *ps, *st)) for ps, st in combinations]
-
-    @lark.v_args(inline=True)
-    def avg_pooling_layer(
-        self,
-        layer_marker: Terminal,
-        pool_sizes: list[MarkerValuePair],
-        strides: list[MarkerValuePair],
-    ) -> list[RuleOption]:
-        # sanity checking the runtime types
+    def avg_pooling_layer(self, parts: typing.Any) -> list[RuleOption]:
         self._raise_if_not_running()
-
-        assert layer_marker == ExpectedTerminal.AVGPOOL.value
-
-        assert isinstance(pool_sizes, list)
-        for ps_marker, ps_value in pool_sizes:
-            assert ps_marker == ExpectedTerminal.POOL_SIZE.value
-            assert isinstance(ps_value, Terminal)
-
-        assert isinstance(strides, list)
-        for st_marker, st_value in strides:
-            assert st_marker == ExpectedTerminal.STRIDE.value
-            assert isinstance(st_value, Terminal)
-
-        combinations = itertools.product(pool_sizes, strides)
-        return [RuleOption((layer_marker, *ps, *st)) for ps, st in combinations]
-
-    def pool_sizes(self, parts: typing.Any) -> list[MarkerValuePair]:
-        self._raise_if_not_running()
-
-        marker, *values = parts
-        assert marker == ExpectedTerminal.POOL_SIZE.value
-        assert isinstance(values, list)
-        for v in values:
-            assert isinstance(v, Terminal)
-
-        return [(marker, s) for s in values]
+        return make_list_of_options(parts)
 
     @lark.v_args(inline=False)
     def optimizer(
@@ -626,189 +666,23 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
         list_of_lists_of_options: list[list[RuleOption]],
     ) -> list[RuleOption]:
         self._raise_if_not_running()
-
-        assert isinstance(list_of_lists_of_options, list)
-        for list_of_options in list_of_lists_of_options:
-            assert isinstance(list_of_options, list)
-            for option in list_of_options:
-                assert isinstance(option, RuleOption)
-
         return [
             opt
             for list_of_options in list_of_lists_of_options
             for opt in list_of_options
         ]
 
-    @lark.v_args(inline=True)
-    def sgd(
-        self,
-        marker: Terminal,
-        learning_rate: list[MarkerValuePair],
-        momentum: list[MarkerValuePair],
-        nesterov: list[MarkerValuePair],
-    ) -> list[RuleOption]:
+    def sgd(self, parts: typing.Any) -> list[RuleOption]:
         self._raise_if_not_running()
+        return make_list_of_options(parts)
 
-        assert isinstance(marker, Terminal)
-
-        assert isinstance(learning_rate, list)
-        for m, v in learning_rate:
-            assert isinstance(m, Terminal)
-            assert isinstance(v, Terminal)
-
-        assert isinstance(momentum, list)
-        for m, v in momentum:
-            assert isinstance(m, Terminal)
-            assert isinstance(v, Terminal)
-
-        assert isinstance(nesterov, list)
-        for m, v in nesterov:
-            assert isinstance(m, Terminal)
-            assert isinstance(v, Terminal)
-
-        combinations = itertools.product(learning_rate, momentum, nesterov)
-        return [
-            RuleOption((marker, *lr, *mom, *nest)) for lr, mom, nest in combinations
-        ]
-
-    @lark.v_args(inline=False)
-    def learning_rate(self, parts: typing.Any) -> list[MarkerValuePair]:
+    def adam(self, parts: typing.Any) -> list[RuleOption]:
         self._raise_if_not_running()
-
-        marker, *values = parts
-
-        assert isinstance(marker, Terminal)
-        assert isinstance(values, list), type(values)
-        for v in values:
-            assert isinstance(v, Terminal)
-
-        return [(marker, v) for v in values]
-
-    @lark.v_args(inline=False)
-    def momentum(self, parts: typing.Any) -> list[MarkerValuePair]:
-        self._raise_if_not_running()
-        return _list_of_marker_value_pairs(parts)
-
-    @lark.v_args(inline=False)
-    def nesterov(self, parts: typing.Any) -> list[MarkerValuePair]:
-        self._raise_if_not_running()
-        return _list_of_marker_value_pairs(parts)
-
-    @lark.v_args(inline=True)
-    def adam(
-        self,
-        marker: Terminal,
-        learning_rate: list[MarkerValuePair],
-        beta1: list[MarkerValuePair],
-        beta2: list[MarkerValuePair],
-        epsilon: list[MarkerValuePair],
-        amsgrad: list[MarkerValuePair],
-    ) -> list[RuleOption]:
-        self._raise_if_not_running()
-
-        assert isinstance(marker, Terminal)
-
-        assert isinstance(learning_rate, list)
-        for m, v in learning_rate:
-            assert isinstance(m, Terminal)
-            assert isinstance(v, Terminal)
-
-        assert isinstance(beta1, list)
-        for m, v in beta1:
-            assert isinstance(m, Terminal)
-            assert isinstance(v, Terminal)
-
-        assert isinstance(beta2, list)
-        for m, v in beta2:
-            assert isinstance(m, Terminal)
-            assert isinstance(v, Terminal)
-
-        assert isinstance(epsilon, list)
-        for m, v in epsilon:
-            assert isinstance(m, Terminal)
-            assert isinstance(v, Terminal)
-
-        assert isinstance(amsgrad, list)
-        for m, v in amsgrad:
-            assert isinstance(m, Terminal)
-            assert isinstance(v, Terminal)
-
-        combinations = itertools.product(
-            learning_rate,
-            beta1,
-            beta2,
-            epsilon,
-            amsgrad,
-        )
-
-        return [
-            RuleOption((marker, *lr, *b1, *b2, *eps, *ams))
-            for lr, b1, b2, eps, ams in combinations
-        ]
-
-    @lark.v_args(inline=False)
-    def beta1(self, parts: typing.Any) -> list[MarkerValuePair]:
-        self._raise_if_not_running()
-        return _list_of_marker_value_pairs(parts)
-
-    @lark.v_args(inline=False)
-    def beta2(self, parts: typing.Any) -> list[MarkerValuePair]:
-        self._raise_if_not_running()
-        return _list_of_marker_value_pairs(parts)
-
-    @lark.v_args(inline=False)
-    def epsilon(self, parts: typing.Any) -> list[MarkerValuePair]:
-        self._raise_if_not_running()
-        return _list_of_marker_value_pairs(parts)
-
-    @lark.v_args(inline=False)
-    def amsgrad(self, parts: typing.Any) -> list[MarkerValuePair]:
-        self._raise_if_not_running()
-        return _list_of_marker_value_pairs(parts)
-
-    def BATCHNORM(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
-        return self._register_terminal(token.value)
+        return make_list_of_options(parts)
 
     def NONTERMINAL(self, token: lark.Token) -> NonTerminal:
         self._raise_if_not_running()
         return self._register_nonterminal(token.value)
-
-    def MERGE(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
-        return self._register_terminal(token.value)
-
-    def FORK(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
-        return self._register_terminal(token.value)
-
-    def CONV(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
-        return self._register_terminal(token.value)
-
-    def FILTER_COUNT(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
-        return self._register_terminal(token.value)
-
-    def KERNEL_SIZE(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
-        return self._register_terminal(token.value)
-
-    def STRIDE(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
-        return self._register_terminal(token.value)
-
-    def RELU(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
-        return self._register_terminal(token.value)
-
-    def GELU(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
-        return self._register_terminal(token.value)
-
-    def SWISH(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
-        return self._register_terminal(token.value)
 
     def RANGE_BOUND(self, token: lark.Token) -> int:
         self._raise_if_not_running()
@@ -822,75 +696,7 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
         self._raise_if_not_running()
         return self._register_terminal(token.value)
 
-    def MAXPOOL(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
-        assert isinstance(token, lark.Token)
-
-        return self._register_terminal(token.value)
-
-    def AVGPOOL(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
-        assert isinstance(token, lark.Token)
-
-        return self._register_terminal(token.value)
-
-    def POOL_SIZE(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
-        assert isinstance(token, lark.Token)
-
-        return self._register_terminal(token.value)
-
-    def SGD(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
-        assert isinstance(token, lark.Token)
-
-        return self._register_terminal(token.value)
-
-    def LEARNING_RATE(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
-        assert isinstance(token, lark.Token)
-
-        return self._register_terminal(token.value)
-
-    def MOMENTUM(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
-        assert isinstance(token, lark.Token)
-
-        return self._register_terminal(token.value)
-
-    def NESTEROV(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
-        assert isinstance(token, lark.Token)
-
-        return self._register_terminal(token.value)
-
     def BOOL_ARG(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
-        assert isinstance(token, lark.Token)
-
-        return self._register_terminal(token.value)
-
-    def ADAM(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
-        assert isinstance(token, lark.Token)
-        return self._register_terminal(token.value)
-
-    def BETA1(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
-        assert isinstance(token, lark.Token)
-        return self._register_terminal(token.value)
-
-    def BETA2(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
-        assert isinstance(token, lark.Token)
-        return self._register_terminal(token.value)
-
-    def EPSILON(self, token: lark.Token) -> Terminal:
-        self._raise_if_not_running()
-        assert isinstance(token, lark.Token)
-        return self._register_terminal(token.value)
-
-    def AMSGRAD(self, token: lark.Token) -> Terminal:
         self._raise_if_not_running()
         assert isinstance(token, lark.Token)
         return self._register_terminal(token.value)

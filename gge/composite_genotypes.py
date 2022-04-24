@@ -28,13 +28,7 @@ def create_genotype(
     rng: rand.RNG,
 ) -> CompositeGenotype:
     backbone_genotype = sge.create_genotype(grammar, rng)
-    tokenstream = sge.map_to_tokenstream(backbone_genotype, grammar)
-    backbone = bb.parse(tokenstream)
-    connections_schema = conn.create_connections_schema(
-        backbone=backbone,
-        rng=rng,
-    )
-    return CompositeGenotype(backbone_genotype, connections_schema)
+    return make_composite_genotype(backbone_genotype, grammar, rng)
 
 
 def make_composite_genotype(

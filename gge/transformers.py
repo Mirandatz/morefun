@@ -1,8 +1,7 @@
 import enum
 import typing
 
-from lark.tree import Tree as LarkTree
-from lark.visitors import Transformer as LarkTransformer
+import lark
 
 
 class TransformerState(enum.Enum):
@@ -11,7 +10,7 @@ class TransformerState(enum.Enum):
     PARSE_DONE = enum.auto()
 
 
-class SinglePassTransformer(LarkTransformer[typing.Any, typing.Any]):
+class SinglePassTransformer(lark.Transformer[typing.Any, typing.Any]):
     """
     Specialization of a base transformer that:
     - can only visit a tree if they start on the root node;
@@ -33,15 +32,15 @@ class SinglePassTransformer(LarkTransformer[typing.Any, typing.Any]):
         data: typing.Any,
         children: typing.Any,
         meta: typing.Any,
-    ) -> None:
-        raise NotImplementedError(f"method not implemented for tree.data: {data}")
+    ) -> typing.Any:
+        raise NotImplementedError(f"method not implemented for tree.data=<{data}>")
 
-    def __default_token__(self, token_text: typing.Any) -> None:
+    def __default_token__(self, token: lark.Token) -> typing.Any:
         raise NotImplementedError(
-            f"method not implemented for token with text: {token_text}"
+            f"method not implemented for token with text=<{token.value}>"
         )
 
-    def transform(self, tree: LarkTree[typing.Any]) -> typing.Any:
+    def transform(self, tree: lark.Tree[typing.Any]) -> typing.Any:
         assert self._state == TransformerState.READY
 
         self._state = TransformerState.PARSING

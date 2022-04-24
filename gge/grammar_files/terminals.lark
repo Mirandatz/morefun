@@ -1,3 +1,11 @@
+DATA_AUGMENTATION : /"data_augmentation"/
+ROTATION          : /"rotation"/
+WIDTH_SHIFT       : /"width_shift"/
+HEIGHT_SHIFT      : /"height_shift"/
+ZOOM              : /"zoom"/
+HORIZONTAL_FLIP   : /"horizontal_flip"/
+VERTICAL_FLIP     : /"vertical_flip"/
+
 MERGE         : /"merge"/
 FORK          : /"fork"/
 

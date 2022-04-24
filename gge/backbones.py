@@ -201,7 +201,11 @@ class BackboneSynthetizer(lgp.LowerGrammarTransformer):
         return gl.Swish(name=self._create_layer_name(gl.Swish))
 
 
-def parse(tokenstream: str, start: typing.Literal["start", "backbone"]) -> Backbone:
+def parse(
+    tokenstream: str,
+    *,
+    start: typing.Literal["start", "backbone"] = "start",
+) -> Backbone:
     """
     `start` indicates whether `tokenstream`'s first symbol is
     the backbone start symbol or the grammar start symbol.

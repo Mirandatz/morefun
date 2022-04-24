@@ -12,7 +12,7 @@ import gge.lower_grammar_parsing as lgp
 class Optimizer(abc.ABC):
     ...
 
-    def to_keras(self) -> tf.keras.optimizers.Optimizer:
+    def to_tensorflow(self) -> tf.keras.optimizers.Optimizer:
         ...
 
 
@@ -30,7 +30,7 @@ class SGD(Optimizer):
         assert self.learning_rate > 0
         assert 0 <= self.momentum <= 1
 
-    def to_keras(self) -> tf.keras.optimizers.SGD:
+    def to_tensorflow(self) -> tf.keras.optimizers.SGD:
         return tf.keras.optimizers.SGD(
             learning_rate=self.learning_rate,
             momentum=self.momentum,
@@ -58,7 +58,7 @@ class Adam(Optimizer):
         assert self.beta2 > 0
         assert self.epsilon > 0
 
-    def to_keras(self) -> tf.keras.optimizers.Adam:
+    def to_tensorflow(self) -> tf.keras.optimizers.Adam:
         return tf.keras.optimizers.Adam(
             learning_rate=self.learning_rate,
             beta_1=self.beta1,
@@ -188,7 +188,11 @@ class OptimizerSynthetizer(lgp.LowerGrammarTransformer):
         return None
 
 
-def parse(tokenstream: str, start: typing.Literal["start", "optimizer"]) -> Optimizer:
+def parse(
+    tokenstream: str,
+    *,
+    start: typing.Literal["start", "optimizer"] = "start",
+) -> Optimizer:
     """
     `start` indicates whether `tokenstream`'s first symbol is
     the optimizer start symbol or the grammar start symbol.

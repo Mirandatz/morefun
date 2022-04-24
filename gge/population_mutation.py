@@ -6,23 +6,20 @@ from loguru import logger
 import gge.composite_genotypes as cg
 import gge.fallible as fallible
 import gge.grammars as gr
-import gge.layers as gl
 import gge.mutations as mutations
-import gge.neural_network as gnn
 import gge.novelty as novel
+import gge.phenotypes as gph
 import gge.randomness as rand
 
-DUMMY_INPUT = gl.make_input(1, 1, 1)
 
-
-@attrs.frozen(cache_hash=True)
+@attrs.frozen
 class PopulationMutationParameters:
     mutants_to_generate: int
     max_failures: int
     grammar: gr.Grammar
 
     def __attrs_post_init__(self) -> None:
-        assert self.mutants_to_generate > 1
+        assert self.mutants_to_generate >= 1
         assert self.max_failures >= 0
 
 
@@ -38,18 +35,18 @@ def try_generate_mutant(
 
     mutant = mutations.mutate(candidate, grammar, rng)
     if novelty_tracker.is_genotype_novel(mutant):
-        logger.debug(f"New novelty mutant=<{mutant}>")
+        logger.debug(f"mutant has novel genotype=<{mutant}>")
         novelty_tracker.register_genotype(mutant)
     else:
-        logger.debug("Failed to produce a novelty individual")
+        logger.debug(f"mutant has non-novel genotype=<{mutant}>")
         return None
 
-    phenotype = gnn.make_network(mutant, grammar, DUMMY_INPUT)
+    phenotype = gph.translate(mutant, grammar)
     if novelty_tracker.is_phenotype_novel(phenotype):
-        logger.debug(f"New novelty phenotype=<{phenotype}>")
+        logger.debug(f"mutant has novel phenotype=<{phenotype}>")
         novelty_tracker.register_phenotype(phenotype)
     else:
-        logger.debug("Failed to produce a novelty phenotype")
+        logger.debug(f"mutant has non-novel phenotype=<{phenotype}>")
         return None
 
     return mutant

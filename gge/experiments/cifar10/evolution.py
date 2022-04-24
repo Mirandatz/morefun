@@ -53,8 +53,12 @@ def get_grammar() -> gr.Grammar:
     return gr.Grammar(raw_grammar)
 
 
-def get_input_layer() -> gl.Input:
-    return gl.make_input(IMAGE_WIDTH, IMAGE_HEIGHT, IMAGE_DEPTH)
+def get_input_shape() -> gl.Shape:
+    return gl.Shape(
+        width=IMAGE_WIDTH,
+        height=IMAGE_HEIGHT,
+        depth=IMAGE_DEPTH,
+    )
 
 
 def validate_output_dir(path: pathlib.Path) -> None:
@@ -108,20 +112,17 @@ def main(
     )
 
     grammar = get_grammar()
-    input_layer = get_input_layer()
 
     fit_params = gfit.FitnessEvaluationParameters(
         gfit.ValidationAccuracy(
-            train_dir=train_dir,
-            validation_dir=validation_dir,
-            input_shape=input_layer.shape,
+            train_directory=train_dir,
+            validation_directory=validation_dir,
+            input_shape=get_input_shape(),
             batch_size=BATCH_SIZE,
-            epochs=EPOCHS,
+            max_epochs=EPOCHS,
             class_count=CLASS_COUNT,
-            shuffle_seed=rand.get_rng_seed(),
         ),
         grammar,
-        input_layer,
     )
 
     mut_params = gmut.PopulationMutationParameters(
