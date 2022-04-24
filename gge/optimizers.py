@@ -188,7 +188,11 @@ class OptimizerSynthetizer(lgp.LowerGrammarTransformer):
         return None
 
 
-def parse(tokenstream: str, start: typing.Literal["start", "optimizer"]) -> Optimizer:
+def parse(
+    tokenstream: str,
+    *,
+    start: typing.Literal["start", "optimizer"] = "start",
+) -> Optimizer:
     """
     `start` indicates whether `tokenstream`'s first symbol is
     the optimizer start symbol or the grammar start symbol.

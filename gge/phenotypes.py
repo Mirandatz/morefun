@@ -32,9 +32,9 @@ def translate(
     grammar: gr.Grammar,
 ) -> Phenotype:
     tokenstream = sge.map_to_tokenstream(genotype.backbone_genotype, grammar)
-    data_aug = gda.parse(tokenstream, start="start")
-    backbone = bb.parse(tokenstream, start="start")
-    optimizer = optim.parse(tokenstream, start="start")
+    data_aug = gda.parse(tokenstream)
+    backbone = bb.parse(tokenstream)
+    optimizer = optim.parse(tokenstream)
     return Phenotype(
         data_aug,
         backbone,

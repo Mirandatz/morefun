@@ -102,7 +102,9 @@ class Transformer(lgp.LowerGrammarTransformer):
 
 
 def parse(
-    tokenstream: str, start: typing.Literal["start", "data_augmentation"]
+    tokenstream: str,
+    *,
+    start: typing.Literal["start", "data_augmentation"] = "start",
 ) -> DataAugmentation:
     """
     `start` indicates whether `tokenstream`'s first symbol is
