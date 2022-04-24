@@ -5,5 +5,5 @@ networkx
 numpy
 pillow
 scipy
-tensorflow-gpu
+tf-nightly==2.10.0.dev20220424
 typer
