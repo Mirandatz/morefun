@@ -1,4 +1,5 @@
 import hypothesis.strategies as hs
+import pytest
 from hypothesis import given
 
 import gge.data_augmentations as gda
@@ -8,10 +9,24 @@ import gge.structured_grammatical_evolution as sge
 import gge.tests.strategies.data_structures as ds
 
 
+@pytest.fixture(autouse=True)
+def disable_logger() -> None:
+    from loguru import logger
+
+    logger.remove()
+
+
 @hs.composite
 def data_augmentations(draw: hs.DrawFn) -> gda.DataAugmentation:
     return gda.DataAugmentation(
-        rotation_range=draw(hs.floats(min_value=0, max_value=360, exclude_max=True)),
+        rotation_range=draw(
+            hs.floats(
+                min_value=0,
+                max_value=360,
+                exclude_max=True,
+            )
+            | hs.integers(min_value=0, max_value=360)
+        ),
         width_shift_range=draw(hs.floats(min_value=0, max_value=1)),
         height_shift_range=draw(hs.floats(min_value=0, max_value=1)),
         zoom_range=draw(hs.floats(min_value=0, max_value=1, exclude_max=True)),

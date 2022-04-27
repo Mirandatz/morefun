@@ -54,7 +54,8 @@ amsgrad : AMSGRAD BOOL
 %import .terminals (ADAM, BETA1, BETA2, EPSILON, AMSGRAD)
 %import .terminals (BOOL)
 
-%import common (INT, FLOAT)
+%import common.INT
+%import common.NUMBER -> FLOAT
 %import common.WS
 
 %ignore WS

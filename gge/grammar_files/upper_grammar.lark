@@ -69,7 +69,8 @@ BOOL_ARG   : BOOL
 %import .terminals (ADAM, BETA1, BETA2, EPSILON, AMSGRAD)
 %import .terminals (BOOL)
 
-%import common (INT, FLOAT)
+%import common.INT
+%import common.NUMBER -> FLOAT
 %import common.NEWLINE -> _NL
 %import common.CNAME -> NAME
 %import common.WS_INLINE
