@@ -498,6 +498,9 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
 
         if token.value in self._expected_tokens:
             return self._register_terminal(token.value)
+        if token.value in ['"fork"', '"merge"']:
+            raise NotImplementedError("WRITE TESTS")
+            # return self._register_terminal(token.value)
 
         return super().__default_token__(token)
 
