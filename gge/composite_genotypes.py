@@ -15,7 +15,7 @@ class CompositeGenotype:
     connections_genotype: conn.ConnectionsSchema = attrs.field(repr=False)
 
     unique_id: uuid.UUID = attrs.field(
-        eq=False, order=False, repr=True, init=False, default=uuid.uuid4()
+        eq=False, order=False, repr=True, init=False, factory=uuid.uuid4
     )
 
     def __attrs_post_init__(self) -> None:
