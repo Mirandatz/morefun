@@ -25,6 +25,7 @@
 	],
 	"runArgs": [
 		"--shm-size=2G",
+		"--runtime=nvidia",
 	],
 	"mounts": [
 		"type=bind,source=${localWorkspaceFolder}/playground,target=/playground",
