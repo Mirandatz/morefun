@@ -27,6 +27,9 @@
 		"--shm-size=2G",
 		"--runtime=nvidia",
 	],
+	"containerEnv": {
+		"TF_CPP_MIN_LOG_LEVEL": "1",
+	},
 	"mounts": [
 		"type=bind,source=${localWorkspaceFolder}/playground,target=/playground",
 	],
