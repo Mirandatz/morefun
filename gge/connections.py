@@ -211,7 +211,7 @@ def make_merge(
         mode=reshape_strategy,
     )
 
-    logger.info(
+    logger.debug(
         f"Merging shapes=<{src_shapes}> into target=<{target_shape}>"
         f" from strategy=<{reshape_strategy}"
     )
