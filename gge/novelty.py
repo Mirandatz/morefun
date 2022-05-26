@@ -32,25 +32,3 @@ class NoveltyTracker:
 
     def register_phenotype(self, phenotype: pheno.Phenotype) -> None:
         self._phenotypes.add(phenotype)
-
-
-def check_novelty_and_update_tracker(
-    genotype: cg.CompositeGenotype,
-    phenotype: pheno.Phenotype,
-    tracker: NoveltyTracker,
-) -> bool:
-    if not tracker.is_genotype_novel(genotype):
-        return False
-
-    if not tracker.is_phenotype_novel(phenotype):
-        # got a new genotype that maps to a known phenotype,
-        # so we mark the genotype as known and return false
-        tracker.register_genotype(genotype)
-        return False
-
-    else:
-        # found a new genotype that maps to new phenotype,
-        # so we mark both as known and return true
-        tracker.register_genotype(genotype)
-        tracker.register_phenotype(phenotype)
-        return True
