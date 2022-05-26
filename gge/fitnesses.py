@@ -10,7 +10,7 @@ import gge.data_augmentations as gda
 import gge.debugging as debug
 import gge.grammars as gr
 import gge.layers as gl
-import gge.phenotypes as phenos
+import gge.phenotypes as pheno
 import gge.randomness as rand
 import gge.redirection as redirection
 
@@ -31,11 +31,11 @@ def make_classification_head(class_count: int, input_tensor: tf.Tensor) -> tf.Te
 
 
 def make_classification_model(
-    phenotype: phenos.Phenotype,
+    phenotype: pheno.Phenotype,
     input_shape: gl.Shape,
     class_count: int,
 ) -> tf.keras.Model:
-    input_tensor, output_tensor = phenos.make_input_output_tensors(
+    input_tensor, output_tensor = pheno.make_input_output_tensors(
         phenotype, gl.Input(input_shape)
     )
     classification_head = make_classification_head(
@@ -93,7 +93,7 @@ class ValidationAccuracy:
                 )
             )
 
-    def evaluate(self, phenotype: phenos.Phenotype) -> float:
+    def evaluate(self, phenotype: pheno.Phenotype) -> float:
         logger.debug(f"starting fitness evaluation, phenotype=<{phenotype}>")
 
         train_data = self.get_train_generator()
@@ -136,7 +136,7 @@ def evaluate(
 ) -> float:
     logger.debug(f"starting fitness evaluation of genotype=<{genotype}>")
 
-    phenotype = phenos.translate(genotype, params.grammar)
+    phenotype = pheno.translate(genotype, params.grammar)
 
     try:
         fitness = params.metric.evaluate(phenotype)
