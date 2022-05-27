@@ -220,11 +220,15 @@ class ConnectableLayer(abc.ABC):
     @abc.abstractmethod
     def to_tensor(
         self,
-        known_tensores: dict["ConnectableLayer", tf.Tensor],
+        known_tensor: dict["ConnectableLayer", tf.Tensor],
     ) -> tf.Tensor:
-        """
-        DOCUMENT WHY THE API IS LIKE THIS.
-        """
+        # `known_tensors` is used for correctness, not for performance.
+        # During the traversal of a "connectivty graph" of a neural network,
+        # it is possible that a layer will be visited multiple times
+        # (e.g. because of skip connections).
+        # If this happens, we want to ensure that all visits yield the same tensor reference;
+        # `known_tensors` is used to track this process.
+
         raise NotImplementedError("this is an abstract method")
 
     @property
@@ -267,9 +271,9 @@ class Input(ConnectableLayer):
 
     def to_tensor(
         self,
-        known_tensores: dict["ConnectableLayer", tf.Tensor],
+        known_tensors: dict["ConnectableLayer", tf.Tensor],
     ) -> tf.Tensor:
-        if self not in known_tensores:
+        if self not in known_tensors:
             tensor = kl.Input(
                 shape=(
                     self.shape.width,
@@ -278,9 +282,9 @@ class Input(ConnectableLayer):
                 ),
                 name=self.name,
             )
-            known_tensores[self] = tensor
+            known_tensors[self] = tensor
 
-        return known_tensores[self]
+        return known_tensors[self]
 
 
 def make_input(width: int, height: int, depth: int) -> Input:
@@ -312,10 +316,10 @@ class ConnectedConv2D(SingleInputLayer):
 
     def to_tensor(
         self,
-        known_tensores: dict["ConnectableLayer", tf.Tensor],
+        known_tensors: dict["ConnectableLayer", tf.Tensor],
     ) -> tf.Tensor:
-        if self not in known_tensores:
-            source = self.input_layer.to_tensor(known_tensores)
+        if self not in known_tensors:
+            source = self.input_layer.to_tensor(known_tensors)
 
             params = self.params
             strides = (params.stride, params.stride)
@@ -328,9 +332,9 @@ class ConnectedConv2D(SingleInputLayer):
                 name=params.name,
             )
             tensor = layer(source)
-            known_tensores[self] = tensor
+            known_tensors[self] = tensor
 
-        return known_tensores[self]
+        return known_tensors[self]
 
     def __repr__(self) -> str:
         return f"{self.params.name}, params={self.params}, input={self.input_layer}, out_shape=[{self.output_shape}]"
@@ -361,10 +365,10 @@ class ConnectedConv2DTranspose(SingleInputLayer):
 
     def to_tensor(
         self,
-        known_tensores: dict["ConnectableLayer", tf.Tensor],
+        known_tensors: dict["ConnectableLayer", tf.Tensor],
     ) -> tf.Tensor:
-        if self not in known_tensores:
-            source = self.input_layer.to_tensor(known_tensores)
+        if self not in known_tensors:
+            source = self.input_layer.to_tensor(known_tensors)
 
             params = self.params
             strides = (params.stride, params.stride)
@@ -387,9 +391,9 @@ class ConnectedConv2DTranspose(SingleInputLayer):
                 size=strides,
                 name=params.name + "_upsample",
             )(conv)
-            known_tensores[self] = upsample
+            known_tensors[self] = upsample
 
-        return known_tensores[self]
+        return known_tensors[self]
 
     def __repr__(self) -> str:
         return f"{self.params.name}, params={self.params}, input={self.input_layer}, out_shape=[{self.output_shape}]"
@@ -419,10 +423,10 @@ class ConnectedMaxPooling2D(SingleInputLayer):
 
     def to_tensor(
         self,
-        known_tensores: dict["ConnectableLayer", tf.Tensor],
+        known_tensors: dict["ConnectableLayer", tf.Tensor],
     ) -> tf.Tensor:
-        if self not in known_tensores:
-            source = self.input_layer.to_tensor(known_tensores)
+        if self not in known_tensors:
+            source = self.input_layer.to_tensor(known_tensors)
 
             params = self.params
             pool_size = (params.pool_size, params.pool_size)
@@ -436,9 +440,9 @@ class ConnectedMaxPooling2D(SingleInputLayer):
             )
 
             tensor = layer(source)
-            known_tensores[self] = tensor
+            known_tensors[self] = tensor
 
-        return known_tensores[self]
+        return known_tensors[self]
 
     def __repr__(self) -> str:
         return f"{self.params.name}: out_shape=[{self.output_shape}]"
@@ -468,10 +472,10 @@ class ConnectedAveragePooling2D(SingleInputLayer):
 
     def to_tensor(
         self,
-        known_tensores: dict["ConnectableLayer", tf.Tensor],
+        known_tensors: dict["ConnectableLayer", tf.Tensor],
     ) -> tf.Tensor:
-        if self not in known_tensores:
-            source = self.input_layer.to_tensor(known_tensores)
+        if self not in known_tensors:
+            source = self.input_layer.to_tensor(known_tensors)
 
             params = self.params
             pool_size = (params.pool_size, params.pool_size)
@@ -485,9 +489,9 @@ class ConnectedAveragePooling2D(SingleInputLayer):
             )
 
             tensor = layer(source)
-            known_tensores[self] = tensor
+            known_tensors[self] = tensor
 
-        return known_tensores[self]
+        return known_tensors[self]
 
     def __repr__(self) -> str:
         return f"{self.params.name}: out_shape=[{self.output_shape}]"
@@ -512,14 +516,14 @@ class ConnectedBatchNorm(SingleInputLayer):
 
     def to_tensor(
         self,
-        known_tensores: dict["ConnectableLayer", tf.Tensor],
+        known_tensors: dict["ConnectableLayer", tf.Tensor],
     ) -> tf.Tensor:
-        if self not in known_tensores:
-            source = self.input_layer.to_tensor(known_tensores)
+        if self not in known_tensors:
+            source = self.input_layer.to_tensor(known_tensors)
             layer = kl.BatchNormalization(name=self.params.name)
             tensor = layer(source)
-            known_tensores[self] = tensor
-        return known_tensores[self]
+            known_tensors[self] = tensor
+        return known_tensors[self]
 
     def __repr__(self) -> str:
         return f"{self.params.name}: out_shape=[{self.output_shape}]"
@@ -554,14 +558,14 @@ class ConnectedAdd(MultiInputLayer):
 
     def to_tensor(
         self,
-        known_tensores: dict["ConnectableLayer", tf.Tensor],
+        known_tensors: dict["ConnectableLayer", tf.Tensor],
     ) -> tf.Tensor:
-        if self not in known_tensores:
-            sources = [src.to_tensor(known_tensores) for src in self.input_layers]
+        if self not in known_tensors:
+            sources = [src.to_tensor(known_tensors) for src in self.input_layers]
             layer = kl.Add(name=self.name)
             tensor = layer(sources)
-            known_tensores[self] = tensor
-        return known_tensores[self]
+            known_tensors[self] = tensor
+        return known_tensors[self]
 
     def __repr__(self) -> str:
         return f"{self.name}: out_shape=[{self.output_shape}]"
@@ -603,14 +607,14 @@ class ConnectedConcatenate(MultiInputLayer):
 
     def to_tensor(
         self,
-        known_tensores: dict["ConnectableLayer", tf.Tensor],
+        known_tensors: dict["ConnectableLayer", tf.Tensor],
     ) -> tf.Tensor:
-        if self not in known_tensores:
-            sources = [src.to_tensor(known_tensores) for src in self.input_layers]
+        if self not in known_tensors:
+            sources = [src.to_tensor(known_tensors) for src in self.input_layers]
             layer = kl.Concatenate(name=self.name)
             tensor = layer(sources)
-            known_tensores[self] = tensor
-        return known_tensores[self]
+            known_tensors[self] = tensor
+        return known_tensors[self]
 
     def __repr__(self) -> str:
         return f"{self.name}: out_shape=[{self.output_shape}]"
@@ -635,17 +639,17 @@ class ConnectedRelu(SingleInputLayer):
 
     def to_tensor(
         self,
-        known_tensores: dict["ConnectableLayer", tf.Tensor],
+        known_tensors: dict["ConnectableLayer", tf.Tensor],
     ) -> tf.Tensor:
-        if self not in known_tensores:
-            source = self.input_layer.to_tensor(known_tensores)
+        if self not in known_tensors:
+            source = self.input_layer.to_tensor(known_tensors)
             layer = kl.Activation(
                 activation=tf.nn.relu,
                 name=self.params.name,
             )
             tensor = layer(source)
-            known_tensores[self] = tensor
-        return known_tensores[self]
+            known_tensors[self] = tensor
+        return known_tensors[self]
 
     def __repr__(self) -> str:
         return f"{self.params.name}: out_shape=[{self.output_shape}]"
@@ -670,17 +674,17 @@ class ConnectedGelu(SingleInputLayer):
 
     def to_tensor(
         self,
-        known_tensores: dict["ConnectableLayer", tf.Tensor],
+        known_tensors: dict["ConnectableLayer", tf.Tensor],
     ) -> tf.Tensor:
-        if self not in known_tensores:
-            source = self.input_layer.to_tensor(known_tensores)
+        if self not in known_tensors:
+            source = self.input_layer.to_tensor(known_tensors)
             layer = kl.Activation(
                 activation=tf.nn.gelu,
                 name=self.params.name,
             )
             tensor = layer(source)
-            known_tensores[self] = tensor
-        return known_tensores[self]
+            known_tensors[self] = tensor
+        return known_tensors[self]
 
     def __repr__(self) -> str:
         return f"{self.params.name}: out_shape=[{self.output_shape}]"
@@ -705,17 +709,17 @@ class ConnectedSwish(SingleInputLayer):
 
     def to_tensor(
         self,
-        known_tensores: dict["ConnectableLayer", tf.Tensor],
+        known_tensors: dict["ConnectableLayer", tf.Tensor],
     ) -> tf.Tensor:
-        if self not in known_tensores:
-            source = self.input_layer.to_tensor(known_tensores)
+        if self not in known_tensors:
+            source = self.input_layer.to_tensor(known_tensors)
             layer = kl.Activation(
                 activation=tf.nn.swish,
                 name=self.params.name,
             )
             tensor = layer(source)
-            known_tensores[self] = tensor
-        return known_tensores[self]
+            known_tensors[self] = tensor
+        return known_tensors[self]
 
     def __repr__(self) -> str:
         return f"{self.params.name}: out_shape=[{self.output_shape}]"
