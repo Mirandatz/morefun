@@ -5,5 +5,7 @@ networkx
 numpy
 pillow
 scipy
-tf-nightly==2.10.0.dev20220424
+tensorflow==2.8.2
+tensorflow-addons
+tensorflow-datasets
 typer

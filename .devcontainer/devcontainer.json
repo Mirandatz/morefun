@@ -28,11 +28,4 @@
 		"--runtime=nvidia",
 		"--cap-add=SYS_NICE"
 	],
-	"containerEnv": {
-		"TF_CPP_MIN_LOG_LEVEL": "1",
-	},
-	"mounts": [
-		"type=bind,source=${localWorkspaceFolder}/playground,target=/playground",
-		"type=bind,source=${localWorkspaceFolder}/playground/train_val_test,target=/dataset,ro",
-	],
 }

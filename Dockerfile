@@ -1,9 +1,9 @@
-FROM nvidia/cuda:11.2.2-cudnn8-runtime-ubuntu20.04
+FROM nvidia/cuda:11.2.2-cudnn8-devel-ubuntu20.04
 
 ENV TZ=America/Sao_Paulo
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LC_ALL=C.UTF-8
-ENV LANG=C.UTF-8    
+ENV LANG=C.UTF-8
 
 # python build deps https://devguide.python.org/setup/#build-dependencies
 RUN apt-get update && apt-get install --no-install-recommends --no-install-suggests -y \
@@ -33,3 +33,6 @@ WORKDIR /gge/
 
 COPY ./requirements ./requirements
 RUN python -m pip install -r ./requirements/dev.txt --no-cache-dir
+
+ENV TF_CPP_MIN_LOG_LEVEL=1
+ENV TF_XLA_FLAGS="--tf_xla_auto_jit=2 --tf_xla_cpu_global_jit"
