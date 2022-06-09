@@ -28,4 +28,12 @@
 		"--runtime=nvidia",
 		"--cap-add=SYS_NICE"
 	],
+	"postStartCommand": [
+		"git",
+		"config",
+		"--global",
+		"--add",
+		"safe.directory",
+		"${containerWorkspaceFolder}"
+	]
 }

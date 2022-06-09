@@ -23,7 +23,7 @@ RUN apt-get update && apt-get install --no-install-recommends --no-install-sugge
 # compile python 3.10.4
 RUN git clone --depth 1 https://github.com/python/cpython.git --branch v3.10.4 \
     && cd /cpython \
-    && ./configure --enable-optimizations \
+    && ./configure --enable-optimizations --with-lto \
     && make \
     && make install \
     && update-alternatives --install /usr/bin/python python /usr/local/bin/python3 999 \
