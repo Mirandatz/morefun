@@ -6,6 +6,12 @@ ZOOM              : /"zoom"/
 HORIZONTAL_FLIP   : /"horizontal_flip"/
 VERTICAL_FLIP     : /"vertical_flip"/
 
+RANDOM_FLIP             : /"random_flip"/
+FLIP_MODE               : HORIZONTAL VERTICAL HORIZONTAL_AND_VERTICAL
+HORIZONTAL              : /"horizontal/
+VERTICAL                : /"vertical"/
+HORIZONTAL_AND_VERTICAL : /"horizontal_and_vertical"/
+
 MERGE         : /"merge"/
 FORK          : /"fork"/
 

@@ -43,6 +43,29 @@ class ConvertibleToConnectableLayer(abc.ABC):
         raise NotImplementedError("this is an abstract method")
 
 
+HORIZONTAL = "horizontal"
+VERTICAL = "vertical"
+HORIZONTAL_AND_VERTICAL = "horizontal_and_vertical"
+FLIP_MODES = [HORIZONTAL, VERTICAL, HORIZONTAL_AND_VERTICAL]
+
+
+@attrs.frozen(cache_hash=True)
+class RandomFlip(ConvertibleToConnectableLayer):
+    name: str
+    seed: int
+    mode: str
+
+    def __attrs_post_init__(self) -> None:
+        assert isinstance(self.name, str)
+        assert isinstance(self.seed, int)
+        assert isinstance(self.mode, str)
+
+        assert self.mode in FLIP_MODES
+
+    def to_connectable(self, input: "ConnectableLayer") -> "ConnectedRandomFlip":
+        return ConnectedRandomFlip(input, self)
+
+
 @attrs.frozen(cache_hash=True)
 class Conv2D(ConvertibleToConnectableLayer):
     name: str
@@ -290,6 +313,44 @@ class Input(ConnectableLayer):
 def make_input(width: int, height: int, depth: int) -> Input:
     shape = Shape(width=width, height=height, depth=depth)
     return Input(shape)
+
+
+@attrs.frozen(cache_hash=True)
+class ConnectedRandomFlip(SingleInputLayer):
+    input_layer: ConnectableLayer
+    params: RandomFlip
+
+    def __attrs_post_init__(self) -> None:
+        assert isinstance(self.input_layer, ConnectableLayer)
+        assert isinstance(self.params, RandomFlip)
+
+    @property
+    def name(self) -> str:
+        return self.params.name
+
+    @property
+    def output_shape(self) -> Shape:
+        return self.input_layer.output_shape
+
+    def to_tensor(
+        self,
+        known_tensors: dict["ConnectableLayer", tf.Tensor],
+    ) -> tf.Tensor:
+        if self not in known_tensors:
+            source = self.input_layer.to_tensor(known_tensors)
+
+            layer = kl.RandomFlip(
+                mode=self.params.mode,
+                seed=self.params.seed,
+                name=self.params.name,
+            )
+            tensor = layer(source)
+            known_tensors[self] = tensor
+
+        return known_tensors[self]
+
+    def __repr__(self) -> str:
+        return f"{self.params.name}, params={self.params}, input={self.input_layer}, out_shape=[{self.output_shape}]"
 
 
 @attrs.frozen(cache_hash=True)

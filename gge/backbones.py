@@ -9,6 +9,7 @@ from loguru import logger
 import gge.layers as gl
 import gge.lower_grammar_parsing as lgp
 import gge.name_generator
+import gge.randomness as rand
 
 
 def _raise_if_contains_repeated_names(layers: tuple[gl.Layer, ...]) -> None:
@@ -95,6 +96,16 @@ class BackboneSynthetizer(lgp.LowerGrammarTransformer):
         self._raise_if_not_running()
 
         return layer
+
+    def random_flip(self, marker: None, mode: str) -> gl.RandomFlip:
+        self._raise_if_not_running()
+
+        assert mode in gl.FLIP_MODES
+        return gl.RandomFlip(
+            name=self._create_layer_name(gl.RandomFlip),
+            mode=mode,
+            seed=rand.get_rng_seed(),
+        )
 
     def conv(
         self, marker: None, filter_count: int, kernel_size: int, stride: int
