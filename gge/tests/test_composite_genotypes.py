@@ -1,21 +1,20 @@
 import gge.composite_genotypes as cg
 import gge.grammars as gr
 import gge.randomness as rand
+from gge.tests.fixtures import remove_logger_sinks  # noqa
 
 
 def get_grammar() -> gr.Grammar:
     return gr.Grammar(
         """
-        start    : data_aug topology optimizer
-
-        data_aug : "data_augmentation" "rotation" 0 "width_shift" 0 "height_shift" 0 "zoom" 0 "horizontal_flip" false "vertical_flip" false
+        start    : topology optimizer
 
         topology     : first_block middle_block~2
         first_block  : conv_block "fork"
         middle_block : "merge" conv_block "fork"
 
         conv_block : conv_layer batchnorm activation
-                | conv_layer batchnorm activation pooling
+                   | conv_layer batchnorm activation pooling
 
         conv_layer : "conv" "filter_count" (32 | 64) "kernel_size" (1 | 3 | 5 | 7) "stride" (1 | 2)
         batchnorm  : "batchnorm"
