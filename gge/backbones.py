@@ -49,9 +49,29 @@ class Backbone:
 
 @lark.v_args(inline=True)
 class BackboneSynthetizer(lgp.LowerGrammarTransformer):
+
+    # list of tokens which, when visited, are just transformed
+    # into None
+    # fmt: off
+    _USELESS_MARKERS = {
+        '"random_flip"',
+        '"conv"', '"filter_count"', '"kernel_size"', '"stride"',
+        '"maxpool"', '"avgpool"', '"pool_size"', '"batch_norm"',
+        '"relu"', '"gelu"', '"swish"'
+    }
+    # fmt: on
+
     def __init__(self) -> None:
         super().__init__()
         self._name_generator = gge.name_generator.NameGenerator()
+
+    def __default_token__(self, token: lark.Token) -> typing.Any:
+        self._raise_if_not_running()
+
+        if token.value in BackboneSynthetizer._USELESS_MARKERS:
+            return None
+
+        return super().__default_token__(token)
 
     def _create_layer_name(self, prefix: str | type) -> str:
         self._raise_if_not_running()
@@ -210,6 +230,14 @@ class BackboneSynthetizer(lgp.LowerGrammarTransformer):
     def SWISH(self, token: lark.Token) -> gl.Swish:
         self._raise_if_not_running()
         return gl.Swish(name=self._create_layer_name(gl.Swish))
+
+    def FLIP_MODE(self, token: lark.Token) -> str:
+        self._raise_if_not_running()
+
+        if token not in gl.FLIP_MODES:
+            raise ValueError(f"unexpected token for FLIP_MODE=<{token.value}>")
+
+        return typing.cast(str, token.value)
 
 
 def parse(

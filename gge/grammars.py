@@ -347,13 +347,7 @@ class Grammar:
 
 
 class ExpectedTerminal(enum.Enum):
-    DATA_AUGMENTATION = Terminal('"data_augmentation"')
-    ROTATION = Terminal('"rotation"')
-    WIDTH_SHIFT = Terminal('"width_shift"')
-    HEIGHT_SHIFT = Terminal('"height_shift"')
-    ZOOM = Terminal('"zoom"')
-    HORIZONTAL_FLIP = Terminal('"horizontal_flip"')
-    VERTICAL_FLIP = Terminal('"vertical_flip"')
+    DATA_AUGMENTATION = Terminal('"random_flip"')
 
     CONV = Terminal('"conv"')
     FILTER_COUNT = Terminal('"filter_count"')

@@ -1,7 +1,22 @@
+import pytest
 from hypothesis import given
+from loguru import logger
 
 import gge.backbones as bb
 import gge.tests.strategies.lower_grammar as lgs
+
+
+@pytest.fixture(autouse=True)
+def remove_logger_sinks() -> None:
+    logger.remove()
+
+
+@given(test_data=lgs.random_flips())
+def test_parse_random_flip(test_data: lgs.LayersTestData) -> None:
+    """Can parse random flip."""
+    actual = bb.parse(test_data.token_stream, start="backbone")
+    expected = bb.Backbone(test_data.parsed)
+    assert expected == actual
 
 
 @given(test_data=lgs.convs())
