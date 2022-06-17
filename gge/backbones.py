@@ -56,7 +56,7 @@ class BackboneSynthetizer(lgp.LowerGrammarTransformer):
     _USELESS_MARKERS = {
         '"random_flip"',
         '"conv"', '"filter_count"', '"kernel_size"', '"stride"',
-        '"maxpool"', '"avgpool"', '"pool_size"', '"batch_norm"',
+        '"maxpool"', '"avgpool"', '"pool_size"', '"batchnorm"',
         '"relu"', '"gelu"', '"swish"'
     }
     # fmt: on
@@ -114,12 +114,10 @@ class BackboneSynthetizer(lgp.LowerGrammarTransformer):
 
     def layer(self, layer: gl.Layer) -> gl.Layer:
         self._raise_if_not_running()
-
         return layer
 
     def random_flip(self, marker: None, mode: str) -> gl.RandomFlip:
         self._raise_if_not_running()
-
         assert mode in gl.FLIP_MODES
         return gl.RandomFlip(
             name=self._create_layer_name(gl.RandomFlip),
@@ -142,24 +140,20 @@ class BackboneSynthetizer(lgp.LowerGrammarTransformer):
     def filter_count(self, marker: None, count: int) -> int:
         self._raise_if_not_running()
         assert count >= 1
-
         return count
 
     def kernel_size(self, marker: None, stride: int) -> int:
         self._raise_if_not_running()
         assert stride >= 1
-
         return stride
 
     def stride(self, marker: None, size: int) -> int:
         self._raise_if_not_running()
         assert size >= 1
-
         return size
 
     def batchnorm(self, marker: None) -> gl.BatchNorm:
         self._raise_if_not_running()
-
         return gl.BatchNorm(self._create_layer_name(gl.BatchNorm))
 
     def maxpool(self, marker: None, pool_size: int, stride: int) -> gl.MaxPool2D:
@@ -187,38 +181,6 @@ class BackboneSynthetizer(lgp.LowerGrammarTransformer):
         self._raise_if_not_running()
         return layer
 
-    def CONV(self, token: lark.Token) -> None:
-        self._raise_if_not_running()
-        return None
-
-    def FILTER_COUNT(self, token: lark.Token) -> None:
-        self._raise_if_not_running()
-        return None
-
-    def KERNEL_SIZE(self, token: lark.Token) -> None:
-        self._raise_if_not_running()
-        return None
-
-    def STRIDE(self, token: lark.Token) -> None:
-        self._raise_if_not_running()
-        return None
-
-    def MAXPOOL(self, token: lark.Token) -> None:
-        self._raise_if_not_running()
-        return None
-
-    def AVGPOOL(self, token: lark.Token) -> None:
-        self._raise_if_not_running()
-        return None
-
-    def POOL_SIZE(self, token: lark.Token) -> None:
-        self._raise_if_not_running()
-        return None
-
-    def BATCHNORM(self, token: lark.Token) -> None:
-        self._raise_if_not_running()
-        return None
-
     def RELU(self, token: lark.Token) -> gl.Relu:
         self._raise_if_not_running()
         return gl.Relu(name=self._create_layer_name(gl.Relu))
@@ -233,8 +195,7 @@ class BackboneSynthetizer(lgp.LowerGrammarTransformer):
 
     def FLIP_MODE(self, token: lark.Token) -> str:
         self._raise_if_not_running()
-
-        if token not in gl.FLIP_MODES:
+        if token.value not in gl.FLIP_MODES:
             raise ValueError(f"unexpected token for FLIP_MODE=<{token.value}>")
 
         return typing.cast(str, token.value)
