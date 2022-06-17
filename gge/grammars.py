@@ -437,38 +437,30 @@ def make_list_of_options(parts: typing.Any) -> list[RuleOption]:
 
 
 class GrammarTransformer(gge_transformers.SinglePassTransformer):
+
+    # This set contains names of grammar rules that always appear in the form
+    # `rule_name: marker value` and which the node-visiting process consists in
+    # calling `make_list_of_marker_value_pairs`.
+    # This set is used  to remove a lot of boilerplate code.
+    # For more information, see:
+    # - `make_list_of_marker_value_pairs`.
+    # - `GrammarTransformer.__default__`
+    # fmt: off
+    _RULES_OF_MARKERS_VALUE_PAIRS = {
+        "rotation", "width_shift", "height_shift", "zoom",
+        "horizontal_flip", "vertical_flip",
+        "filter_count", "kernel_size", "strides", "pool_sizes",
+        "learning_rate", "momentum", "nesterov",
+        "beta1", "beta2", "epsilon", "amsgrad",
+    }
+    # fmt: on
+
+    # This set is also used to remove boilplate code.
+    # For more information, see: `GrammarTransformer.__default_token__`
+    _KNOWN_TERMINALS = {terminal.value.text for terminal in ExpectedTerminal}
+
     def __init__(self) -> None:
         super().__init__()
-
-        # set of known terminals, used to simplify 'terminal registration'.
-        # see self.__default_token__
-        self._expected_tokens: set[str] = {
-            terminal.value.text for terminal in ExpectedTerminal
-        }
-
-        # set of terminals that are always in the form `"marker" value`,
-        # used to simplify generation of pairs of tokens.
-        # see self.__default__
-        data_aug_params = {
-            "rotation",
-            "width_shift",
-            "height_shift",
-            "zoom",
-            "horizontal_flip",
-            "vertical_flip",
-        }
-        conv_params = {"filter_count", "kernel_size", "strides"}
-        pooling_params = {"pool_sizes"}
-        sgd_params = {"learning_rate", "momentum", "nesterov"}
-        adam_params = {"beta1", "beta2", "epsilon", "amsgrad"}
-        self.known_marker_value_pairs = set.union(
-            data_aug_params,
-            conv_params,
-            pooling_params,
-            sgd_params,
-            adam_params,
-        )
-
         self._terminals: list[Terminal] = []
         self._nonterminals: list[NonTerminal] = []
         self._rules: list[ProductionRule] = []
@@ -482,7 +474,7 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
     ) -> typing.Any:
         self._raise_if_not_running()
 
-        if data.value in self.known_marker_value_pairs:
+        if data.value in GrammarTransformer._RULES_OF_MARKERS_VALUE_PAIRS:
             return make_list_of_marker_value_pairs(children)
 
         return super().__default__(data, children, meta)
@@ -490,8 +482,9 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
     def __default_token__(self, token: lark.Token) -> typing.Any:
         self._raise_if_not_running()
 
-        if token.value in self._expected_tokens:
+        if token.value in GrammarTransformer._KNOWN_TERMINALS:
             return self._register_terminal(token.value)
+
         if token.value in ['"fork"', '"merge"']:
             # raise NotImplementedError("WRITE TESTS")
             return self._register_terminal(token.value)

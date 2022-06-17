@@ -49,9 +49,10 @@ class Backbone:
 
 @lark.v_args(inline=True)
 class BackboneSynthetizer(lgp.LowerGrammarTransformer):
-
-    # list of tokens which, when visited, are just transformed
-    # into None
+    # This set contains terminals that, when visited/processed,
+    # are just converted into `None`.
+    # It is used in `BackboneSynthetizer.__default_token__` to remove
+    # boilerplate code.
     # fmt: off
     _USELESS_MARKERS = {
         '"random_flip"',
@@ -119,6 +120,7 @@ class BackboneSynthetizer(lgp.LowerGrammarTransformer):
     def random_flip(self, marker: None, mode: str) -> gl.RandomFlip:
         self._raise_if_not_running()
         assert mode in gl.FLIP_MODES
+
         return gl.RandomFlip(
             name=self._create_layer_name(gl.RandomFlip),
             mode=mode,
