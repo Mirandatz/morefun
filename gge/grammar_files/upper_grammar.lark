@@ -1,5 +1,5 @@
 start       : _NL* rule+
-rule        : NONTERMINAL ":" (data_augmentation | layer | block | optimizer)
+rule        : NONTERMINAL ":" (layer | block | optimizer)
 NONTERMINAL : NAME
 
 block        : block_option ("|" block_option)*
@@ -9,14 +9,6 @@ maybe_fork   : [FORK]
 
 symbol_range : NONTERMINAL ["~" RANGE_BOUND [".." RANGE_BOUND]]
 RANGE_BOUND  : INT
-
-data_augmentation : DATA_AUGMENTATION rotation width_shift height_shift zoom horizontal_flip vertical_flip _NL*
-rotation          : ROTATION _float_args
-width_shift       : WIDTH_SHIFT _float_args
-height_shift      : HEIGHT_SHIFT _float_args
-zoom              : ZOOM _float_args
-horizontal_flip   : HORIZONTAL_FLIP _bool_args
-vertical_flip     : VERTICAL_FLIP _bool_args
 
 layer        : (conv_layer | max_pooling_layer | avg_pooling_layer | batchnorm_layer | activation_layer) _NL*
 

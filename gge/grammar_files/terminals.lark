@@ -1,11 +1,3 @@
-DATA_AUGMENTATION : /"data_augmentation"/
-ROTATION          : /"rotation"/
-WIDTH_SHIFT       : /"width_shift"/
-HEIGHT_SHIFT      : /"height_shift"/
-ZOOM              : /"zoom"/
-HORIZONTAL_FLIP   : /"horizontal_flip"/
-VERTICAL_FLIP     : /"vertical_flip"/
-
 RANDOM_FLIP : /"random_flip"/
 FLIP_MODE   : "horizontal" | "vertical" | "horizontal_and_vertical"
 

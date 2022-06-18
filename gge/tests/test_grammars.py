@@ -1,19 +1,14 @@
 import itertools
 
-import pytest
 from hypothesis import given
 
 import gge.grammars as gr
 import gge.tests.strategies.upper_grammar as ugs
 
+# autouse fixture
+from gge.tests.fixtures import remove_logger_sinks  # noqa
+
 START = gr.NonTerminal("start")
-
-
-@pytest.fixture(autouse=True)
-def disable_logger() -> None:
-    from loguru import logger
-
-    logger.remove()
 
 
 def test_start_symbol() -> None:
