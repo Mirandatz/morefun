@@ -6,15 +6,12 @@ import tensorflow as tf
 from loguru import logger
 
 import gge.composite_genotypes as cg
-import gge.data_augmentations as gda
 import gge.debugging as debug
 import gge.grammars as gr
 import gge.layers as gl
 import gge.phenotypes as pheno
 import gge.randomness as rand
 import gge.redirection as redirection
-
-DataGen: typing.TypeAlias = tf.keras.preprocessing.image.DirectoryIterator
 
 
 def make_classification_head(class_count: int, input_tensor: tf.Tensor) -> tf.Tensor:
@@ -54,12 +51,30 @@ def make_classification_model(
     return model
 
 
+def load_dataset_and_rescale(
+    directory: pathlib.Path,
+    input_shape: gl.Shape,
+    color_mode: typing.Literal["grayscale", "rgb"],
+) -> tf.data.Dataset:
+    ds: tf.data.Dataset = tf.keras.utils.image_dataset_from_directory(
+        directory=directory,
+        batch_size=None,
+        image_size=(input_shape.height, input_shape.width),
+        label_mode="categorical",
+        shuffle=False,
+        color_mode=color_mode,
+    )
+
+    rescaling_layer = tf.keras.Sequential([tf.keras.layers.Rescaling(1.0 / 255)])
+    return ds.map(lambda d, t: (rescaling_layer(d, training=True), t))
+
+
 @attrs.frozen
 class ValidationAccuracy:
-    train_directory: pathlib.Path
-    validation_directory: pathlib.Path
-    data_augmentation: gda.DataAugmentation
+    train_dir: pathlib.Path
+    validation_dir: pathlib.Path
     input_shape: gl.Shape
+    color_mode: typing.Literal["grayscale", "rgb"]
     batch_size: int
     max_epochs: int
     class_count: int
@@ -68,36 +83,46 @@ class ValidationAccuracy:
         assert self.batch_size > 0, self.batch_size
         assert self.max_epochs > 0, self.max_epochs
         assert self.class_count > 1, self.class_count
-        assert self.train_directory.is_dir(), self.train_directory
-        assert self.validation_directory.is_dir(), self.validation_directory
-        assert self.train_directory != self.validation_directory
+        assert self.train_dir.is_dir()
+        assert self.validation_dir.is_dir()
 
-    def get_train_generator(self) -> DataGen:
+    def get_train_dataset(self) -> tf.data.Dataset:
         with redirection.discard_stderr_and_stdout():
-            data_generator = self.data_augmentation.to_tensorflow_data_generator()
-            return data_generator.flow_from_directory(
-                directory=self.train_directory,
-                batch_size=self.batch_size,
-                target_size=(self.input_shape.width, self.input_shape.height),
-                shuffle=True,
-                seed=rand.get_rng_seed(),
+            train = load_dataset_and_rescale(
+                directory=self.train_dir,
+                input_shape=self.input_shape,
+                color_mode=self.color_mode,
             )
 
-    def get_validation_generator(self) -> DataGen:
+        return (
+            train.cache()
+            .shuffle(
+                buffer_size=train.cardinality().numpy(),
+                seed=rand.get_rng_seed(),
+                reshuffle_each_iteration=True,
+            )
+            .batch(self.batch_size, drop_remainder=True)
+            .prefetch(tf.data.AUTOTUNE)
+        )
+
+    def get_validation_dataset(self) -> tf.data.Dataset:
         with redirection.discard_stderr_and_stdout():
             return (
-                tf.keras.preprocessing.image.ImageDataGenerator().flow_from_directory(
-                    directory=self.validation_directory,
-                    batch_size=self.batch_size,
-                    target_size=(self.input_shape.width, self.input_shape.height),
+                load_dataset_and_rescale(
+                    directory=self.validation_dir,
+                    input_shape=self.input_shape,
+                    color_mode=self.color_mode,
                 )
+                .cache()
+                .batch(self.batch_size, drop_remainder=False)
+                .prefetch(tf.data.AUTOTUNE)
             )
 
     def evaluate(self, phenotype: pheno.Phenotype) -> float:
         logger.debug(f"starting fitness evaluation, phenotype=<{phenotype}>")
 
-        train_data = self.get_train_generator()
-        val_data = self.get_validation_generator()
+        train = self.get_train_dataset()
+        validation = self.get_validation_dataset()
         model = make_classification_model(
             phenotype,
             self.input_shape,
@@ -106,11 +131,9 @@ class ValidationAccuracy:
 
         with redirection.discard_stderr_and_stdout():
             fitting_result = model.fit(
-                train_data,
+                train,
                 epochs=self.max_epochs,
-                steps_per_epoch=train_data.samples // self.batch_size,
-                validation_data=val_data,
-                validation_steps=val_data.samples // self.batch_size,
+                validation_data=validation,
                 verbose=0,
             )
 

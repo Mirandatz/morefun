@@ -6,7 +6,6 @@ import tensorflow as tf
 import gge.backbones as bb
 import gge.composite_genotypes as cg
 import gge.connections as conn
-import gge.data_augmentations as gda
 import gge.grammars as gr
 import gge.layers as gl
 import gge.optimizers as optim
@@ -19,7 +18,6 @@ class Phenotype:
     This class exists mostly to be tracked by the NoveltyTracker.
     """
 
-    data_augmentation: gda.DataAugmentation = attrs.field(repr=False)
     backbone: bb.Backbone = attrs.field(repr=False)
     connections: conn.ConnectionsSchema = attrs.field(repr=False)
     optimizer: optim.Optimizer = attrs.field(repr=False)
@@ -32,11 +30,9 @@ def translate(
     grammar: gr.Grammar,
 ) -> Phenotype:
     tokenstream = sge.map_to_tokenstream(genotype.backbone_genotype, grammar)
-    data_aug = gda.parse(tokenstream)
     backbone = bb.parse(tokenstream)
     optimizer = optim.parse(tokenstream)
     return Phenotype(
-        data_aug,
         backbone,
         genotype.connections_genotype,
         optimizer,
