@@ -21,6 +21,28 @@ def conv2ds(
 
 
 @hs.composite
+def random_flips(
+    draw: hs.DrawFn, *, name_gen: NameGenerator | None = None
+) -> gl.RandomFlip:
+    name_gen = name_gen or NameGenerator()
+    return gl.RandomFlip(
+        name=name_gen.gen_name(gl.RandomFlip),
+        mode=draw(hs.sampled_from(gl.FLIP_MODES)),
+    )
+
+
+@hs.composite
+def random_rotations(
+    draw: hs.DrawFn, *, name_gen: NameGenerator | None = None
+) -> gl.RandomRotation:
+    name_gen = name_gen or NameGenerator()
+    return gl.RandomRotation(
+        name=name_gen.gen_name(gl.RandomRotation),
+        factor=draw(hs.floats(min_value=0, max_value=1)),
+    )
+
+
+@hs.composite
 def shapes(draw: hs.DrawFn) -> gl.Shape:
     return gl.Shape(
         width=draw(hs.integers(min_value=1, max_value=8196)),

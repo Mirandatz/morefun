@@ -1,6 +1,6 @@
 import hypothesis
 import hypothesis.strategies as hs
-import tensorflow as tf
+import keras.layers as kl
 from hypothesis import assume, example, given
 
 import gge.layers as gl
@@ -130,3 +130,27 @@ def test_conv2d_tensor_shape(layer: gl.ConnectedConv2D) -> None:
     assert expected_width == actual_shape.width
     assert expected_height == actual_shape.height
     assert expected_depth == actual_shape.depth
+
+
+@hypothesis.settings(deadline=1000)
+@given(ls.random_flips())
+def test_random_flip_tensorflow(layer: gl.RandomFlip) -> None:
+    """Can convert a RandomFlip layer to its Tensorflow equivalent."""
+
+    tf_layer = layer.to_tensorflow({})
+
+    assert isinstance(tf_layer, kl.RandomFlip)
+    assert tf_layer.mode == layer.mode
+    assert tf_layer.seed == layer.seed
+
+
+@hypothesis.settings(deadline=1000)
+@given(ls.random_rotations())
+def test_random_rotation_to_tensorflow(layer: gl.RandomRotation) -> None:
+    """Can convert a RandomRotation layer to its Tensorflow equivalent."""
+
+    tf_layer = layer.to_tensorflow({})
+
+    assert isinstance(tf_layer, kl.RandomRotation)
+    assert tf_layer.factor == layer.factor
+    assert tf_layer.seed == layer.seed

@@ -39,6 +39,15 @@ def make_merge(name: str) -> MarkerLayer:
     return MarkerLayer(name, MarkerType.MERGE_POINT)
 
 
+class ConvertibleToTensorflowLayer(abc.ABC):
+    @abc.abstractmethod
+    def to_tensorflow(
+        self,
+        known_layers: dict["ConvertibleToTensorflowLayer", kl.Layer],
+    ) -> kl.Layer:
+        raise NotImplementedError("this is an abstract method")
+
+
 class ConvertibleToConnectableLayer(abc.ABC):
     @abc.abstractmethod
     def to_connectable(self, input: "ConnectableLayer") -> "ConnectableLayer":
@@ -52,7 +61,7 @@ FLIP_MODES = [HORIZONTAL, VERTICAL, HORIZONTAL_AND_VERTICAL]
 
 
 @attrs.frozen(cache_hash=True)
-class RandomFlip(ConvertibleToConnectableLayer):
+class RandomFlip(ConvertibleToTensorflowLayer, ConvertibleToConnectableLayer):
     name: str
     mode: str
     seed: int = rand.get_rng_seed()
@@ -64,12 +73,22 @@ class RandomFlip(ConvertibleToConnectableLayer):
 
         assert self.mode in FLIP_MODES
 
+    def to_tensorflow(
+        self, known_layers: dict["ConvertibleToTensorflowLayer", kl.Layer]
+    ) -> kl.Layer:
+        if self not in known_layers:
+            known_layers[self] = kl.RandomFlip(
+                mode=self.mode,
+                seed=self.seed,
+            )
+        return known_layers[self]
+
     def to_connectable(self, input: "ConnectableLayer") -> "ConnectedRandomFlip":
         return ConnectedRandomFlip(input, self)
 
 
 @attrs.frozen(cache_hash=True)
-class RandomRotation(ConvertibleToConnectableLayer):
+class RandomRotation(ConvertibleToTensorflowLayer, ConvertibleToConnectableLayer):
     name: str
     factor: float
     seed: int = rand.get_rng_seed()
@@ -80,6 +99,17 @@ class RandomRotation(ConvertibleToConnectableLayer):
         assert isinstance(self.seed, int)
 
         assert 0 <= self.factor <= 1
+
+    def to_tensorflow(
+        self,
+        known_layers: dict[ConvertibleToTensorflowLayer, kl.Layer],
+    ) -> kl.RandomRotation:
+        if self not in known_layers:
+            known_layers[self] = kl.RandomRotation(
+                factor=self.factor,
+                seed=self.seed,
+            )
+        return known_layers[self]
 
     def to_connectable(self, input: "ConnectableLayer") -> "ConnectedRandomRotation":
         return ConnectedRandomRotation(input, self)
