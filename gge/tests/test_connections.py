@@ -102,7 +102,7 @@ def test_merge_downsample_add(shapes: ls.ShapePair) -> None:
         params=gl.BatchNorm(name="bn"),
     )
 
-    source1 = gl.ConnectedMaxPooling2D(
+    source1 = gl.ConnectedMaxPool2D(
         input_layer=input_layer,
         params=gl.MaxPool2D("maxpool", pool_size=1, stride=shapes.ratio),
     )
@@ -131,7 +131,7 @@ def test_merge_downsample_concat(shapes: ls.ShapePair) -> None:
         params=gl.BatchNorm(name="bn"),
     )
 
-    source1 = gl.ConnectedMaxPooling2D(
+    source1 = gl.ConnectedMaxPool2D(
         input_layer=input_layer,
         params=gl.MaxPool2D("maxpool", pool_size=1, stride=shapes.ratio),
     )
@@ -160,7 +160,7 @@ def test_merge_upsample_concat(shapes: ls.ShapePair) -> None:
         params=gl.BatchNorm(name="bn"),
     )
 
-    source1 = gl.ConnectedMaxPooling2D(
+    source1 = gl.ConnectedMaxPool2D(
         input_layer=input_layer,
         params=gl.MaxPool2D("maxpool", pool_size=1, stride=shapes.ratio),
     )

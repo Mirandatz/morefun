@@ -287,7 +287,7 @@ class ConnectedConv2D(SingleInputLayer):
         return f"{self.params.name}, params={self.params}, input={self.input_layer}, out_shape=[{self.output_shape}]"
 
 
-# TODO: Must rename this later
+# TODO: Rename this and `ConnectedConv2DTranspose`
 @attrs.frozen(cache_hash=True)
 class Conv2DTranspose(ConvertibleToConnectableLayer):
     name: str
@@ -310,7 +310,7 @@ class Conv2DTranspose(ConvertibleToConnectableLayer):
         return ConnectedConv2DTranspose(input, self)
 
 
-# MUST RENAME THIS LATER
+# TODO: Rename this and `Conv2DTranspose`
 @attrs.frozen(cache_hash=True)
 class ConnectedConv2DTranspose(SingleInputLayer):
     input_layer: ConnectableLayer
@@ -383,12 +383,12 @@ class MaxPool2D(ConvertibleToConnectableLayer):
         assert self.pool_size > 0
         assert self.stride > 0
 
-    def to_connectable(self, input: "ConnectableLayer") -> "ConnectedMaxPooling2D":
-        return ConnectedMaxPooling2D(input, self)
+    def to_connectable(self, input: "ConnectableLayer") -> "ConnectedMaxPool2D":
+        return ConnectedMaxPool2D(input, self)
 
 
 @attrs.frozen(cache_hash=True)
-class ConnectedMaxPooling2D(SingleInputLayer):
+class ConnectedMaxPool2D(SingleInputLayer):
     input_layer: ConnectableLayer
     params: MaxPool2D
 
@@ -450,12 +450,12 @@ class AvgPool2D(ConvertibleToConnectableLayer):
         assert self.pool_size > 0
         assert self.stride > 0
 
-    def to_connectable(self, input: "ConnectableLayer") -> "ConnectedAveragePooling2D":
-        return ConnectedAveragePooling2D(input, self)
+    def to_connectable(self, input: "ConnectableLayer") -> "ConnectedAvgPool2D":
+        return ConnectedAvgPool2D(input, self)
 
 
 @attrs.frozen(cache_hash=True)
-class ConnectedAveragePooling2D(SingleInputLayer):
+class ConnectedAvgPool2D(SingleInputLayer):
     input_layer: ConnectableLayer
     params: AvgPool2D
 
