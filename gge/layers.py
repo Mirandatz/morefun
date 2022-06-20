@@ -9,6 +9,8 @@ import attrs
 import keras.layers as kl
 import tensorflow as tf
 
+import gge.randomness as rand
+
 
 @enum.unique
 class MarkerType(enum.Enum):
@@ -52,18 +54,35 @@ FLIP_MODES = [HORIZONTAL, VERTICAL, HORIZONTAL_AND_VERTICAL]
 @attrs.frozen(cache_hash=True)
 class RandomFlip(ConvertibleToConnectableLayer):
     name: str
-    seed: int
     mode: str
+    seed: int = rand.get_rng_seed()
 
     def __attrs_post_init__(self) -> None:
         assert isinstance(self.name, str)
-        assert isinstance(self.seed, int)
         assert isinstance(self.mode, str)
+        assert isinstance(self.seed, int)
 
         assert self.mode in FLIP_MODES
 
     def to_connectable(self, input: "ConnectableLayer") -> "ConnectedRandomFlip":
         return ConnectedRandomFlip(input, self)
+
+
+@attrs.frozen(cache_hash=True)
+class RandomRotation(ConvertibleToConnectableLayer):
+    name: str
+    factor: float
+    seed: int = rand.get_rng_seed()
+
+    def __attrs_post_init__(self) -> None:
+        assert isinstance(self.name, str)
+        assert isinstance(self.factor, float)
+        assert isinstance(self.seed, int)
+
+        assert 0 <= self.factor <= 1
+
+    def to_connectable(self, input: "ConnectableLayer") -> "ConnectedRandomRotation":
+        return ConnectedRandomRotation(input, self)
 
 
 @attrs.frozen(cache_hash=True)
@@ -341,6 +360,43 @@ class ConnectedRandomFlip(SingleInputLayer):
 
             layer = kl.RandomFlip(
                 mode=self.params.mode,
+                seed=self.params.seed,
+                name=self.params.name,
+            )
+            tensor = layer(source)
+            known_tensors[self] = tensor
+
+        return known_tensors[self]
+
+    def __repr__(self) -> str:
+        return f"{self.params.name}, params={self.params}, input={self.input_layer}, out_shape=[{self.output_shape}]"
+
+
+@attrs.frozen(cache_hash=True)
+class ConnectedRandomRotation(SingleInputLayer):
+    input_layer: ConnectableLayer
+    params: RandomRotation
+
+    def __attrs_post_init__(self) -> None:
+        assert isinstance(self.input_layer, ConnectableLayer)
+        assert isinstance(self.params, RandomRotation)
+
+    @property
+    def name(self) -> str:
+        return self.params.name
+
+    @property
+    def output_shape(self) -> Shape:
+        return self.input_layer.output_shape
+
+    def to_tensor(
+        self,
+        known_tensors: dict["ConnectableLayer", tf.Tensor],
+    ) -> tf.Tensor:
+        if self not in known_tensors:
+            source = self.input_layer.to_tensor(known_tensors)
+            layer = kl.RandomRotation(
+                factor=self.params.factor,
                 seed=self.params.seed,
                 name=self.params.name,
             )

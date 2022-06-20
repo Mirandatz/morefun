@@ -3,7 +3,6 @@ import hypothesis.strategies as hs
 
 import gge.layers as gl
 import gge.optimizers as optim
-import gge.randomness as rand
 from gge.name_generator import NameGenerator
 
 
@@ -20,8 +19,20 @@ def random_flips(
     name_gen = name_gen or NameGenerator()
     name = name_gen.gen_name(gl.RandomFlip)
     mode = draw(hs.sampled_from(gl.FLIP_MODES))
-    layer = gl.RandomFlip(name, seed=rand.get_rng_seed(), mode=mode)
+    layer = gl.RandomFlip(name, mode)
     token_stream = f'"random_flip" {mode}'
+    return LayersTestData(token_stream, (layer,))
+
+
+@hs.composite
+def random_rotations(
+    draw: hs.DrawFn, *, name_gen: NameGenerator | None = None
+) -> LayersTestData:
+    name_gen = name_gen or NameGenerator()
+    name = name_gen.gen_name(gl.RandomRotation)
+    factor = draw(hs.floats(min_value=0, max_value=1))
+    layer = gl.RandomRotation(name, factor)
+    token_stream = f'"random_rotation" {factor}'
     return LayersTestData(token_stream, (layer,))
 
 

@@ -3,13 +3,15 @@ start: backbone optimizer
 backbone : block+
 block    : MERGE? layer FORK?
 layer    : random_flip
+         | random_rotation
          | conv
          | maxpool
          | avgpool
          | batchnorm
          | activation
 
-random_flip : RANDOM_FLIP FLIP_MODE    
+random_flip     : RANDOM_FLIP FLIP_MODE
+random_rotation : RANDOM_ROTATION FLOAT
 
 conv         : CONV filter_count kernel_size stride
 filter_count : FILTER_COUNT INT
@@ -38,7 +40,7 @@ epsilon : EPSILON FLOAT
 amsgrad : AMSGRAD BOOL
 
 // using multiple imports just for aesthetic reasons
-%import .terminals (RANDOM_FLIP, FLIP_MODE)
+%import .terminals (RANDOM_FLIP, FLIP_MODE, RANDOM_ROTATION)
 %import .terminals (MERGE, FORK)
 %import .terminals (RELU, GELU, SWISH)
 %import .terminals (CONV, FILTER_COUNT, KERNEL_SIZE, STRIDE)

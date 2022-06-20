@@ -53,14 +53,21 @@ class BackboneSynthetizer(lgp.LowerGrammarTransformer):
     # are just converted into `None`.
     # It is used in `BackboneSynthetizer.__default_token__` to remove
     # boilerplate code.
-    # fmt: off
     _USELESS_MARKERS = {
         '"random_flip"',
-        '"conv"', '"filter_count"', '"kernel_size"', '"stride"',
-        '"maxpool"', '"avgpool"', '"pool_size"', '"batchnorm"',
-        '"relu"', '"gelu"', '"swish"'
+        '"random_rotation"',
+        '"conv"',
+        '"filter_count"',
+        '"kernel_size"',
+        '"stride"',
+        '"maxpool"',
+        '"avgpool"',
+        '"pool_size"',
+        '"batchnorm"',
+        '"relu"',
+        '"gelu"',
+        '"swish"',
     }
-    # fmt: on
 
     def __init__(self) -> None:
         super().__init__()
@@ -124,6 +131,17 @@ class BackboneSynthetizer(lgp.LowerGrammarTransformer):
         return gl.RandomFlip(
             name=self._create_layer_name(gl.RandomFlip),
             mode=mode,
+            seed=rand.get_rng_seed(),
+        )
+
+    def random_rotation(self, marker: None, factor: float) -> gl.RandomRotation:
+        self._raise_if_not_running()
+        assert isinstance(factor, float)
+        assert 0 <= factor <= 1
+
+        return gl.RandomRotation(
+            name=self._create_layer_name(gl.RandomRotation),
+            factor=factor,
             seed=rand.get_rng_seed(),
         )
 
