@@ -1,12 +1,11 @@
 import hypothesis
 import hypothesis.strategies as hs
-import pytest
+import tensorflow as tf
 from hypothesis import assume, example, given
 
 import gge.layers as gl
 import gge.tests.strategies.layers as ls
-
-tensorflow_settings = hypothesis.settings(deadline=1000)
+from gge.tests.fixtures import hide_gpu_from_tensorflow, remove_logger_sinks  # noqa
 
 
 @given(
@@ -118,16 +117,7 @@ def test_conv2d_output_shape(
     assert expected == actual
 
 
-# This ensures that tensorflow allocates memory on the cpu,
-# which greatly reduces test run times (and resources required)
-@pytest.fixture(autouse=True)
-def disable_gpu() -> None:
-    import tensorflow
-
-    tensorflow.config.set_visible_devices([], "GPU")
-
-
-@tensorflow_settings
+@hypothesis.settings(deadline=1000)
 @given(ls.connected_conv2ds())
 def test_conv2d_tensor_shape(layer: gl.ConnectedConv2D) -> None:
     """Output shape of ConnectedConv2D layer should match the tensor equivalent."""
