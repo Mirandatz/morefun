@@ -109,6 +109,61 @@ Layer: typing.TypeAlias = ConvertibleToConnectableLayer | MarkerLayer
 
 
 @attrs.frozen(cache_hash=True)
+class Resizing(ConvertibleToConnectableLayer):
+    name: str
+    target_height: int
+    target_width: int
+
+    def __attrs_post_init__(self) -> None:
+        assert isinstance(self.name, str)
+        assert isinstance(self.target_height, int)
+        assert isinstance(self.target_width, int)
+
+        assert self.target_height >= 1
+        assert self.target_width >= 1
+
+    def to_connectable(self, input: "ConnectableLayer") -> "ConnectedResizing":
+        return ConnectedResizing(input, self)
+
+
+@attrs.frozen(cache_hash=True)
+class ConnectedResizing(SingleInputLayer):
+    input_layer: ConnectableLayer
+    params: Resizing
+
+    def __attrs_post_init__(self) -> None:
+        assert isinstance(self.input_layer, ConnectableLayer)
+        assert isinstance(self.params, Resizing)
+
+    @property
+    def name(self) -> str:
+        return self.params.name
+
+    @property
+    def output_shape(self) -> Shape:
+        return self.input_layer.output_shape
+
+    def to_tensor(
+        self,
+        known_tensors: dict["ConnectableLayer", tf.Tensor],
+    ) -> tf.Tensor:
+        if self not in known_tensors:
+            source = self.input_layer.to_tensor(known_tensors)
+            layer = kl.Resizing(
+                height=self.params.target_height,
+                width=self.params.target_width,
+                name=self.params.name,
+            )
+            tensor = layer(source)
+            known_tensors[self] = tensor
+
+        return known_tensors[self]
+
+    def __repr__(self) -> str:
+        return f"{self.params.name}, params={self.params}, input={self.input_layer}, out_shape=[{self.output_shape}]"
+
+
+@attrs.frozen(cache_hash=True)
 class RandomFlip(ConvertibleToConnectableLayer):
     name: str
     mode: str
