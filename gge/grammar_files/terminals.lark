@@ -1,6 +1,9 @@
 RANDOM_FLIP     : /"random_flip"/
 FLIP_MODE       : "horizontal" | "vertical" | "horizontal_and_vertical"
 RANDOM_ROTATION : /"random_rotation"/
+RESIZING        : /"resizing"/
+TARGET_HEIGHT   : /"target_height"/
+TARGET_WIDTH    : /"target_width"/
 
 MERGE         : /"merge"/
 FORK          : /"fork"/

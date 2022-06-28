@@ -56,6 +56,9 @@ class BackboneSynthetizer(lgp.LowerGrammarTransformer):
     _USELESS_MARKERS = {
         '"random_flip"',
         '"random_rotation"',
+        '"resizing"',
+        '"target_height"',
+        '"target_width"',
         '"conv"',
         '"filter_count"',
         '"kernel_size"',
@@ -69,9 +72,30 @@ class BackboneSynthetizer(lgp.LowerGrammarTransformer):
         '"swish"',
     }
 
+    # This set is also used to remove boilplate code.
+    # For more information, see: `BackboneSynthetizer.__default_token__`
+    _RULES_OF_MARKERS_VALUE_PAIRS = {
+        "target_height",
+        "target_width",
+    }
+
     def __init__(self) -> None:
         super().__init__()
         self._name_generator = gge.name_generator.NameGenerator()
+
+    def __default__(
+        self,
+        data: lark.Token,
+        children: list[typing.Any],
+        meta: typing.Any,
+    ) -> typing.Any:
+        self._raise_if_not_running()
+
+        if data.value in BackboneSynthetizer._RULES_OF_MARKERS_VALUE_PAIRS:
+            marker, value = children
+            return value
+
+        return super().__default__(data, children, meta)
 
     def __default_token__(self, token: lark.Token) -> typing.Any:
         self._raise_if_not_running()
@@ -143,6 +167,17 @@ class BackboneSynthetizer(lgp.LowerGrammarTransformer):
             name=self._create_layer_name(gl.RandomRotation),
             factor=factor,
             seed=rand.get_rng_seed(),
+        )
+
+    def resizing(
+        self, marker: None, target_height: int, target_width: int
+    ) -> gl.Resizing:
+        self._raise_if_not_running()
+
+        return gl.Resizing(
+            name=self._create_layer_name(gl.Resizing),
+            target_height=target_height,
+            target_width=target_width,
         )
 
     def conv(

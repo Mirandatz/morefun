@@ -37,6 +37,25 @@ def random_rotations(
 
 
 @hs.composite
+def resizings(
+    draw: hs.DrawFn, *, name_gen: NameGenerator | None = None
+) -> LayersTestData:
+    name_gen = name_gen or NameGenerator()
+    name = name_gen.gen_name(gl.Resizing)
+    target_height = draw(hs.integers(min_value=1, max_value=9999))
+    target_width = draw(hs.integers(min_value=1, max_value=9999))
+    tokenstream = (
+        f'"resizing" "target_height" {target_height} "target_width" {target_width}'
+    )
+    layer = gl.Resizing(
+        name,
+        target_height=target_height,
+        target_width=target_width,
+    )
+    return LayersTestData(tokenstream, (layer,))
+
+
+@hs.composite
 def convs(draw: hs.DrawFn, *, name_gen: NameGenerator | None = None) -> LayersTestData:
     name_gen = name_gen or NameGenerator()
     name = name_gen.gen_name(gl.Conv2D)

@@ -27,6 +27,14 @@ def test_parse_random_rotation(test_data: lgs.LayersTestData) -> None:
     assert expected == actual
 
 
+@given(test_data=lgs.resizings())
+def test_parse_resizing(test_data: lgs.LayersTestData) -> None:
+    """Can parse resizing."""
+    actual = bb.parse(test_data.token_stream, start="backbone")
+    expected = bb.Backbone(test_data.parsed)
+    assert expected == actual
+
+
 @given(test_data=lgs.convs())
 def test_parse_conv(test_data: lgs.LayersTestData) -> None:
     """Can parse conv."""
