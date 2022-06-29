@@ -77,6 +77,10 @@ class BackboneSynthetizer(lgp.LowerGrammarTransformer):
     _RULES_OF_MARKERS_VALUE_PAIRS = {
         "target_height",
         "target_width",
+        "filter_count",
+        "kernel_size",
+        "stride",
+        "pool_size",
     }
 
     def __init__(self) -> None:
@@ -192,21 +196,6 @@ class BackboneSynthetizer(lgp.LowerGrammarTransformer):
             stride=stride,
         )
 
-    def filter_count(self, marker: None, count: int) -> int:
-        self._raise_if_not_running()
-        assert count >= 1
-        return count
-
-    def kernel_size(self, marker: None, stride: int) -> int:
-        self._raise_if_not_running()
-        assert stride >= 1
-        return stride
-
-    def stride(self, marker: None, size: int) -> int:
-        self._raise_if_not_running()
-        assert size >= 1
-        return size
-
     def batchnorm(self, marker: None) -> gl.BatchNorm:
         self._raise_if_not_running()
         return gl.BatchNorm(self._create_layer_name(gl.BatchNorm))
@@ -226,11 +215,6 @@ class BackboneSynthetizer(lgp.LowerGrammarTransformer):
             pool_size=pool_size,
             stride=stride,
         )
-
-    def pool_size(self, marker: None, pool_size: int) -> int:
-        self._raise_if_not_running()
-        assert pool_size >= 1
-        return pool_size
 
     def activation(self, layer: gl.SingleInputLayer) -> gl.SingleInputLayer:
         self._raise_if_not_running()
