@@ -63,12 +63,6 @@ class ConnectableLayer(abc.ABC):
         # (e.g. because of skip connections).
         # If this happens, we want to ensure that all visits yield the same tensor reference;
         # `known_tensors` is used to track this process.
-
-        raise NotImplementedError("this is an abstract method")
-
-    @property
-    @abc.abstractmethod
-    def name(self) -> str:
         raise NotImplementedError("this is an abstract method")
 
 
@@ -136,12 +130,12 @@ class ConnectedResizing(SingleInputLayer):
         assert isinstance(self.params, Resizing)
 
     @property
-    def name(self) -> str:
-        return self.params.name
-
-    @property
     def output_shape(self) -> Shape:
-        return self.input_layer.output_shape
+        return Shape(
+            height=self.params.target_height,
+            width=self.params.target_width,
+            depth=self.input_layer.output_shape.depth,
+        )
 
     def to_tensor(
         self,
@@ -153,6 +147,64 @@ class ConnectedResizing(SingleInputLayer):
                 height=self.params.target_height,
                 width=self.params.target_width,
                 name=self.params.name,
+            )
+            tensor = layer(source)
+            known_tensors[self] = tensor
+
+        return known_tensors[self]
+
+    def __repr__(self) -> str:
+        return f"{self.params.name}, params={self.params}, input={self.input_layer}, out_shape=[{self.output_shape}]"
+
+
+@attrs.frozen(cache_hash=True)
+class RandomCrop(ConvertibleToConnectableLayer):
+    name: str
+    target_height: int
+    target_width: int
+    seed: int
+
+    def __attrs_post_init__(self) -> None:
+        assert isinstance(self.name, str)
+        assert isinstance(self.target_height, int)
+        assert isinstance(self.target_width, int)
+        assert isinstance(self.seed, int)
+
+        assert self.target_height >= 1
+        assert self.target_width >= 1
+
+    def to_connectable(self, input: "ConnectableLayer") -> "ConnectedRandomCrop":
+        return ConnectedRandomCrop(input, self)
+
+
+@attrs.frozen(cache_hash=True)
+class ConnectedRandomCrop(SingleInputLayer):
+    input_layer: ConnectableLayer
+    params: RandomCrop
+
+    def __attrs_post_init__(self) -> None:
+        assert isinstance(self.input_layer, ConnectableLayer)
+        assert isinstance(self.params, RandomCrop)
+
+    @property
+    def output_shape(self) -> Shape:
+        return Shape(
+            height=self.params.target_height,
+            width=self.params.target_width,
+            depth=self.input_layer.output_shape.depth,
+        )
+
+    def to_tensor(
+        self,
+        known_tensors: dict["ConnectableLayer", tf.Tensor],
+    ) -> tf.Tensor:
+        if self not in known_tensors:
+            source = self.input_layer.to_tensor(known_tensors)
+            layer = kl.RandomCrop(
+                height=self.params.target_height,
+                width=self.params.target_width,
+                name=self.params.name,
+                seed=self.params.seed,
             )
             tensor = layer(source)
             known_tensors[self] = tensor
@@ -188,10 +240,6 @@ class ConnectedRandomFlip(SingleInputLayer):
     def __attrs_post_init__(self) -> None:
         assert isinstance(self.input_layer, ConnectableLayer)
         assert isinstance(self.params, RandomFlip)
-
-    @property
-    def name(self) -> str:
-        return self.params.name
 
     @property
     def output_shape(self) -> Shape:
@@ -243,10 +291,6 @@ class ConnectedRandomRotation(SingleInputLayer):
     def __attrs_post_init__(self) -> None:
         assert isinstance(self.input_layer, ConnectableLayer)
         assert isinstance(self.params, RandomRotation)
-
-    @property
-    def name(self) -> str:
-        return self.params.name
 
     @property
     def output_shape(self) -> Shape:
@@ -302,10 +346,6 @@ class ConnectedConv2D(SingleInputLayer):
     def __attrs_post_init__(self) -> None:
         assert isinstance(self.input_layer, ConnectableLayer)
         assert isinstance(self.params, Conv2D)
-
-    @property
-    def name(self) -> str:
-        return self.params.name
 
     @property
     def output_shape(self) -> Shape:
@@ -374,10 +414,6 @@ class ConnectedConv2DTranspose(SingleInputLayer):
     def __attrs_post_init__(self) -> None:
         assert isinstance(self.input_layer, ConnectableLayer)
         assert isinstance(self.params, Conv2DTranspose)
-
-    @property
-    def name(self) -> str:
-        return self.params.name
 
     @property
     def output_shape(self) -> Shape:
@@ -452,10 +488,6 @@ class ConnectedMaxPool2D(SingleInputLayer):
         assert isinstance(self.params, MaxPool2D)
 
     @property
-    def name(self) -> str:
-        return self.params.name
-
-    @property
     def output_shape(self) -> Shape:
         input_shape = self.input_layer.output_shape
         params = self.params
@@ -519,10 +551,6 @@ class ConnectedAvgPool2D(SingleInputLayer):
         assert isinstance(self.params, AvgPool2D)
 
     @property
-    def name(self) -> str:
-        return self.params.name
-
-    @property
     def output_shape(self) -> Shape:
         input_shape = self.input_layer.output_shape
         params = self.params
@@ -580,10 +608,6 @@ class ConnectedBatchNorm(SingleInputLayer):
         assert isinstance(self.params, BatchNorm)
 
     @property
-    def name(self) -> str:
-        return self.params.name
-
-    @property
     def output_shape(self) -> Shape:
         return self.input_layer.output_shape
 
@@ -622,10 +646,6 @@ class ConnectedRelu(SingleInputLayer):
     def __attrs_post_init__(self) -> None:
         assert isinstance(self.input_layer, ConnectableLayer)
         assert isinstance(self.params, Relu)
-
-    @property
-    def name(self) -> str:
-        return self.params.name
 
     @property
     def output_shape(self) -> Shape:
@@ -671,10 +691,6 @@ class ConnectedGelu(SingleInputLayer):
         assert isinstance(self.params, Gelu)
 
     @property
-    def name(self) -> str:
-        return self.params.name
-
-    @property
     def output_shape(self) -> Shape:
         return self.input_layer.output_shape
 
@@ -718,10 +734,6 @@ class ConnectedSwish(SingleInputLayer):
         assert isinstance(self.params, Swish)
 
     @property
-    def name(self) -> str:
-        return self.params.name
-
-    @property
     def output_shape(self) -> Shape:
         return self.input_layer.output_shape
 
@@ -753,11 +765,6 @@ class Input(ConnectableLayer):
         assert isinstance(self.shape, Shape)
 
     @property
-    def name(self) -> str:
-        # We rely on this being a constant, do not change!
-        return Input.NAME
-
-    @property
     def output_shape(self) -> Shape:
         return self.shape
 
@@ -772,7 +779,7 @@ class Input(ConnectableLayer):
                     self.shape.height,
                     self.shape.depth,
                 ),
-                name=self.name,
+                name=Input.NAME,
             )
             known_tensors[self] = tensor
 
