@@ -308,7 +308,7 @@ def test_merge_parameters_constructor_empty_forks_mask() -> None:
 
 
 def test_select_target_shape_single_candidate() -> None:
-    candidates = [gl.Shape(1, 2, 3)]
+    candidates = [gl.Shape(height=2, width=1, depth=3)]
 
     chosen_upsample = conn.select_target_shape(
         candidates,

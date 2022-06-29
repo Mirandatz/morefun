@@ -14,8 +14,8 @@ from gge.tests.fixtures import hide_gpu_from_tensorflow, remove_logger_sinks  # 
 )
 def test_same_object_aspect_ratio(width: int, height: int, depth: int) -> None:
     """Two equal shapes should have the same aspect ratio."""
-    shape_a = gl.Shape(width, height, depth)
-    shape_b = gl.Shape(width, height, depth)
+    shape_a = gl.Shape(height=height, width=width, depth=depth)
+    shape_b = gl.Shape(height=height, width=width, depth=depth)
 
     assert shape_a.aspect_ratio == shape_b.aspect_ratio
 
@@ -29,8 +29,12 @@ def test_same_object_aspect_ratio(width: int, height: int, depth: int) -> None:
 @example(width=4, height=3, depth=19, factor=2)
 def test_same_aspect_ratio(width: int, height: int, depth: int, factor: int) -> None:
     """Shapes that are a factor of one another have the same aspect ratio."""
-    shape_a = gl.Shape(width, height, depth)
-    shape_b = gl.Shape(width * factor, height * factor, depth)
+    shape_a = gl.Shape(height=height, width=width, depth=depth)
+    shape_b = gl.Shape(
+        height=height * factor,
+        width=width * factor,
+        depth=depth,
+    )
 
     assert shape_a.aspect_ratio == shape_b.aspect_ratio
 
@@ -49,13 +53,13 @@ def test_different_aspect_ratio(
     assume(changing_side_b % changing_side_a != 0)
     assume(changing_side_a % changing_side_b != 0)
 
-    wide_a = gl.Shape(changing_side_a, base_side, depth)
-    wide_b = gl.Shape(changing_side_b, base_side, depth)
+    wide_a = gl.Shape(height=base_side, width=changing_side_a, depth=depth)
+    wide_b = gl.Shape(height=base_side, width=changing_side_b, depth=depth)
 
     assert wide_a.aspect_ratio != wide_b.aspect_ratio
 
-    high_a = gl.Shape(base_side, changing_side_a, depth)
-    high_b = gl.Shape(base_side, changing_side_b, depth)
+    high_a = gl.Shape(height=changing_side_a, width=base_side, depth=depth)
+    high_b = gl.Shape(height=changing_side_b, width=base_side, depth=depth)
 
     assert high_a.aspect_ratio != high_b.aspect_ratio
 
@@ -102,7 +106,7 @@ def test_conv2d_output_shape(
     input_height = output_height * stride
 
     connected = gl.ConnectedConv2D(
-        gl.Input(gl.Shape(input_width, input_height, depth)),
+        gl.Input(gl.Shape(height=input_height, width=input_width, depth=depth)),
         gl.Conv2D(
             name=layer_name,
             filter_count=filter_count,
@@ -112,7 +116,7 @@ def test_conv2d_output_shape(
     )
 
     actual = connected.output_shape
-    expected = gl.Shape(output_width, output_height, filter_count)
+    expected = gl.Shape(height=output_height, width=output_width, depth=filter_count)
     assert expected == actual
 
 
