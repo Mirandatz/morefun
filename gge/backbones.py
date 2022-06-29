@@ -57,6 +57,7 @@ class BackboneSynthetizer(lgp.LowerGrammarTransformer):
         '"random_flip"',
         '"random_rotation"',
         '"resizing"',
+        '"random_crop"',
         '"height"',
         '"width"',
         '"conv"',
@@ -182,6 +183,14 @@ class BackboneSynthetizer(lgp.LowerGrammarTransformer):
             name=self._create_layer_name(gl.Resizing),
             height=target_height,
             width=target_width,
+        )
+
+    def random_crop(self, marker: None, height: int, width: int) -> gl.RandomCrop:
+        self._raise_if_not_running()
+        return gl.RandomCrop(
+            name=self._create_layer_name(gl.RandomCrop),
+            height=height,
+            width=width,
         )
 
     def conv(

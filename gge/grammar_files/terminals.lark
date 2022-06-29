@@ -4,6 +4,7 @@ RANDOM_ROTATION : /"random_rotation"/
 RESIZING        : /"resizing"/
 HEIGHT          : /"height"/
 WIDTH           : /"width"/
+RANDOM_CROP     : /"random_crop"/
 
 MERGE         : /"merge"/
 FORK          : /"fork"/

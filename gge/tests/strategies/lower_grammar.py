@@ -54,6 +54,19 @@ def resizings(
 
 
 @hs.composite
+def random_crops(
+    draw: hs.DrawFn, *, name_gen: NameGenerator | None = None
+) -> LayersTestData:
+    name_gen = name_gen or NameGenerator()
+    name = name_gen.gen_name(gl.RandomCrop)
+    height = draw(hs.integers(min_value=1, max_value=9999))
+    width = draw(hs.integers(min_value=1, max_value=9999))
+    layer = gl.RandomCrop(name, height=height, width=width)
+    token_stream = f'"random_crop" "height" {height} "width"  {width}'
+    return LayersTestData(token_stream, (layer,))
+
+
+@hs.composite
 def convs(draw: hs.DrawFn, *, name_gen: NameGenerator | None = None) -> LayersTestData:
     name_gen = name_gen or NameGenerator()
     name = name_gen.gen_name(gl.Conv2D)

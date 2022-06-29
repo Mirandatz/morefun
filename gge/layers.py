@@ -160,8 +160,8 @@ class ConnectedResizing(SingleInputLayer):
 @attrs.frozen(cache_hash=True)
 class RandomCrop(ConvertibleToConnectableLayer):
     name: str
-    height: int
-    width: int
+    height: int = attrs.field(kw_only=True)
+    width: int = attrs.field(kw_only=True)
     seed: int = rand.get_rng_seed()
 
     def __attrs_post_init__(self) -> None:

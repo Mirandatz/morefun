@@ -35,12 +35,12 @@ def test_parse_resizing(test_data: lgs.LayersTestData) -> None:
     assert expected == actual
 
 
-# @given(test_data=lgs.random_crops())
-# def test_parse_random_crop(test_data: lgs.LayersTestData) -> None:
-#     """Can parse random crop."""
-#     actual = bb.parse(test_data.token_stream, start="backbone")
-#     expected = bb.Backbone(test_data.parsed)
-#     assert expected == actual
+@given(test_data=lgs.random_crops())
+def test_parse_random_crop(test_data: lgs.LayersTestData) -> None:
+    """Can parse random crop."""
+    actual = bb.parse(test_data.token_stream, start="backbone")
+    expected = bb.Backbone(test_data.parsed)
+    assert expected == actual
 
 
 @given(test_data=lgs.convs())
