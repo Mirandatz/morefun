@@ -57,8 +57,8 @@ class BackboneSynthetizer(lgp.LowerGrammarTransformer):
         '"random_flip"',
         '"random_rotation"',
         '"resizing"',
-        '"target_height"',
-        '"target_width"',
+        '"height"',
+        '"width"',
         '"conv"',
         '"filter_count"',
         '"kernel_size"',
@@ -75,8 +75,8 @@ class BackboneSynthetizer(lgp.LowerGrammarTransformer):
     # This set is also used to remove boilplate code.
     # For more information, see: `BackboneSynthetizer.__default_token__`
     _RULES_OF_MARKERS_VALUE_PAIRS = {
-        "target_height",
-        "target_width",
+        "height",
+        "width",
         "filter_count",
         "kernel_size",
         "stride",
@@ -180,8 +180,8 @@ class BackboneSynthetizer(lgp.LowerGrammarTransformer):
 
         return gl.Resizing(
             name=self._create_layer_name(gl.Resizing),
-            target_height=target_height,
-            target_width=target_width,
+            height=target_height,
+            width=target_width,
         )
 
     def conv(

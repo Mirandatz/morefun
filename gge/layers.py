@@ -19,9 +19,9 @@ FLIP_MODES = [HORIZONTAL, VERTICAL, HORIZONTAL_AND_VERTICAL]
 
 @attrs.frozen(cache_hash=True)
 class Shape:
-    width: int
-    height: int
-    depth: int
+    height: int = attrs.field(kw_only=True)
+    width: int = attrs.field(kw_only=True)
+    depth: int = attrs.field(kw_only=True)
 
     def __attrs_post_init__(self) -> None:
         assert isinstance(self.width, int)
@@ -105,16 +105,16 @@ Layer: typing.TypeAlias = ConvertibleToConnectableLayer | MarkerLayer
 @attrs.frozen(cache_hash=True)
 class Resizing(ConvertibleToConnectableLayer):
     name: str
-    target_height: int
-    target_width: int
+    height: int
+    width: int
 
     def __attrs_post_init__(self) -> None:
         assert isinstance(self.name, str)
-        assert isinstance(self.target_height, int)
-        assert isinstance(self.target_width, int)
+        assert isinstance(self.height, int)
+        assert isinstance(self.width, int)
 
-        assert self.target_height >= 1
-        assert self.target_width >= 1
+        assert self.height >= 1
+        assert self.width >= 1
 
     def to_connectable(self, input: "ConnectableLayer") -> "ConnectedResizing":
         return ConnectedResizing(input, self)
@@ -132,8 +132,8 @@ class ConnectedResizing(SingleInputLayer):
     @property
     def output_shape(self) -> Shape:
         return Shape(
-            height=self.params.target_height,
-            width=self.params.target_width,
+            height=self.params.height,
+            width=self.params.width,
             depth=self.input_layer.output_shape.depth,
         )
 
@@ -144,8 +144,8 @@ class ConnectedResizing(SingleInputLayer):
         if self not in known_tensors:
             source = self.input_layer.to_tensor(known_tensors)
             layer = kl.Resizing(
-                height=self.params.target_height,
-                width=self.params.target_width,
+                height=self.params.height,
+                width=self.params.width,
                 name=self.params.name,
             )
             tensor = layer(source)
@@ -160,18 +160,17 @@ class ConnectedResizing(SingleInputLayer):
 @attrs.frozen(cache_hash=True)
 class RandomCrop(ConvertibleToConnectableLayer):
     name: str
-    target_height: int
-    target_width: int
-    seed: int
+    height: int
+    width: int
+    seed: int = rand.get_rng_seed()
 
     def __attrs_post_init__(self) -> None:
         assert isinstance(self.name, str)
-        assert isinstance(self.target_height, int)
-        assert isinstance(self.target_width, int)
-        assert isinstance(self.seed, int)
+        assert isinstance(self.height, int)
+        assert isinstance(self.width, int)
 
-        assert self.target_height >= 1
-        assert self.target_width >= 1
+        assert self.height >= 1
+        assert self.width >= 1
 
     def to_connectable(self, input: "ConnectableLayer") -> "ConnectedRandomCrop":
         return ConnectedRandomCrop(input, self)
@@ -189,8 +188,8 @@ class ConnectedRandomCrop(SingleInputLayer):
     @property
     def output_shape(self) -> Shape:
         return Shape(
-            height=self.params.target_height,
-            width=self.params.target_width,
+            height=self.params.height,
+            width=self.params.width,
             depth=self.input_layer.output_shape.depth,
         )
 
@@ -201,8 +200,8 @@ class ConnectedRandomCrop(SingleInputLayer):
         if self not in known_tensors:
             source = self.input_layer.to_tensor(known_tensors)
             layer = kl.RandomCrop(
-                height=self.params.target_height,
-                width=self.params.target_width,
+                height=self.params.height,
+                width=self.params.width,
                 name=self.params.name,
                 seed=self.params.seed,
             )

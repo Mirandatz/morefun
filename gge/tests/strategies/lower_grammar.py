@@ -44,13 +44,11 @@ def resizings(
     name = name_gen.gen_name(gl.Resizing)
     target_height = draw(hs.integers(min_value=1, max_value=9999))
     target_width = draw(hs.integers(min_value=1, max_value=9999))
-    tokenstream = (
-        f'"resizing" "target_height" {target_height} "target_width" {target_width}'
-    )
+    tokenstream = f'"resizing" "height" {target_height} "width" {target_width}'
     layer = gl.Resizing(
         name,
-        target_height=target_height,
-        target_width=target_width,
+        height=target_height,
+        width=target_width,
     )
     return LayersTestData(tokenstream, (layer,))
 

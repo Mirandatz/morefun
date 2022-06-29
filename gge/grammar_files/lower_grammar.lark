@@ -13,9 +13,9 @@ layer    : random_flip
 
 random_flip     : RANDOM_FLIP FLIP_MODE
 random_rotation : RANDOM_ROTATION FLOAT
-resizing        : RESIZING target_height target_width
-target_height   : TARGET_HEIGHT INT
-target_width    : TARGET_WIDTH INT
+resizing        : RESIZING height width
+height          : HEIGHT INT
+width           : WIDTH INT
 
 conv         : CONV filter_count kernel_size stride
 filter_count : FILTER_COUNT INT
@@ -45,7 +45,7 @@ amsgrad : AMSGRAD BOOL
 
 // using multiple imports just for aesthetic reasons
 %import .terminals (RANDOM_FLIP, FLIP_MODE, RANDOM_ROTATION)
-%import .terminals (RESIZING, TARGET_HEIGHT, TARGET_WIDTH)
+%import .terminals (RESIZING, HEIGHT, WIDTH)
 %import .terminals (MERGE, FORK)
 %import .terminals (RELU, GELU, SWISH)
 %import .terminals (CONV, FILTER_COUNT, KERNEL_SIZE, STRIDE)
