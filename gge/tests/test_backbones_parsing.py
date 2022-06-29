@@ -1,14 +1,8 @@
-import pytest
 from hypothesis import given
-from loguru import logger
 
 import gge.backbones as bb
 import gge.tests.strategies.lower_grammar as lgs
-
-
-@pytest.fixture(autouse=True)
-def remove_logger_sinks() -> None:
-    logger.remove()
+from gge.tests.fixtures import remove_logger_sinks  # noqa
 
 
 @given(test_data=lgs.random_flips())
