@@ -309,8 +309,8 @@ def test_maxpool_def(
     # setup
     raw_grammar = (
         'start : "maxpool"'
-        f' "pool_size" {pool_sizes.text}'
-        f' "stride" {strides.text}'
+        f' "pool_size" {pool_sizes.tokenstream}'
+        f' "stride" {strides.tokenstream}'
     )
     grammar = gr.Grammar(raw_grammar)
 
@@ -318,7 +318,7 @@ def test_maxpool_def(
     expansions = grammar.expansions(gr.NonTerminal("start"))
 
     # asserts
-    test_values = itertools.product(pool_sizes.terminals, strides.terminals)
+    test_values = itertools.product(pool_sizes.parsed, strides.parsed)
     for expansion, (pool_size_term, stride_term) in zip(
         expansions, test_values, strict=True
     ):
@@ -346,15 +346,15 @@ def test_avgpool_def(
     # setup
     raw_grammar = (
         'start : "avgpool"'
-        f' "pool_size" {pool_sizes.text}'
-        f' "stride" {strides.text}'
+        f' "pool_size" {pool_sizes.tokenstream}'
+        f' "stride" {strides.tokenstream}'
     )
     grammar = gr.Grammar(raw_grammar)
 
     # function under test
     expansions = grammar.expansions(gr.NonTerminal("start"))
 
-    test_values = itertools.product(pool_sizes.terminals, strides.terminals)
+    test_values = itertools.product(pool_sizes.parsed, strides.parsed)
     for expansion, (pool_size_term, stride_term) in zip(
         expansions, test_values, strict=True
     ):
@@ -395,9 +395,9 @@ def test_sgd_def(
     # setup
     raw_grammar = (
         'start : "sgd"'
-        f' "learning_rate" {learning_rate.text}'
-        f' "momentum" {momentum.text}'
-        f' "nesterov" {nesterov.text}'
+        f' "learning_rate" {learning_rate.tokenstream}'
+        f' "momentum" {momentum.tokenstream}'
+        f' "nesterov" {nesterov.tokenstream}'
     )
     grammar = gr.Grammar(raw_grammar)
 
@@ -405,9 +405,9 @@ def test_sgd_def(
     expansions = grammar.expansions(gr.NonTerminal("start"))
 
     test_values = itertools.product(
-        learning_rate.terminals,
-        momentum.terminals,
-        nesterov.terminals,
+        learning_rate.parsed,
+        momentum.parsed,
+        nesterov.parsed,
     )
 
     for actual_expansion, (lr_term, mom_term, nest_term) in zip(
@@ -446,11 +446,11 @@ def test_adam_def(
     # setup
     raw_grammar = (
         'start : "adam"'
-        f' "learning_rate" {learning_rate.text}'
-        f' "beta1" {beta1.text}'
-        f' "beta2" {beta2.text}'
-        f' "epsilon" {epsilon.text}'
-        f' "amsgrad" {amsgrad.text}'
+        f' "learning_rate" {learning_rate.tokenstream}'
+        f' "beta1" {beta1.tokenstream}'
+        f' "beta2" {beta2.tokenstream}'
+        f' "epsilon" {epsilon.tokenstream}'
+        f' "amsgrad" {amsgrad.tokenstream}'
     )
     grammar = gr.Grammar(raw_grammar)
 
@@ -458,11 +458,11 @@ def test_adam_def(
     expansions = grammar.expansions(gr.NonTerminal("start"))
 
     test_values = itertools.product(
-        learning_rate.terminals,
-        beta1.terminals,
-        beta2.terminals,
-        epsilon.terminals,
-        amsgrad.terminals,
+        learning_rate.parsed,
+        beta1.parsed,
+        beta2.parsed,
+        epsilon.parsed,
+        amsgrad.parsed,
     )
 
     for actual_expansion, terminals in zip(
@@ -497,45 +497,48 @@ def test_adam_def(
 
 def test_random_flip(mode: str) -> None:
     """Can parse middle-grammar: random_flip."""
-    raw_grammar = 'start : "random_flip" {mode}'
-    grammar = gr.Grammar(raw_grammar)
+    # raw_grammar = 'start : "random_flip" {mode}'
+    # grammar = gr.Grammar(raw_grammar)
 
+    raise NotImplementedError()
     # function under test
-    expansions = grammar.expansions(gr.NonTerminal("start"))
+    # expansions = grammar.expansions(gr.NonTerminal("start"))
+    # if expansions:
+    # raise NotImplementedError()
 
-    test_values = itertools.product(
-        learning_rate.terminals,
-        beta1.terminals,
-        beta2.terminals,
-        epsilon.terminals,
-        amsgrad.terminals,
-    )
+    # test_values = itertools.product(
+    #     learning_rate.terminals,
+    #     beta1.terminals,
+    #     beta2.terminals,
+    #     epsilon.terminals,
+    #     amsgrad.terminals,
+    # )
 
-    for actual_expansion, terminals in zip(
-        expansions,
-        test_values,
-        strict=True,
-    ):
-        (
-            lr_term,
-            beta1_term,
-            beta2_term,
-            epsilon_term,
-            amsgrad_term,
-        ) = terminals
+    # for actual_expansion, terminals in zip(
+    #     expansions,
+    #     test_values,
+    #     strict=True,
+    # ):
+    #     (
+    #         lr_term,
+    #         beta1_term,
+    #         beta2_term,
+    #         epsilon_term,
+    #         amsgrad_term,
+    #     ) = terminals
 
-        expected_symbols = (
-            gr.ExpectedTerminal.ADAM.value,
-            gr.ExpectedTerminal.LEARNING_RATE.value,
-            lr_term,
-            gr.ExpectedTerminal.BETA1.value,
-            beta1_term,
-            gr.ExpectedTerminal.BETA2.value,
-            beta2_term,
-            gr.ExpectedTerminal.EPSILON.value,
-            epsilon_term,
-            gr.ExpectedTerminal.AMSGRAD.value,
-            amsgrad_term,
-        )
-        expected_expansion = gr.RuleOption(expected_symbols)
-        assert expected_expansion == actual_expansion
+    #     expected_symbols = (
+    #         gr.ExpectedTerminal.ADAM.value,
+    #         gr.ExpectedTerminal.LEARNING_RATE.value,
+    #         lr_term,
+    #         gr.ExpectedTerminal.BETA1.value,
+    #         beta1_term,
+    #         gr.ExpectedTerminal.BETA2.value,
+    #         beta2_term,
+    #         gr.ExpectedTerminal.EPSILON.value,
+    #         epsilon_term,
+    #         gr.ExpectedTerminal.AMSGRAD.value,
+    #         amsgrad_term,
+    #     )
+    #     expected_expansion = gr.RuleOption(expected_symbols)
+    #     assert expected_expansion == actual_expansion
