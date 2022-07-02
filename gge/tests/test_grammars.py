@@ -517,3 +517,32 @@ def test_random_rotation(rotation: ugs.GrammarArgs) -> None:
         expected_symbols = (gr.ExpectedTerminal.RANDOM_ROTATION.value, terminal)
         expected_expansion = gr.RuleOption(expected_symbols)
         assert expected_expansion == actual_expanion
+
+
+@given(
+    height=ugs.int_args(min_value=1, max_value=3),
+    width=ugs.int_args(min_value=1, max_value=3),
+)
+def test_resizing(height: ugs.GrammarArgs, width: ugs.GrammarArgs) -> None:
+    raw_grammar = (
+        f'start : "resizing" "height" {height.tokenstream} "width" {width.tokenstream}'
+    )
+    grammar = gr.Grammar(raw_grammar)
+
+    expansions = grammar.expansions(gr.NonTerminal("start"))
+    test_values = itertools.product(height.parsed, width.parsed)
+    for actual_expansion, terminals in zip(
+        expansions,
+        test_values,
+        strict=True,
+    ):
+        height_term, width_term = terminals
+        expected_symbols = (
+            gr.ExpectedTerminal.RESIZING.value,
+            gr.ExpectedTerminal.HEIGHT.value,
+            height_term,
+            gr.ExpectedTerminal.WIDTH.value,
+            width_term,
+        )
+        expected_expansion = gr.RuleOption(expected_symbols)
+        assert expected_expansion == actual_expansion

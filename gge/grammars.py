@@ -350,6 +350,10 @@ class ExpectedTerminal(enum.Enum):
     RANDOM_FLIP = Terminal('"random_flip"')
     RANDOM_ROTATION = Terminal('"random_rotation"')
 
+    RESIZING = Terminal('"resizing"')
+    HEIGHT = Terminal('"height"')
+    WIDTH = Terminal('"width"')
+
     CONV = Terminal('"conv"')
     FILTER_COUNT = Terminal('"filter_count"')
     KERNEL_SIZE = Terminal('"kernel_size"')
@@ -446,15 +450,29 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
     # For more information, see:
     # - `make_list_of_marker_value_pairs`.
     # - `GrammarTransformer.__default__`
-    # fmt: off
     _RULES_OF_MARKERS_VALUE_PAIRS = {
-        "rotation", "width_shift", "height_shift", "zoom",
-        "horizontal_flip", "vertical_flip",
-        "filter_count", "kernel_size", "strides", "pool_sizes",
-        "learning_rate", "momentum", "nesterov",
-        "beta1", "beta2", "epsilon", "amsgrad",
+        "rotation",
+        "width_shift",
+        "height_shift",
+        "zoom",
+        "horizontal_flip",
+        "vertical_flip",
+        #
+        "height",
+        "width",
+        #
+        "filter_count",
+        "kernel_size",
+        "strides",
+        "pool_sizes",
+        "learning_rate",
+        "momentum",
+        "nesterov",
+        "beta1",
+        "beta2",
+        "epsilon",
+        "amsgrad",
     }
-    # fmt: on
 
     # This set is also used to remove boilplate code.
     # For more information, see: `GrammarTransformer.__default_token__`
@@ -644,6 +662,10 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
         assert len(rotations) >= 1
 
         return [RuleOption((marker, r)) for r in rotations]
+
+    def resizing(self, parts: typing.Any) -> list[RuleOption]:
+        self._raise_if_not_running()
+        return make_list_of_options(parts)
 
     # this rule exists only to make the upper_grammar.lark cleaner
     @lark.v_args(inline=True)

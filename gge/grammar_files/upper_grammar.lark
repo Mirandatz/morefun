@@ -13,6 +13,7 @@ RANGE_BOUND  : INT
 layer_and_maybe_emptylines : layer _NL*
 layer : random_flip
       | random_rotation
+      | resizing
       | conv_layer 
       | max_pooling_layer 
       | avg_pooling_layer 
@@ -20,10 +21,12 @@ layer : random_flip
       | activation_layer
 
 random_flip : RANDOM_FLIP _flip_args
-_flip_args  : FLIP_MODE 
-            | "(" FLIP_MODE ("|" FLIP_MODE)* ")"
 
 random_rotation : RANDOM_ROTATION _float_args
+
+resizing : RESIZING height width
+height  : HEIGHT _int_args
+width   : WIDTH _int_args
 
 conv_layer   : CONV filter_count kernel_size strides
 filter_count : FILTER_COUNT _int_args
@@ -64,9 +67,13 @@ _bool_args : BOOL_ARG
            | "(" BOOL_ARG ("|" BOOL_ARG)* ")"
 BOOL_ARG   : BOOL
 
+_flip_args  : FLIP_MODE 
+            | "(" FLIP_MODE ("|" FLIP_MODE)* ")"
+
 // using multiple imports just for aesthetic reasons
 %import .terminals (RANDOM_FLIP, FLIP_MODE)
 %import .terminals (RANDOM_ROTATION)
+%import .terminals (RESIZING, HEIGHT, WIDTH)
 %import .terminals (MERGE, FORK)
 %import .terminals (RELU, GELU, SWISH)
 %import .terminals (CONV, FILTER_COUNT, KERNEL_SIZE, STRIDE)
