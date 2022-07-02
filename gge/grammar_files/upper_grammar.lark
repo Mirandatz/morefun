@@ -42,7 +42,7 @@ max_pooling_layer : MAXPOOL pool_sizes strides
 avg_pooling_layer : AVGPOOL pool_sizes strides
 pool_sizes        : POOL_SIZE _int_args
 
-activation_layer : RELU | GELU | SWISH
+activation_layer : RELU | GELU | SWISH | PRELU
 
 optimizer_and_maybe_emptylines : optimizer _NL*
 optimizer : sgd | adam
@@ -79,7 +79,7 @@ _flip_args  : FLIP_MODE
 %import .terminals (RESIZING, HEIGHT, WIDTH)
 %import .terminals (RANDOM_CROP)
 %import .terminals (MERGE, FORK)
-%import .terminals (RELU, GELU, SWISH)
+%import .terminals (RELU, GELU, SWISH, PRELU)
 %import .terminals (CONV, FILTER_COUNT, KERNEL_SIZE, STRIDE)
 %import .terminals (MAXPOOL, AVGPOOL, POOL_SIZE)
 %import .terminals (BATCHNORM)

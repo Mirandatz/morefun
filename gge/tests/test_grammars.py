@@ -581,3 +581,11 @@ def test_random_crop(height: ugs.GrammarArgs, width: ugs.GrammarArgs) -> None:
         )
         expected_expansion = gr.RuleOption(expected_symbols)
         assert expected_expansion == actual_expansion
+
+
+def test_prelu() -> None:
+    """Can parse middle grammar layer definition: prelu."""
+    grammar = gr.Grammar('start : "prelu"')
+    (actual_expansion,) = grammar.expansions(gr.NonTerminal("start"))
+    expected_expansion = gr.RuleOption((gr.ExpectedTerminal.PRELU.value,))
+    assert expected_expansion == actual_expansion

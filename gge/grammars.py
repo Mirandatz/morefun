@@ -370,6 +370,7 @@ class ExpectedTerminal(enum.Enum):
     RELU = Terminal('"relu"')
     GELU = Terminal('"gelu"')
     SWISH = Terminal('"swish"')
+    PRELU = Terminal('"prelu"')
 
     SGD = Terminal('"sgd"')
     LEARNING_RATE = Terminal('"learning_rate"')
