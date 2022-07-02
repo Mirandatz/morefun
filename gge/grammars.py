@@ -618,6 +618,12 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
         self._raise_if_not_running()
         return make_list_of_options(parts)
 
+    # this rule exists only to make the upper_grammar.lark cleaner
+    @lark.v_args(inline=True)
+    def layer_and_maybe_emptylines(self, whatever: typing.Any) -> typing.Any:
+        self._raise_if_not_running()
+        return whatever
+
     def layer(
         self, list_of_lists_of_options: list[list[RuleOption]]
     ) -> list[RuleOption]:
@@ -649,6 +655,12 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
     def avg_pooling_layer(self, parts: typing.Any) -> list[RuleOption]:
         self._raise_if_not_running()
         return make_list_of_options(parts)
+
+    # this rule exists only to make the upper_grammar.lark cleaner
+    @lark.v_args(inline=True)
+    def optimizer_and_maybe_emptylines(self, whatever: typing.Any) -> typing.Any:
+        self._raise_if_not_running()
+        return whatever
 
     @lark.v_args(inline=False)
     def optimizer(

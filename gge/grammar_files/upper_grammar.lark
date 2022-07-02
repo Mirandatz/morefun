@@ -1,5 +1,5 @@
 start       : _NL* rule+
-rule        : NONTERMINAL ":" (layer | block | optimizer)
+rule        : NONTERMINAL ":" (layer_and_maybe_emptylines | block | optimizer_and_maybe_emptylines)
 NONTERMINAL : NAME
 
 block        : block_option ("|" block_option)*
@@ -10,8 +10,14 @@ maybe_fork   : [FORK]
 symbol_range : NONTERMINAL ["~" RANGE_BOUND [".." RANGE_BOUND]]
 RANGE_BOUND  : INT
 
-layer        : (conv_layer | max_pooling_layer | avg_pooling_layer | batchnorm_layer | activation_layer) _NL*
-
+layer_and_maybe_emptylines : layer _NL*
+layer : conv_layer 
+      | max_pooling_layer 
+      | avg_pooling_layer 
+      | batchnorm_layer 
+      | activation_layer
+      
+      
 conv_layer   : CONV filter_count kernel_size strides
 filter_count : FILTER_COUNT _int_args
 kernel_size  : KERNEL_SIZE _int_args
@@ -25,7 +31,8 @@ pool_sizes        : POOL_SIZE _int_args
 
 activation_layer : RELU | GELU | SWISH
 
-optimizer : (sgd | adam) _NL*
+optimizer_and_maybe_emptylines : optimizer _NL*
+optimizer : sgd | adam
 
 sgd           : SGD learning_rate momentum nesterov
 learning_rate : LEARNING_RATE _float_args
