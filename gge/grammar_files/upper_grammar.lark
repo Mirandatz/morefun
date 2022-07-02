@@ -14,6 +14,7 @@ layer_and_maybe_emptylines : layer _NL*
 layer : random_flip
       | random_rotation
       | resizing
+      | random_crop
       | conv_layer 
       | max_pooling_layer 
       | avg_pooling_layer 
@@ -27,6 +28,8 @@ random_rotation : RANDOM_ROTATION _float_args
 resizing : RESIZING height width
 height  : HEIGHT _int_args
 width   : WIDTH _int_args
+
+random_crop : RANDOM_CROP height width
 
 conv_layer   : CONV filter_count kernel_size strides
 filter_count : FILTER_COUNT _int_args
@@ -74,6 +77,7 @@ _flip_args  : FLIP_MODE
 %import .terminals (RANDOM_FLIP, FLIP_MODE)
 %import .terminals (RANDOM_ROTATION)
 %import .terminals (RESIZING, HEIGHT, WIDTH)
+%import .terminals (RANDOM_CROP)
 %import .terminals (MERGE, FORK)
 %import .terminals (RELU, GELU, SWISH)
 %import .terminals (CONV, FILTER_COUNT, KERNEL_SIZE, STRIDE)

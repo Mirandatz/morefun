@@ -497,6 +497,8 @@ def test_adam_def(
 
 @given(mode=ugs.flip_modes())
 def test_random_flip(mode: ugs.GrammarArgs) -> None:
+    """Can parse middle grammar layer definition: random_flip."""
+
     raw_grammar = f'start : "random_flip" {mode.tokenstream}'
     grammar = gr.Grammar(raw_grammar)
 
@@ -509,6 +511,8 @@ def test_random_flip(mode: ugs.GrammarArgs) -> None:
 
 @given(rotation=ugs.float_args(min_value=0))
 def test_random_rotation(rotation: ugs.GrammarArgs) -> None:
+    """Can parse middle grammar layer definition: random_rotation."""
+
     raw_grammar = f'start : "random_rotation" {rotation.tokenstream}'
     grammar = gr.Grammar(raw_grammar)
 
@@ -524,6 +528,8 @@ def test_random_rotation(rotation: ugs.GrammarArgs) -> None:
     width=ugs.int_args(min_value=1, max_value=3),
 )
 def test_resizing(height: ugs.GrammarArgs, width: ugs.GrammarArgs) -> None:
+    """Can parse middle grammar layer definition: resizing."""
+
     raw_grammar = (
         f'start : "resizing" "height" {height.tokenstream} "width" {width.tokenstream}'
     )
@@ -539,6 +545,35 @@ def test_resizing(height: ugs.GrammarArgs, width: ugs.GrammarArgs) -> None:
         height_term, width_term = terminals
         expected_symbols = (
             gr.ExpectedTerminal.RESIZING.value,
+            gr.ExpectedTerminal.HEIGHT.value,
+            height_term,
+            gr.ExpectedTerminal.WIDTH.value,
+            width_term,
+        )
+        expected_expansion = gr.RuleOption(expected_symbols)
+        assert expected_expansion == actual_expansion
+
+
+@given(
+    height=ugs.int_args(min_value=1, max_value=3),
+    width=ugs.int_args(min_value=1, max_value=3),
+)
+def test_random_crop(height: ugs.GrammarArgs, width: ugs.GrammarArgs) -> None:
+    """Can parse middle grammar layer definition: random_crop."""
+
+    raw_grammar = f'start : "random_crop" "height" {height.tokenstream} "width" {width.tokenstream}'
+    grammar = gr.Grammar(raw_grammar)
+
+    expansions = grammar.expansions(gr.NonTerminal("start"))
+    test_values = itertools.product(height.parsed, width.parsed)
+    for actual_expansion, terminals in zip(
+        expansions,
+        test_values,
+        strict=True,
+    ):
+        height_term, width_term = terminals
+        expected_symbols = (
+            gr.ExpectedTerminal.RANDOM_CROP.value,
             gr.ExpectedTerminal.HEIGHT.value,
             height_term,
             gr.ExpectedTerminal.WIDTH.value,
