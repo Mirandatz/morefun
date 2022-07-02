@@ -91,3 +91,11 @@ def test_parse_swish(test_data: lgs.LowerGrammarParsingTestData) -> None:
     actual = bb.parse(test_data.tokenstream, start="backbone")
     expected = bb.Backbone(test_data.parsed)
     assert expected == actual
+
+
+@given(test_data=lgs.prelus())
+def test_parse_prelus(test_data: lgs.LowerGrammarParsingTestData) -> None:
+    """Can parse lower-grammar: prelu."""
+    actual = bb.parse(test_data.tokenstream, start="backbone")
+    expected = bb.Backbone(test_data.parsed)
+    assert expected == actual

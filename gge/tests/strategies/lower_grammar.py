@@ -152,6 +152,18 @@ def swishs(
 
 
 @hs.composite
+def prelus(
+    draw: hs.DrawFn, *, name_gen: NameGenerator | None = None
+) -> LowerGrammarParsingTestData:
+    name_gen = name_gen or NameGenerator()
+    name = name_gen.gen_name(gl.Prelu)
+    return LowerGrammarParsingTestData(
+        tokenstream='"prelu"',
+        parsed=(gl.Prelu(name),),
+    )
+
+
+@hs.composite
 def merge_marker(
     draw: hs.DrawFn, *, name_gen: NameGenerator | None = None
 ) -> LowerGrammarParsingTestData:

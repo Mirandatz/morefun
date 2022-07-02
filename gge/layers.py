@@ -711,6 +711,49 @@ class ConnectedGelu(SingleInputLayer):
         return f"{self.params.name}: out_shape=[{self.output_shape}]"
 
 
+##
+
+
+@attrs.frozen(cache_hash=True)
+class Prelu(ConvertibleToConnectableLayer):
+    name: str
+
+    def __attrs_post_init__(self) -> None:
+        assert isinstance(self.name, str)
+        assert self.name
+
+    def to_connectable(self, input: "ConnectableLayer") -> "ConnectedPrelu":
+        return ConnectedPrelu(input, self)
+
+
+@attrs.frozen(cache_hash=True)
+class ConnectedPrelu(SingleInputLayer):
+    input_layer: ConnectableLayer
+    params: Prelu
+
+    def __attrs_post_init__(self) -> None:
+        assert isinstance(self.input_layer, ConnectableLayer)
+        assert isinstance(self.params, Prelu)
+
+    @property
+    def output_shape(self) -> Shape:
+        return self.input_layer.output_shape
+
+    def to_tensor(
+        self,
+        known_tensors: dict["ConnectableLayer", tf.Tensor],
+    ) -> tf.Tensor:
+        if self not in known_tensors:
+            source = self.input_layer.to_tensor(known_tensors)
+            layer = kl.PReLU(name=self.params.name)
+            tensor = layer(source)
+            known_tensors[self] = tensor
+        return known_tensors[self]
+
+    def __repr__(self) -> str:
+        return f"{self.params.name}: out_shape=[{self.output_shape}]"
+
+
 @attrs.frozen(cache_hash=True)
 class Swish(ConvertibleToConnectableLayer):
     name: str

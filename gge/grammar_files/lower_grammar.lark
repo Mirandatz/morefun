@@ -30,7 +30,7 @@ pool_size : POOL_SIZE INT
  
 batchnorm : BATCHNORM
 
-activation : RELU | GELU | SWISH
+activation : RELU | GELU | PRELU | SWISH
 
 optimizer: sgd | adam
 
@@ -49,7 +49,7 @@ amsgrad : AMSGRAD BOOL
 %import .terminals (RANDOM_FLIP, FLIP_MODE, RANDOM_ROTATION, RANDOM_CROP)
 %import .terminals (RESIZING, HEIGHT, WIDTH)
 %import .terminals (MERGE, FORK)
-%import .terminals (RELU, GELU, SWISH)
+%import .terminals (RELU, GELU, PRELU, SWISH)
 %import .terminals (CONV, FILTER_COUNT, KERNEL_SIZE, STRIDE)
 %import .terminals (MAXPOOL, AVGPOOL, POOL_SIZE)
 %import .terminals (BATCHNORM)

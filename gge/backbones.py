@@ -70,6 +70,7 @@ class BackboneSynthetizer(lgp.LowerGrammarTransformer):
         '"batchnorm"',
         '"relu"',
         '"gelu"',
+        '"prelu"',
         '"swish"',
     }
 
@@ -236,6 +237,10 @@ class BackboneSynthetizer(lgp.LowerGrammarTransformer):
     def GELU(self, token: lark.Token) -> gl.Gelu:
         self._raise_if_not_running()
         return gl.Gelu(name=self._create_layer_name(gl.Gelu))
+
+    def PRELU(self, token: lark.Token) -> gl.Prelu:
+        self._raise_if_not_running()
+        return gl.Prelu(name=self._create_layer_name(gl.Prelu))
 
     def SWISH(self, token: lark.Token) -> gl.Swish:
         self._raise_if_not_running()
