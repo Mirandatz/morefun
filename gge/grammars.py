@@ -451,23 +451,20 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
     # - `make_list_of_marker_value_pairs`.
     # - `GrammarTransformer.__default__`
     _RULES_OF_MARKERS_VALUE_PAIRS = {
-        "rotation",
-        "width_shift",
-        "height_shift",
-        "zoom",
-        "horizontal_flip",
-        "vertical_flip",
-        #
+        # resizing
         "height",
         "width",
-        #
+        # conv
         "filter_count",
         "kernel_size",
         "strides",
+        # pooling
         "pool_sizes",
+        # sgd
         "learning_rate",
         "momentum",
         "nesterov",
+        # adam
         "beta1",
         "beta2",
         "epsilon",
