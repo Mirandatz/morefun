@@ -497,8 +497,6 @@ def test_adam_def(
 
 @given(mode=ugs.flip_modes())
 def test_random_flip(mode: ugs.GrammarArgs) -> None:
-    mode = ugs.GrammarArgs("horizontal", (gr.Terminal("horizontal"),))
-
     raw_grammar = f'start : "random_flip" {mode.tokenstream}'
     grammar = gr.Grammar(raw_grammar)
 
@@ -507,3 +505,15 @@ def test_random_flip(mode: ugs.GrammarArgs) -> None:
         expected_symbols = (gr.ExpectedTerminal.RANDOM_FLIP.value, terminal)
         expected_expansion = gr.RuleOption(expected_symbols)
         assert expected_expansion == actual_expansion
+
+
+@given(rotation=ugs.float_args(min_value=0))
+def test_random_rotation(rotation: ugs.GrammarArgs) -> None:
+    raw_grammar = f'start : "random_rotation" {rotation.tokenstream}'
+    grammar = gr.Grammar(raw_grammar)
+
+    expansions = grammar.expansions(gr.NonTerminal("start"))
+    for actual_expanion, terminal in zip(expansions, rotation.parsed):
+        expected_symbols = (gr.ExpectedTerminal.RANDOM_ROTATION.value, terminal)
+        expected_expansion = gr.RuleOption(expected_symbols)
+        assert expected_expansion == actual_expanion

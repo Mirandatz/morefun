@@ -348,6 +348,7 @@ class Grammar:
 
 class ExpectedTerminal(enum.Enum):
     RANDOM_FLIP = Terminal('"random_flip"')
+    RANDOM_ROTATION = Terminal('"random_rotation"')
 
     CONV = Terminal('"conv"')
     FILTER_COUNT = Terminal('"filter_count"')
@@ -631,6 +632,18 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
             rule_options.append(opt)
 
         return rule_options
+
+    @lark.v_args(inline=False)
+    def random_rotation(self, parts: typing.Any) -> list[RuleOption]:
+        self._raise_if_not_running()
+
+        marker, *rotations = parts
+        assert isinstance(marker, Terminal)
+        assert isinstance(rotations, list)
+        assert all(isinstance(r, Terminal) for r in rotations)
+        assert len(rotations) >= 1
+
+        return [RuleOption((marker, r)) for r in rotations]
 
     # this rule exists only to make the upper_grammar.lark cleaner
     @lark.v_args(inline=True)
