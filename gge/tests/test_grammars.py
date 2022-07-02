@@ -1,5 +1,6 @@
 import itertools
 
+import pytest
 from hypothesis import given
 
 import gge.grammars as gr
@@ -296,6 +297,7 @@ def test_pooling_layer_in_block() -> None:
     assert nt == actual
 
 
+@pytest.mark.slow
 @given(
     pool_sizes=ugs.int_args(min_value=1, max_value=9),
     strides=ugs.int_args(min_value=1, max_value=9),
@@ -332,6 +334,7 @@ def test_maxpool_def(
         assert expected == expansion
 
 
+@pytest.mark.slow
 @given(
     pool_sizes=ugs.int_args(min_value=1, max_value=9),
     strides=ugs.int_args(min_value=1, max_value=9),
@@ -378,6 +381,7 @@ def test_relu_def() -> None:
     assert expected == actual
 
 
+@pytest.mark.slow
 @given(
     learning_rate=ugs.float_args(min_value=0, exclude_min=True),
     momentum=ugs.float_args(min_value=0, exclude_min=True),
@@ -424,6 +428,7 @@ def test_sgd_def(
         assert expected_expansion == actual_expansion
 
 
+@pytest.mark.slow
 @given(
     learning_rate=ugs.float_args(min_value=0, exclude_min=True),
     beta1=ugs.float_args(min_value=0, exclude_min=True),
@@ -447,6 +452,52 @@ def test_adam_def(
         f' "epsilon" {epsilon.text}'
         f' "amsgrad" {amsgrad.text}'
     )
+    grammar = gr.Grammar(raw_grammar)
+
+    # function under test
+    expansions = grammar.expansions(gr.NonTerminal("start"))
+
+    test_values = itertools.product(
+        learning_rate.terminals,
+        beta1.terminals,
+        beta2.terminals,
+        epsilon.terminals,
+        amsgrad.terminals,
+    )
+
+    for actual_expansion, terminals in zip(
+        expansions,
+        test_values,
+        strict=True,
+    ):
+        (
+            lr_term,
+            beta1_term,
+            beta2_term,
+            epsilon_term,
+            amsgrad_term,
+        ) = terminals
+
+        expected_symbols = (
+            gr.ExpectedTerminal.ADAM.value,
+            gr.ExpectedTerminal.LEARNING_RATE.value,
+            lr_term,
+            gr.ExpectedTerminal.BETA1.value,
+            beta1_term,
+            gr.ExpectedTerminal.BETA2.value,
+            beta2_term,
+            gr.ExpectedTerminal.EPSILON.value,
+            epsilon_term,
+            gr.ExpectedTerminal.AMSGRAD.value,
+            amsgrad_term,
+        )
+        expected_expansion = gr.RuleOption(expected_symbols)
+        assert expected_expansion == actual_expansion
+
+
+def test_random_flip(mode: str) -> None:
+    """Can parse middle-grammar: random_flip."""
+    raw_grammar = 'start : "random_flip" {mode}'
     grammar = gr.Grammar(raw_grammar)
 
     # function under test

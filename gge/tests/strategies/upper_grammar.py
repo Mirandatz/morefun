@@ -1,13 +1,11 @@
-import attrs
 import hypothesis.strategies as hs
 
 import gge.grammars as gr
+import gge.tests.strategies.data_structures
 
-
-@attrs.frozen
-class GrammarArgs:
-    text: str
-    terminals: tuple[gr.Terminal, ...]
+GrammarArgs = gge.tests.strategies.data_structures.ParsingTestData[
+    tuple[gr.Terminal, ...]
+]
 
 
 @hs.composite
