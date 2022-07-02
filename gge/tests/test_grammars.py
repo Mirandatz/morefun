@@ -495,50 +495,15 @@ def test_adam_def(
         assert expected_expansion == actual_expansion
 
 
-def test_random_flip(mode: str) -> None:
-    """Can parse middle-grammar: random_flip."""
-    # raw_grammar = 'start : "random_flip" {mode}'
-    # grammar = gr.Grammar(raw_grammar)
+@given(mode=ugs.flip_modes())
+def test_random_flip(mode: ugs.GrammarArgs) -> None:
+    mode = ugs.GrammarArgs("horizontal", (gr.Terminal("horizontal"),))
 
-    raise NotImplementedError()
-    # function under test
-    # expansions = grammar.expansions(gr.NonTerminal("start"))
-    # if expansions:
-    # raise NotImplementedError()
+    raw_grammar = f'start : "random_flip" {mode.tokenstream}'
+    grammar = gr.Grammar(raw_grammar)
 
-    # test_values = itertools.product(
-    #     learning_rate.terminals,
-    #     beta1.terminals,
-    #     beta2.terminals,
-    #     epsilon.terminals,
-    #     amsgrad.terminals,
-    # )
-
-    # for actual_expansion, terminals in zip(
-    #     expansions,
-    #     test_values,
-    #     strict=True,
-    # ):
-    #     (
-    #         lr_term,
-    #         beta1_term,
-    #         beta2_term,
-    #         epsilon_term,
-    #         amsgrad_term,
-    #     ) = terminals
-
-    #     expected_symbols = (
-    #         gr.ExpectedTerminal.ADAM.value,
-    #         gr.ExpectedTerminal.LEARNING_RATE.value,
-    #         lr_term,
-    #         gr.ExpectedTerminal.BETA1.value,
-    #         beta1_term,
-    #         gr.ExpectedTerminal.BETA2.value,
-    #         beta2_term,
-    #         gr.ExpectedTerminal.EPSILON.value,
-    #         epsilon_term,
-    #         gr.ExpectedTerminal.AMSGRAD.value,
-    #         amsgrad_term,
-    #     )
-    #     expected_expansion = gr.RuleOption(expected_symbols)
-    #     assert expected_expansion == actual_expansion
+    expansions = grammar.expansions(gr.NonTerminal("start"))
+    for actual_expansion, terminal in zip(expansions, mode.parsed, strict=True):
+        expected_symbols = (gr.ExpectedTerminal.RANDOM_FLIP.value, terminal)
+        expected_expansion = gr.RuleOption(expected_symbols)
+        assert expected_expansion == actual_expansion

@@ -347,7 +347,7 @@ class Grammar:
 
 
 class ExpectedTerminal(enum.Enum):
-    DATA_AUGMENTATION = Terminal('"random_flip"')
+    RANDOM_FLIP = Terminal('"random_flip"')
 
     CONV = Terminal('"conv"')
     FILTER_COUNT = Terminal('"filter_count"')
@@ -614,9 +614,23 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
 
         return [[nt] * count for count in range(start, stop + 1)]
 
-    def data_augmentation(self, parts: typing.Any) -> list[RuleOption]:
+    @lark.v_args(inline=False)
+    def random_flip(self, parts: typing.Any) -> list[RuleOption]:
         self._raise_if_not_running()
-        return make_list_of_options(parts)
+
+        marker, *modes = parts
+        assert isinstance(marker, Terminal)
+        assert isinstance(modes, list)
+        assert all(isinstance(m, Terminal) for m in modes)
+        assert len(modes) >= 1
+
+        rule_options = []
+        for m in modes:
+            symbols = marker, m
+            opt = RuleOption(symbols)
+            rule_options.append(opt)
+
+        return rule_options
 
     # this rule exists only to make the upper_grammar.lark cleaner
     @lark.v_args(inline=True)
@@ -699,6 +713,11 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
         return self._register_terminal(token.value)
 
     def BOOL_ARG(self, token: lark.Token) -> Terminal:
+        self._raise_if_not_running()
+        assert isinstance(token, lark.Token)
+        return self._register_terminal(token.value)
+
+    def FLIP_MODE(self, token: lark.Token) -> Terminal:
         self._raise_if_not_running()
         assert isinstance(token, lark.Token)
         return self._register_terminal(token.value)

@@ -42,6 +42,22 @@ def bool_args(draw: hs.DrawFn) -> GrammarArgs:
 
 
 @hs.composite
+def flip_modes(draw: hs.DrawFn) -> GrammarArgs:
+    tokens = draw(
+        hs.lists(
+            elements=hs.sampled_from(
+                ["horizontal", "vertical", "horizontal_and_vertical"]
+            ),
+            min_size=1,
+            max_size=3,
+        )
+    )
+    terminals = tuple([gr.Terminal(t) for t in tokens])
+    tokenstream = draw(grammar_text(tokens))
+    return GrammarArgs(tokenstream, terminals)
+
+
+@hs.composite
 def int_args(draw: hs.DrawFn, min_value: int, max_value: int) -> GrammarArgs:
     values = draw(
         hs.lists(
