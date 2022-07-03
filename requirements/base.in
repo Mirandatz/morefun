@@ -4,6 +4,7 @@ loguru
 networkx
 numpy
 pillow
+pydot
 scipy
 tensorflow==2.8.2
 tensorflow-addons

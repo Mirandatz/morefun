@@ -29,6 +29,13 @@ RUN git clone --depth 1 https://github.com/python/cpython.git --branch v3.10.4 \
     && update-alternatives --install /usr/bin/python python /usr/local/bin/python3 999 \
     && rm -rf /cpython
 
+# to plot models
+RUN apt-get update && apt-get install --no-install-recommends --no-install-suggests -y \
+    graphviz \
+    && apt-get autoremove -y \
+    && apt-get clean -y \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /gge/
 
 COPY ./requirements ./requirements

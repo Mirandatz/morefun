@@ -6,9 +6,11 @@
 #    pip-compile-multi
 #
 -r base.txt
+exceptiongroup==1.0.0rc8
+    # via hypothesis
 execnet==1.9.0
     # via pytest-xdist
-hypothesis==6.46.11
+hypothesis==6.48.3
     # via -r requirements/test.in
 iniconfig==1.1.1
     # via pytest
