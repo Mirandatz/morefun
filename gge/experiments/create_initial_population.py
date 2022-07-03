@@ -195,7 +195,15 @@ def create_producers(
     queue: "mp.Queue[Individual]",
     grammar: gr.Grammar,
     filter: IndividualFilter,
+    rng_seed: int,
 ) -> list[mp.Process]:
+    rng = rand.create_rng(rng_seed)
+    first_worker_seed = int(rng.integers(low=0, high=2**30, size=1))
+    worker_seeds = range(
+        first_worker_seed,
+        first_worker_seed + mp.cpu_count(),
+    )
+
     return [
         mp.Process(
             target=create_individuals,
@@ -207,7 +215,7 @@ def create_producers(
             },
             daemon=True,
         )
-        for seed in range(mp.cpu_count())
+        for seed in worker_seeds
     ]
 
 
@@ -243,12 +251,13 @@ def create_initial_population(
     pop_size: int,
     grammar: gr.Grammar,
     filter: IndividualFilter,
+    rng_seed: int,
 ) -> list[Individual]:
     assert pop_size > 0
 
     # the value for maxsize was arbitrarily chosen
     queue: mp.Queue[Individual] = mp.Queue(maxsize=8 * mp.cpu_count())
-    producers = create_producers(queue, grammar, filter)
+    producers = create_producers(queue, grammar, filter, rng_seed)
 
     for p in producers:
         p.start()
@@ -294,6 +303,7 @@ def main(
     max_layer_width: int = typer.Option(..., "--max-layer-width", min=1),
     max_network_params: int = typer.Option(..., "--max-network-params", min=1),
     log_level: str = typer.Option("INFO", "--log_level"),
+    rng_seed: int = typer.Option(...),
 ) -> None:
     configure_logger(log_level)
     grammar = gr.Grammar(grammar_path.read_text())
@@ -305,7 +315,7 @@ def main(
         max_network_params=max_network_params,
     )
 
-    population = create_initial_population(pop_size, grammar, filter)
+    population = create_initial_population(pop_size, grammar, filter, rng_seed)
 
     save_population(population, output_dir)
 
@@ -316,13 +326,14 @@ def run_from_script() -> None:
     output_dir = experiment_dir / "initial_population"
     main(
         grammar_path=grammar_path,
-        pop_size=100,
-        max_network_depth=5,
+        pop_size=40,
+        max_network_depth=7,
         max_wide_layers=2,
         max_layer_width=512,
-        max_network_params=int(1.5 * (10**7)),
+        max_network_params=int(750 * 1000),
         output_dir=pathlib.Path(output_dir),
         log_level="INFO",
+        rng_seed=42,
     )
 
 
