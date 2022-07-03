@@ -46,6 +46,7 @@ def main(
             to_file=genotype_path.with_suffix(".png"),
             show_shapes=True,
             show_layer_names=False,
+            show_layer_activations=True,
         )
 
 

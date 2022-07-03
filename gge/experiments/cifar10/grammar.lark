@@ -25,7 +25,7 @@ avgpool : "avgpool" "pool_size" 2 "stride" 2
 
 norm : "batchnorm"
 
-act   : relu gelu prelu swish
+act   : relu | gelu | prelu | swish
 relu  : "relu"
 gelu  : "gelu"
 prelu : "prelu"
