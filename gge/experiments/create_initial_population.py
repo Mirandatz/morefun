@@ -316,9 +316,9 @@ def run_from_script() -> None:
     output_dir = experiment_dir / "initial_population"
     main(
         grammar_path=grammar_path,
-        pop_size=123,
+        pop_size=100,
         max_network_depth=5,
-        max_wide_layers=0,
+        max_wide_layers=2,
         max_layer_width=512,
         max_network_params=int(1.5 * (10**7)),
         output_dir=pathlib.Path(output_dir),

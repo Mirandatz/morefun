@@ -9,9 +9,24 @@ import gge.layers as gl
 import gge.phenotypes as phenos
 
 
-def plot_population(
-    genotypes_dir: pathlib.Path,
-    grammar_path: pathlib.Path,
+def main(
+    genotypes_dir: pathlib.Path = typer.Option(
+        ...,
+        "--genotypes-dir",
+        file_okay=False,
+        dir_okay=True,
+        exists=True,
+        readable=True,
+        writable=True,
+    ),
+    grammar_path: pathlib.Path = typer.Option(
+        ...,
+        "--grammar-path",
+        file_okay=True,
+        dir_okay=False,
+        exists=True,
+        readable=True,
+    ),
 ) -> None:
     assert genotypes_dir.is_dir()
     assert grammar_path.is_file()
@@ -38,7 +53,7 @@ def run_from_script() -> None:
     base_dir = pathlib.Path(__file__).parent / "cifar10"
     pop_dir = base_dir / "initial_population"
     grammar_path = base_dir / "grammar.lark"
-    plot_population(pop_dir, grammar_path)
+    main(pop_dir, grammar_path)
 
 
 if __name__ == "__main__":
