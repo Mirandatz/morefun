@@ -310,13 +310,13 @@ def main(
     save_population(population, output_dir)
 
 
-if __name__ == "__main__":
+def run_from_script() -> None:
     experiment_dir = pathlib.Path(__file__).parent / "cifar10"
     grammar_path = experiment_dir / "grammar.lark"
     output_dir = experiment_dir / "initial_population"
     main(
         grammar_path=grammar_path,
-        pop_size=4200,
+        pop_size=123,
         max_network_depth=5,
         max_wide_layers=0,
         max_layer_width=512,
@@ -325,6 +325,11 @@ if __name__ == "__main__":
         log_level="INFO",
     )
 
-# if we want to use this as a script:
+
+if __name__ == "__main__":
+    run_from_script()
+
+
+# if we want to use this from the cli:
 # if __name__ == "__main__":
 #     typer.run(main)
