@@ -6,40 +6,44 @@ ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
 
 # python build deps https://devguide.python.org/setup/#build-dependencies
+# + git
+# + curl, to download stuff
+# + graphviz, to plot models
+# + libgl1, for opencv2
 RUN apt-get update && apt-get install --no-install-recommends --no-install-suggests -y \
     build-essential gdb lcov pkg-config libbz2-dev libffi-dev libgdbm-dev libgdbm-compat-dev liblzma-dev \
     libncurses5-dev libreadline6-dev libsqlite3-dev libssl-dev lzma lzma-dev tk-dev uuid-dev zlib1g-dev \
+    curl git graphviz libgl1 \
     && apt-get autoremove -y \
     && apt-get clean -y \
     && rm -rf /var/lib/apt/lists/*
 
-# to download python :)
-RUN apt-get update && apt-get install --no-install-recommends --no-install-suggests -y \
-    git \
-    && apt-get autoremove -y \
-    && apt-get clean -y \
-    && rm -rf /var/lib/apt/lists/*
+# create user and configure pyenv
+ARG UNAME
+ARG UID
+ARG GID
+RUN groupadd --gid $GID $UNAME
+RUN useradd --create-home --uid $UID --gid $GID --shell /bin/bash $UNAME
+USER $UNAME
+ENV PYENV_ROOT /home/$UNAME/.pyenv
+ENV PATH $PYENV_ROOT/shims:$PYENV_ROOT/bin:$PATH
+
+# install pyenv
+SHELL ["/bin/bash", "-c"]
+RUN curl https://pyenv.run | bash
 
 # compile python 3.10.4
-RUN git clone --depth 1 https://github.com/python/cpython.git --branch v3.10.4 \
-    && cd /cpython \
-    && ./configure --enable-optimizations --with-lto \
-    && make \
-    && make install \
-    && update-alternatives --install /usr/bin/python python /usr/local/bin/python3 999 \
-    && rm -rf /cpython
+RUN CONFIGURE_OPTS="--enable-optimizations --with-lto" pyenv install 3.10.4
+RUN pyenv global 3.10.4
 
-# to plot models
-RUN apt-get update && apt-get install --no-install-recommends --no-install-suggests -y \
-    graphviz \
-    && apt-get autoremove -y \
-    && apt-get clean -y \
-    && rm -rf /var/lib/apt/lists/*
+# create project dir and change its owner
+USER root
+RUN mkdir /gge && chown -R $UID:$GID /gge
+USER $UNAME
 
-WORKDIR /gge/
-
-COPY ./requirements ./requirements
-RUN python -m pip install -r ./requirements/dev.txt --no-cache-dir
-
-ENV TF_CPP_MIN_LOG_LEVEL=1
-ENV TF_XLA_FLAGS="--tf_xla_auto_jit=2 --tf_xla_cpu_global_jit"
+# install requirements
+ENV VIRTUAL_ENV=/gge/venv
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+RUN python -m venv $VIRTUAL_ENV
+COPY ./requirements /gge/requirements
+RUN pip install -r /gge/requirements/dev.txt --no-cache-dir
