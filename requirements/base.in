@@ -3,6 +3,7 @@ lark
 loguru
 networkx
 numpy
+opencv-python
 pillow
 pydot
 scipy
