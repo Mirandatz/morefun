@@ -54,8 +54,18 @@ def make_classification_model(
 def load_dataset_and_rescale(
     directory: pathlib.Path,
     input_shape: gl.Shape,
-    color_mode: typing.Literal["grayscale", "rgb"],
 ) -> tf.data.Dataset:
+
+    match input_shape.depth:
+        case 1:
+            color_mode = "grayscale"
+        case 3:
+            color_mode = "rgb"
+        case _:
+            raise ValueError(
+                f"unable to infer color_mode from input_shape=<{input_shape}>"
+            )
+
     ds: tf.data.Dataset = tf.keras.utils.image_dataset_from_directory(
         directory=directory,
         batch_size=None,
@@ -71,10 +81,9 @@ def load_dataset_and_rescale(
 
 @attrs.frozen
 class ValidationAccuracy:
-    train_dir: pathlib.Path
-    validation_dir: pathlib.Path
+    train_directory: pathlib.Path
+    validation_directory: pathlib.Path
     input_shape: gl.Shape
-    color_mode: typing.Literal["grayscale", "rgb"]
     batch_size: int
     max_epochs: int
     class_count: int
@@ -83,15 +92,14 @@ class ValidationAccuracy:
         assert self.batch_size > 0, self.batch_size
         assert self.max_epochs > 0, self.max_epochs
         assert self.class_count > 1, self.class_count
-        assert self.train_dir.is_dir()
-        assert self.validation_dir.is_dir()
+        assert self.train_directory.is_dir()
+        assert self.validation_directory.is_dir()
 
     def get_train_dataset(self) -> tf.data.Dataset:
         with redirection.discard_stderr_and_stdout():
             train = load_dataset_and_rescale(
-                directory=self.train_dir,
+                directory=self.train_directory,
                 input_shape=self.input_shape,
-                color_mode=self.color_mode,
             )
 
         return (
@@ -109,9 +117,8 @@ class ValidationAccuracy:
         with redirection.discard_stderr_and_stdout():
             return (
                 load_dataset_and_rescale(
-                    directory=self.validation_dir,
+                    directory=self.validation_directory,
                     input_shape=self.input_shape,
-                    color_mode=self.color_mode,
                 )
                 .cache()
                 .batch(self.batch_size, drop_remainder=False)
