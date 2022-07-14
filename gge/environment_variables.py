@@ -30,16 +30,16 @@ class GgePaths:
 
 def get_paths() -> GgePaths:
     return GgePaths(
-        initial_population_dir=pathlib.Path(
-            os.getenv(
-                key="GGE_INITIAL_POPULATION",
-                default="/gge/initial_population",
-            )
-        ),
         grammar_path=pathlib.Path(
             os.getenv(
                 key="GGE_GRAMMAR",
                 default="/gge/grammar.lark",
+            )
+        ),
+        initial_population_dir=pathlib.Path(
+            os.getenv(
+                key="GGE_INITIAL_POPULATION",
+                default="/gge/initial_population",
             )
         ),
         train_dataset_dir=pathlib.Path(

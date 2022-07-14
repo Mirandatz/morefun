@@ -1,0 +1,336 @@
+2022-07-14 18:25:59.199 | INFO     | __main__:main:65 - --------------------------------------------------------------------------------
+        Running with settings:
+        rng_seed=0
+        INPUT_SHAPE=(32, 32, 3)
+        CLASS_COUNT=10
+        MAX_GENERATIONS=100
+        MUTANTS_PER_GENERATION=2
+        MAX_FAILURES=500
+        BATCH_SIZE=32
+        EPOCHS=10
+        settings.grammar_path=PosixPath('/gge/grammar.lark')
+        settings.initial_population_dir=PosixPath('/gge/initial_population')
+        settings.train_dataset_dir=PosixPath('/gge/dataset/train')
+        settings.validation_dataset_dir=PosixPath('/gge/dataset/validation')
+        settings.test_dataset_dir=PosixPath('/gge/dataset/test')
+        settings.initial_population_dir=PosixPath('/gge/initial_population')
+        settings.output_dir=PosixPath('/gge/output')
+        settings.logging_dir=PosixPath('/gge/logging')
+        --------------------------------------------------------------------------------
+    
+2022-07-14 18:25:59.199 | DEBUG    | gge.grammars:get_upper_grammar_parser:19 - start parsing upper_grammar
+2022-07-14 18:25:59.306 | DEBUG    | gge.grammars:get_upper_grammar_parser:25 - finished parsing upper_grammar
+2022-07-14 18:25:59.324 | DEBUG    | gge.fitnesses:evaluate:167 - starting fitness evaluation of genotype=<CompositeGenotype(unique_id=UUID('5ff7b6e9-322f-4a33-a614-49c7ab8302a1'))>
+2022-07-14 18:25:59.325 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<NT(start)>
+2022-07-14 18:25:59.325 | DEBUG    | gge.grammars:expansions:332 - Non-terminal=<NT(start)> expands into rhss=<(RuleOption(NT(data_aug),NT(learning),NT(optimizer)),)>
+2022-07-14 18:25:59.325 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:159 - Queueing symbols=<<reversed object at 0x7f8c65db3d00>>
+2022-07-14 18:25:59.325 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<NT(data_aug)>
+2022-07-14 18:25:59.325 | DEBUG    | gge.grammars:expansions:332 - Non-terminal=<NT(data_aug)> expands into rhss=<(RuleOption(NT(flip),NT(enlarge),NT(rotate),NT(crop),NT(restore_size)),)>
+2022-07-14 18:25:59.326 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:159 - Queueing symbols=<<reversed object at 0x7f8c65db24a0>>
+2022-07-14 18:25:59.326 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<NT(flip)>
+2022-07-14 18:25:59.326 | DEBUG    | gge.grammars:expansions:332 - Non-terminal=<NT(flip)> expands into rhss=<(RuleOption(T("random_flip"),T(horizontal_and_vertical)),)>
+2022-07-14 18:25:59.326 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:159 - Queueing symbols=<<reversed object at 0x7f8c65db3d00>>
+2022-07-14 18:25:59.326 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("random_flip")>
+2022-07-14 18:25:59.326 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="random_flip" added to tokenstream
+2022-07-14 18:25:59.327 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T(horizontal_and_vertical)>
+2022-07-14 18:25:59.327 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal=horizontal_and_vertical added to tokenstream
+2022-07-14 18:25:59.327 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<NT(enlarge)>
+2022-07-14 18:25:59.327 | DEBUG    | gge.grammars:expansions:332 - Non-terminal=<NT(enlarge)> expands into rhss=<(RuleOption(NT(small_increase)), RuleOption(NT(large_increase)))>
+2022-07-14 18:25:59.327 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:159 - Queueing symbols=<<reversed object at 0x7f8c65db24a0>>
+2022-07-14 18:25:59.327 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<NT(small_increase)>
+2022-07-14 18:25:59.327 | DEBUG    | gge.grammars:expansions:332 - Non-terminal=<NT(small_increase)> expands into rhss=<(RuleOption(T("resizing"),T("height"),T(48),T("width"),T(48)),)>
+2022-07-14 18:25:59.328 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:159 - Queueing symbols=<<reversed object at 0x7f8c65db3d00>>
+2022-07-14 18:25:59.328 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("resizing")>
+2022-07-14 18:25:59.328 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="resizing" added to tokenstream
+2022-07-14 18:25:59.328 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("height")>
+2022-07-14 18:25:59.328 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="height" added to tokenstream
+2022-07-14 18:25:59.328 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T(48)>
+2022-07-14 18:25:59.328 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal=48 added to tokenstream
+2022-07-14 18:25:59.328 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("width")>
+2022-07-14 18:25:59.329 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="width" added to tokenstream
+2022-07-14 18:25:59.329 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T(48)>
+2022-07-14 18:25:59.329 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal=48 added to tokenstream
+2022-07-14 18:25:59.329 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<NT(rotate)>
+2022-07-14 18:25:59.329 | DEBUG    | gge.grammars:expansions:332 - Non-terminal=<NT(rotate)> expands into rhss=<(RuleOption(T("random_rotation"),T(0.01)), RuleOption(T("random_rotation"),T(0.05)), RuleOption(T("random_rotation"),T(0.10)), RuleOption(T("random_rotation"),T(0.15)))>
+2022-07-14 18:25:59.329 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:159 - Queueing symbols=<<reversed object at 0x7f8c65db24a0>>
+2022-07-14 18:25:59.329 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("random_rotation")>
+2022-07-14 18:25:59.330 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="random_rotation" added to tokenstream
+2022-07-14 18:25:59.330 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T(0.10)>
+2022-07-14 18:25:59.330 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal=0.10 added to tokenstream
+2022-07-14 18:25:59.330 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<NT(crop)>
+2022-07-14 18:25:59.330 | DEBUG    | gge.grammars:expansions:332 - Non-terminal=<NT(crop)> expands into rhss=<(RuleOption(NT(small_crops)), RuleOption(NT(large_crops)))>
+2022-07-14 18:25:59.330 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:159 - Queueing symbols=<<reversed object at 0x7f8c65db3d00>>
+2022-07-14 18:25:59.330 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<NT(small_crops)>
+2022-07-14 18:25:59.330 | DEBUG    | gge.grammars:expansions:332 - Non-terminal=<NT(small_crops)> expands into rhss=<(RuleOption(T("random_crop"),T("height"),T(12),T("width"),T(12)),)>
+2022-07-14 18:25:59.331 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:159 - Queueing symbols=<<reversed object at 0x7f8c65db24a0>>
+2022-07-14 18:25:59.331 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("random_crop")>
+2022-07-14 18:25:59.331 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="random_crop" added to tokenstream
+2022-07-14 18:25:59.331 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("height")>
+2022-07-14 18:25:59.331 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="height" added to tokenstream
+2022-07-14 18:25:59.331 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T(12)>
+2022-07-14 18:25:59.331 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal=12 added to tokenstream
+2022-07-14 18:25:59.331 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("width")>
+2022-07-14 18:25:59.331 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="width" added to tokenstream
+2022-07-14 18:25:59.331 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T(12)>
+2022-07-14 18:25:59.331 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal=12 added to tokenstream
+2022-07-14 18:25:59.332 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<NT(restore_size)>
+2022-07-14 18:25:59.332 | DEBUG    | gge.grammars:expansions:332 - Non-terminal=<NT(restore_size)> expands into rhss=<(RuleOption(T("resizing"),T("height"),T(32),T("width"),T(32)),)>
+2022-07-14 18:25:59.332 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:159 - Queueing symbols=<<reversed object at 0x7f8c65db3d00>>
+2022-07-14 18:25:59.332 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("resizing")>
+2022-07-14 18:25:59.332 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="resizing" added to tokenstream
+2022-07-14 18:25:59.332 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("height")>
+2022-07-14 18:25:59.332 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="height" added to tokenstream
+2022-07-14 18:25:59.332 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T(32)>
+2022-07-14 18:25:59.332 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal=32 added to tokenstream
+2022-07-14 18:25:59.332 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("width")>
+2022-07-14 18:25:59.333 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="width" added to tokenstream
+2022-07-14 18:25:59.333 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T(32)>
+2022-07-14 18:25:59.333 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal=32 added to tokenstream
+2022-07-14 18:25:59.333 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<NT(learning)>
+2022-07-14 18:25:59.333 | DEBUG    | gge.grammars:expansions:332 - Non-terminal=<NT(learning)> expands into rhss=<(RuleOption(NT(conv_block),NT(conv_pool_block),NT(conv_pool_block)), RuleOption(NT(conv_block),NT(conv_pool_block),NT(conv_pool_block),NT(conv_pool_block)), RuleOption(NT(conv_block),NT(conv_pool_block),NT(conv_pool_block),NT(conv_pool_block),NT(conv_pool_block)), RuleOption(NT(conv_block),NT(conv_pool_block),NT(conv_pool_block),NT(conv_pool_block),NT(conv_pool_block),NT(conv_pool_block)), RuleOption(NT(conv_block),NT(conv_block),NT(conv_pool_block),NT(conv_pool_block)), RuleOption(NT(conv_block),NT(conv_block),NT(conv_pool_block),NT(conv_pool_block),NT(conv_pool_block)), RuleOption(NT(conv_block),NT(conv_block),NT(conv_pool_block),NT(conv_pool_block),NT(conv_pool_block),NT(conv_pool_block)), RuleOption(NT(conv_block),NT(conv_block),NT(conv_pool_block),NT(conv_pool_block),NT(conv_pool_block),NT(conv_pool_block),NT(conv_pool_block)))>
+2022-07-14 18:25:59.333 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:159 - Queueing symbols=<<reversed object at 0x7f8c65db24a0>>
+2022-07-14 18:25:59.333 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<NT(conv_block)>
+2022-07-14 18:25:59.333 | DEBUG    | gge.grammars:expansions:332 - Non-terminal=<NT(conv_block)> expands into rhss=<(RuleOption(NT(conv_layer),NT(act),NT(norm),T("fork")),)>
+2022-07-14 18:25:59.333 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:159 - Queueing symbols=<<reversed object at 0x7f8c65db3d00>>
+2022-07-14 18:25:59.334 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<NT(conv_layer)>
+2022-07-14 18:25:59.334 | DEBUG    | gge.grammars:expansions:332 - Non-terminal=<NT(conv_layer)> expands into rhss=<(RuleOption(T("conv"),T("filter_count"),T(32),T("kernel_size"),T(3),T("stride"),T(1)), RuleOption(T("conv"),T("filter_count"),T(32),T("kernel_size"),T(3),T("stride"),T(2)), RuleOption(T("conv"),T("filter_count"),T(32),T("kernel_size"),T(5),T("stride"),T(1)), RuleOption(T("conv"),T("filter_count"),T(32),T("kernel_size"),T(5),T("stride"),T(2)), RuleOption(T("conv"),T("filter_count"),T(32),T("kernel_size"),T(7),T("stride"),T(1)), RuleOption(T("conv"),T("filter_count"),T(32),T("kernel_size"),T(7),T("stride"),T(2)), RuleOption(T("conv"),T("filter_count"),T(64),T("kernel_size"),T(3),T("stride"),T(1)), RuleOption(T("conv"),T("filter_count"),T(64),T("kernel_size"),T(3),T("stride"),T(2)), RuleOption(T("conv"),T("filter_count"),T(64),T("kernel_size"),T(5),T("stride"),T(1)), RuleOption(T("conv"),T("filter_count"),T(64),T("kernel_size"),T(5),T("stride"),T(2)), RuleOption(T("conv"),T("filter_count"),T(64),T("kernel_size"),T(7),T("stride"),T(1)), RuleOption(T("conv"),T("filter_count"),T(64),T("kernel_size"),T(7),T("stride"),T(2)), RuleOption(T("conv"),T("filter_count"),T(128),T("kernel_size"),T(3),T("stride"),T(1)), RuleOption(T("conv"),T("filter_count"),T(128),T("kernel_size"),T(3),T("stride"),T(2)), RuleOption(T("conv"),T("filter_count"),T(128),T("kernel_size"),T(5),T("stride"),T(1)), RuleOption(T("conv"),T("filter_count"),T(128),T("kernel_size"),T(5),T("stride"),T(2)), RuleOption(T("conv"),T("filter_count"),T(128),T("kernel_size"),T(7),T("stride"),T(1)), RuleOption(T("conv"),T("filter_count"),T(128),T("kernel_size"),T(7),T("stride"),T(2)), RuleOption(T("conv"),T("filter_count"),T(256),T("kernel_size"),T(3),T("stride"),T(1)), RuleOption(T("conv"),T("filter_count"),T(256),T("kernel_size"),T(3),T("stride"),T(2)), RuleOption(T("conv"),T("filter_count"),T(256),T("kernel_size"),T(5),T("stride"),T(1)), RuleOption(T("conv"),T("filter_count"),T(256),T("kernel_size"),T(5),T("stride"),T(2)), RuleOption(T("conv"),T("filter_count"),T(256),T("kernel_size"),T(7),T("stride"),T(1)), RuleOption(T("conv"),T("filter_count"),T(256),T("kernel_size"),T(7),T("stride"),T(2)))>
+2022-07-14 18:25:59.334 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:159 - Queueing symbols=<<reversed object at 0x7f8c65db24a0>>
+2022-07-14 18:25:59.334 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("conv")>
+2022-07-14 18:25:59.334 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="conv" added to tokenstream
+2022-07-14 18:25:59.334 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("filter_count")>
+2022-07-14 18:25:59.334 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="filter_count" added to tokenstream
+2022-07-14 18:25:59.334 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T(64)>
+2022-07-14 18:25:59.334 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal=64 added to tokenstream
+2022-07-14 18:25:59.335 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("kernel_size")>
+2022-07-14 18:25:59.335 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="kernel_size" added to tokenstream
+2022-07-14 18:25:59.335 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T(5)>
+2022-07-14 18:25:59.335 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal=5 added to tokenstream
+2022-07-14 18:25:59.335 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("stride")>
+2022-07-14 18:25:59.335 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="stride" added to tokenstream
+2022-07-14 18:25:59.335 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T(1)>
+2022-07-14 18:25:59.335 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal=1 added to tokenstream
+2022-07-14 18:25:59.335 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<NT(act)>
+2022-07-14 18:25:59.336 | DEBUG    | gge.grammars:expansions:332 - Non-terminal=<NT(act)> expands into rhss=<(RuleOption(NT(relu)), RuleOption(NT(gelu)), RuleOption(NT(prelu)), RuleOption(NT(swish)))>
+2022-07-14 18:25:59.336 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:159 - Queueing symbols=<<reversed object at 0x7f8c65db3d00>>
+2022-07-14 18:25:59.336 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<NT(relu)>
+2022-07-14 18:25:59.336 | DEBUG    | gge.grammars:expansions:332 - Non-terminal=<NT(relu)> expands into rhss=<(RuleOption(T("relu")),)>
+2022-07-14 18:25:59.336 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:159 - Queueing symbols=<<reversed object at 0x7f8c65db24a0>>
+2022-07-14 18:25:59.336 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("relu")>
+2022-07-14 18:25:59.336 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="relu" added to tokenstream
+2022-07-14 18:25:59.336 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<NT(norm)>
+2022-07-14 18:25:59.336 | DEBUG    | gge.grammars:expansions:332 - Non-terminal=<NT(norm)> expands into rhss=<(RuleOption(T("batchnorm")),)>
+2022-07-14 18:25:59.337 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:159 - Queueing symbols=<<reversed object at 0x7f8c65db3d00>>
+2022-07-14 18:25:59.337 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("batchnorm")>
+2022-07-14 18:25:59.337 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="batchnorm" added to tokenstream
+2022-07-14 18:25:59.337 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("fork")>
+2022-07-14 18:25:59.337 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="fork" added to tokenstream
+2022-07-14 18:25:59.337 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<NT(conv_pool_block)>
+2022-07-14 18:25:59.337 | DEBUG    | gge.grammars:expansions:332 - Non-terminal=<NT(conv_pool_block)> expands into rhss=<(RuleOption(T("merge"),NT(conv_layer),NT(act),NT(pool),NT(norm),T("fork")), RuleOption(T("merge"),NT(conv_layer),NT(act),NT(norm),T("fork")))>
+2022-07-14 18:25:59.337 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:159 - Queueing symbols=<<reversed object at 0x7f8c65db24a0>>
+2022-07-14 18:25:59.337 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("merge")>
+2022-07-14 18:25:59.338 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="merge" added to tokenstream
+2022-07-14 18:25:59.338 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<NT(conv_layer)>
+2022-07-14 18:25:59.338 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:159 - Queueing symbols=<<reversed object at 0x7f8c65db3d00>>
+2022-07-14 18:25:59.338 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("conv")>
+2022-07-14 18:25:59.338 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="conv" added to tokenstream
+2022-07-14 18:25:59.338 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("filter_count")>
+2022-07-14 18:25:59.338 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="filter_count" added to tokenstream
+2022-07-14 18:25:59.338 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T(128)>
+2022-07-14 18:25:59.338 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal=128 added to tokenstream
+2022-07-14 18:25:59.339 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("kernel_size")>
+2022-07-14 18:25:59.339 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="kernel_size" added to tokenstream
+2022-07-14 18:25:59.339 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T(5)>
+2022-07-14 18:25:59.339 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal=5 added to tokenstream
+2022-07-14 18:25:59.339 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("stride")>
+2022-07-14 18:25:59.339 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="stride" added to tokenstream
+2022-07-14 18:25:59.339 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T(2)>
+2022-07-14 18:25:59.339 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal=2 added to tokenstream
+2022-07-14 18:25:59.339 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<NT(act)>
+2022-07-14 18:25:59.340 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:159 - Queueing symbols=<<reversed object at 0x7f8c65db24a0>>
+2022-07-14 18:25:59.340 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<NT(swish)>
+2022-07-14 18:25:59.340 | DEBUG    | gge.grammars:expansions:332 - Non-terminal=<NT(swish)> expands into rhss=<(RuleOption(T("swish")),)>
+2022-07-14 18:25:59.340 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:159 - Queueing symbols=<<reversed object at 0x7f8c65db3d00>>
+2022-07-14 18:25:59.340 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("swish")>
+2022-07-14 18:25:59.340 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="swish" added to tokenstream
+2022-07-14 18:25:59.340 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<NT(pool)>
+2022-07-14 18:25:59.340 | DEBUG    | gge.grammars:expansions:332 - Non-terminal=<NT(pool)> expands into rhss=<(RuleOption(NT(maxpool)), RuleOption(NT(avgpool)))>
+2022-07-14 18:25:59.340 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:159 - Queueing symbols=<<reversed object at 0x7f8c65db24a0>>
+2022-07-14 18:25:59.341 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<NT(maxpool)>
+2022-07-14 18:25:59.341 | DEBUG    | gge.grammars:expansions:332 - Non-terminal=<NT(maxpool)> expands into rhss=<(RuleOption(T("maxpool"),T("pool_size"),T(2),T("stride"),T(2)),)>
+2022-07-14 18:25:59.341 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:159 - Queueing symbols=<<reversed object at 0x7f8c65db3d00>>
+2022-07-14 18:25:59.341 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("maxpool")>
+2022-07-14 18:25:59.341 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="maxpool" added to tokenstream
+2022-07-14 18:25:59.341 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("pool_size")>
+2022-07-14 18:25:59.341 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="pool_size" added to tokenstream
+2022-07-14 18:25:59.341 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T(2)>
+2022-07-14 18:25:59.341 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal=2 added to tokenstream
+2022-07-14 18:25:59.342 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("stride")>
+2022-07-14 18:25:59.342 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="stride" added to tokenstream
+2022-07-14 18:25:59.342 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T(2)>
+2022-07-14 18:25:59.342 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal=2 added to tokenstream
+2022-07-14 18:25:59.342 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<NT(norm)>
+2022-07-14 18:25:59.342 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:159 - Queueing symbols=<<reversed object at 0x7f8c65db24a0>>
+2022-07-14 18:25:59.342 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("batchnorm")>
+2022-07-14 18:25:59.342 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="batchnorm" added to tokenstream
+2022-07-14 18:25:59.342 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("fork")>
+2022-07-14 18:25:59.343 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="fork" added to tokenstream
+2022-07-14 18:25:59.343 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<NT(conv_pool_block)>
+2022-07-14 18:25:59.343 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:159 - Queueing symbols=<<reversed object at 0x7f8c65db3d00>>
+2022-07-14 18:25:59.343 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("merge")>
+2022-07-14 18:25:59.343 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="merge" added to tokenstream
+2022-07-14 18:25:59.343 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<NT(conv_layer)>
+2022-07-14 18:25:59.343 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:159 - Queueing symbols=<<reversed object at 0x7f8c65db24a0>>
+2022-07-14 18:25:59.343 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("conv")>
+2022-07-14 18:25:59.343 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="conv" added to tokenstream
+2022-07-14 18:25:59.343 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("filter_count")>
+2022-07-14 18:25:59.344 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="filter_count" added to tokenstream
+2022-07-14 18:25:59.344 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T(32)>
+2022-07-14 18:25:59.344 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal=32 added to tokenstream
+2022-07-14 18:25:59.344 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("kernel_size")>
+2022-07-14 18:25:59.344 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="kernel_size" added to tokenstream
+2022-07-14 18:25:59.344 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T(7)>
+2022-07-14 18:25:59.344 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal=7 added to tokenstream
+2022-07-14 18:25:59.344 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("stride")>
+2022-07-14 18:25:59.345 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="stride" added to tokenstream
+2022-07-14 18:25:59.345 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T(1)>
+2022-07-14 18:25:59.345 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal=1 added to tokenstream
+2022-07-14 18:25:59.345 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<NT(act)>
+2022-07-14 18:25:59.345 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:159 - Queueing symbols=<<reversed object at 0x7f8c65db3d00>>
+2022-07-14 18:25:59.345 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<NT(prelu)>
+2022-07-14 18:25:59.345 | DEBUG    | gge.grammars:expansions:332 - Non-terminal=<NT(prelu)> expands into rhss=<(RuleOption(T("prelu")),)>
+2022-07-14 18:25:59.346 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:159 - Queueing symbols=<<reversed object at 0x7f8c65db24a0>>
+2022-07-14 18:25:59.346 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("prelu")>
+2022-07-14 18:25:59.346 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="prelu" added to tokenstream
+2022-07-14 18:25:59.346 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<NT(pool)>
+2022-07-14 18:25:59.346 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:159 - Queueing symbols=<<reversed object at 0x7f8c65db3d00>>
+2022-07-14 18:25:59.346 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<NT(avgpool)>
+2022-07-14 18:25:59.346 | DEBUG    | gge.grammars:expansions:332 - Non-terminal=<NT(avgpool)> expands into rhss=<(RuleOption(T("avgpool"),T("pool_size"),T(2),T("stride"),T(2)),)>
+2022-07-14 18:25:59.346 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:159 - Queueing symbols=<<reversed object at 0x7f8c65db24a0>>
+2022-07-14 18:25:59.347 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("avgpool")>
+2022-07-14 18:25:59.347 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="avgpool" added to tokenstream
+2022-07-14 18:25:59.347 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("pool_size")>
+2022-07-14 18:25:59.347 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="pool_size" added to tokenstream
+2022-07-14 18:25:59.347 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T(2)>
+2022-07-14 18:25:59.347 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal=2 added to tokenstream
+2022-07-14 18:25:59.347 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("stride")>
+2022-07-14 18:25:59.347 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="stride" added to tokenstream
+2022-07-14 18:25:59.347 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T(2)>
+2022-07-14 18:25:59.348 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal=2 added to tokenstream
+2022-07-14 18:25:59.348 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<NT(norm)>
+2022-07-14 18:25:59.348 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:159 - Queueing symbols=<<reversed object at 0x7f8c65db3d00>>
+2022-07-14 18:25:59.348 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("batchnorm")>
+2022-07-14 18:25:59.348 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="batchnorm" added to tokenstream
+2022-07-14 18:25:59.348 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("fork")>
+2022-07-14 18:25:59.348 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="fork" added to tokenstream
+2022-07-14 18:25:59.348 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<NT(conv_pool_block)>
+2022-07-14 18:25:59.348 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:159 - Queueing symbols=<<reversed object at 0x7f8c65db24a0>>
+2022-07-14 18:25:59.348 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("merge")>
+2022-07-14 18:25:59.349 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="merge" added to tokenstream
+2022-07-14 18:25:59.349 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<NT(conv_layer)>
+2022-07-14 18:25:59.349 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:159 - Queueing symbols=<<reversed object at 0x7f8c65db3d00>>
+2022-07-14 18:25:59.349 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("conv")>
+2022-07-14 18:25:59.349 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="conv" added to tokenstream
+2022-07-14 18:25:59.349 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("filter_count")>
+2022-07-14 18:25:59.349 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="filter_count" added to tokenstream
+2022-07-14 18:25:59.349 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T(128)>
+2022-07-14 18:25:59.349 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal=128 added to tokenstream
+2022-07-14 18:25:59.349 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("kernel_size")>
+2022-07-14 18:25:59.349 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="kernel_size" added to tokenstream
+2022-07-14 18:25:59.350 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T(5)>
+2022-07-14 18:25:59.350 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal=5 added to tokenstream
+2022-07-14 18:25:59.350 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("stride")>
+2022-07-14 18:25:59.350 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="stride" added to tokenstream
+2022-07-14 18:25:59.350 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T(1)>
+2022-07-14 18:25:59.350 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal=1 added to tokenstream
+2022-07-14 18:25:59.350 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<NT(act)>
+2022-07-14 18:25:59.350 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:159 - Queueing symbols=<<reversed object at 0x7f8c65db24a0>>
+2022-07-14 18:25:59.351 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<NT(prelu)>
+2022-07-14 18:25:59.351 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:159 - Queueing symbols=<<reversed object at 0x7f8c65db3d00>>
+2022-07-14 18:25:59.351 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("prelu")>
+2022-07-14 18:25:59.351 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="prelu" added to tokenstream
+2022-07-14 18:25:59.351 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<NT(pool)>
+2022-07-14 18:25:59.351 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:159 - Queueing symbols=<<reversed object at 0x7f8c65db24a0>>
+2022-07-14 18:25:59.351 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<NT(maxpool)>
+2022-07-14 18:25:59.351 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:159 - Queueing symbols=<<reversed object at 0x7f8c65db3d00>>
+2022-07-14 18:25:59.352 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("maxpool")>
+2022-07-14 18:25:59.352 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="maxpool" added to tokenstream
+2022-07-14 18:25:59.352 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("pool_size")>
+2022-07-14 18:25:59.352 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="pool_size" added to tokenstream
+2022-07-14 18:25:59.352 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T(2)>
+2022-07-14 18:25:59.352 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal=2 added to tokenstream
+2022-07-14 18:25:59.352 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("stride")>
+2022-07-14 18:25:59.352 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="stride" added to tokenstream
+2022-07-14 18:25:59.352 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T(2)>
+2022-07-14 18:25:59.352 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal=2 added to tokenstream
+2022-07-14 18:25:59.352 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<NT(norm)>
+2022-07-14 18:25:59.353 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:159 - Queueing symbols=<<reversed object at 0x7f8c65db24a0>>
+2022-07-14 18:25:59.353 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("batchnorm")>
+2022-07-14 18:25:59.353 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="batchnorm" added to tokenstream
+2022-07-14 18:25:59.353 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("fork")>
+2022-07-14 18:25:59.353 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="fork" added to tokenstream
+2022-07-14 18:25:59.353 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<NT(optimizer)>
+2022-07-14 18:25:59.353 | DEBUG    | gge.grammars:expansions:332 - Non-terminal=<NT(optimizer)> expands into rhss=<(RuleOption(NT(sgd)), RuleOption(NT(adam)))>
+2022-07-14 18:25:59.353 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:159 - Queueing symbols=<<reversed object at 0x7f8c65db3d00>>
+2022-07-14 18:25:59.353 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<NT(adam)>
+2022-07-14 18:25:59.354 | DEBUG    | gge.grammars:expansions:332 - Non-terminal=<NT(adam)> expands into rhss=<(RuleOption(T("adam"),T("learning_rate"),T(0.001),T("beta1"),T(0.9),T("beta2"),T(0.999),T("epsilon"),T(1e-07),T("amsgrad"),T(true)), RuleOption(T("adam"),T("learning_rate"),T(0.001),T("beta1"),T(0.9),T("beta2"),T(0.999),T("epsilon"),T(1e-07),T("amsgrad"),T(false)), RuleOption(T("adam"),T("learning_rate"),T(0.005),T("beta1"),T(0.9),T("beta2"),T(0.999),T("epsilon"),T(1e-07),T("amsgrad"),T(true)), RuleOption(T("adam"),T("learning_rate"),T(0.005),T("beta1"),T(0.9),T("beta2"),T(0.999),T("epsilon"),T(1e-07),T("amsgrad"),T(false)), RuleOption(T("adam"),T("learning_rate"),T(0.01),T("beta1"),T(0.9),T("beta2"),T(0.999),T("epsilon"),T(1e-07),T("amsgrad"),T(true)), RuleOption(T("adam"),T("learning_rate"),T(0.01),T("beta1"),T(0.9),T("beta2"),T(0.999),T("epsilon"),T(1e-07),T("amsgrad"),T(false)))>
+2022-07-14 18:25:59.354 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:159 - Queueing symbols=<<reversed object at 0x7f8c65db24a0>>
+2022-07-14 18:25:59.354 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("adam")>
+2022-07-14 18:25:59.354 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="adam" added to tokenstream
+2022-07-14 18:25:59.354 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("learning_rate")>
+2022-07-14 18:25:59.354 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="learning_rate" added to tokenstream
+2022-07-14 18:25:59.354 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T(0.01)>
+2022-07-14 18:25:59.354 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal=0.01 added to tokenstream
+2022-07-14 18:25:59.354 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("beta1")>
+2022-07-14 18:25:59.355 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="beta1" added to tokenstream
+2022-07-14 18:25:59.355 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T(0.9)>
+2022-07-14 18:25:59.355 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal=0.9 added to tokenstream
+2022-07-14 18:25:59.355 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("beta2")>
+2022-07-14 18:25:59.355 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="beta2" added to tokenstream
+2022-07-14 18:25:59.355 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T(0.999)>
+2022-07-14 18:25:59.355 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal=0.999 added to tokenstream
+2022-07-14 18:25:59.355 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("epsilon")>
+2022-07-14 18:25:59.355 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="epsilon" added to tokenstream
+2022-07-14 18:25:59.355 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T(1e-07)>
+2022-07-14 18:25:59.356 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal=1e-07 added to tokenstream
+2022-07-14 18:25:59.356 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T("amsgrad")>
+2022-07-14 18:25:59.356 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal="amsgrad" added to tokenstream
+2022-07-14 18:25:59.356 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:139 - Processing symbol=<T(false)>
+2022-07-14 18:25:59.356 | DEBUG    | gge.structured_grammatical_evolution:map_to_tokenstream:146 - Terminal=false added to tokenstream
+2022-07-14 18:25:59.356 | DEBUG    | gge.backbones:parse:267 - parsing backbone tokenstream
+2022-07-14 18:25:59.392 | DEBUG    | gge.name_generator:_create_name:17 - Generated name=<RandomFlip_0> for prefix=<RandomFlip>
+2022-07-14 18:25:59.392 | DEBUG    | gge.name_generator:_create_name:17 - Generated name=<Resizing_0> for prefix=<Resizing>
+2022-07-14 18:25:59.392 | DEBUG    | gge.name_generator:_create_name:17 - Generated name=<RandomRotation_0> for prefix=<RandomRotation>
+2022-07-14 18:25:59.393 | DEBUG    | gge.name_generator:_create_name:17 - Generated name=<RandomCrop_0> for prefix=<RandomCrop>
+2022-07-14 18:25:59.393 | DEBUG    | gge.name_generator:_create_name:17 - Generated name=<Resizing_1> for prefix=<Resizing>
+2022-07-14 18:25:59.393 | DEBUG    | gge.name_generator:_create_name:17 - Generated name=<Conv2D_0> for prefix=<Conv2D>
+2022-07-14 18:25:59.393 | DEBUG    | gge.name_generator:_create_name:17 - Generated name=<Relu_0> for prefix=<Relu>
+2022-07-14 18:25:59.393 | DEBUG    | gge.name_generator:_create_name:17 - Generated name=<BatchNorm_0> for prefix=<BatchNorm>
+2022-07-14 18:25:59.394 | DEBUG    | gge.name_generator:_create_name:17 - Generated name=<fork_0> for prefix=<fork>
+2022-07-14 18:25:59.394 | DEBUG    | gge.name_generator:_create_name:17 - Generated name=<merge_0> for prefix=<merge>
+2022-07-14 18:25:59.394 | DEBUG    | gge.name_generator:_create_name:17 - Generated name=<Conv2D_1> for prefix=<Conv2D>
+2022-07-14 18:25:59.394 | DEBUG    | gge.name_generator:_create_name:17 - Generated name=<Swish_0> for prefix=<Swish>
+2022-07-14 18:25:59.395 | DEBUG    | gge.name_generator:_create_name:17 - Generated name=<MaxPool2D_0> for prefix=<MaxPool2D>
+2022-07-14 18:25:59.395 | DEBUG    | gge.name_generator:_create_name:17 - Generated name=<BatchNorm_1> for prefix=<BatchNorm>
+2022-07-14 18:25:59.395 | DEBUG    | gge.name_generator:_create_name:17 - Generated name=<fork_1> for prefix=<fork>
+2022-07-14 18:25:59.395 | DEBUG    | gge.name_generator:_create_name:17 - Generated name=<merge_1> for prefix=<merge>
+2022-07-14 18:25:59.395 | DEBUG    | gge.name_generator:_create_name:17 - Generated name=<Conv2D_2> for prefix=<Conv2D>
+2022-07-14 18:25:59.396 | DEBUG    | gge.name_generator:_create_name:17 - Generated name=<Prelu_0> for prefix=<Prelu>
+2022-07-14 18:25:59.396 | DEBUG    | gge.name_generator:_create_name:17 - Generated name=<AvgPool2D_0> for prefix=<AvgPool2D>
+2022-07-14 18:25:59.396 | DEBUG    | gge.name_generator:_create_name:17 - Generated name=<BatchNorm_2> for prefix=<BatchNorm>
+2022-07-14 18:25:59.396 | DEBUG    | gge.name_generator:_create_name:17 - Generated name=<fork_2> for prefix=<fork>
+2022-07-14 18:25:59.396 | DEBUG    | gge.name_generator:_create_name:17 - Generated name=<merge_2> for prefix=<merge>
+2022-07-14 18:25:59.396 | DEBUG    | gge.name_generator:_create_name:17 - Generated name=<Conv2D_3> for prefix=<Conv2D>
+2022-07-14 18:25:59.397 | DEBUG    | gge.name_generator:_create_name:17 - Generated name=<Prelu_1> for prefix=<Prelu>
+2022-07-14 18:25:59.397 | DEBUG    | gge.name_generator:_create_name:17 - Generated name=<MaxPool2D_1> for prefix=<MaxPool2D>
+2022-07-14 18:25:59.397 | DEBUG    | gge.name_generator:_create_name:17 - Generated name=<BatchNorm_3> for prefix=<BatchNorm>
+2022-07-14 18:25:59.397 | DEBUG    | gge.name_generator:_create_name:17 - Generated name=<fork_3> for prefix=<fork>
+2022-07-14 18:25:59.397 | DEBUG    | gge.backbones:parse:278 - finished parsing backbone tokenstream
+2022-07-14 18:25:59.398 | DEBUG    | gge.optimizers:parse:201 - parsing optimizer tokenstream
+2022-07-14 18:25:59.427 | DEBUG    | gge.optimizers:parse:212 - finished parsing optimizer tokenstream
+2022-07-14 18:25:59.427 | DEBUG    | gge.fitnesses:evaluate:129 - starting fitness evaluation, phenotype=<Phenotype(genotype_uuid=UUID('5ff7b6e9-322f-4a33-a614-49c7ab8302a1'))>
+2022-07-14 18:26:00.727 | DEBUG    | gge.connections:make_merge:214 - Merging shapes=<[(8, 8, 128), (32, 32, 64)]> into target=<(8, 8, 128)> from strategy=<ReshapeStrategy.DOWNSAMPLE
+2022-07-14 18:26:00.727 | DEBUG    | gge.name_generator:_create_name:17 - Generated name=<Conv2D_0> for prefix=<Conv2D>
+2022-07-14 18:26:00.728 | DEBUG    | gge.name_generator:_create_name:17 - Generated name=<ConnectedConcatenate_0> for prefix=<ConnectedConcatenate>
+2022-07-14 18:26:00.728 | DEBUG    | gge.connections:make_merge:214 - Merging shapes=<[(4, 4, 32), (32, 32, 64)]> into target=<(4, 4, 32)> from strategy=<ReshapeStrategy.DOWNSAMPLE
+2022-07-14 18:26:00.728 | DEBUG    | gge.name_generator:_create_name:17 - Generated name=<Conv2D_1> for prefix=<Conv2D>
+2022-07-14 18:26:00.728 | DEBUG    | gge.name_generator:_create_name:17 - Generated name=<ConnectedAdd_0> for prefix=<ConnectedAdd>

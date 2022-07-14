@@ -1,14 +1,16 @@
 import pathlib
+import pickle
 
 import typer
 from loguru import logger
 
+import gge.composite_genotypes as cg
+import gge.environment_variables
 import gge.evolution as evo
 import gge.fitnesses as gfit
 import gge.grammars as gr
 import gge.layers as gl
 import gge.novelty as novel
-import gge.population_generation as pop_gen
 import gge.population_mutation as gmut
 import gge.randomness as rand
 
@@ -16,8 +18,8 @@ IMAGE_WIDTH = 32
 IMAGE_HEIGHT = 32
 IMAGE_DEPTH = 3
 CLASS_COUNT = 10
+INPUT_SHAPE = gl.Shape(height=IMAGE_HEIGHT, width=IMAGE_WIDTH, depth=IMAGE_DEPTH)
 
-POPULATION_SIZE = 5
 MAX_GENERATIONS = 100
 MUTANTS_PER_GENERATION = 2
 MAX_FAILURES = 500
@@ -26,98 +28,49 @@ BATCH_SIZE = 32
 EPOCHS = 10
 
 
-def get_grammar() -> gr.Grammar:
-    raw_grammar = """
-    start : first_block middle_block~2 optimizer
-
-    first_block  : conv_block "fork"
-    middle_block : "merge" conv_block "fork"
-
-    conv_block : conv_layer batchnorm activation
-               | conv_layer batchnorm activation pooling
-
-    conv_layer : "conv" "filter_count" (32 | 64) "kernel_size" (1 | 3 | 5 | 7) "stride" (1 | 2)
-
-    batchnorm  : "batchnorm"
-
-    activation : relu | swish
-    relu : "relu"
-    swish : "swish"
-
-    pooling : maxpool | avgpool
-    maxpool : "maxpool" "pool_size" (1 | 2) "stride" (1 | 2)
-    avgpool : "avgpool" "pool_size" (1 | 2) "stride" (1 | 2)
-
-    optimizer : "adam" "learning_rate" (0.001 | 0.003 | 0.005) "beta1" 0.9 "beta2" 0.999 "epsilon" 1e-07 "amsgrad" false
-    """
-    return gr.Grammar(raw_grammar)
-
-
-def get_input_shape() -> gl.Shape:
-    return gl.Shape(
-        width=IMAGE_WIDTH,
-        height=IMAGE_HEIGHT,
-        depth=IMAGE_DEPTH,
-    )
-
-
-def validate_output_dir(path: pathlib.Path) -> None:
-    logger.debug(f"validating output dir, path=<{path}>")
-
-    path.mkdir(parents=True, exist_ok=True)
-
-    for _ in path.iterdir():
-        logger.error("output dir is not empty")
-        exit(-1)
-
-    logger.success("output dir okay")
+def load_initial_population(path: pathlib.Path) -> list[cg.CompositeGenotype]:
+    genotypes = [pickle.loads(p.read_bytes()) for p in path.iterdir()]
+    assert len(genotypes) > 0
+    assert all(isinstance(g, cg.CompositeGenotype) for g in genotypes)
+    return genotypes
 
 
 @logger.catch(reraise=True)
-def main(
-    train_dir: pathlib.Path = typer.Option(
-        ...,
-        "--train",
-        file_okay=False,
-        dir_okay=True,
-        exists=True,
-        readable=True,
-    ),
-    validation_dir: pathlib.Path = typer.Option(
-        ...,
-        "--validation",
-        file_okay=False,
-        dir_okay=True,
-        exists=True,
-        readable=True,
-    ),
-    output_dir: pathlib.Path = typer.Option(
-        ...,
-        "--output",
-        file_okay=False,
-        dir_okay=True,
-    ),
-    rng_seed: int = typer.Option(rand.get_rng_seed(), "--seed"),
-    clobber: bool = typer.Option(
-        False,
-        "--clobber",
-    ),
-) -> None:
-    if not clobber:
-        validate_output_dir(output_dir)
+def main() -> None:
+    settings = gge.environment_variables.get_paths()
+    rng_seed = gge.environment_variables.get_rng_seed()
 
-    logger.add(output_dir / "log.txt")
-    logger.info(
-        f"Running with seed=<{rng_seed}>, saving results to output_dir=<{output_dir}>"
-    )
+    logger.add(settings.logging_dir / "log.txt")
 
-    grammar = get_grammar()
+    startup_msg = f"""{'-'*80}
+        Running with settings:
+        {rng_seed=}
+        {INPUT_SHAPE=}
+        {CLASS_COUNT=}
+        {MAX_GENERATIONS=}
+        {MUTANTS_PER_GENERATION=}
+        {MAX_FAILURES=}
+        {BATCH_SIZE=}
+        {EPOCHS=}
+        {settings.grammar_path=}
+        {settings.initial_population_dir=}
+        {settings.train_dataset_dir=}
+        {settings.validation_dataset_dir=}
+        {settings.test_dataset_dir=}
+        {settings.initial_population_dir=}
+        {settings.output_dir=}
+        {settings.logging_dir=}
+        {'-'*80}
+    """
+    logger.info(startup_msg)
+
+    grammar = gr.Grammar(settings.grammar_path.read_text())
 
     fit_params = gfit.FitnessEvaluationParameters(
         gfit.ValidationAccuracy(
-            train_directory=train_dir,
-            validation_directory=validation_dir,
-            input_shape=get_input_shape(),
+            train_directory=settings.train_dataset_dir,
+            validation_directory=settings.validation_dataset_dir,
+            input_shape=INPUT_SHAPE,
             batch_size=BATCH_SIZE,
             max_epochs=EPOCHS,
             class_count=CLASS_COUNT,
@@ -134,17 +87,11 @@ def main(
     novelty_tracker = novel.NoveltyTracker()
     rng = rand.create_rng(rng_seed)
 
-    initial_genotypes = pop_gen.create_initial_population(
-        grammar,
-        pop_size=POPULATION_SIZE,
-        max_failures=MAX_FAILURES,
-        novelty_tracker=novelty_tracker,
-        rng=rng,
-    )
+    initial_genotypes = load_initial_population(settings.initial_population_dir)
 
     evaluated_population = {g: gfit.evaluate(g, fit_params) for g in initial_genotypes}
 
-    checkpoint = evo.Checkpoint(output_dir)
+    checkpoint = evo.Checkpoint(settings.output_dir)
     print_stats = evo.PrintStatistics()
 
     evo.run_evolutionary_loop(

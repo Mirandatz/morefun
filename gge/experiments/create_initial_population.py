@@ -337,10 +337,10 @@ def run_from_script() -> None:
     )
 
 
-if __name__ == "__main__":
-    run_from_script()
+# if __name__ == "__main__":
+#     run_from_script()
 
 
 # if we want to use this from the cli:
-# if __name__ == "__main__":
-#     typer.run(main)
+if __name__ == "__main__":
+    typer.run(main)
