@@ -7,7 +7,7 @@ from loguru import logger
 import gge.composite_genotypes as cg
 import gge.environment_variables
 import gge.evolution as evo
-import gge.fitnesses as gfit
+import gge.fitnesses as fit
 import gge.grammars as gr
 import gge.layers as gl
 import gge.novelty as novel
@@ -66,8 +66,8 @@ def main() -> None:
 
     grammar = gr.Grammar(settings.grammar_path.read_text())
 
-    fit_params = gfit.FitnessEvaluationParameters(
-        gfit.ValidationAccuracy(
+    fit_params = fit.FitnessEvaluationParameters(
+        fit.ValidationAccuracy(
             train_directory=settings.train_dataset_dir,
             validation_directory=settings.validation_dataset_dir,
             input_shape=INPUT_SHAPE,
@@ -89,19 +89,16 @@ def main() -> None:
 
     initial_genotypes = load_initial_population(settings.initial_population_dir)
 
-    evaluated_population = {g: gfit.evaluate(g, fit_params) for g in initial_genotypes}
-
-    checkpoint = evo.Checkpoint(settings.output_dir)
-    print_stats = evo.PrintStatistics()
+    evaluated_population = [fit.evaluate(g, fit_params) for g in initial_genotypes]
 
     evo.run_evolutionary_loop(
         evaluated_population,
         max_generations=MAX_GENERATIONS,
         mut_params=mut_params,
         fit_params=fit_params,
-        callbacks=[checkpoint, print_stats],
         rng=rng,
         novelty_tracker=novelty_tracker,
+        output_dir=settings.output_dir,
     )
 
 

@@ -1,4 +1,10 @@
+"""
+This module assumes that fitnesses must be maximized.
+"""
+
+import datetime as dt
 import pathlib
+import traceback
 import typing
 
 import attrs
@@ -6,7 +12,6 @@ import tensorflow as tf
 from loguru import logger
 
 import gge.composite_genotypes as cg
-import gge.debugging as debug
 import gge.grammars as gr
 import gge.layers as gl
 import gge.phenotypes as pheno
@@ -160,58 +165,110 @@ class FitnessEvaluationParameters:
     grammar: gr.Grammar
 
 
+@attrs.frozen
+class SuccessfulEvaluationResult:
+    genotype: cg.CompositeGenotype
+    fitness: float
+    start_time: dt.datetime
+    end_time: dt.datetime
+
+
+@attrs.frozen
+class FailedEvaluationResult:
+    genotype: cg.CompositeGenotype
+    description: str
+    stacktrace: str
+    start_time: dt.datetime
+    end_time: dt.datetime
+
+
+FitnessEvaluationResult = SuccessfulEvaluationResult | FailedEvaluationResult
+
+
 def evaluate(
     genotype: cg.CompositeGenotype,
     params: FitnessEvaluationParameters,
-) -> float:
-    logger.debug(f"starting fitness evaluation of genotype=<{genotype}>")
+) -> FitnessEvaluationResult:
+    logger.info(f"starting fitness evaluation of genotype=<{genotype}>")
+
+    start_time = dt.datetime.now()
 
     phenotype = pheno.translate(genotype, params.grammar)
 
     try:
         fitness = params.metric.evaluate(phenotype)
-        logger.debug(f"finished fitness evaluation of genotype=<{genotype}>")
-        return fitness
+        logger.info(f"finished fitness evaluation of genotype=<{genotype}>")
+        return SuccessfulEvaluationResult(
+            genotype=genotype,
+            fitness=fitness,
+            start_time=start_time,
+            end_time=dt.datetime.now(),
+        )
 
     except tf.errors.ResourceExhaustedError:
         logger.warning(
             f"unable to evalute genotype due to resource exhaustion; genotype=<{genotype}>"
         )
-        return float("-inf")
-
-    except (ValueError, tf.errors.InvalidArgumentError):
-        filename = debug.save_genotype(genotype)
-        logger.error(
-            f"unable to evaluate genotype because the phenotype is malformed; saved as=<{filename}>"
+        return FailedEvaluationResult(
+            genotype=genotype,
+            description="failed due to resource exhaustion",
+            stacktrace=traceback.format_exc(),
+            start_time=start_time,
+            end_time=dt.datetime.now(),
         )
-        raise
+
+    except Exception:
+        logger.error(
+            f"unknown error occured during fitness evaluation of genotype=<{genotype}>"
+        )
+        return FailedEvaluationResult(
+            genotype=genotype,
+            description="unknown error occured during fitness evaluation",
+            stacktrace=traceback.format_exc(),
+            start_time=start_time,
+            end_time=dt.datetime.now(),
+        )
 
 
 T = typing.TypeVar("T")
 
 
+def get_effective_fitness(evaluation_result: FitnessEvaluationResult) -> float:
+    """
+    If `evaluation_result` is a `SuccessfulEvaluationResult`, returns its `fitness`;
+    if it is as `FailedEvaluationResult`, returns negative infinity.
+
+    This function assumes that fitness must be maximized.
+    """
+
+    match evaluation_result:
+        case SuccessfulEvaluationResult():
+            return evaluation_result.fitness
+
+        case FailedEvaluationResult():
+            return float("-inf")
+
+        case _:
+            raise ValueError(f"unknown fitness evaluation type={evaluation_result}")
+
+
 def select_fittest(
-    population: dict[T, float],
+    candidates: typing.Iterable[T],
+    metric: typing.Callable[[T], float],
     fittest_count: int,
-) -> dict[T, float]:
+) -> list[T]:
     """
     This function assumes that fitness must be maximized.
     """
-    assert len(population) >= fittest_count
     assert fittest_count > 0
 
-    logger.debug("starting fittest selection")
+    candidates_list = list(candidates)
+    assert len(candidates_list) >= fittest_count
 
     best_to_worst = sorted(
-        population.keys(),
-        key=lambda g: population[g],
+        candidates,
+        key=lambda c: metric(c),
         reverse=True,
     )
 
-    fittest = best_to_worst[:fittest_count]
-    assert len(fittest) == fittest_count
-
-    keyed_fittest = {g: population[g] for g in fittest}
-
-    logger.debug("finished fittest selection")
-    return keyed_fittest
+    return best_to_worst[:fittest_count]
