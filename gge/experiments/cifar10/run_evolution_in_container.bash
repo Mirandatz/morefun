@@ -7,7 +7,7 @@ set -o xtrace
 
 EXPERIMENT_DIR="/home/thiago/source/gge/gge/experiments/cifar10"
 OUTPUT_DIR="$EXPERIMENT_DIR/output"
-LOGGING_DIR="$EXPERIMENT_DIR/logging"
+LOG_DIR="$EXPERIMENT_DIR/log"
 GRAMMAR_PATH="$EXPERIMENT_DIR/grammar.lark"
 INITIAL_POPULATION_DIR="$EXPERIMENT_DIR/initial_population"
 
@@ -19,7 +19,7 @@ TEST_DIR="$DATASET_DIR/test"
 GGE_CODE_DIR="/home/thiago/source/gge"
 
 mkdir -p "$OUTPUT_DIR"
-mkdir -p "$LOGGING_DIR"
+mkdir -p "$LOG_DIR"
 
 DIRECTORIES=("$EXPERIMENT_DIR" "$INITIAL_POPULATION_DIR" "$TRAIN_DIR" "$VALIDATION_DIR" "$TEST_DIR" "$GGE_CODE_DIR")
 for DIR in "${DIRECTORIES[@]}"; do
@@ -40,14 +40,13 @@ docker run \
 	--runtime=nvidia \
 	--shm-size=8G \
 	--workdir="/gge/gge" \
-	--env GGE_RNG_SEED=$RNG_SEED \
+	--env GGE_RNG_SEED=$GGE_RNG_SEED \
 	-v "$OUTPUT_DIR":"/gge/output" \
-	-v "$LOGGING_DIR":"/gge/logging" \
+	-v "$LOG_DIR":"/gge/log" \
 	-v "$GRAMMAR_PATH":"/gge/grammar.lark":ro \
 	-v "$INITIAL_POPULATION_DIR":"/gge/initial_population":ro \
 	-v "$TRAIN_DIR":"/gge/dataset/train":ro \
 	-v "$VALIDATION_DIR":"/gge/dataset/validation":ro \
-	-v "$TEST_DIR":"/gge/dataset/test":ro \
 	-v "$GGE_CODE_DIR":"/gge/gge":ro \
 	mirandatz/gge:dev_env \
 	python -m gge.experiments.cifar10.evolution 

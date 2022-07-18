@@ -5,7 +5,6 @@ import typer
 from loguru import logger
 
 import gge.composite_genotypes as cg
-import gge.environment_variables
 import gge.evolution as evo
 import gge.fitnesses as fit
 import gge.grammars as gr
@@ -13,6 +12,7 @@ import gge.layers as gl
 import gge.novelty as novel
 import gge.population_mutation as gmut
 import gge.randomness as rand
+import gge.startup_settings as gge_settings
 
 IMAGE_WIDTH = 32
 IMAGE_HEIGHT = 32
@@ -36,40 +36,25 @@ def load_initial_population(path: pathlib.Path) -> list[cg.CompositeGenotype]:
 
 
 @logger.catch(reraise=True)
-def main() -> None:
-    settings = gge.environment_variables.get_paths()
-    rng_seed = gge.environment_variables.get_rng_seed()
+def main(
+    grammar_path: pathlib.Path = gge_settings.GRAMMAR_PATH,
+    initial_population_dir: pathlib.Path = gge_settings.INITIAL_POPULATION_DIR,
+    train_dataset_dir: pathlib.Path = gge_settings.TRAIN_DATASET_DIR,
+    validation_dataset_dir: pathlib.Path = gge_settings.VALIDATION_DATASET_DIR,
+    output_dir: pathlib.Path = gge_settings.OUTPUT_DIR,
+    log_dir: pathlib.Path = gge_settings.LOG_DIR,
+    log_level: str = gge_settings.LOG_LEVEL,
+    rng_seed: int = gge_settings.RNG_SEED,
+) -> None:
 
-    logger.add(settings.logging_dir / "log.txt")
+    gge_settings.configure_logger(log_dir, log_level)
 
-    startup_msg = f"""{'-'*80}
-        Running with settings:
-        {rng_seed=}
-        {INPUT_SHAPE=}
-        {CLASS_COUNT=}
-        {MAX_GENERATIONS=}
-        {MUTANTS_PER_GENERATION=}
-        {MAX_FAILURES=}
-        {BATCH_SIZE=}
-        {EPOCHS=}
-        {settings.grammar_path=}
-        {settings.initial_population_dir=}
-        {settings.train_dataset_dir=}
-        {settings.validation_dataset_dir=}
-        {settings.test_dataset_dir=}
-        {settings.initial_population_dir=}
-        {settings.output_dir=}
-        {settings.logging_dir=}
-        {'-'*80}
-    """
-    logger.info(startup_msg)
-
-    grammar = gr.Grammar(settings.grammar_path.read_text())
+    grammar = gr.Grammar(grammar_path.read_text())
 
     fit_params = fit.FitnessEvaluationParameters(
         fit.ValidationAccuracy(
-            train_directory=settings.train_dataset_dir,
-            validation_directory=settings.validation_dataset_dir,
+            train_directory=train_dataset_dir,
+            validation_directory=validation_dataset_dir,
             input_shape=INPUT_SHAPE,
             batch_size=BATCH_SIZE,
             max_epochs=EPOCHS,
@@ -87,7 +72,7 @@ def main() -> None:
     novelty_tracker = novel.NoveltyTracker()
     rng = rand.create_rng(rng_seed)
 
-    initial_genotypes = load_initial_population(settings.initial_population_dir)
+    initial_genotypes = load_initial_population(initial_population_dir)
 
     evaluated_population = [fit.evaluate(g, fit_params) for g in initial_genotypes]
 
@@ -98,7 +83,7 @@ def main() -> None:
         fit_params=fit_params,
         rng=rng,
         novelty_tracker=novelty_tracker,
-        output_dir=settings.output_dir,
+        output_dir=output_dir,
     )
 
 
