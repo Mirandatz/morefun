@@ -47,3 +47,6 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 RUN python -m venv $VIRTUAL_ENV
 COPY ./requirements /gge/requirements
 RUN pip install -r /gge/requirements/dev.txt --no-cache-dir
+
+# silence tensorflow
+ENV TF_CPP_MIN_LOG_LEVEL=1
