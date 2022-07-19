@@ -1,12 +1,12 @@
 import gge.composite_genotypes as cg
-import gge.phenotypes as cph
+import gge.phenotypes as pheno
 
 
 class NoveltyTracker:
     def __init__(
         self,
         known_genotypes: set[cg.CompositeGenotype] | None = None,
-        known_phenotypes: set[cph.Phenotype] | None = None,
+        known_phenotypes: set[pheno.Phenotype] | None = None,
     ) -> None:
         self._genotypes = (known_genotypes or set()).copy()
         self._phenotypes = (known_phenotypes or set()).copy()
@@ -24,11 +24,11 @@ class NoveltyTracker:
     def is_genotype_novel(self, genotype: cg.CompositeGenotype) -> bool:
         return genotype not in self._genotypes
 
-    def is_phenotype_novel(self, phenotype: cph.Phenotype) -> bool:
+    def is_phenotype_novel(self, phenotype: pheno.Phenotype) -> bool:
         return phenotype not in self._phenotypes
 
     def register_genotype(self, genotype: cg.CompositeGenotype) -> None:
         self._genotypes.add(genotype)
 
-    def register_phenotype(self, phenotype: cph.Phenotype) -> None:
+    def register_phenotype(self, phenotype: pheno.Phenotype) -> None:
         self._phenotypes.add(phenotype)

@@ -1,22 +1,18 @@
-import typing
-
 import attrs
 import hypothesis.strategies as hs
 from hypothesis import given
 
-import gge.fitnesses as gfit
-
-DrawStrat = typing.Callable[..., typing.Any]
+import gge.fitnesses as fit
 
 
 @attrs.frozen
 class FitnessTestData:
-    population: dict[int, float]
+    fitnesses: dict[int, float]
     fittest_count: int
 
 
 @hs.composite
-def fitness_test_data(draw: DrawStrat) -> FitnessTestData:
+def fitness_test_data(draw: hs.DrawFn) -> FitnessTestData:
     population = draw(
         hs.dictionaries(
             keys=hs.integers(),
@@ -34,11 +30,20 @@ def fitness_test_data(draw: DrawStrat) -> FitnessTestData:
 def test_select_fittest(data: FitnessTestData) -> None:
     """Should select the individuals with largest fitnesses."""
 
-    fittest = gfit.select_fittest(data.population, data.fittest_count)
+    fittest = fit.select_fittest(
+        candidates=data.fitnesses.keys(),
+        metric=lambda k: data.fitnesses[k],
+        fittest_count=data.fittest_count,
+    )
 
     assert data.fittest_count == len(fittest)
 
-    fitness_of_the_worst_selected_individual = min(fittest.values())
-    for genotype, fitness in data.population.items():
+    worst_selected_individual = min(
+        fittest,
+        key=lambda k: data.fitnesses[k],
+    )
+    fitness_of_the_worst_selected_individual = data.fitnesses[worst_selected_individual]
+
+    for genotype, fitness in data.fitnesses.items():
         if fitness > fitness_of_the_worst_selected_individual:
             assert genotype in fittest

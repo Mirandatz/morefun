@@ -15,8 +15,11 @@ __pycache__/
 gge/playground/
 playground/
 
+# experiment byproducts
+gge/experiments/**/*.genotype
+gge/experiments/**/*.png
+gge/experiments/**/log/
+gge/experiments/**/output/
+
 # test history
 .hypothesis/
-
-# rsync scripts
-rsync_to_euler.bash

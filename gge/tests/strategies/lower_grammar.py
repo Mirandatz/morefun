@@ -4,102 +4,173 @@ import hypothesis.strategies as hs
 import gge.layers as gl
 import gge.optimizers as optim
 from gge.name_generator import NameGenerator
+from gge.tests.strategies import data_structures as tds
 
-
-@attrs.frozen
-class LayersTestData:
-    token_stream: str
-    parsed: tuple[gl.Layer, ...]
+LowerGrammarParsingTestData = tds.ParsingTestData[tuple[gl.Layer, ...]]
 
 
 @hs.composite
-def convs(draw: hs.DrawFn, *, name_gen: NameGenerator | None = None) -> LayersTestData:
+def random_flips(
+    draw: hs.DrawFn, *, name_gen: NameGenerator | None = None
+) -> LowerGrammarParsingTestData:
+    name_gen = name_gen or NameGenerator()
+    name = name_gen.gen_name(gl.RandomFlip)
+    mode = draw(hs.sampled_from(gl.FLIP_MODES))
+    layer = gl.RandomFlip(name, mode)
+    tokenstream = f'"random_flip" {mode}'
+    return LowerGrammarParsingTestData(tokenstream, (layer,))
+
+
+@hs.composite
+def random_rotations(
+    draw: hs.DrawFn, *, name_gen: NameGenerator | None = None
+) -> LowerGrammarParsingTestData:
+    name_gen = name_gen or NameGenerator()
+    name = name_gen.gen_name(gl.RandomRotation)
+    factor = draw(hs.floats(min_value=0, max_value=1))
+    layer = gl.RandomRotation(name, factor)
+    tokenstream = f'"random_rotation" {factor}'
+    return LowerGrammarParsingTestData(tokenstream, (layer,))
+
+
+@hs.composite
+def resizings(
+    draw: hs.DrawFn, *, name_gen: NameGenerator | None = None
+) -> LowerGrammarParsingTestData:
+    name_gen = name_gen or NameGenerator()
+    name = name_gen.gen_name(gl.Resizing)
+    target_height = draw(hs.integers(min_value=1, max_value=9999))
+    target_width = draw(hs.integers(min_value=1, max_value=9999))
+    tokenstream = f'"resizing" "height" {target_height} "width" {target_width}'
+    layer = gl.Resizing(
+        name,
+        height=target_height,
+        width=target_width,
+    )
+    return LowerGrammarParsingTestData(tokenstream, (layer,))
+
+
+@hs.composite
+def random_crops(
+    draw: hs.DrawFn, *, name_gen: NameGenerator | None = None
+) -> LowerGrammarParsingTestData:
+    name_gen = name_gen or NameGenerator()
+    name = name_gen.gen_name(gl.RandomCrop)
+    height = draw(hs.integers(min_value=1, max_value=9999))
+    width = draw(hs.integers(min_value=1, max_value=9999))
+    layer = gl.RandomCrop(name, height=height, width=width)
+    tokenstream = f'"random_crop" "height" {height} "width"  {width}'
+    return LowerGrammarParsingTestData(tokenstream, (layer,))
+
+
+@hs.composite
+def convs(
+    draw: hs.DrawFn, *, name_gen: NameGenerator | None = None
+) -> LowerGrammarParsingTestData:
     name_gen = name_gen or NameGenerator()
     name = name_gen.gen_name(gl.Conv2D)
     filter_count = draw(hs.integers(min_value=1))
     kernel_size = draw(hs.integers(min_value=1))
     stride = draw(hs.integers(min_value=1))
     layer = gl.Conv2D(name, filter_count, kernel_size, stride)
-    token_stream = f'"conv" "filter_count" {filter_count} "kernel_size" {kernel_size} "stride" {stride}'
-    return LayersTestData(token_stream, (layer,))
+    tokenstream = f'"conv" "filter_count" {filter_count} "kernel_size" {kernel_size} "stride" {stride}'
+    return LowerGrammarParsingTestData(tokenstream, (layer,))
 
 
 @hs.composite
 def maxpools(
     draw: hs.DrawFn, *, name_gen: NameGenerator | None = None
-) -> LayersTestData:
+) -> LowerGrammarParsingTestData:
     name_gen = name_gen or NameGenerator()
     name = name_gen.gen_name(gl.MaxPool2D)
     pool_size = draw(hs.integers(min_value=1, max_value=9999))
     stride = draw(hs.integers(min_value=1, max_value=9999))
     layer = gl.MaxPool2D(name, pool_size=pool_size, stride=stride)
-    token_stream = f'"maxpool" "pool_size" {pool_size} "stride" {stride}'
-    return LayersTestData(token_stream, (layer,))
+    tokenstream = f'"maxpool" "pool_size" {pool_size} "stride" {stride}'
+    return LowerGrammarParsingTestData(tokenstream, (layer,))
 
 
 @hs.composite
 def avgpools(
     draw: hs.DrawFn, *, name_gen: NameGenerator | None = None
-) -> LayersTestData:
+) -> LowerGrammarParsingTestData:
     name_gen = name_gen or NameGenerator()
     name = name_gen.gen_name(gl.AvgPool2D)
     pool_size = draw(hs.integers(min_value=1, max_value=9999))
     stride = draw(hs.integers(min_value=1, max_value=9999))
     layer = gl.AvgPool2D(name, pool_size=pool_size, stride=stride)
-    token_stream = f'"avgpool" "pool_size" {pool_size} "stride" {stride}'
-    return LayersTestData(token_stream, (layer,))
+    tokenstream = f'"avgpool" "pool_size" {pool_size} "stride" {stride}'
+    return LowerGrammarParsingTestData(tokenstream, (layer,))
 
 
 @hs.composite
 def batchnorms(
     draw: hs.DrawFn, *, name_gen: NameGenerator | None = None
-) -> LayersTestData:
+) -> LowerGrammarParsingTestData:
     name_gen = name_gen or NameGenerator()
     name = name_gen.gen_name(gl.BatchNorm)
-    return LayersTestData(
-        token_stream='"batchnorm"',
+    return LowerGrammarParsingTestData(
+        tokenstream='"batchnorm"',
         parsed=(gl.BatchNorm(name),),
     )
 
 
 @hs.composite
-def relus(draw: hs.DrawFn, *, name_gen: NameGenerator | None = None) -> LayersTestData:
+def relus(
+    draw: hs.DrawFn, *, name_gen: NameGenerator | None = None
+) -> LowerGrammarParsingTestData:
     name_gen = name_gen or NameGenerator()
     name = name_gen.gen_name(gl.Relu)
-    return LayersTestData(
-        token_stream='"relu"',
+    return LowerGrammarParsingTestData(
+        tokenstream='"relu"',
         parsed=(gl.Relu(name),),
     )
 
 
 @hs.composite
-def gelus(draw: hs.DrawFn, *, name_gen: NameGenerator | None = None) -> LayersTestData:
+def gelus(
+    draw: hs.DrawFn, *, name_gen: NameGenerator | None = None
+) -> LowerGrammarParsingTestData:
     name_gen = name_gen or NameGenerator()
     name = name_gen.gen_name(gl.Gelu)
-    return LayersTestData(
-        token_stream='"gelu"',
+    return LowerGrammarParsingTestData(
+        tokenstream='"gelu"',
         parsed=(gl.Gelu(name),),
     )
 
 
 @hs.composite
-def swishs(draw: hs.DrawFn, *, name_gen: NameGenerator | None = None) -> LayersTestData:
+def swishs(
+    draw: hs.DrawFn, *, name_gen: NameGenerator | None = None
+) -> LowerGrammarParsingTestData:
     name_gen = name_gen or NameGenerator()
     name = name_gen.gen_name(gl.Swish)
-    return LayersTestData(
-        token_stream='"swish"',
+    return LowerGrammarParsingTestData(
+        tokenstream='"swish"',
         parsed=(gl.Swish(name),),
+    )
+
+
+@hs.composite
+def prelus(
+    draw: hs.DrawFn, *, name_gen: NameGenerator | None = None
+) -> LowerGrammarParsingTestData:
+    name_gen = name_gen or NameGenerator()
+    name = name_gen.gen_name(gl.Prelu)
+    return LowerGrammarParsingTestData(
+        tokenstream='"prelu"',
+        parsed=(gl.Prelu(name),),
     )
 
 
 @hs.composite
 def merge_marker(
     draw: hs.DrawFn, *, name_gen: NameGenerator | None = None
-) -> LayersTestData:
+) -> LowerGrammarParsingTestData:
     name_gen = name_gen or NameGenerator()
     name = name_gen.gen_name("merge")
-    return LayersTestData(
-        token_stream='"merge"',
+    return LowerGrammarParsingTestData(
+        tokenstream='"merge"',
         parsed=(gl.make_merge(name),),
     )
 
@@ -107,11 +178,11 @@ def merge_marker(
 @hs.composite
 def fork_marker(
     draw: hs.DrawFn, *, name_gen: NameGenerator | None = None
-) -> LayersTestData:
+) -> LowerGrammarParsingTestData:
     name_gen = name_gen or NameGenerator()
     name = name_gen.gen_name("fork")
-    return LayersTestData(
-        token_stream='"fork"',
+    return LowerGrammarParsingTestData(
+        tokenstream='"fork"',
         parsed=(gl.make_fork(name),),
     )
 
@@ -119,10 +190,10 @@ def fork_marker(
 @hs.composite
 def add_markers(
     draw: hs.DrawFn,
-    strat: hs.SearchStrategy[LayersTestData],
+    strat: hs.SearchStrategy[LowerGrammarParsingTestData],
     *,
     name_gen: NameGenerator | None = None,
-) -> LayersTestData:
+) -> LowerGrammarParsingTestData:
     name_gen = name_gen or NameGenerator()
     # TODO:
     raise NotImplementedError()
@@ -134,17 +205,17 @@ def add_markers(
 @hs.composite
 def add_dummy_optimizer_suffix_to(
     draw: hs.DrawFn,
-    strat: hs.SearchStrategy[LayersTestData],
-) -> LayersTestData:
+    strat: hs.SearchStrategy[LowerGrammarParsingTestData],
+) -> LowerGrammarParsingTestData:
     test_data = draw(strat)
     dummy_optimizer = '"sgd" "learning_rate" 0.1 "momentum" 0.05 "nesterov" false'
-    updated_tokenstream = test_data.token_stream + dummy_optimizer
-    return attrs.evolve(test_data, token_stream=updated_tokenstream)
+    updated_tokenstream = test_data.tokenstream + dummy_optimizer
+    return attrs.evolve(test_data, tokenstream=updated_tokenstream)
 
 
 @attrs.frozen
 class OptimizerTestData:
-    token_stream: str
+    tokenstream: str
     parsed: optim.Optimizer
 
 
@@ -158,8 +229,8 @@ def sgds(draw: hs.DrawFn) -> OptimizerTestData:
         momentum=momentum,
         nesterov=nesterov,
     )
-    token_stream = f'"sgd" "learning_rate" {learning_rate} "momentum" {momentum} "nesterov" {str(nesterov).lower()}'
-    return OptimizerTestData(token_stream, sgd)
+    tokenstream = f'"sgd" "learning_rate" {learning_rate} "momentum" {momentum} "nesterov" {str(nesterov).lower()}'
+    return OptimizerTestData(tokenstream, sgd)
 
 
 @hs.composite
@@ -176,14 +247,14 @@ def adams(draw: hs.DrawFn) -> OptimizerTestData:
         epsilon=epsilon,
         amsgrad=amsgrad,
     )
-    token_stream = (
+    tokenstream = (
         f'"adam" "learning_rate" {learning_rate}'
         f'"beta1" {beta1}'
         f'"beta2" {beta2}'
         f'"epsilon" {epsilon}'
         f'"amsgrad" {str(amsgrad).lower()}'
     )
-    return OptimizerTestData(token_stream=token_stream, parsed=adam)
+    return OptimizerTestData(tokenstream=tokenstream, parsed=adam)
 
 
 @hs.composite
@@ -192,5 +263,5 @@ def add_dummy_layer_prefix_to(
 ) -> OptimizerTestData:
     test_data = draw(strat)
     dummy_layer = '"batchnorm"'
-    updated_tokenstream = dummy_layer + test_data.token_stream
-    return attrs.evolve(test_data, token_stream=updated_tokenstream)
+    updated_tokenstream = dummy_layer + test_data.tokenstream
+    return attrs.evolve(test_data, tokenstream=updated_tokenstream)

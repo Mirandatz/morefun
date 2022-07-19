@@ -1,21 +1,24 @@
-start: data_augmentation backbone optimizer
-
-data_augmentation : DATA_AUGMENTATION rotation width_shift height_shift zoom horizontal_flip vertical_flip
-rotation          : ROTATION FLOAT
-width_shift       : WIDTH_SHIFT FLOAT
-height_shift      : HEIGHT_SHIFT FLOAT
-zoom              : ZOOM FLOAT
-horizontal_flip   : HORIZONTAL_FLIP BOOL
-vertical_flip     : VERTICAL_FLIP BOOL
+start: backbone optimizer
 
 backbone : block+
 block    : MERGE? layer FORK?
-layer    : conv
+layer    : random_flip
+         | random_rotation
+         | resizing
+         | random_crop
+         | conv
          | maxpool
          | avgpool
          | batchnorm
          | activation
-    
+
+random_flip     : RANDOM_FLIP FLIP_MODE
+random_rotation : RANDOM_ROTATION FLOAT
+resizing        : RESIZING height width
+height          : HEIGHT INT
+width           : WIDTH INT
+random_crop     : RANDOM_CROP height width
+
 conv         : CONV filter_count kernel_size stride
 filter_count : FILTER_COUNT INT
 kernel_size  : KERNEL_SIZE INT
@@ -27,7 +30,7 @@ pool_size : POOL_SIZE INT
  
 batchnorm : BATCHNORM
 
-activation : RELU | GELU | SWISH
+activation : RELU | GELU | PRELU | SWISH
 
 optimizer: sgd | adam
 
@@ -43,10 +46,10 @@ epsilon : EPSILON FLOAT
 amsgrad : AMSGRAD BOOL
 
 // using multiple imports just for aesthetic reasons
-%import .terminals (DATA_AUGMENTATION, ROTATION, WIDTH_SHIFT, HEIGHT_SHIFT)
-%import .terminals (ZOOM, HORIZONTAL_FLIP, VERTICAL_FLIP)
+%import .terminals (RANDOM_FLIP, FLIP_MODE, RANDOM_ROTATION, RANDOM_CROP)
+%import .terminals (RESIZING, HEIGHT, WIDTH)
 %import .terminals (MERGE, FORK)
-%import .terminals (RELU, GELU, SWISH)
+%import .terminals (RELU, GELU, PRELU, SWISH)
 %import .terminals (CONV, FILTER_COUNT, KERNEL_SIZE, STRIDE)
 %import .terminals (MAXPOOL, AVGPOOL, POOL_SIZE)
 %import .terminals (BATCHNORM)
@@ -54,7 +57,8 @@ amsgrad : AMSGRAD BOOL
 %import .terminals (ADAM, BETA1, BETA2, EPSILON, AMSGRAD)
 %import .terminals (BOOL)
 
-%import common (INT, FLOAT)
+%import common.INT
+%import common.NUMBER -> FLOAT
 %import common.WS
 
 %ignore WS

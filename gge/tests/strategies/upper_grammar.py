@@ -1,13 +1,11 @@
-import attrs
 import hypothesis.strategies as hs
 
 import gge.grammars as gr
+import gge.tests.strategies.data_structures
 
-
-@attrs.frozen
-class GrammarArgs:
-    text: str
-    terminals: tuple[gr.Terminal, ...]
+GrammarArgs = gge.tests.strategies.data_structures.ParsingTestData[
+    tuple[gr.Terminal, ...]
+]
 
 
 @hs.composite
@@ -41,6 +39,22 @@ def bool_args(draw: hs.DrawFn) -> GrammarArgs:
     text = draw(grammar_text(tokens))
 
     return GrammarArgs(text, terminals)
+
+
+@hs.composite
+def flip_modes(draw: hs.DrawFn) -> GrammarArgs:
+    tokens = draw(
+        hs.lists(
+            elements=hs.sampled_from(
+                ["horizontal", "vertical", "horizontal_and_vertical"]
+            ),
+            min_size=1,
+            max_size=3,
+        )
+    )
+    terminals = tuple([gr.Terminal(t) for t in tokens])
+    tokenstream = draw(grammar_text(tokens))
+    return GrammarArgs(tokenstream, terminals)
 
 
 @hs.composite

@@ -9,6 +9,7 @@ from loguru import logger
 import gge.layers as gl
 import gge.lower_grammar_parsing as lgp
 import gge.name_generator
+import gge.randomness as rand
 
 
 def _raise_if_contains_repeated_names(layers: tuple[gl.Layer, ...]) -> None:
@@ -48,9 +49,67 @@ class Backbone:
 
 @lark.v_args(inline=True)
 class BackboneSynthetizer(lgp.LowerGrammarTransformer):
+    # This set contains terminals that, when visited/processed,
+    # are just converted into `None`.
+    # It is used in `BackboneSynthetizer.__default_token__` to remove
+    # boilerplate code.
+    _USELESS_MARKERS = {
+        '"random_flip"',
+        '"random_rotation"',
+        '"resizing"',
+        '"random_crop"',
+        '"height"',
+        '"width"',
+        '"conv"',
+        '"filter_count"',
+        '"kernel_size"',
+        '"stride"',
+        '"maxpool"',
+        '"avgpool"',
+        '"pool_size"',
+        '"batchnorm"',
+        '"relu"',
+        '"gelu"',
+        '"prelu"',
+        '"swish"',
+    }
+
+    # This set is also used to remove boilplate code.
+    # For more information, see: `BackboneSynthetizer.__default_token__`
+    _RULES_OF_MARKERS_VALUE_PAIRS = {
+        "height",
+        "width",
+        "filter_count",
+        "kernel_size",
+        "stride",
+        "pool_size",
+    }
+
     def __init__(self) -> None:
         super().__init__()
         self._name_generator = gge.name_generator.NameGenerator()
+
+    def __default__(
+        self,
+        data: lark.Token,
+        children: list[typing.Any],
+        meta: typing.Any,
+    ) -> typing.Any:
+        self._raise_if_not_running()
+
+        if data.value in BackboneSynthetizer._RULES_OF_MARKERS_VALUE_PAIRS:
+            marker, value = children
+            return value
+
+        return super().__default__(data, children, meta)
+
+    def __default_token__(self, token: lark.Token) -> typing.Any:
+        self._raise_if_not_running()
+
+        if token.value in BackboneSynthetizer._USELESS_MARKERS:
+            return None
+
+        return super().__default_token__(token)
 
     def _create_layer_name(self, prefix: str | type) -> str:
         self._raise_if_not_running()
@@ -93,8 +152,47 @@ class BackboneSynthetizer(lgp.LowerGrammarTransformer):
 
     def layer(self, layer: gl.Layer) -> gl.Layer:
         self._raise_if_not_running()
-
         return layer
+
+    def random_flip(self, marker: None, mode: str) -> gl.RandomFlip:
+        self._raise_if_not_running()
+        assert mode in gl.FLIP_MODES
+
+        return gl.RandomFlip(
+            name=self._create_layer_name(gl.RandomFlip),
+            mode=mode,
+            seed=rand.get_rng_seed(),
+        )
+
+    def random_rotation(self, marker: None, factor: float) -> gl.RandomRotation:
+        self._raise_if_not_running()
+        assert isinstance(factor, float)
+        assert 0 <= factor <= 1
+
+        return gl.RandomRotation(
+            name=self._create_layer_name(gl.RandomRotation),
+            factor=factor,
+            seed=rand.get_rng_seed(),
+        )
+
+    def resizing(
+        self, marker: None, target_height: int, target_width: int
+    ) -> gl.Resizing:
+        self._raise_if_not_running()
+
+        return gl.Resizing(
+            name=self._create_layer_name(gl.Resizing),
+            height=target_height,
+            width=target_width,
+        )
+
+    def random_crop(self, marker: None, height: int, width: int) -> gl.RandomCrop:
+        self._raise_if_not_running()
+        return gl.RandomCrop(
+            name=self._create_layer_name(gl.RandomCrop),
+            height=height,
+            width=width,
+        )
 
     def conv(
         self, marker: None, filter_count: int, kernel_size: int, stride: int
@@ -108,27 +206,8 @@ class BackboneSynthetizer(lgp.LowerGrammarTransformer):
             stride=stride,
         )
 
-    def filter_count(self, marker: None, count: int) -> int:
-        self._raise_if_not_running()
-        assert count >= 1
-
-        return count
-
-    def kernel_size(self, marker: None, stride: int) -> int:
-        self._raise_if_not_running()
-        assert stride >= 1
-
-        return stride
-
-    def stride(self, marker: None, size: int) -> int:
-        self._raise_if_not_running()
-        assert size >= 1
-
-        return size
-
     def batchnorm(self, marker: None) -> gl.BatchNorm:
         self._raise_if_not_running()
-
         return gl.BatchNorm(self._create_layer_name(gl.BatchNorm))
 
     def maxpool(self, marker: None, pool_size: int, stride: int) -> gl.MaxPool2D:
@@ -147,46 +226,9 @@ class BackboneSynthetizer(lgp.LowerGrammarTransformer):
             stride=stride,
         )
 
-    def pool_size(self, marker: None, pool_size: int) -> int:
-        self._raise_if_not_running()
-        assert pool_size >= 1
-        return pool_size
-
     def activation(self, layer: gl.SingleInputLayer) -> gl.SingleInputLayer:
         self._raise_if_not_running()
         return layer
-
-    def CONV(self, token: lark.Token) -> None:
-        self._raise_if_not_running()
-        return None
-
-    def FILTER_COUNT(self, token: lark.Token) -> None:
-        self._raise_if_not_running()
-        return None
-
-    def KERNEL_SIZE(self, token: lark.Token) -> None:
-        self._raise_if_not_running()
-        return None
-
-    def STRIDE(self, token: lark.Token) -> None:
-        self._raise_if_not_running()
-        return None
-
-    def MAXPOOL(self, token: lark.Token) -> None:
-        self._raise_if_not_running()
-        return None
-
-    def AVGPOOL(self, token: lark.Token) -> None:
-        self._raise_if_not_running()
-        return None
-
-    def POOL_SIZE(self, token: lark.Token) -> None:
-        self._raise_if_not_running()
-        return None
-
-    def BATCHNORM(self, token: lark.Token) -> None:
-        self._raise_if_not_running()
-        return None
 
     def RELU(self, token: lark.Token) -> gl.Relu:
         self._raise_if_not_running()
@@ -196,9 +238,20 @@ class BackboneSynthetizer(lgp.LowerGrammarTransformer):
         self._raise_if_not_running()
         return gl.Gelu(name=self._create_layer_name(gl.Gelu))
 
+    def PRELU(self, token: lark.Token) -> gl.Prelu:
+        self._raise_if_not_running()
+        return gl.Prelu(name=self._create_layer_name(gl.Prelu))
+
     def SWISH(self, token: lark.Token) -> gl.Swish:
         self._raise_if_not_running()
         return gl.Swish(name=self._create_layer_name(gl.Swish))
+
+    def FLIP_MODE(self, token: lark.Token) -> str:
+        self._raise_if_not_running()
+        if token.value not in gl.FLIP_MODES:
+            raise ValueError(f"unexpected token for FLIP_MODE=<{token.value}>")
+
+        return typing.cast(str, token.value)
 
 
 def parse(

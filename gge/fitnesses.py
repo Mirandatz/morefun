@@ -1,4 +1,10 @@
+"""
+This module assumes that fitnesses must be maximized.
+"""
+
+import datetime as dt
 import pathlib
+import traceback
 import typing
 
 import attrs
@@ -6,15 +12,11 @@ import tensorflow as tf
 from loguru import logger
 
 import gge.composite_genotypes as cg
-import gge.data_augmentations as gda
-import gge.debugging as debug
 import gge.grammars as gr
 import gge.layers as gl
-import gge.phenotypes as phenos
+import gge.phenotypes as pheno
 import gge.randomness as rand
 import gge.redirection as redirection
-
-DataGen: typing.TypeAlias = tf.keras.preprocessing.image.DirectoryIterator
 
 
 def make_classification_head(class_count: int, input_tensor: tf.Tensor) -> tf.Tensor:
@@ -31,11 +33,11 @@ def make_classification_head(class_count: int, input_tensor: tf.Tensor) -> tf.Te
 
 
 def make_classification_model(
-    phenotype: phenos.Phenotype,
+    phenotype: pheno.Phenotype,
     input_shape: gl.Shape,
     class_count: int,
 ) -> tf.keras.Model:
-    input_tensor, output_tensor = phenos.make_input_output_tensors(
+    input_tensor, output_tensor = pheno.make_input_output_tensors(
         phenotype, gl.Input(input_shape)
     )
     classification_head = make_classification_head(
@@ -54,11 +56,38 @@ def make_classification_model(
     return model
 
 
+def load_dataset_and_rescale(
+    directory: pathlib.Path,
+    input_shape: gl.Shape,
+) -> tf.data.Dataset:
+
+    match input_shape.depth:
+        case 1:
+            color_mode = "grayscale"
+        case 3:
+            color_mode = "rgb"
+        case _:
+            raise ValueError(
+                f"unable to infer color_mode from input_shape=<{input_shape}>"
+            )
+
+    ds: tf.data.Dataset = tf.keras.utils.image_dataset_from_directory(
+        directory=directory,
+        batch_size=None,
+        image_size=(input_shape.height, input_shape.width),
+        label_mode="categorical",
+        shuffle=False,
+        color_mode=color_mode,
+    )
+
+    rescaling_layer = tf.keras.Sequential([tf.keras.layers.Rescaling(1.0 / 255)])
+    return ds.map(lambda d, t: (rescaling_layer(d, training=True), t))
+
+
 @attrs.frozen
 class ValidationAccuracy:
     train_directory: pathlib.Path
     validation_directory: pathlib.Path
-    data_augmentation: gda.DataAugmentation
     input_shape: gl.Shape
     batch_size: int
     max_epochs: int
@@ -68,36 +97,44 @@ class ValidationAccuracy:
         assert self.batch_size > 0, self.batch_size
         assert self.max_epochs > 0, self.max_epochs
         assert self.class_count > 1, self.class_count
-        assert self.train_directory.is_dir(), self.train_directory
-        assert self.validation_directory.is_dir(), self.validation_directory
-        assert self.train_directory != self.validation_directory
+        assert self.train_directory.is_dir()
+        assert self.validation_directory.is_dir()
 
-    def get_train_generator(self) -> DataGen:
+    def get_train_dataset(self) -> tf.data.Dataset:
         with redirection.discard_stderr_and_stdout():
-            data_generator = self.data_augmentation.to_tensorflow_data_generator()
-            return data_generator.flow_from_directory(
+            train = load_dataset_and_rescale(
                 directory=self.train_directory,
-                batch_size=self.batch_size,
-                target_size=(self.input_shape.width, self.input_shape.height),
-                shuffle=True,
-                seed=rand.get_rng_seed(),
+                input_shape=self.input_shape,
             )
 
-    def get_validation_generator(self) -> DataGen:
+        return (
+            train.cache()
+            .shuffle(
+                buffer_size=train.cardinality().numpy(),
+                seed=rand.get_rng_seed(),
+                reshuffle_each_iteration=True,
+            )
+            .batch(self.batch_size, drop_remainder=True)
+            .prefetch(tf.data.AUTOTUNE)
+        )
+
+    def get_validation_dataset(self) -> tf.data.Dataset:
         with redirection.discard_stderr_and_stdout():
             return (
-                tf.keras.preprocessing.image.ImageDataGenerator().flow_from_directory(
+                load_dataset_and_rescale(
                     directory=self.validation_directory,
-                    batch_size=self.batch_size,
-                    target_size=(self.input_shape.width, self.input_shape.height),
+                    input_shape=self.input_shape,
                 )
+                .cache()
+                .batch(self.batch_size, drop_remainder=False)
+                .prefetch(tf.data.AUTOTUNE)
             )
 
-    def evaluate(self, phenotype: phenos.Phenotype) -> float:
+    def evaluate(self, phenotype: pheno.Phenotype) -> float:
         logger.debug(f"starting fitness evaluation, phenotype=<{phenotype}>")
 
-        train_data = self.get_train_generator()
-        val_data = self.get_validation_generator()
+        train = self.get_train_dataset()
+        validation = self.get_validation_dataset()
         model = make_classification_model(
             phenotype,
             self.input_shape,
@@ -106,11 +143,9 @@ class ValidationAccuracy:
 
         with redirection.discard_stderr_and_stdout():
             fitting_result = model.fit(
-                train_data,
+                train,
                 epochs=self.max_epochs,
-                steps_per_epoch=train_data.samples // self.batch_size,
-                validation_data=val_data,
-                validation_steps=val_data.samples // self.batch_size,
+                validation_data=validation,
                 verbose=0,
             )
 
@@ -130,58 +165,110 @@ class FitnessEvaluationParameters:
     grammar: gr.Grammar
 
 
+@attrs.frozen
+class SuccessfulEvaluationResult:
+    genotype: cg.CompositeGenotype
+    fitness: float
+    start_time: dt.datetime
+    end_time: dt.datetime
+
+
+@attrs.frozen
+class FailedEvaluationResult:
+    genotype: cg.CompositeGenotype
+    description: str
+    stacktrace: str
+    start_time: dt.datetime
+    end_time: dt.datetime
+
+
+FitnessEvaluationResult = SuccessfulEvaluationResult | FailedEvaluationResult
+
+
 def evaluate(
     genotype: cg.CompositeGenotype,
     params: FitnessEvaluationParameters,
-) -> float:
-    logger.debug(f"starting fitness evaluation of genotype=<{genotype}>")
+) -> FitnessEvaluationResult:
+    logger.info(f"starting fitness evaluation of genotype=<{genotype}>")
 
-    phenotype = phenos.translate(genotype, params.grammar)
+    start_time = dt.datetime.now()
+
+    phenotype = pheno.translate(genotype, params.grammar)
 
     try:
         fitness = params.metric.evaluate(phenotype)
-        logger.debug(f"finished fitness evaluation of genotype=<{genotype}>")
-        return fitness
+        logger.info(f"finished fitness evaluation of genotype=<{genotype}>")
+        return SuccessfulEvaluationResult(
+            genotype=genotype,
+            fitness=fitness,
+            start_time=start_time,
+            end_time=dt.datetime.now(),
+        )
 
     except tf.errors.ResourceExhaustedError:
         logger.warning(
             f"unable to evalute genotype due to resource exhaustion; genotype=<{genotype}>"
         )
-        return float("-inf")
-
-    except (ValueError, tf.errors.InvalidArgumentError):
-        filename = debug.save_genotype(genotype)
-        logger.error(
-            f"unable to evaluate genotype because the phenotype is malformed; saved as=<{filename}>"
+        return FailedEvaluationResult(
+            genotype=genotype,
+            description="failed due to resource exhaustion",
+            stacktrace=traceback.format_exc(),
+            start_time=start_time,
+            end_time=dt.datetime.now(),
         )
-        raise
+
+    except Exception:
+        logger.error(
+            f"unknown error occured during fitness evaluation of genotype=<{genotype}>"
+        )
+        return FailedEvaluationResult(
+            genotype=genotype,
+            description="unknown error occured during fitness evaluation",
+            stacktrace=traceback.format_exc(),
+            start_time=start_time,
+            end_time=dt.datetime.now(),
+        )
 
 
 T = typing.TypeVar("T")
 
 
+def get_effective_fitness(evaluation_result: FitnessEvaluationResult) -> float:
+    """
+    If `evaluation_result` is a `SuccessfulEvaluationResult`, returns its `fitness`;
+    if it is as `FailedEvaluationResult`, returns negative infinity.
+
+    This function assumes that fitness must be maximized.
+    """
+
+    match evaluation_result:
+        case SuccessfulEvaluationResult():
+            return evaluation_result.fitness
+
+        case FailedEvaluationResult():
+            return float("-inf")
+
+        case _:
+            raise ValueError(f"unknown fitness evaluation type={evaluation_result}")
+
+
 def select_fittest(
-    population: dict[T, float],
+    candidates: typing.Iterable[T],
+    metric: typing.Callable[[T], float],
     fittest_count: int,
-) -> dict[T, float]:
+) -> list[T]:
     """
     This function assumes that fitness must be maximized.
     """
-    assert len(population) >= fittest_count
     assert fittest_count > 0
 
-    logger.debug("starting fittest selection")
+    candidates_list = list(candidates)
+    assert len(candidates_list) >= fittest_count
 
     best_to_worst = sorted(
-        population.keys(),
-        key=lambda g: population[g],
+        candidates,
+        key=lambda c: metric(c),
         reverse=True,
     )
 
-    fittest = best_to_worst[:fittest_count]
-    assert len(fittest) == fittest_count
-
-    keyed_fittest = {g: population[g] for g in fittest}
-
-    logger.debug("finished fittest selection")
-    return keyed_fittest
+    return best_to_worst[:fittest_count]

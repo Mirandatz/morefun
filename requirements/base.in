@@ -3,7 +3,11 @@ lark
 loguru
 networkx
 numpy
+opencv-python
 pillow
+pydot
 scipy
-tensorflow-gpu
+tensorflow==2.8.2
+tensorflow-addons
+tensorflow-datasets
 typer

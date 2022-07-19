@@ -1,4 +1,5 @@
 import attrs
+import pytest
 from hypothesis import given
 
 import gge.backbones as bb
@@ -101,7 +102,7 @@ def test_merge_downsample_add(shapes: ls.ShapePair) -> None:
         params=gl.BatchNorm(name="bn"),
     )
 
-    source1 = gl.ConnectedMaxPooling2D(
+    source1 = gl.ConnectedMaxPool2D(
         input_layer=input_layer,
         params=gl.MaxPool2D("maxpool", pool_size=1, stride=shapes.ratio),
     )
@@ -130,7 +131,7 @@ def test_merge_downsample_concat(shapes: ls.ShapePair) -> None:
         params=gl.BatchNorm(name="bn"),
     )
 
-    source1 = gl.ConnectedMaxPooling2D(
+    source1 = gl.ConnectedMaxPool2D(
         input_layer=input_layer,
         params=gl.MaxPool2D("maxpool", pool_size=1, stride=shapes.ratio),
     )
@@ -159,7 +160,7 @@ def test_merge_upsample_concat(shapes: ls.ShapePair) -> None:
         params=gl.BatchNorm(name="bn"),
     )
 
-    source1 = gl.ConnectedMaxPooling2D(
+    source1 = gl.ConnectedMaxPool2D(
         input_layer=input_layer,
         params=gl.MaxPool2D("maxpool", pool_size=1, stride=shapes.ratio),
     )
@@ -307,7 +308,7 @@ def test_merge_parameters_constructor_empty_forks_mask() -> None:
 
 
 def test_select_target_shape_single_candidate() -> None:
-    candidates = [gl.Shape(1, 2, 3)]
+    candidates = [gl.Shape(height=2, width=1, depth=3)]
 
     chosen_upsample = conn.select_target_shape(
         candidates,
@@ -345,3 +346,11 @@ def test_connect_backbone_with_duplicate_merge_entries() -> None:
     assert isinstance(output_layer, gl.ConnectedBatchNorm)
     assert isinstance(output_layer.input_layer, gl.Input)
     assert output_layer.input_layer == input
+
+
+@pytest.mark.xfail(reason="NOT IMPLEMENTED")
+def test_parse() -> None:
+    """
+    Can parse from middle-grammar to connections genotype.
+    """
+    raise NotImplementedError()

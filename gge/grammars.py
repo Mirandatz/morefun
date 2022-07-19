@@ -347,13 +347,14 @@ class Grammar:
 
 
 class ExpectedTerminal(enum.Enum):
-    DATA_AUGMENTATION = Terminal('"data_augmentation"')
-    ROTATION = Terminal('"rotation"')
-    WIDTH_SHIFT = Terminal('"width_shift"')
-    HEIGHT_SHIFT = Terminal('"height_shift"')
-    ZOOM = Terminal('"zoom"')
-    HORIZONTAL_FLIP = Terminal('"horizontal_flip"')
-    VERTICAL_FLIP = Terminal('"vertical_flip"')
+    RANDOM_FLIP = Terminal('"random_flip"')
+    RANDOM_ROTATION = Terminal('"random_rotation"')
+
+    RESIZING = Terminal('"resizing"')
+    HEIGHT = Terminal('"height"')
+    WIDTH = Terminal('"width"')
+
+    RANDOM_CROP = Terminal('"random_crop"')
 
     CONV = Terminal('"conv"')
     FILTER_COUNT = Terminal('"filter_count"')
@@ -369,6 +370,7 @@ class ExpectedTerminal(enum.Enum):
     RELU = Terminal('"relu"')
     GELU = Terminal('"gelu"')
     SWISH = Terminal('"swish"')
+    PRELU = Terminal('"prelu"')
 
     SGD = Terminal('"sgd"')
     LEARNING_RATE = Terminal('"learning_rate"')
@@ -443,38 +445,41 @@ def make_list_of_options(parts: typing.Any) -> list[RuleOption]:
 
 
 class GrammarTransformer(gge_transformers.SinglePassTransformer):
+
+    # This set contains names of grammar rules that always appear in the form
+    # `rule_name: marker value` and which the node-visiting process consists in
+    # calling `make_list_of_marker_value_pairs`.
+    # This set is used  to remove a lot of boilerplate code.
+    # For more information, see:
+    # - `make_list_of_marker_value_pairs`.
+    # - `GrammarTransformer.__default__`
+    _RULES_OF_MARKERS_VALUE_PAIRS = {
+        # resizing
+        "height",
+        "width",
+        # conv
+        "filter_count",
+        "kernel_size",
+        "strides",
+        # pooling
+        "pool_sizes",
+        # sgd
+        "learning_rate",
+        "momentum",
+        "nesterov",
+        # adam
+        "beta1",
+        "beta2",
+        "epsilon",
+        "amsgrad",
+    }
+
+    # This set is also used to remove boilplate code.
+    # For more information, see: `GrammarTransformer.__default_token__`
+    _KNOWN_TERMINALS = {terminal.value.text for terminal in ExpectedTerminal}
+
     def __init__(self) -> None:
         super().__init__()
-
-        # set of known terminals, used to simplify 'terminal registration'.
-        # see self.__default_token__
-        self._expected_tokens: set[str] = {
-            terminal.value.text for terminal in ExpectedTerminal
-        }
-
-        # set of terminals that are always in the form `"marker" value`,
-        # used to simplify generation of pairs of tokens.
-        # see self.__default__
-        data_aug_params = {
-            "rotation",
-            "width_shift",
-            "height_shift",
-            "zoom",
-            "horizontal_flip",
-            "vertical_flip",
-        }
-        conv_params = {"filter_count", "kernel_size", "strides"}
-        pooling_params = {"pool_sizes"}
-        sgd_params = {"learning_rate", "momentum", "nesterov"}
-        adam_params = {"beta1", "beta2", "epsilon", "amsgrad"}
-        self.known_marker_value_pairs = set.union(
-            data_aug_params,
-            conv_params,
-            pooling_params,
-            sgd_params,
-            adam_params,
-        )
-
         self._terminals: list[Terminal] = []
         self._nonterminals: list[NonTerminal] = []
         self._rules: list[ProductionRule] = []
@@ -488,7 +493,7 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
     ) -> typing.Any:
         self._raise_if_not_running()
 
-        if data.value in self.known_marker_value_pairs:
+        if data.value in GrammarTransformer._RULES_OF_MARKERS_VALUE_PAIRS:
             return make_list_of_marker_value_pairs(children)
 
         return super().__default__(data, children, meta)
@@ -496,7 +501,11 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
     def __default_token__(self, token: lark.Token) -> typing.Any:
         self._raise_if_not_running()
 
-        if token.value in self._expected_tokens:
+        if token.value in GrammarTransformer._KNOWN_TERMINALS:
+            return self._register_terminal(token.value)
+
+        if token.value in ['"fork"', '"merge"']:
+            # raise NotImplementedError("WRITE TESTS")
             return self._register_terminal(token.value)
 
         return super().__default_token__(token)
@@ -624,9 +633,49 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
 
         return [[nt] * count for count in range(start, stop + 1)]
 
-    def data_augmentation(self, parts: typing.Any) -> list[RuleOption]:
+    @lark.v_args(inline=False)
+    def random_flip(self, parts: typing.Any) -> list[RuleOption]:
+        self._raise_if_not_running()
+
+        marker, *modes = parts
+        assert isinstance(marker, Terminal)
+        assert isinstance(modes, list)
+        assert all(isinstance(m, Terminal) for m in modes)
+        assert len(modes) >= 1
+
+        rule_options = []
+        for m in modes:
+            symbols = marker, m
+            opt = RuleOption(symbols)
+            rule_options.append(opt)
+
+        return rule_options
+
+    @lark.v_args(inline=False)
+    def random_rotation(self, parts: typing.Any) -> list[RuleOption]:
+        self._raise_if_not_running()
+
+        marker, *rotations = parts
+        assert isinstance(marker, Terminal)
+        assert isinstance(rotations, list)
+        assert all(isinstance(r, Terminal) for r in rotations)
+        assert len(rotations) >= 1
+
+        return [RuleOption((marker, r)) for r in rotations]
+
+    def resizing(self, parts: typing.Any) -> list[RuleOption]:
         self._raise_if_not_running()
         return make_list_of_options(parts)
+
+    def random_crop(self, parts: typing.Any) -> list[RuleOption]:
+        self._raise_if_not_running()
+        return make_list_of_options(parts)
+
+    # this rule exists only to make the upper_grammar.lark cleaner
+    @lark.v_args(inline=True)
+    def layer_and_maybe_emptylines(self, whatever: typing.Any) -> typing.Any:
+        self._raise_if_not_running()
+        return whatever
 
     def layer(
         self, list_of_lists_of_options: list[list[RuleOption]]
@@ -659,6 +708,12 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
     def avg_pooling_layer(self, parts: typing.Any) -> list[RuleOption]:
         self._raise_if_not_running()
         return make_list_of_options(parts)
+
+    # this rule exists only to make the upper_grammar.lark cleaner
+    @lark.v_args(inline=True)
+    def optimizer_and_maybe_emptylines(self, whatever: typing.Any) -> typing.Any:
+        self._raise_if_not_running()
+        return whatever
 
     @lark.v_args(inline=False)
     def optimizer(
@@ -697,6 +752,11 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
         return self._register_terminal(token.value)
 
     def BOOL_ARG(self, token: lark.Token) -> Terminal:
+        self._raise_if_not_running()
+        assert isinstance(token, lark.Token)
+        return self._register_terminal(token.value)
+
+    def FLIP_MODE(self, token: lark.Token) -> Terminal:
         self._raise_if_not_running()
         assert isinstance(token, lark.Token)
         return self._register_terminal(token.value)

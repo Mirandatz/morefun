@@ -3,6 +3,7 @@
 {
 	"image": "mirandatz/gge:dev_env",
 	"settings": {
+		"python.defaultInterpreterPath": "/gge/venv/bin/python",
 		"terminal.integrated.env.linux": {
 			"PYTHONPATH": "${workspaceFolder}/gge:${env:PYTHONPATH}"
 		},
@@ -25,8 +26,15 @@
 	],
 	"runArgs": [
 		"--shm-size=2G",
+		"--runtime=nvidia",
+		"--cap-add=SYS_NICE"
 	],
-	"mounts": [
-		"type=bind,source=${localWorkspaceFolder}/playground,target=/playground",
-	],
+	"postStartCommand": [
+		"git",
+		"config",
+		"--global",
+		"--add",
+		"safe.directory",
+		"${containerWorkspaceFolder}"
+	]
 }

@@ -2,8 +2,10 @@
 target-version = ['py310']
 
 [tool.pytest.ini_options]
-testpaths = ["/gge/gge/tests"]
 cache_dir = "/dev/shm/pytest_cache"
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')"
+]
 filterwarnings = [
     "ignore::DeprecationWarning:flatbuffers.*:",
     "ignore::DeprecationWarning:keras.*:",
