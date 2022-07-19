@@ -98,8 +98,8 @@ LOG_DIR = typer.Option(
 
 LOG_LEVEL = typer.Option(
     "INFO",
-    "--logging-level",
-    envvar="GGE_LOGGING_LEVEL",
+    "--log-level",
+    envvar="GGE_LOG_LEVEL",
 )
 
 
