@@ -5,48 +5,60 @@ set -o nounset
 set -o pipefail
 set -o xtrace
 
-EXPERIMENT_DIR="/home/thiago/source/gge/gge/experiments/cifar10"
-OUTPUT_DIR="$EXPERIMENT_DIR/output"
-LOG_DIR="$EXPERIMENT_DIR/log"
-GRAMMAR_PATH="$EXPERIMENT_DIR/grammar.lark"
-INITIAL_POPULATION_DIR="$EXPERIMENT_DIR/initial_population"
+# used to generate default values for paths
+GGE_EXPERIMENT_DIR=$(dirname "$(realpath "$0")")
+GGE_ROOT_DIR=$(realpath "${GGE_EXPERIMENT_DIR}/../../..")
+GGE_DATASET_DIR=${GGE_DATASET_DIR:="/home/datasets/cifar10"}
 
-DATASET_DIR="/home/thiago/source/datasets/cifar10"
-TRAIN_DIR="$DATASET_DIR/train"
-VALIDATION_DIR="$DATASET_DIR/validation"
-TEST_DIR="$DATASET_DIR/test"
+# params
+GGE_OUTPUT_DIR=${GGE_OUTPUT_DIR:="$GGE_EXPERIMENT_DIR/output"}
+GGE_LOG_DIR=${GGE_LOG_DIR="$GGE_EXPERIMENT_DIR/log"}
+GGE_GRAMMAR_PATH=${GGE_GRAMMAR_PATH:="$GGE_EXPERIMENT_DIR/grammar.lark"}
+GGE_INITIAL_POPULATION_DIR=${GGE_INITIAL_POPULATION_DIR:="$GGE_EXPERIMENT_DIR/initial_population"}
+GGE_TRAIN_DIR=${GGE_TRAIN_DIR:="$GGE_DATASET_DIR/train"}
+GGE_VALIDATION_DIR=${GGE_VALIDATION_DIR:="$GGE_DATASET_DIR/validation"}
+GGE_LOG_LEVEL=${GGE_LOG_LEVEL:="INFO"}
 
-GGE_CODE_DIR="/home/thiago/source/gge"
+mkdir -p "$GGE_OUTPUT_DIR"
+mkdir -p "$GGE_LOG_DIR"
 
-mkdir -p "$OUTPUT_DIR"
-mkdir -p "$LOG_DIR"
-
-DIRECTORIES=("$EXPERIMENT_DIR" "$INITIAL_POPULATION_DIR" "$TRAIN_DIR" "$VALIDATION_DIR" "$TEST_DIR" "$GGE_CODE_DIR")
+# validate paths
+DIRECTORIES=("$GGE_EXPERIMENT_DIR"
+	"$GGE_INITIAL_POPULATION_DIR"
+	"$GGE_TRAIN_DIR"
+	"$GGE_VALIDATION_DIR"
+	"$GGE_ROOT_DIR")
 for DIR in "${DIRECTORIES[@]}"; do
 	if [ ! -d "$DIR" ]; then
 		echo "directory does not exist: $DIR"
-		exit -1
+		exit 255
 	fi
 done
 
-if [ ! -f "$GRAMMAR_PATH" ]; then
-	echo "file does not exist: $GRAMMAR_PATH"
-	exit -1
+if [ ! -f "$GGE_ROOT_DIR/.gge_root" ]; then
+	echo "environment variable GGE_ROOT_DIR does not point to the root of GGE"
+	exit 255
+fi
+
+if [ ! -f "$GGE_GRAMMAR_PATH" ]; then
+	echo "file does not exist: $GGE_GRAMMAR_PATH"
+	exit 255
 fi
 
 docker run \
-	--user $(id -u):$(id -g) \
+	--user "$(id -u)":"$(id -g)" \
 	--rm \
 	--runtime=nvidia \
 	--shm-size=8G \
 	--workdir="/gge/gge" \
-	--env GGE_RNG_SEED=$GGE_RNG_SEED \
-	-v "$OUTPUT_DIR":"/gge/output" \
-	-v "$LOG_DIR":"/gge/log" \
-	-v "$GRAMMAR_PATH":"/gge/grammar.lark":ro \
-	-v "$INITIAL_POPULATION_DIR":"/gge/initial_population":ro \
-	-v "$TRAIN_DIR":"/gge/dataset/train":ro \
-	-v "$VALIDATION_DIR":"/gge/dataset/validation":ro \
-	-v "$GGE_CODE_DIR":"/gge/gge":ro \
+	--env GGE_RNG_SEED="$GGE_RNG_SEED" \
+	--env GGE_LOG_LEVEL="$GGE_LOG_LEVEL" \
+	-v "$GGE_OUTPUT_DIR":"/gge/output" \
+	-v "$GGE_LOG_DIR":"/gge/log" \
+	-v "$GGE_GRAMMAR_PATH":"/gge/grammar.lark":ro \
+	-v "$GGE_INITIAL_POPULATION_DIR":"/gge/initial_population":ro \
+	-v "$GGE_TRAIN_DIR":"/gge/dataset/train":ro \
+	-v "$GGE_VALIDATION_DIR":"/gge/dataset/validation":ro \
+	-v "$GGE_ROOT_DIR":"/gge/gge":ro \
 	mirandatz/gge:dev_env \
-	python -m gge.experiments.cifar10.evolution 
+	python -m gge.experiments.cifar10.evolution
