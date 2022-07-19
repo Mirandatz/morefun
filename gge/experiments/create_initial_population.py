@@ -15,6 +15,7 @@ import gge.layers as gl
 import gge.novelty as novel
 import gge.phenotypes as pheno
 import gge.randomness as rand
+import gge.startup_settings as gge_settings
 
 
 @attrs.frozen
@@ -279,33 +280,18 @@ def save_population(population: list[Individual], output_dir: pathlib.Path) -> N
 
 
 def main(
-    grammar_path: pathlib.Path = typer.Option(
-        ...,
-        "-g",
-        "--grammar-path",
-        file_okay=True,
-        exists=True,
-        readable=True,
-        dir_okay=False,
-    ),
-    output_dir: pathlib.Path = typer.Option(
-        ...,
-        "-o",
-        "--output-dir",
-        dir_okay=True,
-        readable=True,
-        writable=True,
-        file_okay=False,
-    ),
+    grammar_path: pathlib.Path = gge_settings.GRAMMAR_PATH,
+    output_dir: pathlib.Path = gge_settings.OUTPUT_DIR,
+    log_dir: pathlib.Path = gge_settings.LOG_DIR,
+    log_level: str = gge_settings.LOG_LEVEL,
+    rng_seed: int = gge_settings.RNG_SEED,
     pop_size: int = typer.Option(..., "-s", "--population-size", min=1),
     max_network_depth: int = typer.Option(..., "--max-depth", min=1),
     max_wide_layers: int = typer.Option(..., "--max-wide-layers", min=1),
     max_layer_width: int = typer.Option(..., "--max-layer-width", min=1),
     max_network_params: int = typer.Option(..., "--max-network-params", min=1),
-    log_level: str = typer.Option("INFO", "--log_level"),
-    rng_seed: int = typer.Option(...),
 ) -> None:
-    configure_logger(log_level)
+    gge_settings.configure_logger(log_dir, log_level)
     grammar = gr.Grammar(grammar_path.read_text())
 
     filter = IndividualFilter(
@@ -320,27 +306,5 @@ def main(
     save_population(population, output_dir)
 
 
-def run_from_script() -> None:
-    experiment_dir = pathlib.Path(__file__).parent / "cifar10"
-    grammar_path = experiment_dir / "grammar.lark"
-    output_dir = experiment_dir / "initial_population"
-    main(
-        grammar_path=grammar_path,
-        pop_size=40,
-        max_network_depth=7,
-        max_wide_layers=2,
-        max_layer_width=512,
-        max_network_params=int(750 * 1000),
-        output_dir=pathlib.Path(output_dir),
-        log_level="INFO",
-        rng_seed=42,
-    )
-
-
-# if __name__ == "__main__":
-#     run_from_script()
-
-
-# if we want to use this from the cli:
 if __name__ == "__main__":
     typer.run(main)

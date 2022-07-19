@@ -5,13 +5,28 @@ set -o nounset
 set -o pipefail
 set -o xtrace
 
-SCRIPT_DIR=$(dirname $(realpath "$0"))
-GRAMMAR_PATH="$SCRIPT_DIR/grammar.lark"
-OUTPUT_DIR="$SCRIPT_DIR/initial_population"
+# params
+GGE_POPULATION_SIZE=${GGE_POPULATION_SIZE:=40}
+GGE_MAX_DEPTH=${GGE_MAX_DEPTH:=12}
+GGE_MAX_WIDE_LAYERS=${GGE_MAX_WIDE_LAYERS:=2}
+GGE_MAX_LAYER_WIDTH=${GGE_MAX_LAYER_WIDTH:=512}
+GGE_MAX_NETWORK_PARAMS=${GGE_MAX_NETWORK_PARAMS:=750000}
+GGE_LOG_LEVEL=${GGE_LOG_LEVEL:=WARNING}
 
-GGE_CODE_DIR=$"/home/thiago/source/gge"
+# used to generate default values for grammar path and output dir
+GGE_EXPERIMENT_DIR=$(dirname $(realpath "$0"))
+GGE_ROOT_DIR=$(realpath "${GGE_EXPERIMENT_DIR}/../../..")
 
-mkdir -p "$OUTPUT_DIR"
+GGE_GRAMMAR_PATH=${GGE_GRAMMAR_PATH:="$GGE_EXPERIMENT_DIR/grammar.lark"}
+GGE_OUTPUT_DIR=${GGE_OUTPUT_DIR:="$GGE_EXPERIMENT_DIR/initial_population"}
+
+# validate paths
+if [ ! -f $GGE_GRAMMAR_PATH ]; then
+    echo "file not found: $GGE_GRAMMAR_PATH"
+    exit  -1
+fi
+
+mkdir -p "$GGE_OUTPUT_DIR"
 
 docker run \
 	--user $(id -u):$(id -g) \
@@ -19,16 +34,16 @@ docker run \
 	--runtime=nvidia \
 	--shm-size=8G \
 	--workdir="/gge/gge" \
-    -v "$OUTPUT_DIR":"/gge/output" \
-    -v "$GRAMMAR_PATH":"/gge/grammar.lark":ro \
-	-v "$GGE_CODE_DIR":"/gge/gge":ro \
+    -v "$GGE_OUTPUT_DIR":"/gge/output" \
+    -v "$GGE_GRAMMAR_PATH":"/gge/grammar.lark":ro \
+	-v "$GGE_ROOT_DIR":"/gge/gge":ro \
+    --env GGE_RNG_SEED=$GGE_RNG_SEED \
+    --env GGE_LOG_LEVEL=$GGE_LOG_LEVEL \
+    --tmpfs "/gge/log" \
 	mirandatz/gge:dev_env \
 	python -m gge.experiments.create_initial_population \
-        --grammar-path="/gge/grammar.lark" \
-        --output-dir="/gge/output" \
-        --population-size=40 \
-        --max-depth=12 \
-        --max-wide-layers=2 \
-        --max-layer-width=512 \
-        --max-network-params=750000 \
-        --rng-seed=0
+        --population-size=$GGE_POPULATION_SIZE \
+        --max-depth=$GGE_MAX_DEPTH \
+        --max-wide-layers=$GGE_MAX_WIDE_LAYERS \
+        --max-layer-width=$GGE_MAX_LAYER_WIDTH \
+        --max-network-params=$GGE_MAX_NETWORK_PARAMS
