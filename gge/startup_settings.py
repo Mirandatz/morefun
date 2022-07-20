@@ -102,6 +102,32 @@ LOG_LEVEL = typer.Option(
     envvar="GGE_LOG_LEVEL",
 )
 
+MAX_GENERATIONS = typer.Option(
+    default=...,
+    envvar="GGE_MAX_GENERATIONS",
+    min=1,
+)
+
+MUTANTS_PER_GENERATION = typer.Option(
+    default=...,
+    envvar="GGE_MUTANTS_PER_GENERATION",
+    min=1,
+)
+
+MAX_FAILURES = typer.Option(
+    default=...,
+    envvar="GGE_MAX_FAILURES",
+    min=1,
+)
+
+BATCH_SIZE = typer.Option(
+    default=...,
+    envvar="GGE_BATCH_SIZE",
+    min=1,
+)
+
+EPOCHS = typer.Option(default=..., envvar="GGE_EPOCHS", min=1)
+
 
 def configure_logger(log_dir: pathlib.Path, log_level: str) -> None:
     if log_level not in ["DEBUG", "INFO", "WARNING"]:
