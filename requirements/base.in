@@ -4,6 +4,7 @@ loguru
 networkx
 numpy
 opencv-python
+pandas
 pillow
 pydot
 scipy
