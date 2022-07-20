@@ -20,6 +20,9 @@ IMAGE_DEPTH = 3
 CLASS_COUNT = 100
 INPUT_SHAPE = gl.Shape(height=IMAGE_HEIGHT, width=IMAGE_WIDTH, depth=IMAGE_DEPTH)
 
+TRAIN_INSTANCES = 37500
+VALIDATION_INSTANCES = 12500
+
 
 def load_initial_population(path: pathlib.Path) -> list[cg.CompositeGenotype]:
     genotypes = [pickle.loads(p.read_bytes()) for p in path.iterdir()]
@@ -46,6 +49,24 @@ def main(
 ) -> None:
 
     gge_settings.configure_logger(log_dir, log_level)
+
+    gge_settings.validate_dataset_dir(
+        train_dataset_dir,
+        img_height=IMAGE_HEIGHT,
+        img_width=IMAGE_WIDTH,
+        expected_num_instances=TRAIN_INSTANCES,
+        expected_class_count=CLASS_COUNT,
+    )
+
+    gge_settings.validate_dataset_dir(
+        validation_dataset_dir,
+        img_height=IMAGE_HEIGHT,
+        img_width=IMAGE_WIDTH,
+        expected_num_instances=VALIDATION_INSTANCES,
+        expected_class_count=CLASS_COUNT,
+    )
+
+    exit()
 
     grammar = gr.Grammar(grammar_path.read_text())
 
