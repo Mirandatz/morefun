@@ -6,7 +6,7 @@ import tensorflow as tf
 import tensorflow_datasets as tfds
 from loguru import logger
 
-DATASET_NAME = "cifar10"
+DATASET_NAME = "cifar100"
 
 PARTITIONS_DIR = pathlib.Path(__file__).parent / "partitions"
 
