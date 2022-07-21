@@ -6,6 +6,7 @@ numpy
 opencv-python
 pandas
 pillow
+pyarrow
 pydot
 scipy
 tensorflow==2.8.2

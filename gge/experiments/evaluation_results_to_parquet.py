@@ -3,6 +3,7 @@ import pathlib
 import pickle
 
 import pandas as pd
+import typer
 
 import gge.fitnesses as fit
 import gge.startup_settings as gge_settings
@@ -75,4 +76,4 @@ def main(experiment_output_dir: pathlib.Path = gge_settings.OUTPUT_DIR) -> None:
 
 
 if __name__ == "__main__":
-    main()
+    typer.run(main)
