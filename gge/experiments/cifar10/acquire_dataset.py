@@ -4,6 +4,7 @@ import typing
 import cv2
 import tensorflow as tf
 import tensorflow_datasets as tfds
+from loguru import logger
 
 DATASET_NAME = "cifar10"
 
@@ -43,7 +44,7 @@ def save_partition(
         class_dir.mkdir(parents=True, exist_ok=True)
         instance_path = class_dir / f"{index}.png"
         save_instance(instance_data, instance_path)
-        print(instance_path)
+        logger.info(instance_path)
 
 
 def move_files(
