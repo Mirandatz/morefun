@@ -61,7 +61,7 @@ def move_files(
     files_to_move = src_files[-int(num_to_move) :]
     assert len(files_to_move) > 0
 
-    # ensure consistent splits between runes
+    # ensure consistent splits between runs
     sorted_files = sorted(files_to_move, key=lambda path: path.with_suffix("").name)
 
     for f in sorted_files:
