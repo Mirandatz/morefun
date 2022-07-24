@@ -217,9 +217,9 @@ def evaluate(
             end_time=dt.datetime.now(),
         )
 
-    except Exception:
+    except Exception as ex:
         logger.error(
-            f"unknown error occured during fitness evaluation of genotype=<{genotype}>"
+            f"unable to evaluate genotype, a stacktrace was generated. error message=<{ex}>"
         )
         return FailedEvaluationResult(
             genotype=genotype,
