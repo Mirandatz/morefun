@@ -12,7 +12,7 @@ export GGE_EPOCHS 				  ?= 40
 
 export GGE_IMG_WIDTH   ?= 32
 export GGE_IMG_HEIGHT  ?= 32
-export GGE_IMG_DEPTH   ?= 32
+export GGE_IMG_DEPTH   ?= 3
 export GGE_CLASS_COUNT ?= 10
 
 export GGE_POPULATION_SIZE 	  ?= 40
@@ -20,7 +20,11 @@ export GGE_MAX_DEPTH 		  ?= 12
 export GGE_MAX_WIDE_LAYERS 	  ?= 2
 export GGE_MAX_LAYER_WIDTH 	  ?= 512
 export GGE_MAX_NETWORK_PARAMS ?= 750000
-export GGE_LOG_LEVEL 		  ?= WARNING
+
+export GGE_EXPECTED_NUMBER_OF_TRAIN_INSTANCES 	   = 37500
+export GGE_EXPECTED_NUMBER_OF_VALIDATION_INSTANCES = 12500
+
+export GGE_LOG_LEVEL ?= INFO
 
 MAKEFILE_PATH := $(shell realpath $(lastword $(MAKEFILE_LIST)))
 EXPERIMENT_DIR := $(shell dirname $(MAKEFILE_PATH))
