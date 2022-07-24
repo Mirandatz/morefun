@@ -17,18 +17,36 @@ import gge.redirection
 
 # TODO: improve validation and error messages
 
-GGE_DIR = pathlib.Path("/gge")
 
+RNG_SEED = typer.Option(..., "--rng-seed", envvar="GGE_RNG_SEED")
 
-RNG_SEED = typer.Option(
-    ...,
-    "--rng-seed",
-    envvar="GGE_RNG_SEED",
+MAX_GENERATIONS = typer.Option(..., envvar="GGE_MAX_GENERATIONS", min=1)
+MUTANTS_PER_GENERATION = typer.Option(..., envvar="GGE_MUTANTS_PER_GENERATION", min=1)
+MAX_FAILURES = typer.Option(500, envvar="GGE_MAX_FAILURES", min=1)
+BATCH_SIZE = typer.Option(..., envvar="GGE_BATCH_SIZE", min=1)
+EPOCHS = typer.Option(..., envvar="GGE_EPOCHS", min=1)
+
+IMAGE_WIDTH = typer.Option(..., envvar="GGE_IMG_WIDTH", min=1)
+IMAGE_HEIGHT = typer.Option(..., envvar="GGE_IMG_HEIGHT", min=1)
+IMAGE_DEPTH = typer.Option(..., envvar="GGE_IMG_DEPTH", min=1)
+CLASS_COUNT = typer.Option(..., envvar="GGE_CLASS_COUNT", min=1)
+
+LOG_LEVEL = typer.Option("INFO", envvar="GGE_LOG_LEVEL")
+
+EXPECTED_NUMBER_OF_TRAIN_INSTANCES = typer.Option(
+    None, envvar="GGE_EXPECTED_NUMBER_OF_TRAIN_INSTANCES"
 )
+EXPECTED_NUMBER_OF_VALIDATION_INSTANCES = typer.Option(
+    None, envvar="GGE_EXPECTED_NUMBER_OF_VALIDATION_INSTANCES"
+)
+EXPECTED_NUMBER_OF_TEST_INSTANCES = typer.Option(
+    None, envvar="GGE_EXPECTED_NUMBER_OF_TEST_INSTANCES"
+)
+
+GGE_DIR = pathlib.Path("/gge")
 
 GRAMMAR_PATH = typer.Option(
     GGE_DIR / "grammar.lark",
-    "--grammar-path",
     envvar="GGE_GRAMMAR_PATH",
     exists=True,
     file_okay=True,
@@ -38,7 +56,6 @@ GRAMMAR_PATH = typer.Option(
 
 INITIAL_POPULATION_DIR = typer.Option(
     GGE_DIR / "initial_population",
-    "--initial-population-dir",
     envvar="GGE_INITIAL_POPULATION_DIR",
     dir_okay=True,
     exists=True,
@@ -48,7 +65,6 @@ INITIAL_POPULATION_DIR = typer.Option(
 
 TRAIN_DATASET_DIR = typer.Option(
     GGE_DIR / "dataset" / "train",
-    "--train-dataset-dir",
     envvar="GGE_TRAIN_DIR",
     dir_okay=True,
     exists=True,
@@ -58,7 +74,6 @@ TRAIN_DATASET_DIR = typer.Option(
 
 VALIDATION_DATASET_DIR = typer.Option(
     GGE_DIR / "dataset" / "validation",
-    "--validation-dataset-dir",
     envvar="GGE_VALIDATION_DIR",
     dir_okay=True,
     exists=True,
@@ -68,7 +83,6 @@ VALIDATION_DATASET_DIR = typer.Option(
 
 TEST_DATASET_DIR = typer.Option(
     GGE_DIR / "dataset" / "test",
-    "--test-dataset-dir",
     envvar="GGE_TEST_DIR",
     dir_okay=True,
     exists=True,
@@ -78,7 +92,6 @@ TEST_DATASET_DIR = typer.Option(
 
 OUTPUT_DIR = typer.Option(
     GGE_DIR / "output",
-    "--output-dir",
     envvar="GGE_OUTPUT_DIR",
     dir_okay=True,
     exists=True,
@@ -89,7 +102,6 @@ OUTPUT_DIR = typer.Option(
 
 LOG_DIR = typer.Option(
     GGE_DIR / "log",
-    "--log-dir",
     envvar="GGE_LOG_DIR",
     dir_okay=True,
     exists=True,
@@ -97,38 +109,6 @@ LOG_DIR = typer.Option(
     writable=True,
     file_okay=False,
 )
-
-LOG_LEVEL = typer.Option(
-    "INFO",
-    "--log-level",
-    envvar="GGE_LOG_LEVEL",
-)
-
-MAX_GENERATIONS = typer.Option(
-    default=...,
-    envvar="GGE_MAX_GENERATIONS",
-    min=1,
-)
-
-MUTANTS_PER_GENERATION = typer.Option(
-    default=...,
-    envvar="GGE_MUTANTS_PER_GENERATION",
-    min=1,
-)
-
-MAX_FAILURES = typer.Option(
-    default=...,
-    envvar="GGE_MAX_FAILURES",
-    min=1,
-)
-
-BATCH_SIZE = typer.Option(
-    default=...,
-    envvar="GGE_BATCH_SIZE",
-    min=1,
-)
-
-EPOCHS = typer.Option(default=..., envvar="GGE_EPOCHS", min=1)
 
 
 def configure_logger(log_dir: pathlib.Path, log_level: str) -> None:

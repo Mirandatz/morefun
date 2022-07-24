@@ -1,10 +1,19 @@
-SHELL := /bin/bash 
-.SHELLFLAGS := -o errexit -o nounset -o pipefail -c
-
+SHELL := /bin/bash
+.SHELLFLAGS := -o errexit -o nounset -o pipefail -c 
 
 ifndef GGE_RNG_SEED
 $(error GGE_RNG_SEED is not set)
 endif
+
+export GGE_MAX_GENERATIONS    	  ?= 1000
+export GGE_MUTANTS_PER_GENERATION ?= 2
+export GGE_BATCH_SIZE 			  ?= 64
+export GGE_EPOCHS 				  ?= 40
+
+export GGE_IMG_WIDTH   ?= 32
+export GGE_IMG_HEIGHT  ?= 32
+export GGE_IMG_DEPTH   ?= 32
+export GGE_CLASS_COUNT ?= 10
 
 export GGE_POPULATION_SIZE 	  ?= 40
 export GGE_MAX_DEPTH 		  ?= 12
@@ -14,24 +23,23 @@ export GGE_MAX_NETWORK_PARAMS ?= 750000
 export GGE_LOG_LEVEL 		  ?= WARNING
 
 MAKEFILE_PATH := $(shell realpath $(lastword $(MAKEFILE_LIST)))
-export GGE_EXPERIMENT_DIR := $(shell dirname $(MAKEFILE_PATH))
-export GGE_ROOT_DIR := $(shell realpath ${GGE_EXPERIMENT_DIR}/../../..)
+EXPERIMENT_DIR := $(shell dirname $(MAKEFILE_PATH))
+export HOST_GGE_ROOT_DIR := $(shell realpath ${EXPERIMENT_DIR}/../../..)
 
-export GGE_GRAMMAR_PATH := ${GGE_EXPERIMENT_DIR}/grammar.lark
+export GRAMMAR_PATH := ${EXPERIMENT_DIR}/grammar.lark
 
-export SEED_DIR :=${GGE_EXPERIMENT_DIR}/seed_${GGE_RNG_SEED}
-export GGE_INITIAL_POPULATION_DIR := ${SEED_DIR}/initial_population
-export GGE_OUTPUT_DIR := ${SEED_DIR}/output
-export GGE_LOG_DIR := ${SEED_DIR}/log
-
+SEED_DIR :=${EXPERIMENT_DIR}/seed_${GGE_RNG_SEED}
+export INITIAL_POPULATION_DIR := ${SEED_DIR}/initial_population
+export OUTPUT_DIR := ${SEED_DIR}/output
+export LOG_DIR := ${SEED_DIR}/log
 
 .PHONY: init
 init: 
-	test -f ${GGE_GRAMMAR_PATH}
-	test ! -d ${GGE_INITIAL_POPULATION_DIR}
+	test -f $${GRAMMAR_PATH}
+	test ! -d $${INITIAL_POPULATION_DIR}
 
-	mkdir -p ${GGE_INITIAL_POPULATION_DIR}
-	mkdir -p ${GGE_OUTPUT_DIR}
+	mkdir -p $${INITIAL_POPULATION_DIR}
+	mkdir -p $${OUTPUT_DIR}
 
 	docker run \
 		--user $(shell id -u):$(shell id -g) \
@@ -40,10 +48,10 @@ init:
 		--shm-size=8G \
 		--workdir=/gge/gge \
 		--env GGE_RNG_SEED=${GGE_RNG_SEED} \
-		--env GGE_LOG_LEVEL=${GGE_LOG_LEVEL} \
-		-v ${GGE_INITIAL_POPULATION_DIR}:/gge/output \
-		-v ${GGE_GRAMMAR_PATH}:/gge/grammar.lark:ro \
-		-v ${GGE_ROOT_DIR}:/gge/gge:ro \
+		--env-file <(env | grep ^GGE_) \
+		-v ${INITIAL_POPULATION_DIR}:/gge/output \
+		-v ${GRAMMAR_PATH}:/gge/grammar.lark:ro \
+		-v ${HOST_GGE_ROOT_DIR}:/gge/gge:ro \
 		--tmpfs /gge/log \
 		mirandatz/gge:dev_env \
 		python -m gge.experiments.create_initial_population \
@@ -55,15 +63,19 @@ init:
 
 
 .PHONY: run
-run: directories
-	test -f ${GGE_GRAMMAR_PATH}
-	test -d ${GGE_TRAIN_DIR}
-	test -d ${GGE_VALIDATION_DIR}
-	test -d ${GGE_ROOT_DIR}
-	test -d ${GGE_INITIAL_POPULATION_DIR}
+run:
+	$(eval export HOST_TRAIN_DIR=${GGE_DATASET_DIR}/train)
+	$(eval export HOST_VALIDATION_DIR=${GGE_DATASET_DIR}/validation)
 
-	mkdir -p ${GGE_OUTPUT_DIR}
-	mkdir -p ${GGE_LOG_DIR}
+	test -d $${HOST_GGE_ROOT_DIR}
+	test -f $${GRAMMAR_PATH}
+	test -d $${HOST_TRAIN_DIR}
+	test -d $${HOST_VALIDATION_DIR}
+	test -d $${INITIAL_POPULATION_DIR}
+	test -d $${GGE_DATASET_DIR}
+
+	mkdir -p ${OUTPUT_DIR}
+	mkdir -p ${LOG_DIR}
 
 	docker run \
 		--user $(shell id -u):$(shell id -g) \
@@ -71,17 +83,16 @@ run: directories
 		--runtime=nvidia \
 		--shm-size=8G \
 		--workdir=/gge/gge \
-		--env GGE_RNG_SEED=${GGE_RNG_SEED} \
-		--env GGE_LOG_LEVEL=${GGE_LOG_LEVEL} \
-		-v ${GGE_OUTPUT_DIR}:/gge/output \
-		-v ${GGE_LOG_DIR}:/gge/log \
-		-v ${GGE_GRAMMAR_PATH}:/gge/grammar.lark:ro \
-		-v ${GGE_INITIAL_POPULATION_DIR}:/gge/initial_population:ro \
-		-v ${GGE_TRAIN_DIR}:/gge/dataset/train:ro \
-		-v ${GGE_VALIDATION_DIR}:/gge/dataset/validation:ro \
-		-v ${GGE_ROOT_DIR}:/gge/gge:ro \
+		--env-file <(env | grep GGE_) \
+		-v ${OUTPUT_DIR}:/gge/output \
+		-v ${LOG_DIR}:/gge/log \
+		-v ${GRAMMAR_PATH}:/gge/grammar.lark:ro \
+		-v ${INITIAL_POPULATION_DIR}:/gge/initial_population:ro \
+		-v ${HOST_TRAIN_DIR}:/gge/dataset/train:ro \
+		-v ${HOST_VALIDATION_DIR}:/gge/dataset/validation:ro \
+		-v ${HOST_GGE_ROOT_DIR}:/gge/gge:ro \
 		mirandatz/gge:dev_env \
-		python -m gge.experiments.cifar10.evolution
+		python -m gge.experiments.evolution
 
 .PHONY: init_and_run
 init_and_run: init run
