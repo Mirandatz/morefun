@@ -1,14 +1,17 @@
 import gge.grammars as gr
 import gge.structured_grammatical_evolution as sge
 
+# auto-import fixture
+from gge.tests.fixtures import remove_logger_sinks  # noqa
+
 
 def test_can_expand_nonrecursive_grammar() -> None:
     grammar = gr.Grammar(
         """
         start : a
         a : b c
-        b : "conv" "filter_count" 64 "kernel_size" 5 "stride" 2
-        c : "conv" "filter_count" 128 "kernel_size" 3 "stride" 1
+        b : "conv" "filter_count" "64" "kernel_size" "5" "stride" "2"
+        c : "conv" "filter_count" "128" "kernel_size" "3" "stride" "1"
         """
     )
 
@@ -35,7 +38,7 @@ def test_can_expand_recursive_grammar() -> None:
         start : a
         a : b c | a
         b : b | c
-        c : "conv" "filter_count" (2) "kernel_size" (1) "stride" (2)
+        c : "conv" "filter_count" ("2") "kernel_size" ("1") "stride" ("2")
         """
     )
 
@@ -63,7 +66,7 @@ def test_can_expand_complex_recursive_grammar() -> None:
         a : b c d
         b : c d
         c : d a
-        d : "conv" "filter_count" (2) "kernel_size" (1) "stride" (2)
+        d : "conv" "filter_count" ("2") "kernel_size" ("1") "stride" ("2")
         """
     )
 
@@ -100,7 +103,7 @@ def test_can_expand_nasty_recursive_grammar() -> None:
         a : b | c a | k
         b : c | k
         c : k
-        k : "conv" "filter_count" (2) "kernel_size" (1) "stride" (2)
+        k : "conv" "filter_count" ("2") "kernel_size" ("1") "stride" ("2")
         """
     )
     a = gr.NonTerminal("a")
@@ -125,8 +128,8 @@ def test_max_nr_of_times_nonterminal_can_be_expanded_simple_grammar() -> None:
         """
         start : a
         a : b c
-        b : "conv" "filter_count" 1 "kernel_size" 2 "stride" 3
-        c : "conv" "filter_count" 4 "kernel_size" 5 "stride" 6
+        b : "conv" "filter_count" "1" "kernel_size" "2" "stride" "3"
+        c : "conv" "filter_count" "4" "kernel_size" "5" "stride" "6"
         """
     )
 
@@ -149,8 +152,8 @@ def test_max_nr_of_times_nonterminal_can_be_expanded_simple_repetition() -> None
         """
         start : a
         a : b c~5 b
-        b : "conv" "filter_count" 1 "kernel_size" 2 "stride" 3
-        c : "conv" "filter_count" 3 "kernel_size" 2 "stride" 1
+        b : "conv" "filter_count" "1" "kernel_size" "2" "stride" "3"
+        c : "conv" "filter_count" "3" "kernel_size" "2" "stride" "1"
         """
     )
 
@@ -173,7 +176,7 @@ def test_max_nr_of_times_nonterminal_can_be_expanded_ranged_repetion() -> None:
         """
         start : a
         a : b~5..7
-        b : "conv" "filter_count" 1 "kernel_size" 2 "stride" 3
+        b : "conv" "filter_count" "1" "kernel_size" "2" "stride" "3"
         """
     )
 
@@ -189,8 +192,8 @@ def test_check_recursion_nonrecursive_grammar() -> None:
         """
         start : a
         a : b c
-        b : "conv" "filter_count" 1 "kernel_size" 2 "stride" 3
-        c : "conv" "filter_count" 4 "kernel_size" 5 "stride" 6
+        b : "conv" "filter_count" "1" "kernel_size" "2" "stride" "3"
+        c : "conv" "filter_count" "4" "kernel_size" "5" "stride" "6"
         """
     )
 
@@ -203,7 +206,7 @@ def test_check_recursion_simple_recursive_grammar() -> None:
         start : a
         a : b c | a
         b : b | c
-        c : "conv" "filter_count" 1 "kernel_size" 2 "stride" 3
+        c : "conv" "filter_count" "1" "kernel_size" "2" "stride" "3"
         """
     )
 
@@ -217,7 +220,7 @@ def test_check_recursion_complex_recursive_grammar() -> None:
         a : b c d
         b : c d
         c : d a
-        d : "conv" "filter_count" 1 "kernel_size" 2 "stride" 3
+        d : "conv" "filter_count" "1" "kernel_size" "2" "stride" "3"
         """
     )
 
@@ -233,7 +236,7 @@ def test_check_recursion_nasty_recursive_grammar() -> None:
         c : k
         d : c | b
         j : a
-        k : "conv" "filter_count" (2) "kernel_size" (5) "stride" (2)
+        k : "conv" "filter_count" ("2") "kernel_size" ("5") "stride" ("2")
         """
     )
 
