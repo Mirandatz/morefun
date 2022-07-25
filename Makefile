@@ -33,8 +33,14 @@ run_tests: dev_env
 
 .PHONY: run_tests_sequential
 run_tests_sequential: dev_env
-	docker run --rm --user $(UID):$(GID) -v $(ROOT_DIR):/gge $(DEV_ENG_TAG) \
+	docker run \
+		--rm \
+		--user $(UID):$(GID) \
+		-v $(ROOT_DIR):/gge/gge \
+		--workdir /gge/gge \
+		$(DEV_ENG_TAG) \
 		pytest --pspec
+
 
 .PHONY: playground
 playground: dev_env
