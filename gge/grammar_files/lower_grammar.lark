@@ -13,20 +13,20 @@ layer    : random_flip
          | activation
 
 random_flip     : RANDOM_FLIP FLIP_MODE
-random_rotation : RANDOM_ROTATION FLOAT
+random_rotation : RANDOM_ROTATION QUOTED_FLOAT
 resizing        : RESIZING height width
-height          : HEIGHT INT
-width           : WIDTH INT
+height          : HEIGHT QUOTED_INT
+width           : WIDTH QUOTED_INT
 random_crop     : RANDOM_CROP height width
 
 conv         : CONV filter_count kernel_size stride
-filter_count : FILTER_COUNT INT
-kernel_size  : KERNEL_SIZE INT
-stride       : STRIDE INT
+filter_count : FILTER_COUNT QUOTED_INT
+kernel_size  : KERNEL_SIZE QUOTED_INT
+stride       : STRIDE QUOTED_INT
 
 maxpool  : MAXPOOL pool_size stride
 avgpool  : AVGPOOL pool_size stride
-pool_size : POOL_SIZE INT
+pool_size : POOL_SIZE QUOTED_INT
  
 batchnorm : BATCHNORM
 
@@ -35,14 +35,14 @@ activation : RELU | GELU | PRELU | SWISH
 optimizer: sgd | adam
 
 sgd           : SGD learning_rate momentum nesterov
-learning_rate : LEARNING_RATE FLOAT
-momentum      : MOMENTUM FLOAT
+learning_rate : LEARNING_RATE QUOTED_FLOAT
+momentum      : MOMENTUM QUOTED_FLOAT
 nesterov      : NESTEROV BOOL
 
 adam    : ADAM learning_rate beta1 beta2 epsilon amsgrad
-beta1   : BETA1 FLOAT
-beta2   : BETA2 FLOAT
-epsilon : EPSILON FLOAT
+beta1   : BETA1 QUOTED_FLOAT
+beta2   : BETA2 QUOTED_FLOAT
+epsilon : EPSILON QUOTED_FLOAT
 amsgrad : AMSGRAD BOOL
 
 // using multiple imports just for aesthetic reasons
@@ -55,10 +55,8 @@ amsgrad : AMSGRAD BOOL
 %import .terminals (BATCHNORM)
 %import .terminals (SGD, LEARNING_RATE, MOMENTUM, NESTEROV)
 %import .terminals (ADAM, BETA1, BETA2, EPSILON, AMSGRAD)
-%import .terminals (BOOL)
+%import .terminals (BOOL, QUOTED_INT, QUOTED_FLOAT)
 
-%import common.INT
-%import common.NUMBER -> FLOAT
 %import common.WS
 
 %ignore WS

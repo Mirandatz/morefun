@@ -45,13 +45,27 @@ def parse_tokenstream(
 
 @lark.v_args(inline=True)
 class LowerGrammarTransformer(gge.transformers.SinglePassTransformer):
-    def INT(self, token: lark.Token) -> int:
+    def QUOTED_INT(self, token: lark.Token) -> int:
         self._raise_if_not_running()
-        return int(token.value)
 
-    def FLOAT(self, token: lark.Token) -> float:
+        quoted_int = token.value
+        assert quoted_int[0] == quoted_int[-1] == '"'
+
+        unquoted = token[1:-1]
+        return int(unquoted)
+
+    def QUOTED_FLOAT(self, token: lark.Token) -> float:
         self._raise_if_not_running()
-        return float(token.value)
+
+        quoted_float = token.value
+        assert quoted_float[0] == quoted_float[-1] == '"'
+
+        unquoted = token[1:-1]
+        return float(unquoted)
+
+    def QUOTE(self, token: lark.Token) -> None:
+        self._raise_if_not_running()
+        return None
 
     def BOOL(self, token: lark.Token) -> bool:
         self._raise_if_not_running()

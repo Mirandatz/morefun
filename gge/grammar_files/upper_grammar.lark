@@ -60,11 +60,11 @@ amsgrad: AMSGRAD _bool_args
 
 _int_args : INT_ARG
           | "(" INT_ARG ("|" INT_ARG)* ")"
-INT_ARG   : INT
+INT_ARG   : QUOTED_INT
 
 _float_args : FLOAT_ARG
             | "(" FLOAT_ARG ("|" FLOAT_ARG)* ")"
-FLOAT_ARG : FLOAT
+FLOAT_ARG : QUOTED_FLOAT
 
 _bool_args : BOOL_ARG
            | "(" BOOL_ARG ("|" BOOL_ARG)* ")"
@@ -85,12 +85,11 @@ _flip_args  : FLIP_MODE
 %import .terminals (BATCHNORM)
 %import .terminals (SGD, LEARNING_RATE, MOMENTUM, NESTEROV)
 %import .terminals (ADAM, BETA1, BETA2, EPSILON, AMSGRAD)
-%import .terminals (BOOL)
+%import .terminals (BOOL, QUOTED_INT, QUOTED_FLOAT)
 
-%import common.INT
-%import common.NUMBER -> FLOAT
 %import common.NEWLINE -> _NL
 %import common.CNAME -> NAME
 %import common.WS_INLINE
+%import common.INT
 
 %ignore WS_INLINE

@@ -37,3 +37,10 @@ EPSILON : /"epsilon"/
 AMSGRAD : /"amsgrad"/
 
 BOOL  : /"true"/ | /"false"/
+
+QUOTED_INT : QUOTE INT QUOTE
+QUOTED_FLOAT : QUOTE FLOAT QUOTE
+QUOTE : "\""
+
+%import common.INT
+%import common.NUMBER -> FLOAT

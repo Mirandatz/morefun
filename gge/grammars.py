@@ -33,7 +33,10 @@ def extract_ast(grammar_text: str) -> lark.Tree[typing.Any]:
 
 def _can_be_parsed_as_float(value: str) -> bool:
     try:
-        _ = float(value)
+        assert value[0] == '"'
+        assert value[-1] == '"'
+        unquoted = value[1:-1]
+        _ = float(unquoted)
         return True
     except ValueError:
         return False

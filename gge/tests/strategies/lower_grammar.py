@@ -199,7 +199,7 @@ def sgds(draw: hs.DrawFn) -> OptimizerTestData:
         momentum=momentum,
         nesterov=nesterov,
     )
-    tokenstream = f'"sgd" "learning_rate" {learning_rate} "momentum" {momentum} "nesterov" {str(nesterov).lower()}'
+    tokenstream = f'"sgd" "learning_rate" "{learning_rate}" "momentum" "{momentum}" "nesterov" {str(nesterov).lower()}'
     return OptimizerTestData(tokenstream, sgd)
 
 
