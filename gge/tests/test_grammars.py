@@ -17,7 +17,7 @@ def test_start_symbol() -> None:
         """
         start     : convblock
         convblock : conv~2
-        conv      : "conv" "filter_count" 1 "kernel_size" 2 "stride" 3
+        conv      : "conv" "filter_count" "1" "kernel_size" "2" "stride" "3"
     """
     )
     assert START == grammar.start_symbol
@@ -27,8 +27,8 @@ def test_terminals() -> None:
     grammar = gr.Grammar(
         """
         start : a act1 b act2
-        a : "conv" "filter_count" 1 "kernel_size" (2) "stride" (3 | 4)
-        b : "conv" "filter_count" 5 "kernel_size" 6 "stride" (7)
+        a : "conv" "filter_count" "1" "kernel_size" ("2") "stride" ("3" | "4")
+        b : "conv" "filter_count" "5" "kernel_size" "6" "stride" ("7")
         act1 : "relu"
         act2 : "swish"
     """
@@ -43,7 +43,7 @@ def test_terminals() -> None:
         gr.ExpectedTerminal.RELU.value,
         gr.ExpectedTerminal.SWISH.value,
     }
-    numbers = {gr.Terminal(str(i)) for i in range(1, 8)}
+    numbers = {gr.Terminal(f'"{i}"') for i in range(1, 8)}
     expected = set.union(names, numbers)
 
     assert expected == actual
@@ -53,8 +53,8 @@ def test_non_terminals() -> None:
     grammar = gr.Grammar(
         """
         start : a b
-        a : "conv" "filter_count" 1 "kernel_size" (2) "stride" (3 | 4)
-        b : "conv" "filter_count" 5 "kernel_size" 6 "stride" (7)
+        a : "conv" "filter_count" "1" "kernel_size" ("2") "stride" ("3" | "4")
+        b : "conv" "filter_count" "5" "kernel_size" "6" "stride" ("7")
     """
     )
     actual = set(grammar.nonterminals)
@@ -66,7 +66,7 @@ def test_start_trivial_expansion() -> None:
     grammar = gr.Grammar(
         """
         start : a
-        a     : "conv" "filter_count" 1 "kernel_size" 2 "stride" 3
+        a     : "conv" "filter_count" "1" "kernel_size" "2" "stride" "3"
         """
     )
     (actual,) = grammar.expansions(START)
@@ -78,8 +78,8 @@ def test_start_simple_expansion() -> None:
     grammar = gr.Grammar(
         """
         start : a b
-        a     : "conv" "filter_count" 1 "kernel_size" 2 "stride" 3
-        b     : "conv" "filter_count" 1 "kernel_size" 2 "stride" 3
+        a     : "conv" "filter_count" "1" "kernel_size" "2" "stride" "3"
+        b     : "conv" "filter_count" "1" "kernel_size" "2" "stride" "3"
         """
     )
     (actual,) = grammar.expansions(START)
@@ -98,9 +98,9 @@ def test_start_complex_expansion() -> None:
     grammar = gr.Grammar(
         """
         start : a b | c | c a
-        a     : "conv" "filter_count" 1 "kernel_size" 2 "stride" 3
-        b     : "conv" "filter_count" 4 "kernel_size" 5 "stride" 6
-        c     : "conv" "filter_count" 7 "kernel_size" 8 "stride" 9
+        a     : "conv" "filter_count" "1" "kernel_size" "2" "stride" "3"
+        b     : "conv" "filter_count" "4" "kernel_size" "5" "stride" "6"
+        c     : "conv" "filter_count" "7" "kernel_size" "8" "stride" "9"
         """
     )
     actual = grammar.expansions(START)
@@ -127,9 +127,9 @@ def test_complex_symbol_expansion() -> None:
                | sblock~2..2 conv1~1
                | conv3
 
-        conv1 : "conv" "filter_count" 1 "kernel_size" 2 "stride" 3
-        conv2 : "conv" "filter_count" 4 "kernel_size" 5 "stride" 6
-        conv3 : "conv" "filter_count" 7 "kernel_size" 8 "stride" 9
+        conv1 : "conv" "filter_count" "1" "kernel_size" "2" "stride" "3"
+        conv2 : "conv" "filter_count" "4" "kernel_size" "5" "stride" "6"
+        conv3 : "conv" "filter_count" "7" "kernel_size" "8" "stride" "9"
         """
     )
     actual = grammar.expansions(gr.NonTerminal("cblock"))
@@ -157,7 +157,7 @@ def test_non_terminal_with_single_expansion() -> None:
     grammar = gr.Grammar(
         """ start : block
         block : layer
-        layer : "conv" "filter_count" 1 "kernel_size" 2 "stride" 3
+        layer : "conv" "filter_count" "1" "kernel_size" "2" "stride" "3"
     """
     )
     (actual,) = grammar.expansions(gr.NonTerminal("block"))
@@ -169,8 +169,8 @@ def test_int_arg_parenthesis() -> None:
     grammar = gr.Grammar(
         """
         start   : with without
-        with    : "conv" "filter_count" (1) "kernel_size" (2) "stride" (3)
-        without : "conv" "filter_count" 1 "kernel_size" 2 "stride" 3
+        with    : "conv" "filter_count" ("1") "kernel_size" ("2") "stride" ("3")
+        without : "conv" "filter_count" "1" "kernel_size" "2" "stride" "3"
         """
     )
     with_par = grammar.expansions(gr.NonTerminal("with"))
@@ -182,7 +182,7 @@ def test_multiple_int_arg() -> None:
     grammar = gr.Grammar(
         """
         start : layer
-        layer : "conv" "filter_count" (1 | 2) "kernel_size" 2 "stride" 3
+        layer : "conv" "filter_count" ("1" | "2") "kernel_size" "2" "stride" "3"
         """
     )
     actual_first, actual_second = grammar.expansions(gr.NonTerminal("layer"))
@@ -191,11 +191,11 @@ def test_multiple_int_arg() -> None:
         (
             gr.ExpectedTerminal.CONV.value,
             gr.ExpectedTerminal.FILTER_COUNT.value,
-            gr.Terminal("1"),
+            gr.Terminal('"1"'),
             gr.ExpectedTerminal.KERNEL_SIZE.value,
-            gr.Terminal("2"),
+            gr.Terminal('"2"'),
             gr.ExpectedTerminal.STRIDE.value,
-            gr.Terminal("3"),
+            gr.Terminal('"3"'),
         )
     )
     assert expected_first == actual_first
@@ -204,11 +204,11 @@ def test_multiple_int_arg() -> None:
         (
             gr.ExpectedTerminal.CONV.value,
             gr.ExpectedTerminal.FILTER_COUNT.value,
-            gr.Terminal("2"),
+            gr.Terminal('"2"'),
             gr.ExpectedTerminal.KERNEL_SIZE.value,
-            gr.Terminal("2"),
+            gr.Terminal('"2"'),
             gr.ExpectedTerminal.STRIDE.value,
-            gr.Terminal("3"),
+            gr.Terminal('"3"'),
         )
     )
     assert expected_second == actual_second
@@ -218,7 +218,7 @@ def test_blockless_grammar() -> None:
     grammar = gr.Grammar(
         """
         start : conv
-        conv  : "conv" "filter_count" 1 "kernel_size" 2 "stride" 3
+        conv  : "conv" "filter_count" "1" "kernel_size" "2" "stride" "3"
     """
     )
     start_rule, conv_def_rule = grammar.rules
@@ -231,11 +231,11 @@ def test_blockless_grammar() -> None:
         (
             gr.ExpectedTerminal.CONV.value,
             gr.ExpectedTerminal.FILTER_COUNT.value,
-            gr.Terminal("1"),
+            gr.Terminal('"1"'),
             gr.ExpectedTerminal.KERNEL_SIZE.value,
-            gr.Terminal("2"),
+            gr.Terminal('"2"'),
             gr.ExpectedTerminal.STRIDE.value,
-            gr.Terminal("3"),
+            gr.Terminal('"3"'),
         )
     )
     assert expected_rhs == conv_def_rule.rhs
@@ -246,7 +246,7 @@ def test_batchnorm_in_block() -> None:
         """
         start : block
         block : conv norm
-        conv  : "conv" "filter_count" (1 | 2) "kernel_size" 2 "stride" 3
+        conv  : "conv" "filter_count" ("1" | "2") "kernel_size" "2" "stride" "3"
         norm  : "batchnorm"
         """
     )
@@ -265,7 +265,7 @@ def test_batchnorm_def() -> None:
         """
         start : block
         block : conv norm
-        conv  : "conv" "filter_count" (1 | 2) "kernel_size" 2 "stride" 3
+        conv  : "conv" "filter_count" ("1" | "2") "kernel_size" "2" "stride" "3"
         norm  : "batchnorm"
         """
     )
@@ -283,8 +283,8 @@ def test_pooling_layer_in_block() -> None:
         """
         start : block
         block : conv pool
-        conv  : "conv" "filter_count" 1 "kernel_size" (2) "stride" (3 | 4)
-        pool  : "maxpool" "pool_size" 2 "stride" 3
+        conv  : "conv" "filter_count" "1" "kernel_size" ("2") "stride" ("3" | "4")
+        pool  : "maxpool" "pool_size" "2" "stride" "3"
         """
     )
 

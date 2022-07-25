@@ -70,7 +70,7 @@ def int_args(draw: hs.DrawFn, min_value: int, max_value: int) -> GrammarArgs:
         )
     )
 
-    tokens = list(map(str, values))
+    tokens = [f'"{v}"' for v in values]
     terminals = tuple([gr.Terminal(v) for v in tokens])
     text = draw(grammar_text(tokens))
 
@@ -100,7 +100,7 @@ def float_args(
         )
     )
 
-    tokens = list(map(str, values))
+    tokens = [f'"{v}"' for v in values]
     terminals = tuple([gr.Terminal(v) for v in tokens])
     text = draw(grammar_text(tokens))
 
