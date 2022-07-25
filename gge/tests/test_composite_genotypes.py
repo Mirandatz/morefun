@@ -16,17 +16,16 @@ def get_grammar() -> gr.Grammar:
         conv_block : conv_layer batchnorm activation
                    | conv_layer batchnorm activation pooling
 
-        conv_layer : "conv" "filter_count" (32 | 64) "kernel_size" (1 | 3 | 5 | 7) "stride" (1 | 2)
+        conv_layer : "conv" "filter_count" ("32" | "64") "kernel_size" ("1" | "3" | "5" | "7") "stride" ("1" | "2")
         batchnorm  : "batchnorm"
         activation : relu | swish
         relu       : "relu"
         swish      : "swish"
         pooling    : maxpool | avgpool
-        maxpool    : "maxpool" "pool_size" (1 | 2) "stride" (1 | 2)
-        avgpool    : "avgpool" "pool_size" (1 | 2) "stride" (1 | 2)
+        maxpool    : "maxpool" "pool_size" ("1" | "2") "stride" ("1" | "2")
+        avgpool    : "avgpool" "pool_size" ("1" | "2") "stride" ("1" | "2")
 
-        optimizer  : "adam" "learning_rate" (0.001 | 0.003 | 0.005) "beta1" 0.9 "beta2" 0.999 "epsilon" 1e-07 "amsgrad" "false"
-
+        optimizer  : "adam" "learning_rate" ("0.001" | "0.003" | "0.005") "beta1" "0.9" "beta2" "0.999" "epsilon" "1e-07" "amsgrad" "false"
         """
     )
 
