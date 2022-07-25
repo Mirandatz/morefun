@@ -7,6 +7,9 @@ import gge.structured_grammatical_evolution as sge
 import gge.tests.strategies.data_structures as ds
 import gge.tests.strategies.optimizers as gos
 
+# auto-import fixtures
+from gge.tests.fixtures import hide_gpu_from_tensorflow, remove_logger_sinks  # noqa
+
 
 @given(test_data=gos.sgds().map(gos.sgd_grammar))
 def test_sgds_middle_grammar(test_data: ds.ParsingTestData[optim.SGD]) -> None:

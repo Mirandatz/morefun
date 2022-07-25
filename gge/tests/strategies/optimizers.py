@@ -14,11 +14,12 @@ def sgds(draw: hs.DrawFn) -> optim.SGD:
 
 
 def sgd_grammar(sgd: optim.SGD) -> ds.ParsingTestData[optim.SGD]:
+    nesterov = '"true"' if sgd.nesterov else '"false"'
     grammar = (
         'start : "sgd"'
         f'"learning_rate" {sgd.learning_rate}'
         f'"momentum" {sgd.momentum}'
-        f'"nesterov" {str(sgd.nesterov).lower()}'
+        f'"nesterov" {nesterov}'
     )
 
     return ds.ParsingTestData(grammar, sgd)
@@ -63,13 +64,15 @@ def adams(draw: hs.DrawFn) -> optim.Adam:
 
 
 def adam_grammar(adam: optim.Adam) -> ds.ParsingTestData[optim.Adam]:
+    amsgrad = '"true"' if adam.amsgrad else '"false"'
+
     grammar = (
         'start : "adam"'
         f'"learning_rate" {adam.learning_rate}'
         f'"beta1" {adam.beta1}'
         f'"beta2" {adam.beta2}'
         f'"epsilon" {adam.epsilon}'
-        f'"amsgrad" {str(adam.amsgrad).lower()}'
+        f'"amsgrad" {amsgrad}'
     )
 
     return ds.ParsingTestData(grammar, adam)

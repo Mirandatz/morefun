@@ -36,4 +36,4 @@ BETA2   : /"beta2"/
 EPSILON : /"epsilon"/
 AMSGRAD : /"amsgrad"/
 
-BOOL  : "true" | "false"
+BOOL  : /"true"/ | /"false"/

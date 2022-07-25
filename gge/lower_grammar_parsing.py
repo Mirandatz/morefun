@@ -56,10 +56,10 @@ class LowerGrammarTransformer(gge.transformers.SinglePassTransformer):
     def BOOL(self, token: lark.Token) -> bool:
         self._raise_if_not_running()
 
-        if token.value == "true":
+        if token.value == '"true"':
             return True
 
-        elif token.value == "false":
+        elif token.value == '"false"':
             return False
 
         else:

@@ -34,7 +34,7 @@ def bool_args(draw: hs.DrawFn) -> GrammarArgs:
         )
     )
 
-    tokens = ["true" if v else "false" for v in values]
+    tokens = ['"true"' if v else '"false"' for v in values]
     terminals = tuple([gr.Terminal(v) for v in tokens])
     text = draw(grammar_text(tokens))
 
