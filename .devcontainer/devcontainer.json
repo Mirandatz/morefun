@@ -19,7 +19,8 @@
 	},
 	"extensions": [
 		"ms-python.python",
-		"ms-python.vscode-pylance"
+		"ms-python.vscode-pylance",
+		"timonwong.shellcheck"
 	],
 	"forwardPorts": [
 		8000 // for debugger
