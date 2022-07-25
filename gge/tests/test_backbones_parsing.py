@@ -61,40 +61,39 @@ def test_parse_avgpools(test_data: lgs.LowerGrammarParsingTestData) -> None:
     assert expected == actual
 
 
-@given(test_data=lgs.batchnorms())
-def test_parse_batchnorm(test_data: lgs.LowerGrammarParsingTestData) -> None:
+def test_parse_batchnorm(
+    test_data: lgs.LowerGrammarParsingTestData = lgs.batchnorms(),
+) -> None:
     """Can parse batchnorm."""
     actual = bb.parse(test_data.tokenstream, start="backbone")
     expected = bb.Backbone(test_data.parsed)
     assert expected == actual
 
 
-@given(test_data=lgs.relus())
-def test_parse_relu(test_data: lgs.LowerGrammarParsingTestData) -> None:
+def test_parse_relu(test_data: lgs.LowerGrammarParsingTestData = lgs.relus()) -> None:
     """Can parse relu."""
     actual = bb.parse(test_data.tokenstream, start="backbone")
     expected = bb.Backbone(test_data.parsed)
     assert expected == actual
 
 
-@given(test_data=lgs.gelus())
-def test_parse_gelu(test_data: lgs.LowerGrammarParsingTestData) -> None:
+def test_parse_gelu(test_data: lgs.LowerGrammarParsingTestData = lgs.gelus()) -> None:
     """Can parse gelu."""
     actual = bb.parse(test_data.tokenstream, start="backbone")
     expected = bb.Backbone(test_data.parsed)
     assert expected == actual
 
 
-@given(test_data=lgs.swishs())
-def test_parse_swish(test_data: lgs.LowerGrammarParsingTestData) -> None:
+def test_parse_swish(test_data: lgs.LowerGrammarParsingTestData = lgs.swishs()) -> None:
     """Can parse swish."""
     actual = bb.parse(test_data.tokenstream, start="backbone")
     expected = bb.Backbone(test_data.parsed)
     assert expected == actual
 
 
-@given(test_data=lgs.prelus())
-def test_parse_prelus(test_data: lgs.LowerGrammarParsingTestData) -> None:
+def test_parse_prelus(
+    test_data: lgs.LowerGrammarParsingTestData = lgs.prelus(),
+) -> None:
     """Can parse lower-grammar: prelu."""
     actual = bb.parse(test_data.tokenstream, start="backbone")
     expected = bb.Backbone(test_data.parsed)

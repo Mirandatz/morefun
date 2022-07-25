@@ -11,9 +11,9 @@ import tensorflow as tf
 
 import gge.randomness as rand
 
-HORIZONTAL = "horizontal"
-VERTICAL = "vertical"
-HORIZONTAL_AND_VERTICAL = "horizontal_and_vertical"
+HORIZONTAL = '"horizontal"'
+VERTICAL = '"vertical"'
+HORIZONTAL_AND_VERTICAL = '"horizontal_and_vertical"'
 FLIP_MODES = [HORIZONTAL, VERTICAL, HORIZONTAL_AND_VERTICAL]
 
 

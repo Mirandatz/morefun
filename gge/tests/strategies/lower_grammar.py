@@ -15,7 +15,9 @@ def random_flips(
 ) -> LowerGrammarParsingTestData:
     name_gen = name_gen or NameGenerator()
     name = name_gen.gen_name(gl.RandomFlip)
-    mode = draw(hs.sampled_from(gl.FLIP_MODES))
+    mode = draw(
+        hs.sampled_from(['"horizontal"', '"vertical"', '"horizontal_and_vertical"'])
+    )
     layer = gl.RandomFlip(name, mode)
     tokenstream = f'"random_flip" {mode}'
     return LowerGrammarParsingTestData(tokenstream, (layer,))
@@ -103,10 +105,7 @@ def avgpools(
     return LowerGrammarParsingTestData(tokenstream, (layer,))
 
 
-@hs.composite
-def batchnorms(
-    draw: hs.DrawFn, *, name_gen: NameGenerator | None = None
-) -> LowerGrammarParsingTestData:
+def batchnorms(*, name_gen: NameGenerator | None = None) -> LowerGrammarParsingTestData:
     name_gen = name_gen or NameGenerator()
     name = name_gen.gen_name(gl.BatchNorm)
     return LowerGrammarParsingTestData(
@@ -115,10 +114,7 @@ def batchnorms(
     )
 
 
-@hs.composite
-def relus(
-    draw: hs.DrawFn, *, name_gen: NameGenerator | None = None
-) -> LowerGrammarParsingTestData:
+def relus(*, name_gen: NameGenerator | None = None) -> LowerGrammarParsingTestData:
     name_gen = name_gen or NameGenerator()
     name = name_gen.gen_name(gl.Relu)
     return LowerGrammarParsingTestData(
@@ -127,10 +123,7 @@ def relus(
     )
 
 
-@hs.composite
-def gelus(
-    draw: hs.DrawFn, *, name_gen: NameGenerator | None = None
-) -> LowerGrammarParsingTestData:
+def gelus(*, name_gen: NameGenerator | None = None) -> LowerGrammarParsingTestData:
     name_gen = name_gen or NameGenerator()
     name = name_gen.gen_name(gl.Gelu)
     return LowerGrammarParsingTestData(
@@ -139,10 +132,7 @@ def gelus(
     )
 
 
-@hs.composite
-def swishs(
-    draw: hs.DrawFn, *, name_gen: NameGenerator | None = None
-) -> LowerGrammarParsingTestData:
+def swishs(*, name_gen: NameGenerator | None = None) -> LowerGrammarParsingTestData:
     name_gen = name_gen or NameGenerator()
     name = name_gen.gen_name(gl.Swish)
     return LowerGrammarParsingTestData(
@@ -151,10 +141,7 @@ def swishs(
     )
 
 
-@hs.composite
-def prelus(
-    draw: hs.DrawFn, *, name_gen: NameGenerator | None = None
-) -> LowerGrammarParsingTestData:
+def prelus(*, name_gen: NameGenerator | None = None) -> LowerGrammarParsingTestData:
     name_gen = name_gen or NameGenerator()
     name = name_gen.gen_name(gl.Prelu)
     return LowerGrammarParsingTestData(
@@ -163,9 +150,8 @@ def prelus(
     )
 
 
-@hs.composite
 def merge_marker(
-    draw: hs.DrawFn, *, name_gen: NameGenerator | None = None
+    *, name_gen: NameGenerator | None = None
 ) -> LowerGrammarParsingTestData:
     name_gen = name_gen or NameGenerator()
     name = name_gen.gen_name("merge")
@@ -175,9 +161,8 @@ def merge_marker(
     )
 
 
-@hs.composite
 def fork_marker(
-    draw: hs.DrawFn, *, name_gen: NameGenerator | None = None
+    *, name_gen: NameGenerator | None = None
 ) -> LowerGrammarParsingTestData:
     name_gen = name_gen or NameGenerator()
     name = name_gen.gen_name("fork")
@@ -185,21 +170,6 @@ def fork_marker(
         tokenstream='"fork"',
         parsed=(gl.make_fork(name),),
     )
-
-
-@hs.composite
-def add_markers(
-    draw: hs.DrawFn,
-    strat: hs.SearchStrategy[LowerGrammarParsingTestData],
-    *,
-    name_gen: NameGenerator | None = None,
-) -> LowerGrammarParsingTestData:
-    name_gen = name_gen or NameGenerator()
-    # TODO:
-    raise NotImplementedError()
-    # add_merge = draw(hs.booleans())
-    # if add_merge:
-    #     merge_name = name_gen.gen_name('merge')
 
 
 @hs.composite

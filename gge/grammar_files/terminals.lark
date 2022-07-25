@@ -1,5 +1,5 @@
 RANDOM_FLIP     : /"random_flip"/
-FLIP_MODE       : "horizontal" | "vertical" | "horizontal_and_vertical"
+FLIP_MODE       : /"horizontal"/ | /"vertical"/ | /"horizontal_and_vertical"/
 RANDOM_ROTATION : /"random_rotation"/
 RESIZING        : /"resizing"/
 HEIGHT          : /"height"/

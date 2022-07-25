@@ -46,7 +46,7 @@ def flip_modes(draw: hs.DrawFn) -> GrammarArgs:
     tokens = draw(
         hs.lists(
             elements=hs.sampled_from(
-                ["horizontal", "vertical", "horizontal_and_vertical"]
+                ['"horizontal"', '"vertical"', '"horizontal_and_vertical"']
             ),
             min_size=1,
             max_size=3,
