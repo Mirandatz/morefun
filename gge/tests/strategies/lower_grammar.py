@@ -1,8 +1,6 @@
-import attrs
 import hypothesis.strategies as hs
 
 import gge.layers as gl
-import gge.optimizers as optim
 from gge.name_generator import NameGenerator
 from gge.tests.strategies import data_structures as tds
 
@@ -15,11 +13,12 @@ def random_flips(
 ) -> LowerGrammarParsingTestData:
     name_gen = name_gen or NameGenerator()
     name = name_gen.gen_name(gl.RandomFlip)
-    mode = draw(
-        hs.sampled_from(['"horizontal"', '"vertical"', '"horizontal_and_vertical"'])
-    )
-    layer = gl.RandomFlip(name, mode)
-    tokenstream = f'"random_flip" {mode}'
+
+    possible_modes = [e.value for e in gl.FlipMode]
+
+    mode = draw(hs.sampled_from(possible_modes))
+    layer = gl.RandomFlip(name, gl.FlipMode(mode))
+    tokenstream = f'"random_flip" "{mode}"'
     return LowerGrammarParsingTestData(tokenstream, (layer,))
 
 
