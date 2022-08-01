@@ -68,7 +68,7 @@ run:
 	$(eval export HOST_TRAIN_DIR=${GGE_DATASET_DIR}/train)
 	$(eval export HOST_VALIDATION_DIR=${GGE_DATASET_DIR}/validation)
 
-	test -z $${GGE_RNG_SEED}
+	test ! -z $${GGE_RNG_SEED}
 	test -d $${HOST_GGE_ROOT_DIR}
 	test -f $${GRAMMAR_PATH}
 	test -d $${HOST_TRAIN_DIR}
