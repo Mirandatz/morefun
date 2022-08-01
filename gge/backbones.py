@@ -154,9 +154,8 @@ class BackboneSynthetizer(lgp.LowerGrammarTransformer):
         self._raise_if_not_running()
         return layer
 
-    def random_flip(self, marker: None, mode: str) -> gl.RandomFlip:
+    def random_flip(self, marker: None, mode: gl.FlipMode) -> gl.RandomFlip:
         self._raise_if_not_running()
-        assert mode in gl.FLIP_MODES
 
         return gl.RandomFlip(
             name=self._create_layer_name(gl.RandomFlip),
@@ -246,12 +245,18 @@ class BackboneSynthetizer(lgp.LowerGrammarTransformer):
         self._raise_if_not_running()
         return gl.Swish(name=self._create_layer_name(gl.Swish))
 
-    def FLIP_MODE(self, token: lark.Token) -> str:
+    def FLIP_MODE(self, token: lark.Token) -> gl.FlipMode:
         self._raise_if_not_running()
-        if token.value not in gl.FLIP_MODES:
-            raise ValueError(f"unexpected token for FLIP_MODE=<{token.value}>")
 
-        return typing.cast(str, token.value)
+        match token.value:
+            case '"horizontal"':
+                return gl.FlipMode.HORIZONTAL
+            case '"vertical"':
+                return gl.FlipMode.VERTICAL
+            case '"horizontal_and_vertical"':
+                return gl.FlipMode.HORIZONTAL_AND_VERTICAL
+            case _:
+                raise ValueError(f"unexpected token for FLIP_MODE=<{token.value}>")
 
 
 def parse(

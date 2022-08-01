@@ -11,11 +11,6 @@ import tensorflow as tf
 
 import gge.randomness as rand
 
-HORIZONTAL = '"horizontal"'
-VERTICAL = '"vertical"'
-HORIZONTAL_AND_VERTICAL = '"horizontal_and_vertical"'
-FLIP_MODES = [HORIZONTAL, VERTICAL, HORIZONTAL_AND_VERTICAL]
-
 
 @attrs.frozen(cache_hash=True)
 class Shape:
@@ -214,18 +209,23 @@ class ConnectedRandomCrop(SingleInputLayer):
         return f"{self.params.name}, params={self.params}, input={self.input_layer}, out_shape=[{self.output_shape}]"
 
 
+@enum.unique
+class FlipMode(enum.Enum):
+    HORIZONTAL = "horizontal"
+    VERTICAL = "vertical"
+    HORIZONTAL_AND_VERTICAL = "horizontal_and_vertical"
+
+
 @attrs.frozen(cache_hash=True)
 class RandomFlip(ConvertibleToConnectableLayer):
     name: str
-    mode: str
+    mode: FlipMode
     seed: int = rand.get_rng_seed()
 
     def __attrs_post_init__(self) -> None:
         assert isinstance(self.name, str)
-        assert isinstance(self.mode, str)
+        assert isinstance(self.mode, FlipMode)
         assert isinstance(self.seed, int)
-
-        assert self.mode in FLIP_MODES
 
     def to_connectable(self, input: "ConnectableLayer") -> "ConnectedRandomFlip":
         return ConnectedRandomFlip(input, self)
@@ -252,7 +252,7 @@ class ConnectedRandomFlip(SingleInputLayer):
             source = self.input_layer.to_tensor(known_tensors)
 
             layer = kl.RandomFlip(
-                mode=self.params.mode,
+                mode=self.params.mode.value,
                 seed=self.params.seed,
                 name=self.params.name,
             )

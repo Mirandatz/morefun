@@ -1,10 +1,6 @@
 SHELL := /bin/bash
 .SHELLFLAGS := -o errexit -o nounset -o pipefail -c 
 
-ifndef GGE_RNG_SEED
-$(error GGE_RNG_SEED is not set)
-endif
-
 export GGE_MAX_GENERATIONS    	  ?= 1000
 export GGE_MUTANTS_PER_GENERATION ?= 2
 export GGE_BATCH_SIZE 			  ?= 64
@@ -39,6 +35,7 @@ export LOG_DIR := ${SEED_DIR}/log
 
 .PHONY: init
 init: 
+	test ! -z $${GGE_RNG_SEED}
 	test -f $${GRAMMAR_PATH}
 	test ! -d $${INITIAL_POPULATION_DIR}
 
@@ -71,6 +68,7 @@ run:
 	$(eval export HOST_TRAIN_DIR=${GGE_DATASET_DIR}/train)
 	$(eval export HOST_VALIDATION_DIR=${GGE_DATASET_DIR}/validation)
 
+	test -z $${GGE_RNG_SEED}
 	test -d $${HOST_GGE_ROOT_DIR}
 	test -f $${GRAMMAR_PATH}
 	test -d $${HOST_TRAIN_DIR}
@@ -100,4 +98,3 @@ run:
 
 .PHONY: init_and_run
 init_and_run: init run
-	;
