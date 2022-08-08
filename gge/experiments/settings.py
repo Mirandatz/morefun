@@ -22,7 +22,8 @@ def configure_logger(settings: Settings) -> None:
     if log_level not in ["DEBUG", "INFO", "WARNING"]:
         raise ValueError(f"unknown log_level=<{log_level}>")
 
-    log_dir = log_settings["container_path"]
+    log_dir = pathlib.Path(log_settings["container_path"])
+    log_dir.mkdir(exist_ok=True, parents=True)
     if not log_dir.is_dir():
         raise ValueError(f"log_dir is not a directory, path=<{log_dir}>")
 

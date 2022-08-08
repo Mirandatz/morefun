@@ -30,7 +30,9 @@ def get_first_valid_host_path(host_paths: list[str]) -> pathlib.Path:
     raise ValueError("no path in `host_path` exists")
 
 
-def copy_gge(repository_path: pathlib.Path, output_path: pathlib.Path) -> None:
+def copy_gge_repository(
+    repository_path: pathlib.Path, output_path: pathlib.Path
+) -> None:
     assert repository_path.is_dir()
 
     proc = subprocess.run(
@@ -50,15 +52,15 @@ def copy_gge(repository_path: pathlib.Path, output_path: pathlib.Path) -> None:
     )
 
 
-def docker_run(host_mount_point: pathlib.Path, commands: list[str]) -> None:
+def docker_run(mount_point: pathlib.Path, commands: list[str]) -> None:
     args = [
         "docker",
         "run",
         f"--user={os.getuid()}:{os.getgid()}",
         "--rm",
         "--runtime=nvidia",
-        "--workdir=/gge",
-        f"-v={host_mount_point}:/gge",
+        "--workdir=/gge/gge",
+        f"-v={mount_point}:/gge",
         DOCKER_IMAGE_NAME,
         *commands,
     ]
@@ -87,26 +89,26 @@ def create_initial_population(
             dst=mount_point / "settings.toml",
         )
 
-        copy_gge(
+        copy_gge_repository(
             repository_path=get_first_valid_host_path(settings["gge"]["host_path"]),
             output_path=mount_point / "gge",
         )
 
         docker_run(
-            host_mount_point=mount_point,
+            mount_point=mount_point,
             commands=[
                 "bash",
                 "-euo",
                 "pipefail",
                 "-c",
-                "source /venv/bin/activate && python -m gge.experiments.create_initial_population",
+                "source /venv/bin/activate && python -m gge.experiments.create_initial_population_genotypes",
             ],
         )
 
-        # shutil.copy(
-        #     src=workdir / "generations" / "0" / "genotypes",
-        #     dst=settings_path.parent / "generations" / "0" / "genotypes",
-        # )
+        shutil.copy(
+            src=mount_point / "generations" / "0" / "genotypes",
+            dst=settings_path.parent / "generations" / "0" / "genotypes",
+        )
 
 
 @app.command()
