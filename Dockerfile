@@ -38,15 +38,13 @@ RUN pyenv global 3.10.4
 
 # create project dir and change its owner
 USER root
-RUN mkdir /gge && chown -R $UID:$GID /gge
+RUN mkdir /venv && chown -R $UID:$GID /venv
 USER $UNAME
 
 # install requirements
-ENV VIRTUAL_ENV=/gge/venv
-ENV PATH="$VIRTUAL_ENV/bin:$PATH"
-RUN python -m venv $VIRTUAL_ENV
+RUN python -m venv /venv
 COPY ./requirements /gge/requirements
-RUN pip install -r /gge/requirements/dev.txt --no-cache-dir
+RUN source /venv/bin/activate && pip install -r /gge/requirements/dev.txt --no-cache-dir
 
 # silence tensorflow
 ENV TF_CPP_MIN_LOG_LEVEL=1

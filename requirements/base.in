@@ -9,7 +9,7 @@ pillow
 pyarrow
 pydot
 scipy
-tensorflow==2.8.2
+tensorflow==2.8.*
 tensorflow-addons
 tensorflow-datasets
 typer

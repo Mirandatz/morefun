@@ -30,7 +30,7 @@ def get_first_valid_host_path(host_paths: list[str]) -> pathlib.Path:
     raise ValueError("no path in `host_path` exists")
 
 
-def create_gge_tgz(repository_path: pathlib.Path, tgz_path: pathlib.Path) -> None:
+def copy_gge(repository_path: pathlib.Path, output_path: pathlib.Path) -> None:
     assert repository_path.is_dir()
 
     proc = subprocess.run(
@@ -40,29 +40,31 @@ def create_gge_tgz(repository_path: pathlib.Path, tgz_path: pathlib.Path) -> Non
         check=True,
     )
 
-    tgz_path.write_bytes(proc.stdout)
+    output_path.mkdir(exist_ok=True, parents=True)
 
-
-def docker_run(host_mount_point: pathlib.Path, command: str) -> None:
     subprocess.run(
-        args=[
-            "docker",
-            "run",
-            f"--user={os.getuid()}:{os.getgid()}",
-            "--rm",
-            "--runtime=nvidia",
-            "--workdir=/gge",
-            f"-v={host_mount_point}:/gge",
-            DOCKER_IMAGE_NAME,
-            "bash",
-            "-e",
-            "-u",
-            "-x",
-            "-o",
-            "pipefail",
-            "-c",
-            command,
-        ],
+        args=["tar", "-zxf", "-"],
+        cwd=output_path,
+        input=proc.stdout,
+        check=True,
+    )
+
+
+def docker_run(host_mount_point: pathlib.Path, commands: list[str]) -> None:
+    args = [
+        "docker",
+        "run",
+        f"--user={os.getuid()}:{os.getgid()}",
+        "--rm",
+        "--runtime=nvidia",
+        "--workdir=/gge",
+        f"-v={host_mount_point}:/gge",
+        DOCKER_IMAGE_NAME,
+        *commands,
+    ]
+
+    subprocess.run(
+        args=args,
         check=True,
         stdin=sys.stdin,
         stdout=sys.stdout,
@@ -77,29 +79,28 @@ def create_initial_population(
     with settings_path.open("rb") as file:
         settings = tomli.load(file)
 
-    with tempfile.TemporaryDirectory(
-        prefix="gge_workdir_",
-        dir="/dev/shm",
-    ) as workdir_str:
-        workdir = pathlib.Path(workdir_str)
+    with tempfile.TemporaryDirectory(dir="/dev/shm") as tmpdir:
+        mount_point = pathlib.Path(tmpdir)
 
         shutil.copy(
             src=settings_path,
-            dst=workdir / "settings.toml",
+            dst=mount_point / "settings.toml",
         )
 
-        create_gge_tgz(
+        copy_gge(
             repository_path=get_first_valid_host_path(settings["gge"]["host_path"]),
-            tgz_path=workdir / "gge.tgz",
+            output_path=mount_point / "gge",
         )
 
         docker_run(
-            host_mount_point=workdir,
-            command="mkdir -p gge \
-                    && tar -zxf /gge/gge.tgz -C gge \
-                    && cd /gge/gge \
-                    && pyenv local --unset \
-                    && ls gge/experiments",
+            host_mount_point=mount_point,
+            commands=[
+                "bash",
+                "-euo",
+                "pipefail",
+                "-c",
+                "source /venv/bin/activate && python -m gge.experiments.create_initial_population",
+            ],
         )
 
         # shutil.copy(
@@ -114,6 +115,6 @@ def run_evolution() -> None:
 
 
 if __name__ == "__main__":
-    path = pathlib.Path(__file__).parent / "tmp" / "settings.toml"
+    path = pathlib.Path(__file__).parent / "cifar10" / "settings.toml"
     create_initial_population(path)
     # app()
