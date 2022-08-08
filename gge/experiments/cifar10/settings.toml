@@ -46,7 +46,7 @@ adam      : "adam" "learning_rate" ("0.001" | "0.005" | "0.01") "beta1" "0.9" "b
 
 
 [initialization]
-container_path = "/gge/generation_0/genotypes"
+container_path = "/gge/generations/0/genotypes"
 population_size = 20
 max_network_depth = 50
 wide_layer_threshold = 512
