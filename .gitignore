@@ -9,6 +9,7 @@ __pycache__/
 .gge_build_cache/
 
 # venv
+.python-version
 .venv/
 
 # playground & debugging
