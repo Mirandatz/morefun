@@ -302,7 +302,7 @@ def main() -> None:
 
     save_population(
         population,
-        output_dir=settings["initialization"]["container_path"],
+        output_dir=pathlib.Path(settings["initialization"]["container_path"]),
     )
 
 
