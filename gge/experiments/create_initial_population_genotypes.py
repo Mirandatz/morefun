@@ -289,7 +289,7 @@ def main() -> None:
     filter = IndividualFilter(
         max_network_depth=settings["initialization"]["max_network_depth"],
         max_wide_layers=settings["initialization"]["max_wide_layers"],
-        max_layer_width=settings["initialization"]["max_layer_width"],
+        max_layer_width=settings["initialization"]["wide_layer_threshold"],
         max_network_params=settings["initialization"]["max_network_params"],
     )
 
