@@ -8,8 +8,8 @@
 __pycache__/
 .gge_build_cache/
 
-# pyenv
-.python-version
+# venv
+.venv/
 
 # playground & debugging
 gge/playground/
