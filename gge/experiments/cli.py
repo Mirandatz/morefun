@@ -4,15 +4,12 @@ import os  # noqa
 import pathlib
 import shutil
 import subprocess
-import sys  # noqa
-import tempfile  # noqa
+import sys
+import tempfile
 import typing
 
-import docker  # noqa
 import tomli
 import typer
-
-# from loguru import logger  # noqa
 
 Settings = dict[str, typing.Any]
 
@@ -105,9 +102,9 @@ def create_initial_population(
             ],
         )
 
-        shutil.copy(
-            src=mount_point / "generations" / "0" / "genotypes",
-            dst=settings_path.parent / "generations" / "0" / "genotypes",
+        shutil.copytree(
+            src=mount_point / "generations",
+            dst=settings_path.parent / "generations",
         )
 
 
@@ -117,6 +114,4 @@ def run_evolution() -> None:
 
 
 if __name__ == "__main__":
-    path = pathlib.Path(__file__).parent / "cifar10" / "settings.toml"
-    create_initial_population(path)
-    # app()
+    app()

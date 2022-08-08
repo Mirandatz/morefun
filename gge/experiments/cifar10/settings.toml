@@ -1,6 +1,5 @@
 [logging]
 log_level = "INFO"
-container_path = "/gge/logging"
 
 [experiment]
 description = "testing toml"
@@ -44,9 +43,7 @@ sgd       : "sgd" "learning_rate" ("0.005" | "0.01" | "0.05") "momentum" ("0.0" 
 adam      : "adam" "learning_rate" ("0.001" | "0.005" | "0.01") "beta1" "0.9" "beta2" "0.999" "epsilon" "1e-07" "amsgrad" ("true" | "false")
 """
 
-
 [initialization]
-container_path = "/gge/generations/0/genotypes"
 population_size = 20
 max_network_depth = 50
 wide_layer_threshold = 512
@@ -74,7 +71,6 @@ host_path = [
     "/home/thiago/source/datasets/cifar10/train",
     "/disk2/thiago/datasets/cifar10/train",
 ]
-container_path = "/gge/dataset/train"
 number_of_instances = 37500
 
 [datasets.validation]
@@ -83,7 +79,6 @@ host_path = [
     "/home/thiago/source/datasets/cifar10/validation",
     "/disk2/thiago/datasets/cifar10/validation",
 ]
-container_path = "/gge/dataset/validation"
 number_of_instances = 12500
 
 [gge]
@@ -92,5 +87,4 @@ host_path = [
     "/home/thiago/source/gge",
     "/home/thiago/gge"
 ]
-container_path = "/gge/gge"
 

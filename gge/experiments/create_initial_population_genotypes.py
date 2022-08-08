@@ -17,6 +17,8 @@ import gge.novelty as novel
 import gge.phenotypes as pheno
 import gge.randomness as rand
 
+OUTPUT_DIR = pathlib.Path("/gge") / "generations" / "0" / "initial_genotypes"
+
 
 @attrs.frozen
 class Individual:
@@ -300,10 +302,7 @@ def main() -> None:
         rng_seed=settings["experiment"]["rng_seed"],
     )
 
-    save_population(
-        population,
-        output_dir=pathlib.Path(settings["initialization"]["container_path"]),
-    )
+    save_population(population, output_dir=OUTPUT_DIR)
 
 
 if __name__ == "__main__":
