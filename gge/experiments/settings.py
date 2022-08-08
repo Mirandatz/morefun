@@ -7,6 +7,9 @@ from loguru import logger
 
 Settings = dict[str, typing.Any]
 
+WORKDIR = pathlib.Path("/gge")
+LOGGING_DIR = WORKDIR / "logging"
+
 
 def read_settings_file(
     path: pathlib.Path = pathlib.Path("/gge/settings.toml"),
@@ -22,14 +25,11 @@ def configure_logger(settings: Settings) -> None:
     if log_level not in ["DEBUG", "INFO", "WARNING"]:
         raise ValueError(f"unknown log_level=<{log_level}>")
 
-    log_dir = pathlib.Path(log_settings["container_path"])
-    log_dir.mkdir(exist_ok=True, parents=True)
-    if not log_dir.is_dir():
-        raise ValueError(f"log_dir is not a directory, path=<{log_dir}>")
+    LOGGING_DIR.mkdir(exist_ok=True, parents=True)
 
     logger.remove()
     logger.add(sink=sys.stderr, level=log_level)
-    logger.add(sink=log_dir / "log.txt")
+    logger.add(sink=LOGGING_DIR / "log.txt")
 
     # checking if we can write to both sinks
     logger.info("started logger")
