@@ -1,5 +1,0 @@
-black
-docker
-flake8
-mypy
-typer

@@ -43,8 +43,8 @@ USER $UNAME
 
 # install requirements
 RUN python -m venv /venv
-COPY ./requirements /gge/requirements
-RUN source /venv/bin/activate && pip install -r /gge/requirements/dev.txt --no-cache-dir
+COPY ./requirements /tmp/requirements
+RUN source /venv/bin/activate && pip install -r /tmp/requirements/dev.txt --no-cache-dir
 
 # silence tensorflow
 ENV TF_CPP_MIN_LOG_LEVEL=1
