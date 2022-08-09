@@ -3,7 +3,7 @@
 {
 	"image": "mirandatz/gge:dev_env",
 	"settings": {
-		"python.defaultInterpreterPath": "/gge/venv/bin/python",
+		"python.defaultInterpreterPath": "/venv/bin/python",
 		"terminal.integrated.env.linux": {
 			"PYTHONPATH": "${workspaceFolder}/gge:${env:PYTHONPATH}"
 		},
