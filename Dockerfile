@@ -32,9 +32,9 @@ ENV PATH $PYENV_ROOT/shims:$PYENV_ROOT/bin:$PATH
 SHELL ["/bin/bash", "-c"]
 RUN curl https://pyenv.run | bash
 
-# compile python 3.10.4
-RUN CONFIGURE_OPTS="--enable-optimizations --with-lto" pyenv install 3.10.4
-RUN pyenv global 3.10.4
+# compile python 3.10.6
+RUN pyenv update && CONFIGURE_OPTS="--enable-optimizations --with-lto" pyenv install 3.10.6
+RUN pyenv global 3.10.6
 
 # create project dir and change its owner
 USER root

@@ -53,7 +53,7 @@ update_requirements:
 		--env HOST_UID=$(UID) \
 		--env HOST_GID=$(GID) \
 		-v $(ROOT_DIR)/requirements:/requirements \
-		python:3.10.4-slim-bullseye \
+		python:3.10.6-slim-bullseye \
 			/bin/bash -c 'python3 -m pip install pip-compile-multi==2.4.5 \
 			&& pip-compile-multi \
 			&& chown -R "$${HOST_UID}":"$${HOST_GID}" /requirements'
