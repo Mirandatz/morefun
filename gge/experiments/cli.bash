@@ -35,6 +35,7 @@ fi
 OUTPUT_MOUNT_POINT=$(dirname "$SETTINGS_MOUNT_POINT")/output
 mkdir -p "$OUTPUT_MOUNT_POINT"
 
+shift
 docker run \
     --user "$(id -u)":"$(id -g)" \
     --rm \
@@ -45,4 +46,4 @@ docker run \
     -v "$CODE_MOUNT_POINT":/gge/code:ro \
     -v "$OUTPUT_MOUNT_POINT":/gge/output \
     mirandatz/gge:dev_env \
-    python -m gge.experiments.cli "$@"
+    bash -c "source /venv/bin/activate && python -m gge.experiments.cli $*"

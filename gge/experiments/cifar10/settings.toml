@@ -4,44 +4,6 @@ log_level = "INFO"
 [experiment]
 description = "testing toml"
 rng_seed = 0
-grammar = """
-start : data_aug learning optimizer
-
-data_aug       : flip enlarge rotate crop restore_size
-flip           : "random_flip" "horizontal_and_vertical"
-enlarge        : small_increase | large_increase
-small_increase : "resizing" "height" "48" "width" "48"
-large_increase : "resizing" "height" "64" "width" "64"
-rotate         : "random_rotation" ("0.01" | "0.05" | "0.10" | "0.15")
-crop           : small_crops | large_crops
-small_crops    : "random_crop" "height" "12" "width" "12"
-large_crops    : "random_crop" "height" "24" "width" "24"
-restore_size   : "resizing" "height" "32" "width" "32"
-
-learning : conv_block~1..2 conv_pool_block~2..5 
-
-conv_block      : conv_layer act norm "fork"
-conv_pool_block : "merge" conv_layer act pool norm "fork" 
-                | "merge" conv_layer act norm "fork" 
-
-conv_layer : "conv" "filter_count" ("32" | "64" | "128" | "256") "kernel_size" ("3" | "5" | "7") "stride" ("1" | "2")
-
-pool    : maxpool | avgpool
-maxpool : "maxpool" "pool_size" "2" "stride" "2"
-avgpool : "avgpool" "pool_size" "2" "stride" "2"
-
-norm : "batchnorm"
-
-act   : relu | gelu | prelu | swish
-relu  : "relu"
-gelu  : "gelu"
-prelu : "prelu"
-swish : "swish"
-
-optimizer : sgd | adam
-sgd       : "sgd" "learning_rate" ("0.005" | "0.01" | "0.05") "momentum" ("0.0" | "0.5" | "0.9") "nesterov" ("true" | "false")
-adam      : "adam" "learning_rate" ("0.001" | "0.005" | "0.01") "beta1" "0.9" "beta2" "0.999" "epsilon" "1e-07" "amsgrad" ("true" | "false")
-"""
 
 [initialization]
 population_size = 20
@@ -49,6 +11,7 @@ max_network_depth = 50
 wide_layer_threshold = 512
 max_wide_layers = 2
 max_network_params = 10000000
+output_directory = "/gge/output/generations/0/initial_genotypes"
 
 [mutation]
 mutants_per_generation = 5
@@ -88,3 +51,43 @@ host_path = [
     "/home/thiago/gge"
 ]
 
+
+[grammar]
+raw = """
+start : data_aug learning optimizer
+
+data_aug       : flip enlarge rotate crop restore_size
+flip           : "random_flip" "horizontal_and_vertical"
+enlarge        : small_increase | large_increase
+small_increase : "resizing" "height" "48" "width" "48"
+large_increase : "resizing" "height" "64" "width" "64"
+rotate         : "random_rotation" ("0.01" | "0.05" | "0.10" | "0.15")
+crop           : small_crops | large_crops
+small_crops    : "random_crop" "height" "12" "width" "12"
+large_crops    : "random_crop" "height" "24" "width" "24"
+restore_size   : "resizing" "height" "32" "width" "32"
+
+learning : conv_block~1..2 conv_pool_block~2..5 
+
+conv_block      : conv_layer act norm "fork"
+conv_pool_block : "merge" conv_layer act pool norm "fork" 
+                | "merge" conv_layer act norm "fork" 
+
+conv_layer : "conv" "filter_count" ("32" | "64" | "128" | "256") "kernel_size" ("3" | "5" | "7") "stride" ("1" | "2")
+
+pool    : maxpool | avgpool
+maxpool : "maxpool" "pool_size" "2" "stride" "2"
+avgpool : "avgpool" "pool_size" "2" "stride" "2"
+
+norm : "batchnorm"
+
+act   : relu | gelu | prelu | swish
+relu  : "relu"
+gelu  : "gelu"
+prelu : "prelu"
+swish : "swish"
+
+optimizer : sgd | adam
+sgd       : "sgd" "learning_rate" ("0.005" | "0.01" | "0.05") "momentum" ("0.0" | "0.5" | "0.9") "nesterov" ("true" | "false")
+adam      : "adam" "learning_rate" ("0.001" | "0.005" | "0.01") "beta1" "0.9" "beta2" "0.999" "epsilon" "1e-07" "amsgrad" ("true" | "false")
+"""

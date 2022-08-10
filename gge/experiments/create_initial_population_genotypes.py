@@ -6,18 +6,14 @@ import typing
 
 import attrs
 import tensorflow as tf
-import typer
 from loguru import logger
 
 import gge.composite_genotypes as cg
-import gge.experiments.settings as gge_settings
 import gge.grammars as gr
 import gge.layers as gl
 import gge.novelty as novel
 import gge.phenotypes as pheno
 import gge.randomness as rand
-
-OUTPUT_DIR = pathlib.Path("/gge") / "generations" / "0" / "initial_genotypes"
 
 
 @attrs.frozen
@@ -274,36 +270,7 @@ def create_initial_population(
 
 
 def save_population(population: list[Individual], output_dir: pathlib.Path) -> None:
-    output_dir.mkdir(parents=True, exist_ok=True)
     genotypes = (ind.genotype for ind in population)
     for geno in genotypes:
         path = output_dir / f"{geno.unique_id.hex}.genotype"
         path.write_bytes(pickle.dumps(obj=geno, protocol=pickle.HIGHEST_PROTOCOL))
-
-
-def main() -> None:
-    settings = gge_settings.read_settings_file()
-
-    gge_settings.configure_logger(settings)
-
-    grammar = gr.Grammar(settings["experiment"]["grammar"])
-
-    filter = IndividualFilter(
-        max_network_depth=settings["initialization"]["max_network_depth"],
-        max_wide_layers=settings["initialization"]["max_wide_layers"],
-        max_layer_width=settings["initialization"]["wide_layer_threshold"],
-        max_network_params=settings["initialization"]["max_network_params"],
-    )
-
-    population = create_initial_population(
-        pop_size=settings["initialization"]["population_size"],
-        grammar=grammar,
-        filter=filter,
-        rng_seed=settings["experiment"]["rng_seed"],
-    )
-
-    save_population(population, output_dir=OUTPUT_DIR)
-
-
-if __name__ == "__main__":
-    typer.run(main)
