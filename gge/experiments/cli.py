@@ -11,6 +11,7 @@ import typer
 
 import gge.experiments.create_initial_population_genotypes as exp_init_create
 import gge.grammars as gr
+import gge.persistence
 
 SETTINGS_OPTION = typer.Option(
     pathlib.Path("/gge/settings.toml"),
@@ -62,7 +63,8 @@ def create_initial_population_genotypes(
         rng_seed=settings["experiment"]["rng_seed"],
     )
 
-    exp_init_create.save_population(population, output_dir)
+    genotypes = [indi.genotype for indi in population]
+    gge.persistence.save_population_genotypes(genotypes, output_dir)
 
 
 @app.command()

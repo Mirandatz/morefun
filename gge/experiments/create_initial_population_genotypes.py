@@ -1,7 +1,4 @@
 import multiprocessing as mp
-import pathlib
-import pickle
-import sys
 import typing
 
 import attrs
@@ -34,15 +31,6 @@ class IndividualFilter:
         assert self.max_wide_layers >= 0
         assert self.max_layer_width >= 1
         assert self.max_network_params >= 1
-
-
-def configure_logger(log_level: str) -> None:
-    logger.remove()
-    logger.add(
-        sink=sys.stderr,
-        level=log_level,
-        enqueue=True,
-    )
 
 
 def is_network_too_deep(
@@ -267,10 +255,3 @@ def create_initial_population(
         p.kill()
 
     return initial_population
-
-
-def save_population(population: list[Individual], output_dir: pathlib.Path) -> None:
-    genotypes = (ind.genotype for ind in population)
-    for geno in genotypes:
-        path = output_dir / f"{geno.unique_id.hex}.genotype"
-        path.write_bytes(pickle.dumps(obj=geno, protocol=pickle.HIGHEST_PROTOCOL))
