@@ -29,7 +29,7 @@ run_tests: dev_env
 		-v $(ROOT_DIR):/gge/gge \
 		--workdir /gge/gge \
 		$(DEV_ENG_TAG) \
-		pytest --numprocesses=auto --hypothesis-profile=parallel
+		bash -c "source /venv/bin/activate && pytest --numprocesses=auto --hypothesis-profile=parallel"
 
 .PHONY: run_tests_sequential
 run_tests_sequential: dev_env
@@ -39,17 +39,23 @@ run_tests_sequential: dev_env
 		-v $(ROOT_DIR):/gge/gge \
 		--workdir /gge/gge \
 		$(DEV_ENG_TAG) \
-		pytest --pspec
+		bash -c "source /venv/bin/activate && pytest --pspec"
 
 
 .PHONY: playground
 playground: dev_env
-	docker run --rm --user $(UID):$(GID) -it -v $(ROOT_DIR):/gge $(DEV_ENG_TAG) \
+	docker run \
+		--rm \
+		--user $(UID):$(GID) \
+		-it \
+		-v $(ROOT_DIR):/gge \
+		$(DEV_ENG_TAG) \
 		/bin/bash
 
 .PHONY: update_requirements
 update_requirements:
-	docker run --rm \
+	docker run \
+		--rm \
 		--env HOST_UID=$(UID) \
 		--env HOST_GID=$(GID) \
 		-v $(ROOT_DIR)/requirements:/requirements \
