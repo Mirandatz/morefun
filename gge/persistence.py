@@ -4,8 +4,10 @@ import pickle
 from loguru import logger
 
 import gge.composite_genotypes as cg
+import gge.fitnesses as cf
 
 GENOTYPE_EXTENSION = ".genotype"
+FITNESS_EVALUATION_RESULT_EXTENSION = ".fitness_evaluation_result"
 
 
 def save_genotype_to_directory(
@@ -61,3 +63,33 @@ def deserialize_genotype(serialized: bytes) -> cg.CompositeGenotype:
     genotype = pickle.loads(serialized)
     assert isinstance(genotype, cg.CompositeGenotype)
     return genotype
+
+
+def serialize_fitness_evaluation_result(result: cf.FitnessEvaluationResult) -> bytes:
+    return pickle.dumps(result, protocol=pickle.HIGHEST_PROTOCOL)
+
+
+def deserialize_fitness_evaluation_result(
+    serialized: bytes,
+) -> cf.FitnessEvaluationResult:
+    result = pickle.loads(serialized)
+    assert isinstance(result, cf.SuccessfulEvaluationResult | cf.FailedEvaluationResult)
+    return result
+
+
+def save_fitness_evaluation_result_to_directory(
+    result: cf.FitnessEvaluationResult,
+    directory: pathlib.Path,
+) -> None:
+    assert directory.is_dir()
+
+    serialized = serialize_fitness_evaluation_result(result)
+
+    path_without_extension = directory / result.genotype.unique_id.hex
+    full_path = path_without_extension.with_suffix(GENOTYPE_EXTENSION)
+
+    full_path.write_bytes(serialized)
+
+
+def load_fitness_evaluation_result(path: pathlib.Path) -> cf.FitnessEvaluationResult:
+    return deserialize_fitness_evaluation_result(path.read_bytes())
