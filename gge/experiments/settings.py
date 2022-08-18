@@ -13,9 +13,15 @@ import gge.redirection
 Settings = dict[str, typing.Any]
 
 
-def load_settings(path: pathlib.Path) -> dict[str, typing.Any]:
+def load_settings(path: pathlib.Path) -> Settings:
     with path.open("rb") as file:
         return tomli.load(file)
+
+
+def load_settings_and_configure_logger(path: pathlib.Path) -> Settings:
+    settings = load_settings(path)
+    configure_logger(settings)
+    return settings
 
 
 def get_base_output_dir(settings: Settings) -> pathlib.Path:
