@@ -5,13 +5,15 @@ log_level = "INFO"
 description = "testing toml"
 rng_seed = 0
 
+[output]
+directory = "/gge/output"
+
 [initialization]
 population_size = 20
 max_network_depth = 50
 wide_layer_threshold = 512
 max_wide_layers = 2
 max_network_params = 10000000
-output_directory = "/gge/output/generations/0/initial_genotypes"
 
 [mutation]
 mutants_per_generation = 5
@@ -22,27 +24,14 @@ batch_size = 512
 epochs = 20
 
 [datasets]
-name = "cifar10"
+partitions_dir = "/gge/datasets/cifar10"
 image_height = 32
 image_width = 32
 image_depth = 3
 class_count = 10
+train_instances = 37500
+validation_instances = 12500
 
-[datasets.train]
-# the first host_path that exists is used
-host_path = [
-    "/home/thiago/source/datasets/cifar10/train",
-    "/disk2/thiago/datasets/cifar10/train",
-]
-number_of_instances = 37500
-
-[datasets.validation]
-# the first host_path that exists is used
-host_path = [
-    "/home/thiago/source/datasets/cifar10/validation",
-    "/disk2/thiago/datasets/cifar10/validation",
-]
-number_of_instances = 12500
 
 [gge]
 # the first host_path that exists is used

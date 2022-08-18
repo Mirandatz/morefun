@@ -1,16 +1,17 @@
 import os  # noqa
 import pathlib
-import shutil
-import subprocess
-import sys
-import tempfile
-import typing
+import shutil  # noqa
+import subprocess  # noqa
+import sys  # noqa
+import tempfile  # noqa
+import typing  # noqa
 
-import tomli
+import tomli  # noqa
 import typer
 
 import gge.experiments.create_initial_population_genotypes as exp_init_create
-import gge.grammars as gr
+import gge.experiments.evaluate_genotypes as exp_eval
+import gge.experiments.settings as gset
 import gge.persistence
 
 SETTINGS_OPTION = typer.Option(
@@ -22,32 +23,20 @@ SETTINGS_OPTION = typer.Option(
     dir_okay=False,
 )
 
-Settings = dict[str, typing.Any]
-
 
 app = typer.Typer()
 
 
-def get_first_valid_host_path(host_paths: list[str]) -> pathlib.Path:
-    as_pathlib_paths = map(pathlib.Path, host_paths)
-    for path in as_pathlib_paths:
-        if path.exists():
-            return path
-
-    raise ValueError("no path in `host_path` exists")
-
-
 @app.command(name="init-create")
-def create_initial_population_genotypes(
+def create_initial_population(
     settings_path: pathlib.Path = SETTINGS_OPTION,
 ) -> None:
-    with settings_path.open("rb") as file:
-        settings = tomli.load(file)
+    settings = gset.load_settings(settings_path)
 
-    output_dir = pathlib.Path(settings["initialization"]["output_directory"])
-    output_dir.mkdir(parents=True, exist_ok=True)
+    gset.configure_logger(settings)
 
-    grammar = gr.Grammar(settings["grammar"]["raw"])
+    output_dir = gset.get_initial_population_genotypes_dir(settings)
+    grammar = gset.get_grammar(settings)
 
     filter = exp_init_create.IndividualFilter(
         max_network_depth=settings["initialization"]["max_network_depth"],
@@ -64,12 +53,30 @@ def create_initial_population_genotypes(
     )
 
     genotypes = [indi.genotype for indi in population]
+
     gge.persistence.save_population_genotypes(genotypes, output_dir)
 
 
-@app.command()
-def run_evolution() -> None:
-    print("evolved")
+@app.command(name="init-evaluate")
+def evaluate_initial_population(
+    settings_path: pathlib.Path = SETTINGS_OPTION,
+) -> None:
+    settings = gset.load_settings_and_configure_logger(settings_path)
+
+    genotypes = gge.persistence.load_population_genotypes(
+        gset.get_initial_population_genotypes_dir(settings)
+    )
+
+    fitness_evaluation_params = gset.get_fitness_evaluation_params(settings)
+
+    output_dir = gset.get_initial_population_fitness_dir(settings)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    exp_eval.evaluate_population(
+        genotypes,
+        fitness_evaluation_params,
+        output_dir=output_dir,
+    )
 
 
 if __name__ == "__main__":
