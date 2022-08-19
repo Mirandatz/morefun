@@ -36,20 +36,6 @@ def get_logging_dir(settings: Settings) -> pathlib.Path:
     return directory
 
 
-def get_initial_population_genotypes_dir(settings: Settings) -> pathlib.Path:
-    base_output_dir = get_base_output_dir(settings)
-    genotypes_dir = base_output_dir / "generations" / "0" / "initial_genotypes"
-    genotypes_dir.mkdir(parents=True, exist_ok=True)
-    return genotypes_dir
-
-
-def get_initial_population_fitness_dir(settings: Settings) -> pathlib.Path:
-    base_output_dir = get_base_output_dir(settings)
-    fitnesses_dir = base_output_dir / "generations" / "0" / "fitnesses"
-    fitnesses_dir.mkdir(parents=True, exist_ok=True)
-    return fitnesses_dir
-
-
 def configure_logger(settings: Settings) -> None:
     log_settings = settings["logging"]
     log_level = log_settings["log_level"]
@@ -64,15 +50,6 @@ def configure_logger(settings: Settings) -> None:
     logger.add(sink=logging_dir / "log.txt")
 
     logger.info("started logger")
-
-
-def get_first_valid_host_path(host_paths: list[str]) -> pathlib.Path:
-    as_pathlib_paths = map(pathlib.Path, host_paths)
-    for path in as_pathlib_paths:
-        if path.exists():
-            return path
-
-    raise ValueError("no path in `host_path` exists")
 
 
 def get_grammar(settings: Settings) -> gr.Grammar:

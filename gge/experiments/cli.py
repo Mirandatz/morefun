@@ -1,18 +1,11 @@
-import os  # noqa
 import pathlib
-import shutil  # noqa
-import subprocess  # noqa
-import sys  # noqa
-import tempfile  # noqa
-import typing  # noqa
 
-import tomli  # noqa
 import typer
 
 import gge.experiments.create_initial_population_genotypes as exp_init_create
-import gge.experiments.evaluate_genotypes as exp_eval
 import gge.experiments.settings as gset
-import gge.persistence
+import gge.fitnesses as gf
+import gge.persistence as gp
 
 SETTINGS_OPTION = typer.Option(
     pathlib.Path("/gge/settings.toml"),
@@ -35,7 +28,8 @@ def create_initial_population(
 
     gset.configure_logger(settings)
 
-    output_dir = gset.get_initial_population_genotypes_dir(settings)
+    base_output_dir = gset.get_base_output_dir(settings)
+
     grammar = gset.get_grammar(settings)
 
     filter = exp_init_create.IndividualFilter(
@@ -54,7 +48,9 @@ def create_initial_population(
 
     genotypes = [indi.genotype for indi in population]
 
-    gge.persistence.save_population_genotypes(genotypes, output_dir)
+    # generations are 0-indexed, so first gen == 0
+    generation = 0
+    gp.save_generation_genotypes(genotypes, generation, base_output_dir)
 
 
 @app.command(name="init-evaluate")
@@ -63,20 +59,60 @@ def evaluate_initial_population(
 ) -> None:
     settings = gset.load_settings_and_configure_logger(settings_path)
 
-    genotypes = gge.persistence.load_population_genotypes(
-        gset.get_initial_population_genotypes_dir(settings)
-    )
+    # generations are 0-indexed, so first gen == 0
+    generation = 0
+
+    base_output_dir = gset.get_base_output_dir(settings)
+    genotypes_dir = gp.get_genotypes_dir(generation, base_output_dir)
+    genotypes = [gp.load_genotype(path) for path in genotypes_dir.iterdir()]
+
+    if len(genotypes) == 0:
+        raise ValueError(f"the genotypes directory is empty, path=<{genotypes_dir}>")
 
     fitness_evaluation_params = gset.get_fitness_evaluation_params(settings)
+    fers = [gf.evaluate(g, fitness_evaluation_params) for g in genotypes]
 
-    output_dir = gset.get_initial_population_fitness_dir(settings)
-    output_dir.mkdir(parents=True, exist_ok=True)
+    gp.save_generation_fitness_evaluation_results(fers, generation, base_output_dir)
 
-    exp_eval.evaluate_population(
-        genotypes,
-        fitness_evaluation_params,
-        output_dir=output_dir,
-    )
+
+def get_newest_generation_dir(generations_dir: pathlib.Path) -> pathlib.Path:
+    if not generations_dir.is_dir():
+        raise ValueError(
+            f"`generations_dir` is not a directorty, path=<{generations_dir}>"
+        )
+
+    subdirs = [p for p in generations_dir.iterdir() if p.is_dir()]
+
+    if len(subdirs) == 0:
+        raise ValueError(f"`generations_dir` is empty, path=<{generations_dir}>")
+
+    return max(subdirs, key=lambda path: int(path.name))
+
+
+@app.command(name="evolve")
+def evolutionary_loop(
+    settings_path: pathlib.Path = SETTINGS_OPTION,
+    generations: int = typer.Option(..., "--generations", min=1),
+) -> None:
+    raise NotImplementedError()
+    # settings = gset.load_settings_and_configure_logger(settings_path)
+
+    # newest_generation = get_newest_generation_dir(
+    #     generations_dir=gset.get_generations_dir(settings)
+    # )
+
+    # fitness_evaluation_results = gge.persistence.population_fitnesses(newest_generation)
+
+    # fitness_evaluation_params = gset.get_fitness_evaluation_params(settings)
+
+    # output_dir = gset.get_initial_population_fitness_dir(settings)
+    # output_dir.mkdir(parents=True, exist_ok=True)
+
+    # exp_eval.evaluate_population(
+    #     genotypes,
+    #     fitness_evaluation_params,
+    #     output_dir=output_dir,
+    # )
 
 
 if __name__ == "__main__":
