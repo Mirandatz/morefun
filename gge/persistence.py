@@ -10,49 +10,125 @@ GENOTYPE_EXTENSION = ".genotype"
 FITNESS_EVALUATION_RESULT_EXTENSION = ".fitness_evaluation_result"
 
 
-def save_genotype_to_directory(
-    genotype: cg.CompositeGenotype,
-    directory: pathlib.Path,
-) -> None:
-    assert directory.is_dir()
+def save_genotype(genotype: cg.CompositeGenotype, path: pathlib.Path) -> None:
+    """
+    Creates `path` parents, then serializes `genotype` and writes it to `path`.
+    """
 
+    path.parent.mkdir(parents=True, exist_ok=True)
     serialized = serialize_genotype(genotype)
+    path.write_bytes(serialized)
 
-    path_without_extension = directory / genotype.unique_id.hex
-    full_path = path_without_extension.with_suffix(GENOTYPE_EXTENSION)
-
-    full_path.write_bytes(serialized)
+    logger.info(f"saved genotype=<{genotype}>, path=<{path}>")
 
 
-def save_population_genotypes(
-    population: list[cg.CompositeGenotype],
-    directory: pathlib.Path,
+def save_fitness_evaluation_result(
+    fer: cf.FitnessEvaluationResult,
+    path: pathlib.Path,
 ) -> None:
-    assert len(population) > 0
-    assert directory.is_dir()
+    """
+    Creates `path` parents, then serializes `fer` and writes it to `path`.
+    """
 
-    logger.info("started saving population genotypes")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    serialized = serialize_fitness_evaluation_result(fer)
+    path.write_bytes(serialized)
 
-    for genotype in population:
-        save_genotype_to_directory(genotype, directory)
+    logger.info(
+        f"saved fitness evaluation result of genotype=<{fer.genotype}>, path=<{path}>"
+    )
+
+
+def get_generation_dir(generation: int, base_output_dir: pathlib.Path) -> pathlib.Path:
+    assert generation >= 0
+
+    generation_dir = base_output_dir / str(generation)
+    generation_dir.mkdir(parents=True, exist_ok=True)
+    return generation_dir
+
+
+def get_genotypes_dir(generation: int, base_output_dir: pathlib.Path) -> pathlib.Path:
+    assert generation >= 0
+
+    generation_dir = get_generation_dir(generation, base_output_dir)
+    genotypes_dir = generation_dir / "genotypes"
+    genotypes_dir.mkdir(parents=True, exist_ok=True)
+    return genotypes_dir
+
+
+def get_fitness_evaluation_results_dir(
+    generation: int, base_output_dir: pathlib.Path
+) -> pathlib.Path:
+    assert generation >= 0
+
+    generation_dir = get_generation_dir(generation, base_output_dir)
+    fers_dir = generation_dir / "fitness_evaluation_results"
+    fers_dir.mkdir(parents=True, exist_ok=True)
+    return fers_dir
+
+
+def get_genotype_path(
+    genotype: cg.CompositeGenotype,
+    generation: int,
+    base_output_dir: pathlib.Path,
+) -> pathlib.Path:
+    assert generation >= 0
+
+    genotypes_dir = get_genotypes_dir(generation, base_output_dir)
+    return genotypes_dir / f"{genotype.unique_id.hex}{GENOTYPE_EXTENSION}"
+
+
+def save_generation_genotypes(
+    genotypes: list[cg.CompositeGenotype],
+    generation: int,
+    base_output_dir: pathlib.Path,
+) -> None:
+    assert generation >= 0
+
+    logger.info(
+        f"started saving genotypes for generation=<{generation}>, count=<{len(genotypes)}>"
+    )
+
+    for genotype in genotypes:
+        path = get_genotype_path(genotype, generation, base_output_dir)
+        save_genotype(genotype, path)
 
     logger.info("finished saving population genotypes")
 
 
+def save_generation_fitness_evaluation_results(
+    fers: list[cf.FitnessEvaluationResult],
+    generation: int,
+    base_output_dir: pathlib.Path,
+) -> None:
+    assert generation >= 0
+
+    logger.info(
+        f"started saving fitness evaluation results for generation=<{generation}>, count=<{len(fers)}>"
+    )
+
+    for fer in fers:
+        path = get_fitness_evaluation_result_path(fer, generation, base_output_dir)
+        save_fitness_evaluation_result(fer, path)
+
+    logger.info("finished saving fitness evaluation results")
+
+
+def get_fitness_evaluation_result_path(
+    fer: cf.FitnessEvaluationResult,
+    generation: int,
+    base_output_dir: pathlib.Path,
+) -> pathlib.Path:
+    assert generation >= 0
+
+    fers_dir = get_fitness_evaluation_results_dir(generation, base_output_dir)
+    return (
+        fers_dir / f"{fer.genotype.unique_id.hex}{FITNESS_EVALUATION_RESULT_EXTENSION}"
+    )
+
+
 def load_genotype(path: pathlib.Path) -> cg.CompositeGenotype:
     return deserialize_genotype(path.read_bytes())
-
-
-def load_population_genotypes(directory: pathlib.Path) -> list[cg.CompositeGenotype]:
-    assert directory.is_dir()
-
-    paths = list(directory.glob(f"*{GENOTYPE_EXTENSION}"))
-    if len(paths) == 0:
-        raise ValueError(
-            f"directory=<{directory}> does not contain files with genotype extension=<{GENOTYPE_EXTENSION}>"
-        )
-
-    return [load_genotype(p) for p in paths]
 
 
 def serialize_genotype(genotype: cg.CompositeGenotype) -> bytes:
@@ -75,20 +151,6 @@ def deserialize_fitness_evaluation_result(
     result = pickle.loads(serialized)
     assert isinstance(result, cf.SuccessfulEvaluationResult | cf.FailedEvaluationResult)
     return result
-
-
-def save_fitness_evaluation_result_to_directory(
-    result: cf.FitnessEvaluationResult,
-    directory: pathlib.Path,
-) -> None:
-    assert directory.is_dir()
-
-    serialized = serialize_fitness_evaluation_result(result)
-
-    path_without_extension = directory / result.genotype.unique_id.hex
-    full_path = path_without_extension.with_suffix(GENOTYPE_EXTENSION)
-
-    full_path.write_bytes(serialized)
 
 
 def load_fitness_evaluation_result(path: pathlib.Path) -> cf.FitnessEvaluationResult:
