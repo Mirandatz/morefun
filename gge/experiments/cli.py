@@ -1,11 +1,18 @@
+import itertools
 import pathlib
+import typing
 
 import typer
 
+import gge.composite_genotypes as cg
+import gge.evolution
 import gge.experiments.create_initial_population_genotypes as exp_init_create
 import gge.experiments.settings as gset
 import gge.fitnesses as gf
+import gge.grammars as gr
+import gge.novelty
 import gge.persistence as gp
+import gge.phenotypes
 
 SETTINGS_OPTION = typer.Option(
     pathlib.Path("/gge/settings.toml"),
@@ -89,13 +96,44 @@ def get_newest_generation_dir(generations_dir: pathlib.Path) -> pathlib.Path:
     return max(subdirs, key=lambda path: int(path.name))
 
 
+def create_novelty_tracker(
+    known_genotypes: typing.Iterable[cg.CompositeGenotype],
+    grammar: gr.Grammar,
+) -> gge.novelty.NoveltyTracker:
+    unique_genotypes = set(known_genotypes)
+    unique_phenotypes = set(
+        [gge.phenotypes.translate(geno, grammar) for geno in unique_genotypes]
+    )
+
+    return gge.novelty.NoveltyTracker(
+        unique_genotypes,
+        unique_phenotypes,
+    )
+
+
 @app.command(name="evolve")
 def evolutionary_loop(
     settings_path: pathlib.Path = SETTINGS_OPTION,
     generations: int = typer.Option(..., "--generations", min=1),
 ) -> None:
-    raise NotImplementedError()
-    # settings = gset.load_settings_and_configure_logger(settings_path)
+    settings = gset.load_settings_and_configure_logger(settings_path)
+
+    base_output_dir = gset.get_base_output_dir(settings)
+    grammar = gset.get_grammar(settings)
+
+    fitness_params = gset.get_fitness_evaluation_params(settings)
+    mutation_params = gset.get_mutation_params(settings)
+
+    # genotypes_by_generation = gp.load_genotypes_by_generations(base_output_dir)
+
+    # novelty_tracker = create_novelty_tracker(
+    #     itertools.chain(genotypes_by_generation.values),
+    #     grammar,
+    # )
+
+    # gge.evolution.run_evolutionary_loop(
+
+    # )
 
     # newest_generation = get_newest_generation_dir(
     #     generations_dir=gset.get_generations_dir(settings)
