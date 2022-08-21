@@ -8,6 +8,7 @@ from loguru import logger
 import gge.fitnesses as cf
 import gge.grammars as gr
 import gge.layers as gl
+import gge.population_mutation
 import gge.redirection
 
 Settings = dict[str, typing.Any]
@@ -147,6 +148,28 @@ def get_fitness_evaluation_params(settings: Settings) -> cf.FitnessEvaluationPar
     return cf.FitnessEvaluationParameters(
         get_fitness_metric(settings),
         get_grammar(settings),
+    )
+
+
+def get_nr_of_mutants_to_create_per_generation(settings: Settings) -> int:
+    value = settings["mutation"]["mutants_per_generation"]
+    assert isinstance(value, int)
+    return value
+
+
+def get_max_mutation_failures_per_generation(settings: Settings) -> int:
+    value = settings["mutation"]["max_failures_per_generation"]
+    assert isinstance(value, int)
+    return value
+
+
+def get_mutation_params(
+    settings: Settings,
+) -> gge.population_mutation.PopulationMutationParameters:
+    return gge.population_mutation.PopulationMutationParameters(
+        mutants_to_generate=get_nr_of_mutants_to_create_per_generation(settings),
+        max_failures=get_max_mutation_failures_per_generation(settings),
+        grammar=get_grammar(settings),
     )
 
 
