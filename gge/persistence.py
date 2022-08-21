@@ -39,10 +39,26 @@ def save_fitness_evaluation_result(
     )
 
 
+def get_generations_dir(base_output_dir: pathlib.Path) -> pathlib.Path:
+    """
+    Returns the path of the "generations dir", i.e., the directory
+    that contains sub-directories for each generation.
+    """
+
+    generations_dir = base_output_dir / "generations"
+    generations_dir.mkdir(parents=True, exist_ok=True)
+    return generations_dir
+
+
 def get_generation_dir(generation: int, base_output_dir: pathlib.Path) -> pathlib.Path:
+    """
+    Returns the path of the directory used to store the products of
+    the generation numbered `generation`.
+    """
+
     assert generation >= 0
 
-    generation_dir = base_output_dir / str(generation)
+    generation_dir = get_generations_dir(base_output_dir) / str(generation)
     generation_dir.mkdir(parents=True, exist_ok=True)
     return generation_dir
 
@@ -155,3 +171,37 @@ def deserialize_fitness_evaluation_result(
 
 def load_fitness_evaluation_result(path: pathlib.Path) -> cf.FitnessEvaluationResult:
     return deserialize_fitness_evaluation_result(path.read_bytes())
+
+
+def load_generation_genotypes(
+    generation: int,
+    base_output_dir: pathlib.Path,
+) -> list[cg.CompositeGenotype]:
+    assert generation >= 0
+
+    genotypes_dir = get_genotypes_dir(generation, base_output_dir)
+    genotypes_paths = [p for p in genotypes_dir.iterdir()]
+
+    if len(genotypes_paths) == 0:
+        raise ValueError(f"genotypes_dir is empty, path=<{genotypes_dir}>")
+
+    return [load_genotype(p) for p in genotypes_paths]
+
+
+def load_genotypes_by_generations(
+    base_output_dir: pathlib.Path,
+) -> dict[int, list[cg.CompositeGenotype]]:
+    """
+    Returns a dict that maps "generation number" -> "genotypes that belong to that generation".
+    """
+
+    generations_dir = get_generations_dir(base_output_dir)
+    generations_numbers = [int(path.name) for path in generations_dir.iterdir()]
+
+    if len(generations_numbers) == 0:
+        raise ValueError(f"generation_dir is empty, path=<{generations_dir}>")
+
+    return {
+        number: load_generation_genotypes(number, base_output_dir)
+        for number in generations_numbers
+    }
