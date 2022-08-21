@@ -17,7 +17,7 @@ max_network_params = 10000000
 
 [mutation]
 mutants_per_generation = 5
-max_failures = 500
+max_failures_per_generation = 500
 
 [fitness]
 batch_size = 512
