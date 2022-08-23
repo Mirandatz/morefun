@@ -34,15 +34,18 @@ def create_and_evaluate_initial_population(
 
     base_output_dir = gset.get_base_output_dir(settings)
 
-    grammar = gset.get_grammar()
-    rng_seed = gset.get_rng_seed()
+    grammar = gset.get_grammar(settings)
+    rng_seed = gset.get_rng_seed(settings)
 
-    genotypes = gge_init.create_initial_population(
+    individuals = gge_init.create_initial_population(
         pop_size=gset.get_initial_population_size(settings),
         grammar=grammar,
         filter=gset.get_initialization_individual_filter(settings),
         rng_seed=rng_seed,
     )
+
+    genotypes = [ind.genotype for ind in individuals]
+    phenotypes = [ind.phenotype for ind in individuals]
 
     fitness_evaluation_params = gset.get_fitness_evaluation_params(settings)
     fitness_evaluation_results = [
@@ -50,7 +53,7 @@ def create_and_evaluate_initial_population(
     ]
 
     known_genotypes = set(genotypes)
-    known_phenotypes = set(gge.phenotypes.translate(g, grammar) for g in set(genotypes))
+    known_phenotypes = set(phenotypes)
     novelty_tracker = gge.novelty.NoveltyTracker(
         known_genotypes=known_genotypes,
         known_phenotypes=known_phenotypes,

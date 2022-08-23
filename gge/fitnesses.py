@@ -111,7 +111,7 @@ class ValidationAccuracy:
             train.cache()
             .shuffle(
                 buffer_size=train.cardinality().numpy(),
-                seed=rand.get_rng_seed(),
+                seed=rand.get_fixed_seed(),
                 reshuffle_each_iteration=True,
             )
             .batch(self.batch_size, drop_remainder=True)

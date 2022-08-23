@@ -157,7 +157,7 @@ class RandomCrop(ConvertibleToConnectableLayer):
     name: str
     height: int = attrs.field(kw_only=True)
     width: int = attrs.field(kw_only=True)
-    seed: int = rand.get_rng_seed()
+    seed: int = rand.get_fixed_seed()
 
     def __attrs_post_init__(self) -> None:
         assert isinstance(self.name, str)
@@ -220,7 +220,7 @@ class FlipMode(enum.Enum):
 class RandomFlip(ConvertibleToConnectableLayer):
     name: str
     mode: FlipMode
-    seed: int = rand.get_rng_seed()
+    seed: int = rand.get_fixed_seed()
 
     def __attrs_post_init__(self) -> None:
         assert isinstance(self.name, str)
@@ -269,7 +269,7 @@ class ConnectedRandomFlip(SingleInputLayer):
 class RandomRotation(ConvertibleToConnectableLayer):
     name: str
     factor: float
-    seed: int = rand.get_rng_seed()
+    seed: int = rand.get_fixed_seed()
 
     def __attrs_post_init__(self) -> None:
         assert isinstance(self.name, str)

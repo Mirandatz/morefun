@@ -60,12 +60,12 @@ def run_evolutionary_loop(
     fitness_params: cf.FitnessEvaluationParameters,
     novelty_tracker: novel.NoveltyTracker,
     rng: rand.RNG,
-    output_directory: pathlib.Path,
+    output_dir: pathlib.Path,
 ) -> None:
     assert len(initial_population) > 0
     assert number_of_generations_to_run > 0
 
-    output_directory.mkdir(parents=True, exist_ok=True)
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     population = list(initial_population)
 
@@ -75,25 +75,28 @@ def run_evolutionary_loop(
     ):
         logger.info(f"started running generation {gen_nr}")
 
-        population = run_single_generation(
-            population,
-            mutation_params,
-            fitness_params,
-            novelty_tracker=novelty_tracker,
+        maybe_population = run_single_generation(
+            population=population,
+            mut_params=mutation_params,
+            fit_params=fitness_params,
             rng=rng,
+            novelty_tracker=novelty_tracker,
         )
 
-        if population is None:
+        if maybe_population is None:
             logger.info(
                 "stopping evolutionary loop: reason=<unable to generate enough novel mutants>"
             )
             break
+        else:
+            population = maybe_population
 
         gge.persistence.save_generation_output(
             generation_number=gen_nr,
             fittest=population,
             rng=rng,
             novelty_tracker=novelty_tracker,
+            output_dir=output_dir,
         )
 
         logger.info(f"finished running generation {gen_nr}")
