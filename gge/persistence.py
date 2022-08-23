@@ -58,11 +58,13 @@ def save_generation_output(
     )
 
 
-def load_generation_output(
-    generation_number: int,
-    directory: pathlib.Path,
-) -> GenerationOutput:
-    path = get_generation_output_path(generation_number, directory)
+def load_generation_output(path: pathlib.Path) -> GenerationOutput:
     deserialized = pickle.loads(path.read_bytes())
     assert isinstance(deserialized, GenerationOutput)
     return deserialized
+
+
+def load_latest_generation_output(output_dir: pathlib.Path) -> GenerationOutput:
+    paths = output_dir.glob(f"*{GENERATION_OUTPUT_EXTENSION}")
+    latest = max(paths, key=lambda path: int(path.name))
+    return load_generation_output(latest)

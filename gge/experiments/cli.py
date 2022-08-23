@@ -11,7 +11,7 @@ import gge.experiments.settings as gset
 import gge.fitnesses as gf
 import gge.grammars as gr
 import gge.novelty
-import gge.persistence as gp
+import gge.persistence
 import gge.phenotypes
 
 SETTINGS_OPTION = typer.Option(
@@ -82,35 +82,6 @@ def evaluate_initial_population(
     gp.save_generation_fitness_evaluation_results(fers, generation, base_output_dir)
 
 
-def get_newest_generation_dir(generations_dir: pathlib.Path) -> pathlib.Path:
-    if not generations_dir.is_dir():
-        raise ValueError(
-            f"`generations_dir` is not a directorty, path=<{generations_dir}>"
-        )
-
-    subdirs = [p for p in generations_dir.iterdir() if p.is_dir()]
-
-    if len(subdirs) == 0:
-        raise ValueError(f"`generations_dir` is empty, path=<{generations_dir}>")
-
-    return max(subdirs, key=lambda path: int(path.name))
-
-
-def create_novelty_tracker(
-    known_genotypes: typing.Iterable[cg.CompositeGenotype],
-    grammar: gr.Grammar,
-) -> gge.novelty.NoveltyTracker:
-    unique_genotypes = set(known_genotypes)
-    unique_phenotypes = set(
-        [gge.phenotypes.translate(geno, grammar) for geno in unique_genotypes]
-    )
-
-    return gge.novelty.NoveltyTracker(
-        unique_genotypes,
-        unique_phenotypes,
-    )
-
-
 @app.command(name="evolve")
 def evolutionary_loop(
     settings_path: pathlib.Path = SETTINGS_OPTION,
@@ -119,38 +90,22 @@ def evolutionary_loop(
     settings = gset.load_settings_and_configure_logger(settings_path)
 
     base_output_dir = gset.get_base_output_dir(settings)
-    grammar = gset.get_grammar(settings)
 
-    fitness_params = gset.get_fitness_evaluation_params(settings)
+    latest_gen_output = gge.persistence.load_latest_generation_output(base_output_dir)
+    current_generation_number = latest_gen_output.generation_number + 1
     mutation_params = gset.get_mutation_params(settings)
+    fitness_params = gset.get_fitness_evaluation_params(settings)
 
-    # genotypes_by_generation = gp.load_genotypes_by_generations(base_output_dir)
-
-    # novelty_tracker = create_novelty_tracker(
-    #     itertools.chain(genotypes_by_generation.values),
-    #     grammar,
-    # )
-
-    # gge.evolution.run_evolutionary_loop(
-
-    # )
-
-    # newest_generation = get_newest_generation_dir(
-    #     generations_dir=gset.get_generations_dir(settings)
-    # )
-
-    # fitness_evaluation_results = gge.persistence.population_fitnesses(newest_generation)
-
-    # fitness_evaluation_params = gset.get_fitness_evaluation_params(settings)
-
-    # output_dir = gset.get_initial_population_fitness_dir(settings)
-    # output_dir.mkdir(parents=True, exist_ok=True)
-
-    # exp_eval.evaluate_population(
-    #     genotypes,
-    #     fitness_evaluation_params,
-    #     output_dir=output_dir,
-    # )
+    gge.evolution.run_evolutionary_loop(
+        starting_generation_number=current_generation_number,
+        number_of_generations_to_run=generations,
+        initial_population=latest_gen_output.fittest,
+        mutation_params=mutation_params,
+        fitness_params=fitness_params,
+        novelty_tracker=latest_gen_output.novelty_tracker,
+        rng=latest_gen_output.rng,
+        output_dir=base_output_dir,
+    )
 
 
 if __name__ == "__main__":
