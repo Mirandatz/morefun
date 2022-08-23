@@ -5,7 +5,7 @@ import pickle
 import pandas as pd
 import typer
 
-import gge.fitnesses as fit
+import gge.fitnesses as cf
 import gge.startup_settings as gge_settings
 
 
@@ -17,7 +17,7 @@ def parse_evaluation_result_file(
     evaluation_result = pickle.loads(path.read_bytes())
 
     match evaluation_result:
-        case fit.SuccessfulEvaluationResult() as succ:
+        case cf.SuccessfulEvaluationResult() as succ:
             return {
                 "uuid": succ.genotype.unique_id.hex,
                 "fitness": succ.fitness,
@@ -27,7 +27,7 @@ def parse_evaluation_result_file(
                 "end_time": succ.end_time,
             }
 
-        case fit.FailedEvaluationResult() as fail:
+        case cf.FailedEvaluationResult() as fail:
             return {
                 "uuid": fail.genotype.unique_id.hex,
                 "fitness": float("nan"),

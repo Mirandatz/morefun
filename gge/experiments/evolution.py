@@ -7,11 +7,11 @@ from loguru import logger
 
 import gge.composite_genotypes as cg
 import gge.evolution as evo
-import gge.fitnesses as fit
+import gge.fitnesses as cf
 import gge.grammars as gr
 import gge.layers as gl
 import gge.novelty as novel
-import gge.population_mutation as gmut
+import gge.population_mutation as gm
 import gge.randomness as rand
 import gge.startup_settings as gge_settings
 
@@ -95,8 +95,8 @@ def main(
         depth=img_depth,
     )
 
-    fit_params = fit.FitnessEvaluationParameters(
-        fit.ValidationAccuracy(
+    fit_params = cf.FitnessEvaluationParameters(
+        cf.ValidationAccuracy(
             train_directory=train_dataset_dir,
             validation_directory=validation_dataset_dir,
             input_shape=input_shape,
@@ -107,7 +107,7 @@ def main(
         grammar,
     )
 
-    mut_params = gmut.PopulationMutationParameters(
+    mut_params = gm.PopulationMutationParameters(
         mutants_to_generate=mutants_per_generation,
         max_failures=max_failures,
         grammar=grammar,
@@ -118,7 +118,7 @@ def main(
 
     initial_genotypes = load_initial_population(initial_population_dir)
 
-    evaluated_population = [fit.evaluate(g, fit_params) for g in initial_genotypes]
+    evaluated_population = [cf.evaluate(g, fit_params) for g in initial_genotypes]
 
     evo.run_evolutionary_loop(
         evaluated_population,

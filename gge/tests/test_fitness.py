@@ -2,7 +2,7 @@ import attrs
 import hypothesis.strategies as hs
 from hypothesis import given
 
-import gge.fitnesses as fit
+import gge.fitnesses as cf
 
 
 @attrs.frozen
@@ -30,7 +30,7 @@ def fitness_test_data(draw: hs.DrawFn) -> FitnessTestData:
 def test_select_fittest(data: FitnessTestData) -> None:
     """Should select the individuals with largest fitnesses."""
 
-    fittest = fit.select_fittest(
+    fittest = cf.select_fittest(
         candidates=data.fitnesses.keys(),
         metric=lambda k: data.fitnesses[k],
         fittest_count=data.fittest_count,
