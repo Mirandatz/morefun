@@ -5,6 +5,7 @@ import typing
 import tomli
 from loguru import logger
 
+import gge.experiments.create_initial_population_genotypes as gge_init
 import gge.fitnesses as cf
 import gge.grammars as gr
 import gge.layers as gl
@@ -170,6 +171,53 @@ def get_mutation_params(
         mutants_to_generate=get_nr_of_mutants_to_create_per_generation(settings),
         max_failures=get_max_mutation_failures_per_generation(settings),
         grammar=get_grammar(settings),
+    )
+
+
+def get_rng_seed(settings: Settings) -> int:
+    value = settings["experiment"]["rng_seed"]
+    assert isinstance(value, int)
+    return value
+
+
+def get_initial_population_size(settings: Settings) -> int:
+    value = settings["initialization"]["population_size"]
+    assert isinstance(value, int)
+    return value
+
+
+def get_initial_population_max_network_depth(settings: Settings) -> int:
+    value = settings["initialization"]["max_network_depth"]
+    assert isinstance(value, int)
+    return value
+
+
+def get_initial_population_max_wide_layers(settings: Settings) -> int:
+    value = settings["initialization"]["max_wide_layers"]
+    assert isinstance(value, int)
+    return value
+
+
+def get_initial_population_wide_layer_threshold(settings: Settings) -> int:
+    value = settings["initialization"]["wide_layer_threshold"]
+    assert isinstance(value, int)
+    return value
+
+
+def get_initial_population_max_network_params(settings: Settings) -> int:
+    value = settings["initialization"]["max_network_params"]
+    assert isinstance(value, int)
+    return value
+
+
+def get_initialization_individual_filter(
+    settings: Settings,
+) -> gge_init.IndividualFilter:
+    return gge_init.IndividualFilter(
+        max_network_depth=get_initial_population_max_network_depth(settings),
+        max_wide_layers=get_initial_population_max_wide_layers(settings),
+        max_layer_width=get_initial_population_wide_layer_threshold(settings),
+        max_network_params=get_initial_population_max_network_params(settings),
     )
 
 

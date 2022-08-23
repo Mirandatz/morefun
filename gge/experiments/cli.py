@@ -1,18 +1,15 @@
-import itertools
 import pathlib
-import typing
 
 import typer
 
-import gge.composite_genotypes as cg
 import gge.evolution
-import gge.experiments.create_initial_population_genotypes as exp_init_create
+import gge.experiments.create_initial_population_genotypes as gge_init
 import gge.experiments.settings as gset
 import gge.fitnesses as gf
-import gge.grammars as gr
 import gge.novelty
 import gge.persistence
 import gge.phenotypes
+import gge.randomness
 
 SETTINGS_OPTION = typer.Option(
     pathlib.Path("/gge/settings.toml"),
@@ -27,8 +24,8 @@ SETTINGS_OPTION = typer.Option(
 app = typer.Typer()
 
 
-@app.command(name="init-create")
-def create_initial_population(
+@app.command(name="initialize")
+def create_and_evaluate_initial_population(
     settings_path: pathlib.Path = SETTINGS_OPTION,
 ) -> None:
     settings = gset.load_settings(settings_path)
@@ -37,49 +34,36 @@ def create_initial_population(
 
     base_output_dir = gset.get_base_output_dir(settings)
 
-    grammar = gset.get_grammar(settings)
+    grammar = gset.get_grammar()
+    rng_seed = gset.get_rng_seed()
 
-    filter = exp_init_create.IndividualFilter(
-        max_network_depth=settings["initialization"]["max_network_depth"],
-        max_wide_layers=settings["initialization"]["max_wide_layers"],
-        max_layer_width=settings["initialization"]["wide_layer_threshold"],
-        max_network_params=settings["initialization"]["max_network_params"],
-    )
-
-    population = exp_init_create.create_initial_population(
-        pop_size=settings["initialization"]["population_size"],
+    genotypes = gge_init.create_initial_population(
+        pop_size=gset.get_initial_population_size(settings),
         grammar=grammar,
-        filter=filter,
-        rng_seed=settings["experiment"]["rng_seed"],
+        filter=gset.get_initialization_individual_filter(settings),
+        rng_seed=rng_seed,
     )
-
-    genotypes = [indi.genotype for indi in population]
-
-    # generations are 0-indexed, so first gen == 0
-    generation = 0
-    gp.save_generation_genotypes(genotypes, generation, base_output_dir)
-
-
-@app.command(name="init-evaluate")
-def evaluate_initial_population(
-    settings_path: pathlib.Path = SETTINGS_OPTION,
-) -> None:
-    settings = gset.load_settings_and_configure_logger(settings_path)
-
-    # generations are 0-indexed, so first gen == 0
-    generation = 0
-
-    base_output_dir = gset.get_base_output_dir(settings)
-    genotypes_dir = gp.get_genotypes_dir(generation, base_output_dir)
-    genotypes = [gp.load_genotype(path) for path in genotypes_dir.iterdir()]
-
-    if len(genotypes) == 0:
-        raise ValueError(f"the genotypes directory is empty, path=<{genotypes_dir}>")
 
     fitness_evaluation_params = gset.get_fitness_evaluation_params(settings)
-    fers = [gf.evaluate(g, fitness_evaluation_params) for g in genotypes]
+    fitness_evaluation_results = [
+        gf.evaluate(g, fitness_evaluation_params) for g in genotypes
+    ]
 
-    gp.save_generation_fitness_evaluation_results(fers, generation, base_output_dir)
+    known_genotypes = set(genotypes)
+    known_phenotypes = set(gge.phenotypes.translate(g, grammar) for g in set(genotypes))
+    novelty_tracker = gge.novelty.NoveltyTracker(
+        known_genotypes=known_genotypes,
+        known_phenotypes=known_phenotypes,
+    )
+
+    # generations are 0-indexed, so first gen == 0
+    gge.persistence.save_generation_output(
+        generation_number=0,
+        fittest=fitness_evaluation_results,
+        novelty_tracker=novelty_tracker,
+        rng=gge.randomness.create_rng(rng_seed),
+        output_dir=base_output_dir,
+    )
 
 
 @app.command(name="evolve")
