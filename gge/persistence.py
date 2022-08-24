@@ -66,5 +66,5 @@ def load_generation_output(path: pathlib.Path) -> GenerationOutput:
 
 def load_latest_generation_output(output_dir: pathlib.Path) -> GenerationOutput:
     paths = output_dir.glob(f"*{GENERATION_OUTPUT_EXTENSION}")
-    latest = max(paths, key=lambda path: int(path.name))
+    latest = max(paths, key=lambda path: int(path.stem))
     return load_generation_output(latest)
