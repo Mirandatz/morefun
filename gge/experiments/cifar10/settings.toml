@@ -32,15 +32,6 @@ class_count = 10
 train_instances = 37500
 validation_instances = 12500
 
-
-[gge]
-# the first host_path that exists is used
-host_path = [
-    "/home/thiago/source/gge",
-    "/home/thiago/gge"
-]
-
-
 [grammar]
 raw = """
 start : data_aug learning optimizer
