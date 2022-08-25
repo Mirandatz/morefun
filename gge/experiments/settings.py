@@ -65,7 +65,7 @@ def get_train_dataset_dir(settings: Settings) -> pathlib.Path:
     img_height = shape.height
     img_width = shape.width
 
-    expected_class_count = get_class_count(settings)
+    expected_class_count = get_dataset_class_count(settings)
 
     partitions_dir = pathlib.Path(dataset_settings["partitions_dir"])
     train_dir = partitions_dir / "train"
@@ -90,7 +90,7 @@ def get_validation_dataset_dir(settings: Settings) -> pathlib.Path:
     img_height = shape.height
     img_width = shape.width
 
-    expected_class_count = get_class_count(settings)
+    expected_class_count = get_dataset_class_count(settings)
 
     partitions_dir = pathlib.Path(dataset_settings["partitions_dir"])
     validation_dir = partitions_dir / "validation"
@@ -128,7 +128,7 @@ def get_max_epochs(settings: Settings) -> int:
     return value
 
 
-def get_class_count(settings: Settings) -> int:
+def get_dataset_class_count(settings: Settings) -> int:
     value = settings["datasets"]["class_count"]
     assert isinstance(value, int)
     return value
@@ -141,11 +141,37 @@ def get_fitness_metric(settings: Settings) -> cf.ValidationAccuracy:
         input_shape=get_dataset_input_shape(settings),
         batch_size=get_batch_size(settings),
         max_epochs=get_max_epochs(settings),
-        class_count=get_class_count(settings),
+        class_count=get_dataset_class_count(settings),
     )
 
 
-def get_fitness_evaluation_params(settings: Settings) -> cf.FitnessEvaluationParameters:
+def get_evolutionary_fitness_evaluation_params(
+    settings: Settings,
+) -> cf.FitnessEvaluationParameters:
+    final_train_settings = settings["final_train"]
+    batch_size = int(final_train_settings["batch_size"])
+    max_epochs = int(final_train_settings["epochs"])
+    test_dir = pathlib.Path(final_train_settings["test_dir"])
+
+    metric = cf.TestAccuracy(
+        train_directory=get_train_dataset_dir(settings),
+        validation_directory=get_validation_dataset_dir(settings),
+        test_dir=test_dir,
+        batch_size=batch_size,
+        max_epochs=max_epochs,
+        input_shape=get_dataset_input_shape(settings),
+        class_count=get_dataset_class_count(settings),
+    )
+
+    return cf.FitnessEvaluationParameters(
+        metric=metric,
+        grammar=get_grammar(settings),
+    )
+
+
+def get_final_performance_evaluation_params(
+    settings: Settings,
+) -> cf.FitnessEvaluationParameters:
     return cf.FitnessEvaluationParameters(
         get_fitness_metric(settings),
         get_grammar(settings),

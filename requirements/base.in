@@ -7,6 +7,7 @@ opencv-python
 pandas
 pillow
 pyarrow
+pyyaml
 pydot
 scipy
 tensorflow==2.8.*

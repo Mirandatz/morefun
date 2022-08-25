@@ -47,7 +47,9 @@ def create_and_evaluate_initial_population(
     genotypes = [ind.genotype for ind in individuals]
     phenotypes = [ind.phenotype for ind in individuals]
 
-    fitness_evaluation_params = gset.get_fitness_evaluation_params(settings)
+    fitness_evaluation_params = gset.get_evolutionary_fitness_evaluation_params(
+        settings
+    )
     fitness_evaluation_results = [
         gf.evaluate(g, fitness_evaluation_params) for g in genotypes
     ]
@@ -81,7 +83,7 @@ def evolutionary_loop(
     latest_gen_output = gge.persistence.load_latest_generation_output(base_output_dir)
     current_generation_number = latest_gen_output.generation_number + 1
     mutation_params = gset.get_mutation_params(settings)
-    fitness_params = gset.get_fitness_evaluation_params(settings)
+    fitness_params = gset.get_evolutionary_fitness_evaluation_params(settings)
 
     gge.evolution.run_evolutionary_loop(
         starting_generation_number=current_generation_number,
@@ -93,6 +95,23 @@ def evolutionary_loop(
         rng=latest_gen_output.rng,
         output_dir=base_output_dir,
     )
+
+
+@app.command(name="final-train")
+def final_train(
+    settings_path: pathlib.Path = SETTINGS_OPTION,
+) -> None:
+    settings = gset.load_settings_and_configure_logger(settings_path)
+
+    base_output_dir = gset.get_base_output_dir(settings)
+    latest_gen_output = gge.persistence.load_latest_generation_output(base_output_dir)
+
+    best_of_the_best = max(
+        latest_gen_output.fittest,
+        key=lambda fer: gf.get_effective_fitness(fer),
+    )
+
+    final_train_fitness_params = gset.get_final_performance_evaluation_params(settings)
 
 
 if __name__ == "__main__":
