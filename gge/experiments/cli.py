@@ -28,28 +28,28 @@ app = typer.Typer()
 def create_and_evaluate_initial_population(
     settings_path: pathlib.Path = SETTINGS_OPTION,
 ) -> None:
-    settings = gset.load_settings(settings_path)
+    settings = gset.load_gge_settings(settings_path)
 
-    gset.configure_logger(settings)
+    gset.configure_logger(settings.output)
 
-    base_output_dir = gset.get_base_output_dir(settings)
-
-    grammar = gset.get_grammar(settings)
-    rng_seed = gset.get_rng_seed(settings)
+    rng_seed = settings.experiment.rng_seed
 
     individuals = gge_init.create_initial_population(
-        pop_size=gset.get_initial_population_size(settings),
-        grammar=grammar,
-        filter=gset.get_initialization_individual_filter(settings),
+        pop_size=settings.initialization.population_size,
+        grammar=settings.grammar,
+        filter=settings.initialization.individual_filter,
         rng_seed=rng_seed,
     )
 
     genotypes = [ind.genotype for ind in individuals]
     phenotypes = [ind.phenotype for ind in individuals]
 
-    fitness_evaluation_params = gset.get_evolutionary_fitness_evaluation_params(
-        settings
+    fitness_evaluation_params = gset.make_fitness_evaluation_params(
+        dataset=settings.dataset,
+        fitness=settings.evolution.fitness_settings,
+        grammar=settings.grammar,
     )
+
     fitness_evaluation_results = [
         gf.evaluate(g, fitness_evaluation_params) for g in genotypes
     ]
@@ -67,7 +67,7 @@ def create_and_evaluate_initial_population(
         fittest=fitness_evaluation_results,
         novelty_tracker=novelty_tracker,
         rng=gge.randomness.create_rng(rng_seed),
-        output_dir=base_output_dir,
+        output_dir=settings.output.directory,
     )
 
 
@@ -76,14 +76,24 @@ def evolutionary_loop(
     settings_path: pathlib.Path = SETTINGS_OPTION,
     generations: int = typer.Option(..., "--generations", min=1),
 ) -> None:
-    settings = gset.load_settings_and_configure_logger(settings_path)
+    settings = gset.load_gge_settings(settings_path)
 
-    base_output_dir = gset.get_base_output_dir(settings)
+    latest_gen_output = gge.persistence.load_latest_generation_output(
+        settings.output.directory
+    )
 
-    latest_gen_output = gge.persistence.load_latest_generation_output(base_output_dir)
     current_generation_number = latest_gen_output.generation_number + 1
-    mutation_params = gset.get_mutation_params(settings)
-    fitness_params = gset.get_evolutionary_fitness_evaluation_params(settings)
+
+    mutation_params = gset.make_mutation_params(
+        mutation=settings.evolution.mutation_settings,
+        grammar=settings.grammar,
+    )
+
+    fitness_params = gset.make_fitness_evaluation_params(
+        dataset=settings.dataset,
+        fitness=settings.evolution.fitness_settings,
+        grammar=settings.grammar,
+    )
 
     gge.evolution.run_evolutionary_loop(
         starting_generation_number=current_generation_number,
@@ -93,7 +103,7 @@ def evolutionary_loop(
         fitness_params=fitness_params,
         novelty_tracker=latest_gen_output.novelty_tracker,
         rng=latest_gen_output.rng,
-        output_dir=base_output_dir,
+        output_dir=settings.output.directory,
     )
 
 
@@ -101,17 +111,18 @@ def evolutionary_loop(
 def final_train(
     settings_path: pathlib.Path = SETTINGS_OPTION,
 ) -> None:
-    settings = gset.load_settings_and_configure_logger(settings_path)
+    raise NotImplementedError()
+    # settings = gset.load_settings_and_configure_logger(settings_path)
 
-    base_output_dir = gset.get_base_output_dir(settings)
-    latest_gen_output = gge.persistence.load_latest_generation_output(base_output_dir)
+    # base_output_dir = gset.get_base_output_dir(settings)
+    # latest_gen_output = gge.persistence.load_latest_generation_output(base_output_dir)
 
-    best_of_the_best = max(
-        latest_gen_output.fittest,
-        key=lambda fer: gf.get_effective_fitness(fer),
-    )
+    # best_of_the_best = max(
+    #     latest_gen_output.fittest,
+    #     key=lambda fer: gf.get_effective_fitness(fer),
+    # )
 
-    final_train_fitness_params = gset.get_final_performance_evaluation_params(settings)
+    # final_train_fitness_params = gset.get_final_performance_evaluation_params(settings)
 
 
 if __name__ == "__main__":

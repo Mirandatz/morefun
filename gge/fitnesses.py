@@ -143,9 +143,9 @@ class ValidationAccuracy:
     train_directory: pathlib.Path
     validation_directory: pathlib.Path
     input_shape: gl.Shape
+    class_count: int
     batch_size: int
     max_epochs: int
-    class_count: int
     early_stop_patience: int
 
     def __attrs_post_init__(self) -> None:

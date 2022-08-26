@@ -1,253 +1,329 @@
+import functools
 import pathlib
 import sys
 import typing
 
-import tomli
+import attrs
+import typeguard
+import yaml
 from loguru import logger
 
 import gge.experiments.create_initial_population_genotypes as gge_init
-import gge.fitnesses as cf
+import gge.fitnesses as gf
 import gge.grammars as gr
 import gge.layers as gl
 import gge.population_mutation
+import gge.population_mutation as gm
+import gge.randomness as rand
 import gge.redirection
 
-Settings = dict[str, typing.Any]
+YamlDict = dict[str, typing.Any]
 
 
-def load_settings(path: pathlib.Path) -> Settings:
-    with path.open("rb") as file:
-        return tomli.load(file)
+@typeguard.typechecked()
+@attrs.frozen
+class ExperimentSettings:
+    description: str
+    rng_seed: int
+
+    def __attrs_post_init__(self) -> None:
+        # check if rng_seed is valid
+        _ = rand.create_rng(self.rng_seed)
+
+    @staticmethod
+    def from_yaml(values: YamlDict) -> "ExperimentSettings":
+        return ExperimentSettings(**values)
 
 
-def load_settings_and_configure_logger(path: pathlib.Path) -> Settings:
-    settings = load_settings(path)
-    configure_logger(settings)
-    return settings
+@typeguard.typechecked()
+@attrs.frozen
+class OutputSettings:
+    log_level: str
+    directory: pathlib.Path
+
+    def __attrs_post_init__(self) -> None:
+        assert self.log_level in [
+            "TRACE",
+            "DEBUG",
+            "INFO",
+            "SUCCESS",
+            "WARNING",
+            "ERROR",
+            "CRITICAL",
+        ]
+
+        self.directory.mkdir(parents=True, exist_ok=True)
+
+    @staticmethod
+    def from_yaml(values: YamlDict) -> "OutputSettings":
+        copy_of_values = dict(values)
+        directory = pathlib.Path(copy_of_values.pop("directory"))
+        return OutputSettings(directory=directory, **copy_of_values)
 
 
-def get_base_output_dir(settings: Settings) -> pathlib.Path:
-    directory = pathlib.Path(settings["output"]["directory"])
-    directory.mkdir(parents=True, exist_ok=True)
-    return directory
+@typeguard.typechecked()
+@attrs.frozen
+class InitializationSettings:
+    population_size: int
+    max_network_depth: int
+    wide_layer_threshold: int
+    max_wide_layers: int
+    max_network_params: int
+
+    def __attrs_post_init__(self) -> None:
+        assert self.population_size >= 1
+        assert self.max_network_depth >= 1
+        assert self.wide_layer_threshold >= 1
+        assert self.max_wide_layers >= 0
+        assert self.max_network_params >= 1
+
+    @staticmethod
+    def from_yaml(values: YamlDict) -> "InitializationSettings":
+        return InitializationSettings(**values)
+
+    @property
+    def individual_filter(self) -> gge_init.IndividualFilter:
+        return gge_init.IndividualFilter(
+            max_network_depth=self.max_network_depth,
+            max_wide_layers=self.max_wide_layers,
+            wide_layer_threshold=self.wide_layer_threshold,
+            max_network_params=self.max_network_params,
+        )
 
 
-def get_logging_dir(settings: Settings) -> pathlib.Path:
-    directory = get_base_output_dir(settings) / "logging"
-    directory.mkdir(parents=True, exist_ok=True)
-    return directory
+@typeguard.typechecked()
+@attrs.frozen
+class MutationSettings:
+    mutants_per_generation: int
+    max_failures_per_generation: int
+
+    def __attrs_post_init__(self) -> None:
+        assert self.mutants_per_generation >= 1
+        assert self.max_failures_per_generation >= 0
+
+    @staticmethod
+    def from_yaml(values: YamlDict) -> "MutationSettings":
+        return MutationSettings(**values)
 
 
-def configure_logger(settings: Settings) -> None:
-    log_settings = settings["logging"]
-    log_level = log_settings["log_level"]
+@typeguard.typechecked()
+@attrs.frozen
+class FitnessSettings:
+    batch_size: int
+    max_epochs: int
+    early_stop_patience: int
 
-    if log_level not in ["DEBUG", "INFO", "WARNING"]:
-        raise ValueError(f"unknown log_level=<{log_level}>")
+    def __attrs_post_init__(self) -> None:
+        assert isinstance(self.batch_size, int)
+        assert isinstance(self.max_epochs, int)
+        assert isinstance(self.early_stop_patience, int)
 
-    logging_dir = get_logging_dir(settings)
+        assert self.batch_size >= 1
+        assert self.max_epochs >= 1
+        assert self.early_stop_patience >= 0
 
+    @staticmethod
+    def from_yaml(values: YamlDict) -> "FitnessSettings":
+        return FitnessSettings(**values)
+
+
+@typeguard.typechecked()
+@attrs.frozen
+class DatasetSettings:
+    partitions_dir: pathlib.Path
+    image_height: int
+    image_width: int
+    image_depth: int
+    class_count: int
+    train_instances: int
+    validation_instances: int
+    test_instances: int
+
+    def __attrs_post_init__(self) -> None:
+        assert self.partitions_dir.is_dir()
+        assert self.image_height >= 1
+        assert self.image_width >= 1
+        assert self.image_depth >= 1
+        assert self.class_count >= 2
+        assert self.train_instances >= 2
+        assert self.validation_instances >= 2
+        assert self.test_instances >= 2
+
+    @staticmethod
+    def from_yaml(values: YamlDict) -> "DatasetSettings":
+        copy_of_values = dict(values)
+        partitions_dir = pathlib.Path(copy_of_values.pop("partitions_dir"))
+
+        return DatasetSettings(
+            partitions_dir=partitions_dir,
+            **copy_of_values,
+        )
+
+    @property
+    def input_shape(self) -> gl.Shape:
+        return gl.Shape(
+            height=self.image_height,
+            width=self.image_width,
+            depth=self.image_depth,
+        )
+
+    @functools.cache
+    def get_train_dataset_dir(self) -> pathlib.Path:
+        train_dir = self.partitions_dir / "train"
+
+        validate_dataset_dir(
+            train_dir,
+            img_height=self.image_height,
+            img_width=self.image_width,
+            expected_num_instances=self.train_instances,
+            expected_class_count=self.class_count,
+        )
+
+        return train_dir
+
+    @functools.cache
+    def get_validation_dataset_dir(self) -> pathlib.Path:
+        validation_dir = self.partitions_dir / "validation"
+
+        validate_dataset_dir(
+            validation_dir,
+            img_height=self.image_height,
+            img_width=self.image_width,
+            expected_num_instances=self.train_instances,
+            expected_class_count=self.class_count,
+        )
+
+        return validation_dir
+
+    @functools.cache
+    def test_dataset_dir(self) -> pathlib.Path:
+        test_dir = self.partitions_dir / "test"
+
+        validate_dataset_dir(
+            test_dir,
+            img_height=self.image_height,
+            img_width=self.image_width,
+            expected_num_instances=self.train_instances,
+            expected_class_count=self.class_count,
+        )
+
+        return test_dir
+
+
+@typeguard.typechecked()
+@attrs.frozen
+class EvolutionSettings:
+    mutation_settings: MutationSettings
+    fitness_settings: FitnessSettings
+
+    @staticmethod
+    def from_yaml(values: YamlDict) -> "EvolutionSettings":
+        assert values.keys() == {"mutation", "fitness_estimation"}
+        return EvolutionSettings(
+            MutationSettings.from_yaml(values["mutation"]),
+            FitnessSettings.from_yaml(values["fitness_estimation"]),
+        )
+
+
+@attrs.frozen
+class FinalTrainSettings:
+    batch_size: int
+    epochs: int
+    early_stop_patience: int
+
+    def __attrs_post_init__(self) -> None:
+        assert isinstance(self.batch_size, int)
+        assert isinstance(self.epochs, int)
+        assert isinstance(self.early_stop_patience, int)
+
+        assert self.batch_size >= 1
+        assert self.epochs >= 1
+        assert self.early_stop_patience >= 0
+
+    @staticmethod
+    def from_yaml(values: YamlDict) -> "FinalTrainSettings":
+        return FinalTrainSettings(**values)
+
+
+@typeguard.typechecked()
+@attrs.frozen
+class GgeSettings:
+    experiment: ExperimentSettings
+    dataset: DatasetSettings
+    output: OutputSettings
+    initialization: InitializationSettings
+    evolution: EvolutionSettings
+    final_train: FinalTrainSettings
+    grammar: gr.Grammar
+
+    @staticmethod
+    def from_yaml(values: YamlDict) -> "GgeSettings":
+        assert values.keys() == {
+            "experiment",
+            "dataset",
+            "output",
+            "population_initialization",
+            "evolution",
+            "final_train",
+            "grammar",
+        }
+
+        return GgeSettings(
+            experiment=ExperimentSettings.from_yaml(values["experiment"]),
+            dataset=DatasetSettings.from_yaml(values["dataset"]),
+            output=OutputSettings.from_yaml(values["output"]),
+            initialization=InitializationSettings.from_yaml(
+                values["population_initialization"]
+            ),
+            evolution=EvolutionSettings.from_yaml(values["evolution"]),
+            final_train=FinalTrainSettings.from_yaml(values["final_train"]),
+            grammar=gr.Grammar(values["grammar"]),
+        )
+
+
+def make_mutation_params(
+    mutation: MutationSettings,
+    grammar: gr.Grammar,
+) -> gm.PopulationMutationParameters:
+    return gm.PopulationMutationParameters(
+        mutants_to_generate=mutation.mutants_per_generation,
+        max_failures=mutation.max_failures_per_generation,
+        grammar=grammar,
+    )
+
+
+def make_fitness_evaluation_params(
+    dataset: DatasetSettings,
+    fitness: FitnessSettings,
+    grammar: gr.Grammar,
+) -> gf.FitnessEvaluationParameters:
+    val_acc = gf.ValidationAccuracy(
+        train_directory=dataset.get_train_dataset_dir(),
+        validation_directory=dataset.get_validation_dataset_dir(),
+        input_shape=dataset.input_shape,
+        batch_size=fitness.batch_size,
+        max_epochs=fitness.max_epochs,
+        class_count=dataset.class_count,
+        early_stop_patience=fitness.early_stop_patience,
+    )
+
+    return gf.FitnessEvaluationParameters(val_acc, grammar)
+
+
+def load_gge_settings(path: pathlib.Path) -> GgeSettings:
+    yaml_dict = yaml.safe_load(path.read_text())
+    return GgeSettings.from_yaml(yaml_dict)
+
+
+def configure_logger(settings: OutputSettings) -> None:
     logger.remove()
-    logger.add(sink=sys.stderr, level=log_level)
-    logger.add(sink=logging_dir / "log.txt")
+    logger.add(sink=sys.stderr, level=settings.log_level)
+    logger.add(sink=settings.directory / "log.txt")
 
     logger.info("started logger")
 
 
-def get_grammar(settings: Settings) -> gr.Grammar:
-    return gr.Grammar(settings["grammar"]["raw"])
-
-
-def get_train_dataset_dir(settings: Settings) -> pathlib.Path:
-    dataset_settings = settings["datasets"]
-
-    shape = get_dataset_input_shape(settings)
-    img_height = shape.height
-    img_width = shape.width
-
-    expected_class_count = get_dataset_class_count(settings)
-
-    partitions_dir = pathlib.Path(dataset_settings["partitions_dir"])
-    train_dir = partitions_dir / "train"
-
-    expected_num_instances = dataset_settings["train_instances"]
-
-    _validate_dataset_dir(
-        train_dir,
-        img_height=img_height,
-        img_width=img_width,
-        expected_num_instances=expected_num_instances,
-        expected_class_count=expected_class_count,
-    )
-
-    return train_dir
-
-
-def get_validation_dataset_dir(settings: Settings) -> pathlib.Path:
-    dataset_settings = settings["datasets"]
-
-    shape = get_dataset_input_shape(settings)
-    img_height = shape.height
-    img_width = shape.width
-
-    expected_class_count = get_dataset_class_count(settings)
-
-    partitions_dir = pathlib.Path(dataset_settings["partitions_dir"])
-    validation_dir = partitions_dir / "validation"
-
-    expected_num_instances = dataset_settings["validation_instances"]
-
-    _validate_dataset_dir(
-        validation_dir,
-        img_height=img_height,
-        img_width=img_width,
-        expected_num_instances=expected_num_instances,
-        expected_class_count=expected_class_count,
-    )
-
-    return validation_dir
-
-
-def get_dataset_input_shape(settings: Settings) -> gl.Shape:
-    return gl.Shape(
-        height=settings["datasets"]["image_height"],
-        width=settings["datasets"]["image_width"],
-        depth=settings["datasets"]["image_depth"],
-    )
-
-
-def get_batch_size(settings: Settings) -> int:
-    value = settings["fitness"]["batch_size"]
-    assert isinstance(value, int)
-    return value
-
-
-def get_max_epochs(settings: Settings) -> int:
-    value = settings["fitness"]["epochs"]
-    assert isinstance(value, int)
-    return value
-
-
-def get_dataset_class_count(settings: Settings) -> int:
-    value = settings["datasets"]["class_count"]
-    assert isinstance(value, int)
-    return value
-
-
-def get_fitness_metric(settings: Settings) -> cf.ValidationAccuracy:
-    return cf.ValidationAccuracy(
-        train_directory=get_train_dataset_dir(settings),
-        validation_directory=get_validation_dataset_dir(settings),
-        input_shape=get_dataset_input_shape(settings),
-        batch_size=get_batch_size(settings),
-        max_epochs=get_max_epochs(settings),
-        class_count=get_dataset_class_count(settings),
-    )
-
-
-def get_evolutionary_fitness_evaluation_params(
-    settings: Settings,
-) -> cf.FitnessEvaluationParameters:
-    final_train_settings = settings["final_train"]
-    batch_size = int(final_train_settings["batch_size"])
-    max_epochs = int(final_train_settings["epochs"])
-    test_dir = pathlib.Path(final_train_settings["test_dir"])
-
-    metric = cf.TestAccuracy(
-        train_directory=get_train_dataset_dir(settings),
-        validation_directory=get_validation_dataset_dir(settings),
-        test_dir=test_dir,
-        batch_size=batch_size,
-        max_epochs=max_epochs,
-        input_shape=get_dataset_input_shape(settings),
-        class_count=get_dataset_class_count(settings),
-    )
-
-    return cf.FitnessEvaluationParameters(
-        metric=metric,
-        grammar=get_grammar(settings),
-    )
-
-
-def get_final_performance_evaluation_params(
-    settings: Settings,
-) -> cf.FitnessEvaluationParameters:
-    return cf.FitnessEvaluationParameters(
-        get_fitness_metric(settings),
-        get_grammar(settings),
-    )
-
-
-def get_nr_of_mutants_to_create_per_generation(settings: Settings) -> int:
-    value = settings["mutation"]["mutants_per_generation"]
-    assert isinstance(value, int)
-    return value
-
-
-def get_max_mutation_failures_per_generation(settings: Settings) -> int:
-    value = settings["mutation"]["max_failures_per_generation"]
-    assert isinstance(value, int)
-    return value
-
-
-def get_mutation_params(
-    settings: Settings,
-) -> gge.population_mutation.PopulationMutationParameters:
-    return gge.population_mutation.PopulationMutationParameters(
-        mutants_to_generate=get_nr_of_mutants_to_create_per_generation(settings),
-        max_failures=get_max_mutation_failures_per_generation(settings),
-        grammar=get_grammar(settings),
-    )
-
-
-def get_rng_seed(settings: Settings) -> int:
-    value = settings["experiment"]["rng_seed"]
-    assert isinstance(value, int)
-    return value
-
-
-def get_initial_population_size(settings: Settings) -> int:
-    value = settings["initialization"]["population_size"]
-    assert isinstance(value, int)
-    return value
-
-
-def get_initial_population_max_network_depth(settings: Settings) -> int:
-    value = settings["initialization"]["max_network_depth"]
-    assert isinstance(value, int)
-    return value
-
-
-def get_initial_population_max_wide_layers(settings: Settings) -> int:
-    value = settings["initialization"]["max_wide_layers"]
-    assert isinstance(value, int)
-    return value
-
-
-def get_initial_population_wide_layer_threshold(settings: Settings) -> int:
-    value = settings["initialization"]["wide_layer_threshold"]
-    assert isinstance(value, int)
-    return value
-
-
-def get_initial_population_max_network_params(settings: Settings) -> int:
-    value = settings["initialization"]["max_network_params"]
-    assert isinstance(value, int)
-    return value
-
-
-def get_initialization_individual_filter(
-    settings: Settings,
-) -> gge_init.IndividualFilter:
-    return gge_init.IndividualFilter(
-        max_network_depth=get_initial_population_max_network_depth(settings),
-        max_wide_layers=get_initial_population_max_wide_layers(settings),
-        max_layer_width=get_initial_population_wide_layer_threshold(settings),
-        max_network_params=get_initial_population_max_network_params(settings),
-    )
-
-
-def _validate_dataset_dir(
+def validate_dataset_dir(
     path: pathlib.Path,
     img_height: int,
     img_width: int,

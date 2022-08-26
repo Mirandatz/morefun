@@ -23,13 +23,13 @@ class Individual:
 class IndividualFilter:
     max_network_depth: int
     max_wide_layers: int
-    max_layer_width: int
+    wide_layer_threshold: int
     max_network_params: int
 
     def __attrs_post_init__(self) -> None:
         assert self.max_network_depth >= 1
         assert self.max_wide_layers >= 0
-        assert self.max_layer_width >= 1
+        assert self.wide_layer_threshold >= 1
         assert self.max_network_params >= 1
 
 
@@ -126,7 +126,7 @@ def should_consider_for_population(
             is_network_too_wide(
                 ind,
                 max_wide_layers=filter_params.max_wide_layers,
-                max_layer_width=filter_params.max_layer_width,
+                max_layer_width=filter_params.wide_layer_threshold,
             ),
             is_network_overparameterized(
                 ind,
