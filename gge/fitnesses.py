@@ -9,6 +9,7 @@ import typing
 
 import attrs
 import tensorflow as tf
+import typeguard
 from loguru import logger
 
 import gge.composite_genotypes as cg
@@ -116,7 +117,7 @@ def get_train_dataset(
         )
 
 
-def get_non_train_dataset(
+def non_train_dataset(
     input_shape: gl.Shape,
     batch_size: int,
     directory: pathlib.Path,
@@ -168,7 +169,7 @@ class ValidationAccuracy:
             directory=self.train_directory,
         )
 
-        validation = get_non_train_dataset(
+        validation = non_train_dataset(
             self.input_shape, self.batch_size, self.validation_directory
         )
 
@@ -235,12 +236,10 @@ class TestAccuracy:
         train = get_train_dataset(
             self.input_shape, self.batch_size, self.train_directory
         )
-        validation = get_non_train_dataset(
+        validation = non_train_dataset(
             self.input_shape, self.batch_size, self.validation_directory
         )
-        test = get_non_train_dataset(
-            self.input_shape, self.batch_size, self.test_directory
-        )
+        test = non_train_dataset(self.input_shape, self.batch_size, self.test_directory)
         model = make_classification_model(
             phenotype,
             self.input_shape,
@@ -345,7 +344,7 @@ def evaluate(
 T = typing.TypeVar("T")
 
 
-def get_effective_fitness(evaluation_result: FitnessEvaluationResult) -> float:
+def effective_fitness(evaluation_result: FitnessEvaluationResult) -> float:
     """
     If `evaluation_result` is a `SuccessfulEvaluationResult`, returns its `fitness`;
     if it is as `FailedEvaluationResult`, returns negative infinity.
@@ -384,3 +383,110 @@ def select_fittest(
     )
 
     return best_to_worst[:fittest_count]
+
+
+@attrs.frozen(cache_hash=True, slots=True)
+class ModelTrainingParameters:
+    input_shape: gl.Shape
+    batch_size: int
+    max_epochs: int
+    train_dir: pathlib.Path
+    validation_dir: pathlib.Path
+    early_stop_patience: int
+
+    def __attrs_post_init__(self) -> None:
+        assert self.batch_size >= 1, self.batch_size
+        assert self.max_epochs >= 1, self.max_epochs
+        assert self.early_stop_patience >= 0
+        assert self.train_dir.is_dir()
+        assert self.validation_dir.is_dir()
+
+        if self.train_dir == self.validation_dir:
+            logger.warning("train_directory == validation_directory")
+
+
+@typeguard.typechecked()
+@attrs.frozen(cache_hash=True, slots=True)
+class TrainingHistory:
+    train_losses: tuple[float, ...]
+    train_accuracies: tuple[float, ...]
+    val_losses: tuple[float, ...]
+    val_accuracies: tuple[float, ...]
+
+    def __attrs_post_init__(self) -> None:
+        num_entries = len(self.train_losses)
+
+        assert num_entries > 0
+        assert len(self.train_accuracies) == num_entries
+        assert len(self.val_losses) == num_entries
+        assert len(self.val_accuracies) == num_entries
+
+    @staticmethod
+    def from_keras_history(history: dict[str, list[float]]) -> "TrainingHistory":
+        assert history.keys() == {"loss", "accuracy", "val_loss", "val_accuracy"}
+
+        return TrainingHistory(
+            train_losses=tuple(history["loss"]),
+            train_accuracies=tuple(history["accuracy"]),
+            val_losses=tuple(history["val_loss"]),
+            val_accuracies=tuple(history["val_accuracy"]),
+        )
+
+
+def train_model(
+    model: tf.keras.Model,
+    input_shape: gl.Shape,
+    batch_size: int,
+    max_epochs: int,
+    early_stop_patience: int,
+    train_dir: pathlib.Path,
+    validation_dir: pathlib.Path,
+) -> TrainingHistory:
+    logger.info("starting model training")
+
+    train = get_train_dataset(
+        input_shape,
+        batch_size,
+        train_dir,
+    )
+
+    validation = non_train_dataset(
+        input_shape,
+        batch_size,
+        validation_dir,
+    )
+
+    early_stop = tf.keras.callbacks.EarlyStopping(
+        patience=early_stop_patience,
+        restore_best_weights=True,
+    )
+
+    with redirection.discard_stderr_and_stdout():
+        fitting_result = model.fit(
+            train,
+            epochs=max_epochs,
+            validation_data=validation,
+            verbose=0,
+            callbacks=[early_stop],
+        )
+        keras_history = fitting_result.history
+        assert isinstance(keras_history, dict)
+
+    logger.info("finished model training")
+
+    return TrainingHistory.from_keras_history(keras_history)
+
+
+def compute_accuracy(
+    model: tf.keras.Model,
+    input_shape: gl.Shape,
+    batch_size: int,
+    dataset_dir: pathlib.Path,
+) -> float:
+    assert batch_size >= 1
+
+    dataset = non_train_dataset(input_shape, batch_size, dataset_dir)
+
+    loss, accuracy = model.evaluate(dataset)
+    assert isinstance(accuracy, float)
+    return accuracy

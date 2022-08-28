@@ -168,7 +168,7 @@ class DatasetSettings:
         )
 
     @functools.cache
-    def get_train_dataset_dir(self) -> pathlib.Path:
+    def get_train_dir(self) -> pathlib.Path:
         train_dir = self.partitions_dir / "train"
 
         validate_dataset_dir(
@@ -182,7 +182,7 @@ class DatasetSettings:
         return train_dir
 
     @functools.cache
-    def get_validation_dataset_dir(self) -> pathlib.Path:
+    def get_validation_dir(self) -> pathlib.Path:
         validation_dir = self.partitions_dir / "validation"
 
         validate_dataset_dir(
@@ -196,7 +196,7 @@ class DatasetSettings:
         return validation_dir
 
     @functools.cache
-    def test_dataset_dir(self) -> pathlib.Path:
+    def get_test_dir(self) -> pathlib.Path:
         test_dir = self.partitions_dir / "test"
 
         validate_dataset_dir(
@@ -228,16 +228,16 @@ class EvolutionSettings:
 @attrs.frozen
 class FinalTrainSettings:
     batch_size: int
-    epochs: int
+    max_epochs: int
     early_stop_patience: int
 
     def __attrs_post_init__(self) -> None:
         assert isinstance(self.batch_size, int)
-        assert isinstance(self.epochs, int)
+        assert isinstance(self.max_epochs, int)
         assert isinstance(self.early_stop_patience, int)
 
         assert self.batch_size >= 1
-        assert self.epochs >= 1
+        assert self.max_epochs >= 1
         assert self.early_stop_patience >= 0
 
     @staticmethod
@@ -298,8 +298,8 @@ def make_fitness_evaluation_params(
     grammar: gr.Grammar,
 ) -> gf.FitnessEvaluationParameters:
     val_acc = gf.ValidationAccuracy(
-        train_directory=dataset.get_train_dataset_dir(),
-        validation_directory=dataset.get_validation_dataset_dir(),
+        train_directory=dataset.get_train_dir(),
+        validation_directory=dataset.get_validation_dir(),
         input_shape=dataset.input_shape,
         batch_size=fitness.batch_size,
         max_epochs=fitness.max_epochs,

@@ -29,7 +29,6 @@ def create_and_evaluate_initial_population(
     settings_path: pathlib.Path = SETTINGS_OPTION,
 ) -> None:
     settings = gset.load_gge_settings(settings_path)
-
     gset.configure_logger(settings.output)
 
     rng_seed = settings.experiment.rng_seed
@@ -77,6 +76,7 @@ def evolutionary_loop(
     generations: int = typer.Option(..., "--generations", min=1),
 ) -> None:
     settings = gset.load_gge_settings(settings_path)
+    gset.configure_logger(settings.output)
 
     latest_gen_output = gge.persistence.load_latest_generation_output(
         settings.output.directory
@@ -111,18 +111,42 @@ def evolutionary_loop(
 def final_train(
     settings_path: pathlib.Path = SETTINGS_OPTION,
 ) -> None:
-    raise NotImplementedError()
-    # settings = gset.load_settings_and_configure_logger(settings_path)
+    settings = gset.load_gge_settings(settings_path)
+    gset.configure_logger(settings.output)
 
-    # base_output_dir = gset.get_base_output_dir(settings)
-    # latest_gen_output = gge.persistence.load_latest_generation_output(base_output_dir)
+    latest_gen_output = gge.persistence.load_latest_generation_output(
+        settings.output.directory
+    )
 
-    # best_of_the_best = max(
-    #     latest_gen_output.fittest,
-    #     key=lambda fer: gf.get_effective_fitness(fer),
-    # )
+    fittest_fer = max(
+        latest_gen_output.fittest, key=lambda fer: gf.effective_fitness(fer)
+    )
+    assert isinstance(fittest_fer, gf.SuccessfulEvaluationResult)
 
-    # final_train_fitness_params = gset.get_final_performance_evaluation_params(settings)
+    phenotype = gge.phenotypes.translate(fittest_fer.genotype, settings.grammar)
+
+    model = gf.make_classification_model(
+        phenotype,
+        input_shape=settings.dataset.input_shape,
+        class_count=settings.dataset.class_count,
+    )
+
+    gf.train_model(
+        model,
+        input_shape=settings.dataset.input_shape,
+        batch_size=settings.final_train.batch_size,
+        max_epochs=settings.final_train.max_epochs,
+        early_stop_patience=settings.final_train.early_stop_patience,
+        train_dir=settings.dataset.get_train_dir(),
+        validation_dir=settings.dataset.get_validation_dir(),
+    )
+
+    gf.compute_accuracy(
+        model,
+        input_shape=settings.dataset.input_shape,
+        batch_size=settings.final_train.batch_size,
+        dataset_dir=settings.dataset.get_test_dir(),
+    )
 
 
 if __name__ == "__main__":

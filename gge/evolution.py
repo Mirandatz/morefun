@@ -45,7 +45,7 @@ def run_single_generation(
 
     fittest = cf.select_fittest(
         next_gen_candidates,
-        metric=cf.get_effective_fitness,
+        metric=cf.effective_fitness,
         fittest_count=len(population),
     )
 
