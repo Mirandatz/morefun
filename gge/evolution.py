@@ -2,7 +2,7 @@ import pathlib
 
 from loguru import logger
 
-import gge.fitnesses as cf
+import gge.fitnesses as gf
 import gge.novelty as novel
 import gge.persistence
 import gge.population_mutation as gm
@@ -10,12 +10,12 @@ import gge.randomness as rand
 
 
 def run_single_generation(
-    population: list[cf.FitnessEvaluationResult],
+    population: list[gf.FitnessEvaluationResult],
     mut_params: gm.PopulationMutationParameters,
-    fit_params: cf.FitnessEvaluationParameters,
+    fit_params: gf.FitnessEvaluationParameters,
     rng: rand.RNG,
     novelty_tracker: novel.NoveltyTracker,
-) -> list[cf.FitnessEvaluationResult] | None:
+) -> list[gf.FitnessEvaluationResult] | None:
     """
     Runs a single generation of the evolutionary loop and
     returns the fittest individuals genereated.
@@ -40,12 +40,12 @@ def run_single_generation(
     if mutants is None:
         return None
 
-    evaluated_mutants = [cf.evaluate(m, fit_params) for m in mutants]
+    evaluated_mutants = [gf.evaluate(m, fit_params) for m in mutants]
     next_gen_candidates = population + evaluated_mutants
 
-    fittest = cf.select_fittest(
+    fittest = gf.select_fittest(
         next_gen_candidates,
-        metric=cf.effective_fitness,
+        metric=gf.effective_fitness,
         fittest_count=len(population),
     )
 
@@ -55,9 +55,9 @@ def run_single_generation(
 def run_evolutionary_loop(
     starting_generation_number: int,
     number_of_generations_to_run: int,
-    initial_population: list[cf.FitnessEvaluationResult],
+    initial_population: list[gf.FitnessEvaluationResult],
     mutation_params: gm.PopulationMutationParameters,
-    fitness_params: cf.FitnessEvaluationParameters,
+    fitness_params: gf.FitnessEvaluationParameters,
     novelty_tracker: novel.NoveltyTracker,
     rng: rand.RNG,
     output_dir: pathlib.Path,
@@ -91,7 +91,7 @@ def run_evolutionary_loop(
         else:
             population = maybe_population
 
-        gge.persistence.save_generation_output(
+        gge.persistence.save_generational_artifacts(
             generation_number=gen_nr,
             fittest=population,
             rng=rng,

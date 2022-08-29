@@ -168,7 +168,7 @@ class DatasetSettings:
         )
 
     @functools.cache
-    def get_train_dir(self) -> pathlib.Path:
+    def get_and_check_train_dir(self) -> pathlib.Path:
         train_dir = self.partitions_dir / "train"
 
         validate_dataset_dir(
@@ -182,7 +182,7 @@ class DatasetSettings:
         return train_dir
 
     @functools.cache
-    def get_validation_dir(self) -> pathlib.Path:
+    def get_and_check_validation_dir(self) -> pathlib.Path:
         validation_dir = self.partitions_dir / "validation"
 
         validate_dataset_dir(
@@ -196,7 +196,7 @@ class DatasetSettings:
         return validation_dir
 
     @functools.cache
-    def get_test_dir(self) -> pathlib.Path:
+    def get_and_check_test_dir(self) -> pathlib.Path:
         test_dir = self.partitions_dir / "test"
 
         validate_dataset_dir(
@@ -227,6 +227,7 @@ class EvolutionSettings:
 
 @attrs.frozen
 class FinalTrainSettings:
+    train_k_fittest: int
     batch_size: int
     max_epochs: int
     early_stop_patience: int
@@ -242,6 +243,7 @@ class FinalTrainSettings:
 
     @staticmethod
     def from_yaml(values: YamlDict) -> "FinalTrainSettings":
+
         return FinalTrainSettings(**values)
 
 
@@ -298,8 +300,8 @@ def make_fitness_evaluation_params(
     grammar: gr.Grammar,
 ) -> gf.FitnessEvaluationParameters:
     val_acc = gf.ValidationAccuracy(
-        train_directory=dataset.get_train_dir(),
-        validation_directory=dataset.get_validation_dir(),
+        train_directory=dataset.get_and_check_train_dir(),
+        validation_directory=dataset.get_and_check_validation_dir(),
         input_shape=dataset.input_shape,
         batch_size=fitness.batch_size,
         max_epochs=fitness.max_epochs,

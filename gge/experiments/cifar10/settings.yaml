@@ -30,12 +30,13 @@ evolution:
 
   fitness_estimation:
     batch_size: 512
-    epochs: 20
+    max_epochs: 20
     early_stop_patience: 20
 
 final_train:
+  train_k_fittest: 1
   batch_size: 512
-  epochs: 2000
+  max_epochs: 2000
   early_stop_patience: 20
 
 grammar: |

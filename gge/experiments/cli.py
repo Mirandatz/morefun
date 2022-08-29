@@ -1,7 +1,9 @@
+import heapq
 import pathlib
 
 import typer
 
+import gge.composite_genotypes as cg
 import gge.evolution
 import gge.experiments.create_initial_population_genotypes as gge_init
 import gge.experiments.settings as gset
@@ -61,7 +63,7 @@ def create_and_evaluate_initial_population(
     )
 
     # generations are 0-indexed, so first gen == 0
-    gge.persistence.save_generation_output(
+    gge.persistence.save_generational_artifacts(
         generation_number=0,
         fittest=fitness_evaluation_results,
         novelty_tracker=novelty_tracker,
@@ -78,7 +80,7 @@ def evolutionary_loop(
     settings = gset.load_gge_settings(settings_path)
     gset.configure_logger(settings.output)
 
-    latest_gen_output = gge.persistence.load_latest_generation_output(
+    latest_gen_output = gge.persistence.load_latest_generational_artifacts(
         settings.output.directory
     )
 
@@ -107,6 +109,54 @@ def evolutionary_loop(
     )
 
 
+def _final_train_single_genotype(
+    genotype: cg.CompositeGenotype,
+    settings: gset.GgeSettings,
+) -> None:
+    phenotype = gge.phenotypes.translate(genotype, settings.grammar)
+    model = gf.make_classification_model(
+        phenotype,
+        input_shape=settings.dataset.input_shape,
+        class_count=settings.dataset.class_count,
+    )
+
+    training_history = gf.train_model(
+        model,
+        input_shape=settings.dataset.input_shape,
+        batch_size=settings.final_train.batch_size,
+        max_epochs=settings.final_train.max_epochs,
+        early_stop_patience=settings.final_train.early_stop_patience,
+        train_dir=settings.dataset.get_and_check_train_dir(),
+        validation_dir=settings.dataset.get_and_check_validation_dir(),
+    )
+
+    gge.persistence.save_genotype(
+        genotype,
+        gge.persistence.get_genotype_path(
+            genotype,
+            settings.output.directory,
+        ),
+    )
+
+    genotype_uuid_hex = genotype.unique_id.hex
+
+    gge.persistence.save_and_zip_tf_model(
+        model,
+        gge.persistence.get_model_path(
+            genotype_uuid_hex,
+            settings.output.directory,
+        ),
+    )
+
+    gge.persistence.save_training_history(
+        training_history,
+        gge.persistence.get_training_history_path(
+            genotype_uuid_hex,
+            settings.output.directory,
+        ),
+    )
+
+
 @app.command(name="final-train")
 def final_train(
     settings_path: pathlib.Path = SETTINGS_OPTION,
@@ -114,39 +164,22 @@ def final_train(
     settings = gset.load_gge_settings(settings_path)
     gset.configure_logger(settings.output)
 
-    latest_gen_output = gge.persistence.load_latest_generation_output(
+    latest_gen_output = gge.persistence.load_latest_generational_artifacts(
         settings.output.directory
     )
 
-    fittest_fer = max(
-        latest_gen_output.fittest, key=lambda fer: gf.effective_fitness(fer)
-    )
-    assert isinstance(fittest_fer, gf.SuccessfulEvaluationResult)
-
-    phenotype = gge.phenotypes.translate(fittest_fer.genotype, settings.grammar)
-
-    model = gf.make_classification_model(
-        phenotype,
-        input_shape=settings.dataset.input_shape,
-        class_count=settings.dataset.class_count,
+    fittest = heapq.nlargest(
+        n=settings.final_train.train_k_fittest,
+        iterable=latest_gen_output.fittest,
+        key=lambda fer: gf.effective_fitness(fer),
     )
 
-    gf.train_model(
-        model,
-        input_shape=settings.dataset.input_shape,
-        batch_size=settings.final_train.batch_size,
-        max_epochs=settings.final_train.max_epochs,
-        early_stop_patience=settings.final_train.early_stop_patience,
-        train_dir=settings.dataset.get_train_dir(),
-        validation_dir=settings.dataset.get_validation_dir(),
-    )
+    assert all(isinstance(fer, gf.SuccessfulEvaluationResult) for fer in fittest)
 
-    gf.compute_accuracy(
-        model,
-        input_shape=settings.dataset.input_shape,
-        batch_size=settings.final_train.batch_size,
-        dataset_dir=settings.dataset.get_test_dir(),
-    )
+    genotypes = [fer.genotype for fer in fittest]
+
+    for genotype in genotypes:
+        _final_train_single_genotype(genotype, settings)
 
 
 if __name__ == "__main__":
