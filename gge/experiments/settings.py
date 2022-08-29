@@ -12,8 +12,7 @@ import gge.experiments.create_initial_population_genotypes as gge_init
 import gge.fitnesses as gf
 import gge.grammars as gr
 import gge.layers as gl
-import gge.population_mutation
-import gge.population_mutation as gm
+import gge.mutations as gm
 import gge.randomness as rand
 import gge.redirection
 

@@ -3,9 +3,9 @@ import pathlib
 from loguru import logger
 
 import gge.fitnesses as gf
+import gge.mutations as gm
 import gge.novelty as novel
 import gge.persistence
-import gge.population_mutation as gm
 import gge.randomness as rand
 
 
