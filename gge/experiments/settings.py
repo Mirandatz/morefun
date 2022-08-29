@@ -189,7 +189,7 @@ class DatasetSettings:
             validation_dir,
             img_height=self.image_height,
             img_width=self.image_width,
-            expected_num_instances=self.train_instances,
+            expected_num_instances=self.validation_instances,
             expected_class_count=self.class_count,
         )
 
@@ -203,7 +203,7 @@ class DatasetSettings:
             test_dir,
             img_height=self.image_height,
             img_width=self.image_width,
-            expected_num_instances=self.train_instances,
+            expected_num_instances=self.test_instances,
             expected_class_count=self.class_count,
         )
 
