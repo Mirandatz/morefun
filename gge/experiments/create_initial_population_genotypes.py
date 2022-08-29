@@ -1,12 +1,8 @@
 import multiprocessing as mp
-import pathlib
-import pickle
-import sys
 import typing
 
 import attrs
 import tensorflow as tf
-import typer
 from loguru import logger
 
 import gge.composite_genotypes as cg
@@ -15,7 +11,6 @@ import gge.layers as gl
 import gge.novelty as novel
 import gge.phenotypes as pheno
 import gge.randomness as rand
-import gge.startup_settings as gge_settings
 
 
 @attrs.frozen
@@ -28,23 +23,14 @@ class Individual:
 class IndividualFilter:
     max_network_depth: int
     max_wide_layers: int
-    max_layer_width: int
+    wide_layer_threshold: int
     max_network_params: int
 
     def __attrs_post_init__(self) -> None:
         assert self.max_network_depth >= 1
         assert self.max_wide_layers >= 0
-        assert self.max_layer_width >= 1
+        assert self.wide_layer_threshold >= 1
         assert self.max_network_params >= 1
-
-
-def configure_logger(log_level: str) -> None:
-    logger.remove()
-    logger.add(
-        sink=sys.stderr,
-        level=log_level,
-        enqueue=True,
-    )
 
 
 def is_network_too_deep(
@@ -140,7 +126,7 @@ def should_consider_for_population(
             is_network_too_wide(
                 ind,
                 max_wide_layers=filter_params.max_wide_layers,
-                max_layer_width=filter_params.max_layer_width,
+                max_layer_width=filter_params.wide_layer_threshold,
             ),
             is_network_overparameterized(
                 ind,
@@ -269,42 +255,3 @@ def create_initial_population(
         p.kill()
 
     return initial_population
-
-
-def save_population(population: list[Individual], output_dir: pathlib.Path) -> None:
-    output_dir.mkdir(parents=True, exist_ok=True)
-    genotypes = (ind.genotype for ind in population)
-    for geno in genotypes:
-        path = output_dir / f"{geno.unique_id.hex}.genotype"
-        path.write_bytes(pickle.dumps(obj=geno, protocol=pickle.HIGHEST_PROTOCOL))
-
-
-def main(
-    grammar_path: pathlib.Path = gge_settings.GRAMMAR_PATH,
-    output_dir: pathlib.Path = gge_settings.OUTPUT_DIR,
-    log_dir: pathlib.Path = gge_settings.LOG_DIR,
-    log_level: str = gge_settings.LOG_LEVEL,
-    rng_seed: int = gge_settings.RNG_SEED,
-    pop_size: int = typer.Option(..., "-s", "--population-size", min=1),
-    max_network_depth: int = typer.Option(..., "--max-depth", min=1),
-    max_wide_layers: int = typer.Option(..., "--max-wide-layers", min=1),
-    max_layer_width: int = typer.Option(..., "--max-layer-width", min=1),
-    max_network_params: int = typer.Option(..., "--max-network-params", min=1),
-) -> None:
-    gge_settings.configure_logger(log_dir, log_level)
-    grammar = gr.Grammar(grammar_path.read_text())
-
-    filter = IndividualFilter(
-        max_network_depth=max_network_depth,
-        max_wide_layers=max_wide_layers,
-        max_layer_width=max_layer_width,
-        max_network_params=max_network_params,
-    )
-
-    population = create_initial_population(pop_size, grammar, filter, rng_seed)
-
-    save_population(population, output_dir)
-
-
-if __name__ == "__main__":
-    typer.run(main)

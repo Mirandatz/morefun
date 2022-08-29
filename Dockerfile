@@ -32,21 +32,19 @@ ENV PATH $PYENV_ROOT/shims:$PYENV_ROOT/bin:$PATH
 SHELL ["/bin/bash", "-c"]
 RUN curl https://pyenv.run | bash
 
-# compile python 3.10.4
-RUN CONFIGURE_OPTS="--enable-optimizations --with-lto" pyenv install 3.10.4
-RUN pyenv global 3.10.4
+# compile python 3.10.6
+RUN pyenv update && CONFIGURE_OPTS="--enable-optimizations --with-lto" pyenv install 3.10.6
+RUN pyenv global 3.10.6
 
 # create project dir and change its owner
 USER root
-RUN mkdir /gge && chown -R $UID:$GID /gge
+RUN mkdir /venv && chown -R $UID:$GID /venv
 USER $UNAME
 
 # install requirements
-ENV VIRTUAL_ENV=/gge/venv
-ENV PATH="$VIRTUAL_ENV/bin:$PATH"
-RUN python -m venv $VIRTUAL_ENV
-COPY ./requirements /gge/requirements
-RUN pip install -r /gge/requirements/dev.txt --no-cache-dir
+RUN python -m venv /venv
+COPY ./requirements /tmp/requirements
+RUN source /venv/bin/activate && pip install -r /tmp/requirements/dev.txt --no-cache-dir
 
 # silence tensorflow
 ENV TF_CPP_MIN_LOG_LEVEL=1

@@ -9,6 +9,7 @@ import typing
 
 import attrs
 import tensorflow as tf
+import typeguard
 from loguru import logger
 
 import gge.composite_genotypes as cg
@@ -84,61 +85,103 @@ def load_dataset_and_rescale(
     return ds.map(lambda d, t: (rescaling_layer(d, training=True), t))
 
 
-@attrs.frozen
-class ValidationAccuracy:
-    train_directory: pathlib.Path
-    validation_directory: pathlib.Path
-    input_shape: gl.Shape
-    batch_size: int
-    max_epochs: int
-    class_count: int
+def get_train_dataset(
+    input_shape: gl.Shape,
+    batch_size: int,
+    directory: pathlib.Path,
+) -> tf.data.Dataset:
+    """
+    Returns a `tf.data.Dataset` instance with images reshaped to match `input_shape`,
+    organized in batches with size `batch_size`.
+    The instances are reshuffled after every epoch.
+    """
 
-    def __attrs_post_init__(self) -> None:
-        assert self.batch_size > 0, self.batch_size
-        assert self.max_epochs > 0, self.max_epochs
-        assert self.class_count > 1, self.class_count
-        assert self.train_directory.is_dir()
-        assert self.validation_directory.is_dir()
+    assert batch_size >= 1
+    assert directory.is_dir()
 
-    def get_train_dataset(self) -> tf.data.Dataset:
-        with redirection.discard_stderr_and_stdout():
-            train = load_dataset_and_rescale(
-                directory=self.train_directory,
-                input_shape=self.input_shape,
-            )
+    with redirection.discard_stderr_and_stdout():
+        train = load_dataset_and_rescale(
+            directory=directory,
+            input_shape=input_shape,
+        )
 
         return (
             train.cache()
             .shuffle(
                 buffer_size=train.cardinality().numpy(),
-                seed=rand.get_rng_seed(),
+                seed=rand.get_fixed_seed(),
                 reshuffle_each_iteration=True,
             )
-            .batch(self.batch_size, drop_remainder=True)
+            .batch(batch_size, drop_remainder=True)
             .prefetch(tf.data.AUTOTUNE)
         )
 
-    def get_validation_dataset(self) -> tf.data.Dataset:
-        with redirection.discard_stderr_and_stdout():
-            return (
-                load_dataset_and_rescale(
-                    directory=self.validation_directory,
-                    input_shape=self.input_shape,
-                )
-                .cache()
-                .batch(self.batch_size, drop_remainder=False)
-                .prefetch(tf.data.AUTOTUNE)
+
+def non_train_dataset(
+    input_shape: gl.Shape,
+    batch_size: int,
+    directory: pathlib.Path,
+) -> tf.data.Dataset:
+    """
+    Returns a `tf.data.Dataset` instance with images reshaped
+    to match `input_shape` organized in batches with size `batch_size`.
+    """
+
+    with redirection.discard_stderr_and_stdout():
+        return (
+            load_dataset_and_rescale(
+                directory=directory,
+                input_shape=input_shape,
             )
+            .cache()
+            .batch(batch_size, drop_remainder=False)
+            .prefetch(tf.data.AUTOTUNE)
+        )
+
+
+@attrs.frozen
+class ValidationAccuracy:
+    train_directory: pathlib.Path
+    validation_directory: pathlib.Path
+    input_shape: gl.Shape
+    class_count: int
+    batch_size: int
+    max_epochs: int
+    early_stop_patience: int
+
+    def __attrs_post_init__(self) -> None:
+        assert self.batch_size > 0, self.batch_size
+        assert self.max_epochs > 0, self.max_epochs
+        assert self.class_count > 1, self.class_count
+        assert self.early_stop_patience > 0
+        assert self.train_directory.is_dir()
+        assert self.validation_directory.is_dir()
+
+        if self.train_directory == self.validation_directory:
+            logger.warning("train_directory == validation_directory")
 
     def evaluate(self, phenotype: pheno.Phenotype) -> float:
-        logger.debug(f"starting fitness evaluation, phenotype=<{phenotype}>")
+        logger.info(f"starting fitness evaluation, phenotype=<{phenotype}>")
 
-        train = self.get_train_dataset()
-        validation = self.get_validation_dataset()
+        train = get_train_dataset(
+            input_shape=self.input_shape,
+            batch_size=self.batch_size,
+            directory=self.train_directory,
+        )
+
+        validation = non_train_dataset(
+            self.input_shape, self.batch_size, self.validation_directory
+        )
+
         model = make_classification_model(
             phenotype,
             self.input_shape,
             self.class_count,
+        )
+
+        early_stop = tf.keras.callbacks.EarlyStopping(
+            patience=self.early_stop_patience,
+            restore_best_weights=True,
         )
 
         with redirection.discard_stderr_and_stdout():
@@ -147,12 +190,13 @@ class ValidationAccuracy:
                 epochs=self.max_epochs,
                 validation_data=validation,
                 verbose=0,
+                callbacks=[early_stop],
             )
 
         val_acc = max(fitting_result.history["val_accuracy"])
         assert isinstance(val_acc, float)
 
-        logger.debug(
+        logger.info(
             f"finished fitness evaluation, phenotype=<{phenotype}>, accuracy=<{val_acc}>"
         )
 
@@ -160,8 +204,75 @@ class ValidationAccuracy:
 
 
 @attrs.frozen
+class TestAccuracy:
+    train_directory: pathlib.Path
+    validation_directory: pathlib.Path
+    test_directory: pathlib.Path
+    input_shape: gl.Shape
+    class_count: int
+    batch_size: int
+    max_epochs: int
+    early_stop_patience: int
+
+    def __attrs_post_init__(self) -> None:
+        assert self.batch_size > 0, self.batch_size
+        assert self.max_epochs > 0, self.max_epochs
+        assert self.class_count > 1, self.class_count
+        assert self.early_stop_patience >= 0
+        assert self.train_directory.is_dir()
+        assert self.validation_directory.is_dir()
+        assert self.test_directory.is_dir()
+
+        if self.train_directory == self.validation_directory:
+            logger.warning("train_directory == validation_directory")
+        if self.train_directory == self.test_directory:
+            logger.warning("train_directory == test_directory")
+        if self.validation_directory == self.test_directory:
+            logger.warning("validation_directory == test_directory")
+
+    def evaluate(self, phenotype: pheno.Phenotype) -> float:
+        logger.debug(f"starting fitness evaluation, phenotype=<{phenotype}>")
+
+        train = get_train_dataset(
+            self.input_shape, self.batch_size, self.train_directory
+        )
+        validation = non_train_dataset(
+            self.input_shape, self.batch_size, self.validation_directory
+        )
+        test = non_train_dataset(self.input_shape, self.batch_size, self.test_directory)
+        model = make_classification_model(
+            phenotype,
+            self.input_shape,
+            self.class_count,
+        )
+
+        early_stop = tf.keras.callbacks.EarlyStopping(
+            patience=self.early_stop_patience,
+            restore_best_weights=True,
+        )
+
+        with redirection.discard_stderr_and_stdout():
+            model.fit(
+                train,
+                epochs=self.max_epochs,
+                validation_data=validation,
+                verbose=0,
+                callbacks=[early_stop],
+            )
+
+            _, test_acc = model.evaluate(test)
+            assert isinstance(test_acc, float)
+
+        logger.info(
+            f"finished fitness evaluation, phenotype=<{phenotype}>, accuracy=<{test_acc}>"
+        )
+
+        return test_acc
+
+
+@attrs.frozen
 class FitnessEvaluationParameters:
-    metric: ValidationAccuracy
+    metric: ValidationAccuracy | TestAccuracy
     grammar: gr.Grammar
 
 
@@ -233,7 +344,7 @@ def evaluate(
 T = typing.TypeVar("T")
 
 
-def get_effective_fitness(evaluation_result: FitnessEvaluationResult) -> float:
+def effective_fitness(evaluation_result: FitnessEvaluationResult) -> float:
     """
     If `evaluation_result` is a `SuccessfulEvaluationResult`, returns its `fitness`;
     if it is as `FailedEvaluationResult`, returns negative infinity.
@@ -272,3 +383,110 @@ def select_fittest(
     )
 
     return best_to_worst[:fittest_count]
+
+
+@attrs.frozen(cache_hash=True, slots=True)
+class ModelTrainingParameters:
+    input_shape: gl.Shape
+    batch_size: int
+    max_epochs: int
+    train_dir: pathlib.Path
+    validation_dir: pathlib.Path
+    early_stop_patience: int
+
+    def __attrs_post_init__(self) -> None:
+        assert self.batch_size >= 1, self.batch_size
+        assert self.max_epochs >= 1, self.max_epochs
+        assert self.early_stop_patience >= 0
+        assert self.train_dir.is_dir()
+        assert self.validation_dir.is_dir()
+
+        if self.train_dir == self.validation_dir:
+            logger.warning("train_directory == validation_directory")
+
+
+@typeguard.typechecked()
+@attrs.frozen(cache_hash=True, slots=True)
+class TrainingHistory:
+    train_losses: tuple[float, ...]
+    train_accuracies: tuple[float, ...]
+    val_losses: tuple[float, ...]
+    val_accuracies: tuple[float, ...]
+
+    def __attrs_post_init__(self) -> None:
+        num_entries = len(self.train_losses)
+
+        assert num_entries > 0
+        assert len(self.train_accuracies) == num_entries
+        assert len(self.val_losses) == num_entries
+        assert len(self.val_accuracies) == num_entries
+
+    @staticmethod
+    def from_keras_history(history: dict[str, list[float]]) -> "TrainingHistory":
+        assert history.keys() == {"loss", "accuracy", "val_loss", "val_accuracy"}
+
+        return TrainingHistory(
+            train_losses=tuple(history["loss"]),
+            train_accuracies=tuple(history["accuracy"]),
+            val_losses=tuple(history["val_loss"]),
+            val_accuracies=tuple(history["val_accuracy"]),
+        )
+
+
+def train_model(
+    model: tf.keras.Model,
+    input_shape: gl.Shape,
+    batch_size: int,
+    max_epochs: int,
+    early_stop_patience: int,
+    train_dir: pathlib.Path,
+    validation_dir: pathlib.Path,
+) -> TrainingHistory:
+    logger.info("starting model training")
+
+    train = get_train_dataset(
+        input_shape,
+        batch_size,
+        train_dir,
+    )
+
+    validation = non_train_dataset(
+        input_shape,
+        batch_size,
+        validation_dir,
+    )
+
+    early_stop = tf.keras.callbacks.EarlyStopping(
+        patience=early_stop_patience,
+        restore_best_weights=True,
+    )
+
+    with redirection.discard_stderr_and_stdout():
+        fitting_result = model.fit(
+            train,
+            epochs=max_epochs,
+            validation_data=validation,
+            verbose=0,
+            callbacks=[early_stop],
+        )
+        keras_history = fitting_result.history
+        assert isinstance(keras_history, dict)
+
+    logger.info("finished model training")
+
+    return TrainingHistory.from_keras_history(keras_history)
+
+
+def compute_accuracy(
+    model: tf.keras.Model,
+    input_shape: gl.Shape,
+    batch_size: int,
+    dataset_dir: pathlib.Path,
+) -> float:
+    assert batch_size >= 1
+
+    dataset = non_train_dataset(input_shape, batch_size, dataset_dir)
+
+    loss, accuracy = model.evaluate(dataset)
+    assert isinstance(accuracy, float)
+    return accuracy

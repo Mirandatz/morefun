@@ -160,7 +160,7 @@ class BackboneSynthetizer(lgp.LowerGrammarTransformer):
         return gl.RandomFlip(
             name=self._create_layer_name(gl.RandomFlip),
             mode=mode,
-            seed=rand.get_rng_seed(),
+            seed=rand.get_fixed_seed(),
         )
 
     def random_rotation(self, marker: None, factor: float) -> gl.RandomRotation:
@@ -171,7 +171,7 @@ class BackboneSynthetizer(lgp.LowerGrammarTransformer):
         return gl.RandomRotation(
             name=self._create_layer_name(gl.RandomRotation),
             factor=factor,
-            seed=rand.get_rng_seed(),
+            seed=rand.get_fixed_seed(),
         )
 
     def resizing(
