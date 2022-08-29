@@ -2,9 +2,9 @@ import pathlib
 import pickle
 import shutil
 import tempfile
+import typing
 
 import attrs
-import pandas as pd
 import tensorflow as tf
 from loguru import logger
 
@@ -17,6 +17,7 @@ GENERATION_OUTPUT_EXTENSION = ".gen_out"
 TRAINING_HISTORY_EXTENSION = ".train_hist"
 GENOTYPE_EXTENSION = ".genotype"
 MODEL_EXTENSION = ".zipped_tf_model"
+MODEL_EVALUATIONS_EXTENSION = ".csv"
 
 
 @attrs.define
@@ -46,9 +47,16 @@ def get_model_path(genotype_uuid_hex: str, dir: pathlib.Path) -> pathlib.Path:
 
 
 def get_training_history_path(
-    genotype_uuid_hex: str, dir: pathlib.Path
+    genotype_uuid_hex: str,
+    dir: pathlib.Path,
 ) -> pathlib.Path:
     return (dir / genotype_uuid_hex).with_suffix(TRAINING_HISTORY_EXTENSION)
+
+
+def get_models_evaluations_path(
+    dir: pathlib.Path,
+) -> pathlib.Path:
+    return (dir / "models_evaluations").with_suffix(MODEL_EVALUATIONS_EXTENSION)
 
 
 def save_generational_artifacts(
@@ -135,6 +143,14 @@ def load_zipped_tf_model(path: pathlib.Path) -> tf.keras.Model:
         shutil.unpack_archive(filename=path, extract_dir=tmp_dir, format="zip")
 
         return tf.keras.models.load_model(tmp_dir)
+
+
+def load_models(dir: pathlib.Path) -> typing.Iterable[tuple[str, tf.keras.Model]]:
+    model_paths = list(dir.glob(f"*{MODEL_EXTENSION}"))
+    assert len(model_paths) > 0
+
+    for path in model_paths:
+        yield path.stem, load_zipped_tf_model(path)
 
 
 def save_genotype(genotype: cg.CompositeGenotype, path: pathlib.Path) -> None:

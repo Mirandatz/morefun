@@ -1,6 +1,8 @@
 import heapq
 import pathlib
 
+import pandas as pd
+import tensorflow as tf
 import typer
 
 import gge.composite_genotypes as cg
@@ -180,6 +182,67 @@ def final_train(
 
     for genotype in genotypes:
         _final_train_single_genotype(genotype, settings)
+
+
+def _evaluate_model(
+    genotype_uuid_hex: str,
+    model: tf.keras.Model,
+    settings: gset.GgeSettings,
+) -> dict[str, float | int | str]:
+    train_accuracy = model.evaluate(
+        gf.non_train_dataset(
+            settings.dataset.input_shape,
+            settings.final_train.batch_size,
+            settings.dataset.get_and_check_train_dir(),
+        )
+    )
+
+    val_accuracy = model.evaluate(
+        gf.non_train_dataset(
+            settings.dataset.input_shape,
+            settings.final_train.batch_size,
+            settings.dataset.get_and_check_validation_dir(),
+        )
+    )
+
+    test_accuracy = model.evaluate(
+        gf.non_train_dataset(
+            settings.dataset.input_shape,
+            settings.final_train.batch_size,
+            settings.dataset.get_and_check_test_dir(),
+        )
+    )
+
+    num_params: int = model.count_params()
+
+    return {
+        "rng_seed": settings.experiment.rng_seed,
+        "genotype_uuid_hex": genotype_uuid_hex,
+        "train_accuracy": train_accuracy,
+        "validation_accuracy": val_accuracy,
+        "test_accuracy": test_accuracy,
+        "num_params": num_params,
+    }
+
+
+@app.command(name="evaluate-models")
+def evaluate_models(
+    settings_path: pathlib.Path = SETTINGS_OPTION,
+) -> None:
+    settings = gset.load_gge_settings(settings_path)
+    gset.configure_logger(settings.output)
+
+    evaluations = []
+
+    for genotype_uuid_hex, model in gge.persistence.load_models(
+        settings.output.directory
+    ):
+        model_eval = _evaluate_model(genotype_uuid_hex, model, settings)
+        evaluations.append(model_eval)
+
+    df = pd.DataFrame(evaluations)
+    save_path = gge.persistence.get_models_evaluations_path(settings.output.directory)
+    df.to_csv(save_path)
 
 
 if __name__ == "__main__":
