@@ -161,8 +161,6 @@ class ValidationAccuracy:
             logger.warning("train_directory == validation_directory")
 
     def evaluate(self, phenotype: pheno.Phenotype) -> float:
-        logger.info(f"starting fitness evaluation, phenotype=<{phenotype}>")
-
         train = get_train_dataset(
             input_shape=self.input_shape,
             batch_size=self.batch_size,
@@ -195,10 +193,6 @@ class ValidationAccuracy:
 
         val_acc = max(fitting_result.history["val_accuracy"])
         assert isinstance(val_acc, float)
-
-        logger.info(
-            f"finished fitness evaluation, phenotype=<{phenotype}>, accuracy=<{val_acc}>"
-        )
 
         return val_acc
 
@@ -241,7 +235,9 @@ def evaluate(
 
     try:
         fitness = params.metric.evaluate(phenotype)
-        logger.info(f"finished fitness evaluation of genotype=<{genotype}>")
+        logger.info(
+            f"finished fitness evaluation of genotype=<{genotype}>, fitness={fitness}"
+        )
         return SuccessfulEvaluationResult(
             genotype=genotype,
             fitness=fitness,
