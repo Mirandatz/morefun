@@ -22,6 +22,9 @@ class CompositeGenotype:
         assert isinstance(self.backbone_genotype, sge.Genotype)
         assert isinstance(self.connections_genotype, conn.ConnectionsSchema)
 
+    def __str__(self) -> str:
+        return f"Genotype(UUID={self.unique_id.hex})"
+
 
 def create_genotype(
     grammar: gr.Grammar,
