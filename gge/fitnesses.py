@@ -204,75 +204,8 @@ class ValidationAccuracy:
 
 
 @attrs.frozen
-class TestAccuracy:
-    train_directory: pathlib.Path
-    validation_directory: pathlib.Path
-    test_directory: pathlib.Path
-    input_shape: gl.Shape
-    class_count: int
-    batch_size: int
-    max_epochs: int
-    early_stop_patience: int
-
-    def __attrs_post_init__(self) -> None:
-        assert self.batch_size > 0, self.batch_size
-        assert self.max_epochs > 0, self.max_epochs
-        assert self.class_count > 1, self.class_count
-        assert self.early_stop_patience >= 0
-        assert self.train_directory.is_dir()
-        assert self.validation_directory.is_dir()
-        assert self.test_directory.is_dir()
-
-        if self.train_directory == self.validation_directory:
-            logger.warning("train_directory == validation_directory")
-        if self.train_directory == self.test_directory:
-            logger.warning("train_directory == test_directory")
-        if self.validation_directory == self.test_directory:
-            logger.warning("validation_directory == test_directory")
-
-    def evaluate(self, phenotype: pheno.Phenotype) -> float:
-        logger.debug(f"starting fitness evaluation, phenotype=<{phenotype}>")
-
-        train = get_train_dataset(
-            self.input_shape, self.batch_size, self.train_directory
-        )
-        validation = non_train_dataset(
-            self.input_shape, self.batch_size, self.validation_directory
-        )
-        test = non_train_dataset(self.input_shape, self.batch_size, self.test_directory)
-        model = make_classification_model(
-            phenotype,
-            self.input_shape,
-            self.class_count,
-        )
-
-        early_stop = tf.keras.callbacks.EarlyStopping(
-            patience=self.early_stop_patience,
-            restore_best_weights=True,
-        )
-
-        with redirection.discard_stderr_and_stdout():
-            model.fit(
-                train,
-                epochs=self.max_epochs,
-                validation_data=validation,
-                verbose=0,
-                callbacks=[early_stop],
-            )
-
-            _, test_acc = model.evaluate(test)
-            assert isinstance(test_acc, float)
-
-        logger.info(
-            f"finished fitness evaluation, phenotype=<{phenotype}>, accuracy=<{test_acc}>"
-        )
-
-        return test_acc
-
-
-@attrs.frozen
 class FitnessEvaluationParameters:
-    metric: ValidationAccuracy | TestAccuracy
+    metric: ValidationAccuracy
     grammar: gr.Grammar
 
 
