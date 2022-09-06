@@ -48,3 +48,9 @@ RUN source /venv/bin/activate && pip install -r /tmp/requirements/dev.txt --no-c
 
 # silence tensorflow
 ENV TF_CPP_MIN_LOG_LEVEL=1
+
+# enable xla
+ENV TF_XLA_FLAGS="--tf_xla_auto_jit=2"
+
+# be nice with friends and share gpu ram
+ENV TF_FORCE_GPU_ALLOW_GROWTH="true"
