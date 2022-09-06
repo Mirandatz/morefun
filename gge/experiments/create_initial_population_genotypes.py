@@ -12,6 +12,8 @@ import gge.novelty as novel
 import gge.phenotypes as pheno
 import gge.randomness as rand
 
+DEFAULT_WORKER_COUNT = 1 + (mp.cpu_count() // 3)
+
 
 @attrs.frozen
 class Individual:
@@ -47,11 +49,6 @@ def is_network_too_deep(
     num_real_layers = len(learning_layers)
     network_too_deep = num_real_layers > max_depth
 
-    logger.info(
-        f"genotype {ind.genotype} describes a network with {num_real_layers} layers,"
-        f" network considered too deep=<{network_too_deep}>"
-    )
-
     return network_too_deep
 
 
@@ -80,17 +77,10 @@ def is_network_too_wide(
     n_wide_layers = len(wide_layers)
     network_too_wide = n_wide_layers > max_wide_layers
 
-    logger.info(
-        f"genotype {ind.genotype} describes a network with {n_wide_layers}"
-        f" layers with more than {max_layer_width} filters,"
-        f" network considered too wide=<{network_too_wide}>"
-    )
-
     return network_too_wide
 
 
 def is_network_overparameterized(ind: Individual, max_params: int) -> bool:
-
     with tf.device("/device:CPU:0"):
         input_tensor, output_tensor = pheno.make_input_output_tensors(
             ind.phenotype,
@@ -104,11 +94,6 @@ def is_network_overparameterized(ind: Individual, max_params: int) -> bool:
 
         params: int = model.count_params()
         overparameterized = params > max_params
-
-        logger.info(
-            f"genotype {ind.genotype=} describes a network with {params} params,"
-            f" discarded as overparameterize=<{overparameterized}>"
-        )
 
         return overparameterized
 
@@ -166,15 +151,11 @@ def create_individuals(
         ind = Individual(genotype, phenotype)
 
         if should_consider_for_population(ind, filter):
-            logger.info(
-                f"genotype {ind.genotype} passed the individual filter"
-                " and was added to the initial population candidates"
-            )
+            logger.info(f"added {ind.genotype} to the initial population candidates")
             queue.put(ind)
         else:
             logger.info(
-                f"genotype {ind.genotype} dit not pass pass the individual filter"
-                " and was not added to the initial population candidates"
+                f"discarded {ind.genotype} reason=<dit not pass pass the individual filter>"
             )
 
 
@@ -182,13 +163,16 @@ def create_producers(
     queue: "mp.Queue[Individual]",
     grammar: gr.Grammar,
     filter: IndividualFilter,
+    worker_count: int,
     rng_seed: int,
 ) -> list[mp.Process]:
+    assert worker_count >= 1
+
     rng = rand.create_rng(rng_seed)
     first_worker_seed = int(rng.integers(low=0, high=2**30, size=1))
     worker_seeds = range(
         first_worker_seed,
-        first_worker_seed + mp.cpu_count(),
+        first_worker_seed + (worker_count - 1),
     )
 
     return [
@@ -219,16 +203,12 @@ def collect_results(
         ind = queue.get()
 
         if should_add_to_population(ind, tracker):
-            logger.info(
-                f"genotype {ind.genotype} passed the population filter"
-                " and was added to the initial population"
-            )
+            logger.info(f"added genotype {ind.genotype} the initial population")
             results.append(ind)
 
         else:
             logger.info(
-                f"genotype {ind.genotype} dit not pass the population filter"
-                " and was discarded"
+                f"discarded {ind.genotype}, reason=<dit not pass the population filter>"
             )
 
     return results
@@ -239,12 +219,15 @@ def create_initial_population(
     grammar: gr.Grammar,
     filter: IndividualFilter,
     rng_seed: int,
+    worker_count: int = DEFAULT_WORKER_COUNT,
 ) -> list[Individual]:
     assert pop_size > 0
 
     # the value for maxsize was arbitrarily chosen
     queue: mp.Queue[Individual] = mp.Queue(maxsize=8 * mp.cpu_count())
-    producers = create_producers(queue, grammar, filter, rng_seed)
+    producers = create_producers(
+        queue, grammar, filter, worker_count=worker_count, rng_seed=rng_seed
+    )
 
     for p in producers:
         p.start()
