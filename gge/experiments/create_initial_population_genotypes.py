@@ -214,7 +214,7 @@ def collect_results(
     return results
 
 
-def create_initial_population(
+def create_initial_population_multiprocessing(
     pop_size: int,
     grammar: gr.Grammar,
     filter: IndividualFilter,
@@ -238,3 +238,61 @@ def create_initial_population(
         p.kill()
 
     return initial_population
+
+
+def create_initial_population(
+    pop_size: int,
+    grammar: gr.Grammar,
+    filter: IndividualFilter,
+    rng_seed: int,
+) -> list[Individual]:
+    assert pop_size > 0
+
+    rng = rand.create_rng(rng_seed)
+
+    novelty_tracker = novel.NoveltyTracker()
+    population: list[Individual] = []
+
+    while len(population) < pop_size:
+        genotype = cg.create_genotype(grammar, rng)
+        if not novelty_tracker.is_genotype_novel(genotype):
+            logger.info("discarded genotype=<{genotype}>, reason=<known genotype>")
+            continue
+        novelty_tracker.register_genotype(genotype)
+
+        phenotype = pheno.translate(genotype, grammar)
+        if not novelty_tracker.is_phenotype_novel(phenotype):
+            logger.info("discarded genotype=<{genotype}>, reason=<known phenotype>")
+            continue
+        novelty_tracker.register_phenotype(phenotype)
+
+        individual = Individual(genotype, phenotype)
+
+        if is_network_too_deep(
+            individual,
+            max_depth=filter.max_network_depth,
+        ):
+            logger.info(f"discarde genotype=<{genotype}>, reason=<network too deep>")
+            continue
+
+        if is_network_too_wide(
+            individual,
+            max_wide_layers=filter.max_wide_layers,
+            max_layer_width=filter.wide_layer_threshold,
+        ):
+            logger.info(f"discarde genotype=<{genotype}>, reason=<network too wide>")
+            continue
+
+        if is_network_overparameterized(
+            individual,
+            max_params=filter.max_network_params,
+        ):
+            logger.info(
+                f"discarde genotype=<{genotype}>, reason=<network is overparameterized>"
+            )
+            continue
+
+        population.append(individual)
+        logger.info(f"added genotype=<{genotype}> to the population")
+
+    return population
