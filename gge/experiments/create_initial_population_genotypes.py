@@ -272,7 +272,7 @@ def create_initial_population(
             individual,
             max_depth=filter.max_network_depth,
         ):
-            logger.info(f"discarde genotype=<{genotype}>, reason=<network too deep>")
+            logger.info(f"discarded genotype=<{genotype}>, reason=<network too deep>")
             continue
 
         if is_network_too_wide(
@@ -280,7 +280,7 @@ def create_initial_population(
             max_wide_layers=filter.max_wide_layers,
             max_layer_width=filter.wide_layer_threshold,
         ):
-            logger.info(f"discarde genotype=<{genotype}>, reason=<network too wide>")
+            logger.info(f"discarded genotype=<{genotype}>, reason=<network too wide>")
             continue
 
         if is_network_overparameterized(
@@ -288,7 +288,7 @@ def create_initial_population(
             max_params=filter.max_network_params,
         ):
             logger.info(
-                f"discarde genotype=<{genotype}>, reason=<network is overparameterized>"
+                f"discarde genotyped=<{genotype}>, reason=<network is overparameterized>"
             )
             continue
 
