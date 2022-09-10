@@ -8,6 +8,7 @@ pandas
 pillow
 pyarrow
 pydot
+pymoo
 pyyaml
 scipy
 tensorflow==2.8.*
