@@ -61,6 +61,13 @@ def load_dataset_and_rescale(
     directory: pathlib.Path,
     input_shape: gl.Shape,
 ) -> tf.data.Dataset:
+    """
+    Loads an image classification dataset and returns a `tf.data.Dataset` instance.
+
+    Transformations:
+    - resized to match `input_shape`
+    - color values normalized to [0.0, 0.1] interval
+    """
 
     match input_shape.depth:
         case 1:
@@ -85,15 +92,19 @@ def load_dataset_and_rescale(
     return ds.map(lambda d, t: (rescaling_layer(d, training=True), t))
 
 
-def get_train_dataset(
+def load_train_partition(
     input_shape: gl.Shape,
     batch_size: int,
     directory: pathlib.Path,
 ) -> tf.data.Dataset:
     """
-    Returns a `tf.data.Dataset` instance with images reshaped to match `input_shape`,
-    organized in batches with size `batch_size`.
-    The instances are reshuffled after every epoch.
+    Loads an image classification dataset and returns a `tf.data.Dataset` instance.
+
+    Transformations:
+    - resized to match `input_shape`
+    - color values normalized to [0.0, 0.1] interval
+    - batched in `batch_size` batches, with remainder dropped
+    - instances shuffled after each epoch
     """
 
     assert batch_size >= 1
@@ -117,14 +128,18 @@ def get_train_dataset(
         )
 
 
-def non_train_dataset(
+def load_non_train_partition(
     input_shape: gl.Shape,
     batch_size: int,
     directory: pathlib.Path,
 ) -> tf.data.Dataset:
     """
-    Returns a `tf.data.Dataset` instance with images reshaped
-    to match `input_shape` organized in batches with size `batch_size`.
+    Loads an image classification dataset and returns a `tf.data.Dataset` instance.
+
+    Transformations:
+    - resized to match `input_shape`
+    - color values normalized to [0.0, 0.1] interval
+    - batched in `batch_size` batches, with remainder kept
     """
 
     with redirection.discard_stderr_and_stdout():
@@ -161,13 +176,13 @@ class ValidationAccuracy:
             logger.warning("train_directory == validation_directory")
 
     def evaluate(self, phenotype: pheno.Phenotype) -> float:
-        train = get_train_dataset(
+        train = load_train_partition(
             input_shape=self.input_shape,
             batch_size=self.batch_size,
             directory=self.train_directory,
         )
 
-        validation = non_train_dataset(
+        validation = load_non_train_partition(
             self.input_shape, self.batch_size, self.validation_directory
         )
 
@@ -373,13 +388,13 @@ def train_model(
 ) -> TrainingHistory:
     logger.info("starting model training")
 
-    train = get_train_dataset(
+    train = load_train_partition(
         input_shape,
         batch_size,
         train_dir,
     )
 
-    validation = non_train_dataset(
+    validation = load_non_train_partition(
         input_shape,
         batch_size,
         validation_dir,
@@ -414,7 +429,7 @@ def compute_accuracy(
 ) -> float:
     assert batch_size >= 1
 
-    dataset = non_train_dataset(input_shape, batch_size, dataset_dir)
+    dataset = load_non_train_partition(input_shape, batch_size, dataset_dir)
 
     loss, accuracy = model.evaluate(dataset)
     assert isinstance(accuracy, float)

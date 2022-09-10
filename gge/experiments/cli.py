@@ -190,7 +190,7 @@ def _evaluate_model(
     settings: gset.GgeSettings,
 ) -> dict[str, float | int | str]:
     train_accuracy = model.evaluate(
-        gf.non_train_dataset(
+        gf.load_non_train_partition(
             settings.dataset.input_shape,
             settings.final_train.batch_size,
             settings.dataset.get_and_check_train_dir(),
@@ -198,7 +198,7 @@ def _evaluate_model(
     )
 
     val_accuracy = model.evaluate(
-        gf.non_train_dataset(
+        gf.load_non_train_partition(
             settings.dataset.input_shape,
             settings.final_train.batch_size,
             settings.dataset.get_and_check_validation_dir(),
@@ -206,7 +206,7 @@ def _evaluate_model(
     )
 
     test_accuracy = model.evaluate(
-        gf.non_train_dataset(
+        gf.load_non_train_partition(
             settings.dataset.input_shape,
             settings.final_train.batch_size,
             settings.dataset.get_and_check_test_dir(),
