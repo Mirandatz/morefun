@@ -33,6 +33,7 @@ evolution:
     batch_size: 256
     max_epochs: 20
     early_stop_patience: 5
+    metrics: ["accuracy", "number_of_parameters"]
 
 final_train:
   train_k_fittest: 1

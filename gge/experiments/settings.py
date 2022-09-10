@@ -110,16 +110,14 @@ class MutationSettings:
 class FitnessSettings:
     batch_size: int
     max_epochs: int
+    metrics: tuple[typing.Literal["accuracy", "number_of_parameters"], ...]
     early_stop_patience: int
 
     def __attrs_post_init__(self) -> None:
-        assert isinstance(self.batch_size, int)
-        assert isinstance(self.max_epochs, int)
-        assert isinstance(self.early_stop_patience, int)
-
         assert self.batch_size >= 1
         assert self.max_epochs >= 1
         assert self.early_stop_patience >= 0
+        assert len(set(self.metrics)) == len(self.metrics)
 
     @staticmethod
     def from_yaml(values: YamlDict) -> "FitnessSettings":
