@@ -1,4 +1,3 @@
-import heapq
 import pathlib
 
 import pandas as pd
@@ -170,10 +169,9 @@ def final_train(
         settings.output.directory
     )
 
-    fittest = heapq.nlargest(
-        n=settings.final_train.train_k_fittest,
-        iterable=latest_gen_output.fittest,
-        key=lambda fer: gf.effective_fitness(fer),
+    fittest = gf.select_fittest_nsga2(
+        fitness_evaluations=latest_gen_output.fittest,
+        fittest_count=settings.final_train.train_k_fittest,
     )
 
     assert all(isinstance(fer, gf.SuccessfulEvaluationResult) for fer in fittest)

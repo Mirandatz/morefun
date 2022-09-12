@@ -291,22 +291,37 @@ def make_mutation_params(
     )
 
 
+def make_fitness_metric(
+    name: str,
+    fitness: FitnessSettings,
+    dataset: DatasetSettings,
+) -> gf.FitnessMetric:
+    match name:
+        case "validation_accuracy":
+            return gf.ValidationAccuracy(
+                train_directory=dataset.get_and_check_train_dir(),
+                validation_directory=dataset.get_and_check_validation_dir(),
+                input_shape=dataset.input_shape,
+                batch_size=fitness.batch_size,
+                max_epochs=fitness.max_epochs,
+                class_count=dataset.class_count,
+                early_stop_patience=fitness.early_stop_patience,
+            )
+
+        case "number_of_parameters":
+            return gf.NumberOfParameters(dataset.input_shape, dataset.class_count)
+
+        case _:
+            raise ValueError(f"unknown metric name=<{name}>")
+
+
 def make_fitness_evaluation_params(
     dataset: DatasetSettings,
     fitness: FitnessSettings,
     grammar: gr.Grammar,
 ) -> gf.FitnessEvaluationParameters:
-    val_acc = gf.ValidationAccuracy(
-        train_directory=dataset.get_and_check_train_dir(),
-        validation_directory=dataset.get_and_check_validation_dir(),
-        input_shape=dataset.input_shape,
-        batch_size=fitness.batch_size,
-        max_epochs=fitness.max_epochs,
-        class_count=dataset.class_count,
-        early_stop_patience=fitness.early_stop_patience,
-    )
-
-    return gf.FitnessEvaluationParameters(val_acc, grammar)
+    metrics = [make_fitness_metric(name, fitness, dataset) for name in fitness.metrics]
+    return gf.FitnessEvaluationParameters(tuple(metrics), grammar)
 
 
 def load_gge_settings(path: pathlib.Path) -> GgeSettings:

@@ -185,10 +185,6 @@ class FitnessMetric(abc.ABC):
         raise NotImplementedError("this is an abstract method")
 
     @abc.abstractmethod
-    def should_be_maximized(self) -> bool:
-        raise NotImplementedError("this is an abstract method")
-
-    @abc.abstractmethod
     def evaluate(self, phenotype: pheno.Phenotype) -> float:
         """
         Fitnesses must be maximized, so metrics that must be minimized,
