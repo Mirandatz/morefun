@@ -414,7 +414,7 @@ def fitness_evaluations_to_ndarray(
     return np.asarray(effective_fitnesses, dtype=np.float64)
 
 
-def nsga2(
+def argsort_nsga2(
     fitnesses: npt.NDArray[np.float64],
     fittest_count: int,
 ) -> list[int]:
@@ -467,6 +467,16 @@ def nsga2(
     assert len(fittest) == fittest_count
 
     return fittest
+
+
+def select_fittest_nsga2(
+    fitness_evaluations: typing.Iterable[FitnessEvaluationResult],
+    fittest_count: int,
+) -> list[FitnessEvaluationResult]:
+    as_list = list(fitness_evaluations)
+    as_array = fitness_evaluations_to_ndarray(as_list)
+    fittest_indices = argsort_nsga2(as_array, fittest_count)
+    return [as_list[index] for index in fittest_indices]
 
 
 @attrs.frozen(cache_hash=True, slots=True)

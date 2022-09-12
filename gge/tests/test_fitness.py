@@ -80,5 +80,5 @@ def test_nsga2(
     fittest_count: int,
     expected_result: list[int],
 ) -> None:
-    actual = gf.nsga2(data, fittest_count)
+    actual = gf.argsort_nsga2(data, fittest_count)
     assert expected_result == actual

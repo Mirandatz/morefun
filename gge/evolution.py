@@ -42,12 +42,7 @@ def run_single_generation(
 
     evaluated_mutants = [gf.evaluate(m, fit_params) for m in mutants]
     next_gen_candidates = population + evaluated_mutants
-
-    fittest = gf.select_fittest(
-        next_gen_candidates,
-        metric=gf.effective_fitness,
-        fittest_count=len(population),
-    )
+    fittest = gf.select_fittest_nsga2(next_gen_candidates, len(population))
 
     return fittest
 
