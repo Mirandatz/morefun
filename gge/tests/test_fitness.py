@@ -13,8 +13,12 @@ import gge.structured_grammatical_evolution as sge
 
 def test_fitness_evaluations_to_ndarray() -> None:
     grammar = gr.Grammar(
-        """start: aff
-    aff: "maxpool" "pool_size" "2" "stride" "2" """
+        """
+        start     : convblock optim
+        convblock : conv~2
+        conv      : "conv" "filter_count" "1" "kernel_size" "2" "stride" "3"
+        optim     : "sgd" "learning_rate" "0.001" "momentum" "0.1" "nesterov" "false"
+    """
     )
     rng = rand.create_rng(seed=0)
     backbone_genotype = sge.create_genotype(grammar, rng)
