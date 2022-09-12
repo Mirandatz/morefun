@@ -2,15 +2,20 @@
 This module assumes that fitnesses must be maximized.
 """
 
+import abc
 import datetime as dt
 import pathlib
 import traceback
 import typing
 
 import attrs
+import numpy as np
+import numpy.typing as npt
 import tensorflow as tf
 import typeguard
 from loguru import logger
+from pymoo.algorithms.moo.nsga2 import calc_crowding_distance
+from pymoo.util.nds.fast_non_dominated_sort import fast_non_dominated_sort
 
 import gge.composite_genotypes as cg
 import gge.grammars as gr
@@ -18,6 +23,26 @@ import gge.layers as gl
 import gge.phenotypes as pheno
 import gge.randomness as rand
 import gge.redirection as redirection
+
+
+@typeguard.typechecked
+@attrs.frozen
+class Fitness:
+    names: tuple[str, ...]
+    values: tuple[float, ...]
+
+    def __attrs_post_init__(self) -> None:
+        assert len(self.names) == len(self.values)
+        assert len(self.names) >= 1
+
+    def to_dict(self) -> dict[str, float]:
+        return dict(zip(self.names, self.values))
+
+    def __str__(self) -> str:
+        name_value_pairs = [
+            f"{name}={value}" for name, value in zip(self.names, self.values)
+        ]
+        return ", ".join(name_value_pairs)
 
 
 def make_classification_head(class_count: int, input_tensor: tf.Tensor) -> tf.Tensor:
@@ -154,8 +179,27 @@ def load_non_train_partition(
         )
 
 
+class FitnessMetric(abc.ABC):
+    @abc.abstractmethod
+    def name(self) -> str:
+        raise NotImplementedError("this is an abstract method")
+
+    @abc.abstractmethod
+    def should_be_maximized(self) -> bool:
+        raise NotImplementedError("this is an abstract method")
+
+    @abc.abstractmethod
+    def evaluate(self, phenotype: pheno.Phenotype) -> float:
+        """
+        Fitnesses must be maximized, so metrics that must be minimized,
+        such as 'number of parameters', may return (1 / value) or (-1 * value).
+        """
+
+        raise NotImplementedError("this is an abstract method")
+
+
 @attrs.frozen
-class ValidationAccuracy:
+class ValidationAccuracy(FitnessMetric):
     train_directory: pathlib.Path
     validation_directory: pathlib.Path
     input_shape: gl.Shape
@@ -165,15 +209,18 @@ class ValidationAccuracy:
     early_stop_patience: int
 
     def __attrs_post_init__(self) -> None:
-        assert self.batch_size > 0, self.batch_size
-        assert self.max_epochs > 0, self.max_epochs
-        assert self.class_count > 1, self.class_count
-        assert self.early_stop_patience > 0
+        assert self.batch_size >= 1, self.batch_size
+        assert self.max_epochs >= 1, self.max_epochs
+        assert self.class_count >= 2, self.class_count
+        assert self.early_stop_patience >= 1
         assert self.train_directory.is_dir()
         assert self.validation_directory.is_dir()
 
         if self.train_directory == self.validation_directory:
             logger.warning("train_directory == validation_directory")
+
+    def name(self) -> str:
+        return "validation_accuracy"
 
     def evaluate(self, phenotype: pheno.Phenotype) -> float:
         train = load_train_partition(
@@ -213,17 +260,45 @@ class ValidationAccuracy:
 
 
 @attrs.frozen
+class NumberOfParameters(FitnessMetric):
+    input_shape: gl.Shape
+    class_count: int
+
+    def __attrs_post_init__(self) -> None:
+        assert self.class_count >= 2
+
+    def name(self) -> str:
+        return "number_of_parameters"
+
+    def evaluate(self, phenotype: pheno.Phenotype) -> float:
+        model = make_classification_model(phenotype, self.input_shape, self.class_count)
+        param_count = model.count_params()
+        assert isinstance(int, param_count)
+
+        # fitnesses must be maximized and we want the smallest models
+        return float(-1 * param_count)
+
+
+@typeguard.typechecked
+@attrs.frozen
 class FitnessEvaluationParameters:
-    metric: ValidationAccuracy
+    metrics: tuple[FitnessMetric, ...]
     grammar: gr.Grammar
 
+    def __attrs_post_init__(self) -> None:
+        assert len(self.metrics) >= 1
 
+
+@typeguard.typechecked
 @attrs.frozen
 class SuccessfulEvaluationResult:
     genotype: cg.CompositeGenotype
-    fitness: float
+    fitness: Fitness
     start_time: dt.datetime
     end_time: dt.datetime
+
+    def __attrs_post_init__(self) -> None:
+        assert self.end_time >= self.start_time
 
 
 @attrs.frozen
@@ -249,10 +324,17 @@ def evaluate(
     phenotype = pheno.translate(genotype, params.grammar)
 
     try:
-        fitness = params.metric.evaluate(phenotype)
-        logger.info(
-            f"finished fitness evaluation of genotype=<{genotype}>, fitness={fitness}"
+        metrics_names = [m.name() for m in params.metrics]
+        metrics_values = [m.evaluate(phenotype) for m in params.metrics]
+        fitness = Fitness(
+            names=tuple(metrics_names),
+            values=tuple(metrics_values),
         )
+
+        logger.info(
+            f"finished fitness evaluation of genotype=<{genotype}>, fitness=<{fitness}>"
+        )
+
         return SuccessfulEvaluationResult(
             genotype=genotype,
             fitness=fitness,
@@ -288,45 +370,103 @@ def evaluate(
 T = typing.TypeVar("T")
 
 
-def effective_fitness(evaluation_result: FitnessEvaluationResult) -> float:
+def effective_fitness(
+    evaluation_result: FitnessEvaluationResult,
+    num_metrics: int,
+) -> tuple[float, ...]:
     """
-    If `evaluation_result` is a `SuccessfulEvaluationResult`, returns its `fitness`;
+    If `evaluation_result` is a `SuccessfulEvaluationResult`, returns its `metrics_values`;
     if it is as `FailedEvaluationResult`, returns negative infinity.
 
     This function assumes that fitness must be maximized.
     """
 
+    assert num_metrics >= 1
+
     match evaluation_result:
         case SuccessfulEvaluationResult():
-            return evaluation_result.fitness
+            return evaluation_result.fitness.values
 
         case FailedEvaluationResult():
-            return float("-inf")
+            failure_value = float("-inf")
+            return tuple([failure_value] * num_metrics)
 
         case _:
             raise ValueError(f"unknown fitness evaluation type={evaluation_result}")
 
 
-def select_fittest(
-    candidates: typing.Iterable[T],
-    metric: typing.Callable[[T], float],
+def fitness_evaluations_to_ndarray(
+    fitness_evaluations: typing.Iterable[FitnessEvaluationResult],
+) -> npt.NDArray[np.float64]:
+    fers_copy = list(fitness_evaluations)
+
+    successes = [
+        fer for fer in fers_copy if isinstance(fer, SuccessfulEvaluationResult)
+    ]
+
+    if len(successes) == 0:
+        raise ValueError(
+            "fitness_evaluations must contain at least one `SuccessfulEvaluationResult`"
+        )
+
+    num_objectives = len(successes[0].fitness.names)
+    effective_fitnesses = [effective_fitness(fer, num_objectives) for fer in fers_copy]
+    return np.asarray(effective_fitnesses, dtype=np.float64)
+
+
+def nsga2(
+    fitnesses: npt.NDArray[np.float64],
     fittest_count: int,
-) -> list[T]:
+) -> list[int]:
     """
-    This function assumes that fitness must be maximized.
+    Returns a list of indices that would select the `fittest_count` elements
+    of `fitnesses` using NSGA-II's fittest criteria.
+
+    This function assumes that fitnesses must be maximized.
     """
-    assert fittest_count > 0
 
-    candidates_list = list(candidates)
-    assert len(candidates_list) >= fittest_count
+    num_points, _ = fitnesses.shape
 
-    best_to_worst = sorted(
-        candidates,
-        key=lambda c: metric(c),
-        reverse=True,
-    )
+    assert num_points >= 1
+    assert fittest_count >= 1
+    assert fittest_count <= num_points
 
-    return best_to_worst[:fittest_count]
+    fittest: list[int] = []
+
+    # the functions `fast_non_dominated_sort` and `calc_crowding_distance`
+    # assume that objective functions (our fitness) must be minimized,
+    # so we must negate the values before using them
+    negated_fitnesses = fitnesses * -1
+
+    fronts = fast_non_dominated_sort(negated_fitnesses)
+
+    for current_front in fronts:
+        remaining_slots = fittest_count - len(fittest)
+
+        if remaining_slots > len(current_front):
+            fittest.extend(current_front)
+
+        elif remaining_slots == len(current_front):
+            fittest.extend(current_front)
+            break
+
+        else:
+            front_fitnesses = negated_fitnesses[current_front]
+            distances = calc_crowding_distance(
+                front_fitnesses, filter_out_duplicates=False
+            )
+            indices_of_least_crowded = np.argsort(distances)
+            sorted_by_crowding = [
+                current_front[index] for index in indices_of_least_crowded
+            ]
+            least_crowded = sorted_by_crowding[:remaining_slots]
+            fittest.extend(least_crowded)
+            break
+
+    # sanity check
+    assert len(fittest) == fittest_count
+
+    return fittest
 
 
 @attrs.frozen(cache_hash=True, slots=True)

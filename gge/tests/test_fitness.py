@@ -1,49 +1,80 @@
-import attrs
-import hypothesis.strategies as hs
-from hypothesis import given
+import datetime as dt
 
+import numpy as np
+import numpy.typing as npt
+import pytest
+
+import gge.composite_genotypes as gc
 import gge.fitnesses as gf
+import gge.grammars as gr
+import gge.randomness as rand
+import gge.structured_grammatical_evolution as sge
 
 
-@attrs.frozen
-class FitnessTestData:
-    fitnesses: dict[int, float]
-    fittest_count: int
-
-
-@hs.composite
-def fitness_test_data(draw: hs.DrawFn) -> FitnessTestData:
-    population = draw(
-        hs.dictionaries(
-            keys=hs.integers(),
-            values=hs.floats(allow_nan=False),
-            min_size=1,
-        )
+def test_fitness_evaluations_to_ndarray() -> None:
+    grammar = gr.Grammar(
+        """start: aff
+    aff: "maxpool" "pool_size" "2" "stride" "2" """
+    )
+    rng = rand.create_rng(seed=0)
+    backbone_genotype = sge.create_genotype(grammar, rng)
+    composite_genotype = gc.make_composite_genotype(
+        backbone_genotype,
+        grammar,
+        rng,
     )
 
-    fittest_count = draw(hs.integers(min_value=1, max_value=len(population)))
+    objective_value = 123
 
-    return FitnessTestData(population, fittest_count)
-
-
-@given(fitness_test_data())
-def test_select_fittest(data: FitnessTestData) -> None:
-    """Should select the individuals with largest fitnesses."""
-
-    fittest = gf.select_fittest(
-        candidates=data.fitnesses.keys(),
-        metric=lambda k: data.fitnesses[k],
-        fittest_count=data.fittest_count,
+    fitness = gf.Fitness(
+        names=tuple(["dummy_metric"]),
+        values=tuple([objective_value]),
     )
 
-    assert data.fittest_count == len(fittest)
-
-    worst_selected_individual = min(
-        fittest,
-        key=lambda k: data.fitnesses[k],
+    fer = gf.SuccessfulEvaluationResult(
+        composite_genotype, fitness, dt.datetime.now(), dt.datetime.now()
     )
-    fitness_of_the_worst_selected_individual = data.fitnesses[worst_selected_individual]
 
-    for genotype, fitness in data.fitnesses.items():
-        if fitness > fitness_of_the_worst_selected_individual:
-            assert genotype in fittest
+    fitnesses = [fer, fer, fer]
+    actual = gf.fitness_evaluations_to_ndarray(fitnesses)
+    expected = np.asarray([[objective_value], [objective_value], [objective_value]])
+    assert np.array_equal(expected, actual)
+
+
+@pytest.mark.parametrize(
+    "data, fittest_count, expected_result",
+    [
+        (
+            np.asarray([[0, 0], [1, 0], [0, 1], [1, 1]]),
+            1,
+            [3],
+        ),
+        (
+            np.asarray([[0, 0], [1, 0], [0, 1], [1, 1]]),
+            2,
+            [3, 1],
+        ),
+        (
+            np.asarray([[0, 0], [1, 0], [0, 1], [1, 1]]),
+            3,
+            [3, 1, 2],
+        ),
+        (
+            np.asarray([[0, 0], [1, 0], [0, 1], [1, 1]]),
+            4,
+            [3, 1, 2, 0],
+        ),
+        (
+            np.asarray([[0], [1], [2], [3], [4]]),
+            1,
+            [4],
+        ),
+    ],
+)
+def test_nsga2(
+    data: npt.NDArray[np.float64],
+    fittest_count: int,
+    expected_result: list[int],
+) -> None:
+    actual = gf.nsga2(data, fittest_count)
+    assert expected_result == actual

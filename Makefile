@@ -29,7 +29,7 @@ run_tests: dev_env
 		-v $(ROOT_DIR):/gge/gge \
 		--workdir /gge/gge \
 		$(DEV_ENG_TAG) \
-		bash -c "source /venv/bin/activate && pytest --numprocesses=auto --hypothesis-profile=parallel"
+		bash -c "source /venv/bin/activate && pytest ./gge/tests --numprocesses=auto --hypothesis-profile=parallel"
 
 .PHONY: run_tests_sequential
 run_tests_sequential: dev_env
@@ -39,7 +39,7 @@ run_tests_sequential: dev_env
 		-v $(ROOT_DIR):/gge/gge \
 		--workdir /gge/gge \
 		$(DEV_ENG_TAG) \
-		bash -c "source /venv/bin/activate && pytest --pspec"
+		bash -c "source /venv/bin/activate && pytest ./gge/tests --pspec"
 
 
 .PHONY: playground
