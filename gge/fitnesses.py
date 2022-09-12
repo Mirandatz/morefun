@@ -269,7 +269,7 @@ class NumberOfParameters(FitnessMetric):
     def evaluate(self, phenotype: pheno.Phenotype) -> float:
         model = make_classification_model(phenotype, self.input_shape, self.class_count)
         param_count = model.count_params()
-        assert isinstance(int, param_count)
+        assert isinstance(param_count, int)
 
         # fitnesses must be maximized and we want the smallest models
         return float(-1 * param_count)

@@ -110,7 +110,7 @@ class MutationSettings:
 class FitnessSettings:
     batch_size: int
     max_epochs: int
-    metrics: tuple[typing.Literal["accuracy", "number_of_parameters"], ...]
+    metrics: tuple[typing.Literal["validation_accuracy", "number_of_parameters"], ...]
     early_stop_patience: int
 
     def __attrs_post_init__(self) -> None:
@@ -121,7 +121,12 @@ class FitnessSettings:
 
     @staticmethod
     def from_yaml(values: YamlDict) -> "FitnessSettings":
-        return FitnessSettings(**values)
+        return FitnessSettings(
+            batch_size=values["batch_size"],
+            max_epochs=values["max_epochs"],
+            metrics=tuple(values["metrics"]),
+            early_stop_patience=values["early_stop_patience"],
+        )
 
 
 @typeguard.typechecked()
