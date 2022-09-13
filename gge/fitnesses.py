@@ -63,6 +63,7 @@ def make_classification_model(
     input_shape: gl.Shape,
     class_count: int,
 ) -> tf.keras.Model:
+    tf.keras.backend.clear_session()
     input_tensor, output_tensor = pheno.make_input_output_tensors(
         phenotype, gl.Input(input_shape)
     )
