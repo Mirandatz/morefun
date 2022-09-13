@@ -33,6 +33,7 @@ def create_and_evaluate_initial_population(
 ) -> None:
     settings = gset.load_gge_settings(settings_path)
     gset.configure_logger(settings.output)
+    gset.configure_tensorflow(settings.tensorflow)
 
     rng_seed = settings.experiment.rng_seed
 
@@ -80,6 +81,7 @@ def evolutionary_loop(
 ) -> None:
     settings = gset.load_gge_settings(settings_path)
     gset.configure_logger(settings.output)
+    gset.configure_tensorflow(settings.tensorflow)
 
     latest_gen_output = gge.persistence.load_latest_generational_artifacts(
         settings.output.directory
@@ -164,6 +166,7 @@ def final_train(
 ) -> None:
     settings = gset.load_gge_settings(settings_path)
     gset.configure_logger(settings.output)
+    gset.configure_tensorflow(settings.tensorflow)
 
     latest_gen_output = gge.persistence.load_latest_generational_artifacts(
         settings.output.directory
@@ -229,6 +232,7 @@ def evaluate_models(
 ) -> None:
     settings = gset.load_gge_settings(settings_path)
     gset.configure_logger(settings.output)
+    gset.configure_tensorflow(settings.tensorflow)
 
     evaluations = []
 

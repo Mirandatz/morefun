@@ -33,13 +33,17 @@ evolution:
     batch_size: 256
     max_epochs: 20
     early_stop_patience: 5
-    metrics: ["accuracy", "number_of_parameters"]
+    metrics: ["valdidatva'accuracy", "number_of_parameters"]
 
 final_train:
   train_k_fittest: 1
   batch_size: 256
   max_epochs: 2000
   early_stop_patience: 10
+
+tensorflow:
+  xla: true
+  mixed_precision: true
 
 grammar: |
   start : data_aug learning optimizer

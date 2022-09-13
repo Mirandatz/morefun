@@ -1,9 +1,11 @@
 import functools
+import os
 import pathlib
 import sys
 import typing
 
 import attrs
+import tensorflow as tf
 import typeguard
 import yaml
 from loguru import logger
@@ -251,6 +253,20 @@ class FinalTrainSettings:
 
 @typeguard.typechecked()
 @attrs.frozen
+class TensorflowSettings:
+    xla: bool
+    mixed_precision: bool
+
+    @staticmethod
+    def from_yaml(values: YamlDict) -> "TensorflowSettings":
+        return TensorflowSettings(
+            xla=values["xla"],
+            mixed_precision=values["mixed_precision"],
+        )
+
+
+@typeguard.typechecked()
+@attrs.frozen
 class GgeSettings:
     experiment: ExperimentSettings
     dataset: DatasetSettings
@@ -259,6 +275,7 @@ class GgeSettings:
     evolution: EvolutionSettings
     final_train: FinalTrainSettings
     grammar: gr.Grammar
+    tensorflow: TensorflowSettings
 
     @staticmethod
     def from_yaml(values: YamlDict) -> "GgeSettings":
@@ -269,6 +286,7 @@ class GgeSettings:
             "population_initialization",
             "evolution",
             "final_train",
+            "tensorflow",
             "grammar",
         }
 
@@ -281,6 +299,7 @@ class GgeSettings:
             ),
             evolution=EvolutionSettings.from_yaml(values["evolution"]),
             final_train=FinalTrainSettings.from_yaml(values["final_train"]),
+            tensorflow=TensorflowSettings.from_yaml(values["tensorflow"]),
             grammar=gr.Grammar(values["grammar"]),
         )
 
@@ -340,6 +359,20 @@ def configure_logger(settings: OutputSettings) -> None:
     logger.add(sink=settings.directory / "log.txt")
 
     logger.info("started logger")
+
+
+def configure_tensorflow(settings: TensorflowSettings) -> None:
+    if settings.xla:
+        tf.config.optimizer.set_jit("autoclustering")
+    else:
+        logger.info("disabling xla")
+
+    if settings.mixed_precision:
+        tf.keras.mixed_precision.set_global_policy("mixed_float16")
+
+    logger.info(
+        f"tensorflow settings: xla=<{settings.xla}>, mixed_precision=<{settings.mixed_precision}>"
+    )
 
 
 def validate_dataset_dir(
