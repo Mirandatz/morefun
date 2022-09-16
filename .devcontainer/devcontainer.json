@@ -31,7 +31,7 @@
 		"--cap-add=SYS_NICE"
 	],
 	"mounts": [
-		"source=/home/thiago/source/datasets/cifar10,target=/gge/datasets/cifar10,type=bind,readonly",
+		"source=/home/thiago/source/datasets/,target=/gge/datasets/,type=bind,readonly",
 		"source=${localWorkspaceFolder}/playground/output,target=/gge/output,type=bind"
 	],
 	"postStartCommand": [
