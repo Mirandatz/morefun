@@ -5,14 +5,16 @@ set -o nounset
 set -o xtrace
 set -o pipefail
 
+# LOCAL_GGE_DIR="/dev/shm/gge_from_bioinfo03_$(date '+%Y_%m_%d_%H_%M_%S')"
+LOCAL_GGE_DIR=/home/thiago/source/gge
+
 REMOTE=bioinfo03
 REMOTE_GGE_DIR=/home/thiago/source/gge
 
-DOWNLOAD_DIR=$(date '+%Y_%m_%d_%H_%M_%S')
-mkdir "$DOWNLOAD_DIR"
+cd "$LOCAL_GGE_DIR"
 
-rsync -av \
-    --exclude '.mypy_cache/*' \
-    --exclude '*.pyc' \
-    "$REMOTE:$REMOTE_GGE_DIR" \
-    "$DOWNLOAD_DIR"
+ssh "$REMOTE" " \
+    cd $REMOTE_GGE_DIR \
+    && git archive --format=tgz HEAD" \
+    | tar -zxvf - 
+

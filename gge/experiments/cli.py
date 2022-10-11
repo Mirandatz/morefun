@@ -172,17 +172,20 @@ def final_train(
         settings.output.directory
     )
 
-    fittest = gf.select_fittest_nsga2(
-        fitness_evaluations=latest_gen_output.fittest,
-        fittest_count=settings.final_train.train_k_fittest,
+    successfully_evaluated = [
+        fer
+        for fer in latest_gen_output.fittest
+        if isinstance(fer, gf.SuccessfulEvaluationResult)
+    ]
+
+    fittest = max(
+        successfully_evaluated,
+        key=lambda fer: fer.fitness.values[
+            fer.fitness.names.index("validation_accuracy")
+        ],
     )
 
-    assert all(isinstance(fer, gf.SuccessfulEvaluationResult) for fer in fittest)
-
-    genotypes = [fer.genotype for fer in fittest]
-
-    for genotype in genotypes:
-        _final_train_single_genotype(genotype, settings)
+    _final_train_single_genotype(fittest.genotype, settings)
 
 
 def _evaluate_model(
