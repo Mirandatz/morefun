@@ -40,6 +40,7 @@ docker run \
     --user "$(id -u)":"$(id -g)" \
     --rm \
     --runtime=nvidia \
+    --shm-size=8gb \
     --workdir=/gge/code \
     -v "$SETTINGS_MOUNT_POINT":/gge/settings.toml:ro \
     -v "$DATASETS_MOUNT_POINT":/gge/datasets:ro \
