@@ -158,6 +158,13 @@ def save_genotype(genotype: cg.CompositeGenotype, path: pathlib.Path) -> None:
     path.write_bytes(pickle.dumps(genotype, protocol=pickle.HIGHEST_PROTOCOL))
 
 
+def load_genotype(path: pathlib.Path) -> cg.CompositeGenotype:
+    serialized = path.read_bytes()
+    genotype = pickle.loads(serialized)
+    assert isinstance(genotype, cg.CompositeGenotype)
+    return genotype
+
+
 def save_training_history(hist: gf.TrainingHistory, path: pathlib.Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(pickle.dumps(hist, protocol=pickle.HIGHEST_PROTOCOL))
