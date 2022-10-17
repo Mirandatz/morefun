@@ -31,7 +31,7 @@
 		"--cap-add=SYS_NICE"
 	],
 	"mounts": [
-		"source=/disk2/thiago/datasets/,target=/gge/datasets/,type=bind,readonly",
+		"source=${localEnv:GGE_DATASETS_DIR},target=/gge/datasets/,type=bind,readonly",
 		"source=${localWorkspaceFolder}/playground/output,target=/gge/output,type=bind"
 	],
 	"postStartCommand": [
