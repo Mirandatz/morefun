@@ -32,7 +32,7 @@
 	],
 	"mounts": [
 		"source=${localEnv:GGE_DATASETS_DIR},target=/gge/datasets/,type=bind,readonly",
-		"source=${localWorkspaceFolder}/playground/output,target=/gge/output,type=bind"
+		"source=${localWorkspaceFolder}/gge/playground/,target=/gge/output,type=bind"
 	],
 	"postStartCommand": [
 		"git",

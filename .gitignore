@@ -12,10 +12,6 @@ __pycache__/
 .python-version
 .venv/
 
-# playground & debugging
-gge/playground/
-playground/
-
 # experiment byproducts
 gge/experiments/**/*.genotype
 gge/experiments/**/*.png
