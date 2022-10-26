@@ -12,6 +12,9 @@ __pycache__/
 .python-version
 .venv/
 
+# playground
+gge/playground/gitignored
+
 # experiment byproducts
 gge/experiments/**/*.genotype
 gge/experiments/**/*.png
