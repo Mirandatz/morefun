@@ -10,8 +10,12 @@ import gge.phenotypes
 NUMBER_OF_RUNS_PER_DATASET = 5
 
 RESULTS_DIR = pathlib.Path(__file__).parent / "gitignored"
+
 CIFAR10_RESULTS = RESULTS_DIR / "cifar10_results"
+LAST_DITCH_CIFAR10_RESULTS = RESULTS_DIR / "last_ditch_cifar10"
+
 CIFAR100_RESULTS = RESULTS_DIR / "cifar100_results"
+LAST_DITCH_CIFAR100_RESULTS = RESULTS_DIR / "last_ditch_cifar100"
 
 
 def process_run_directory(run_directory: pathlib.Path) -> None:
@@ -27,9 +31,12 @@ def process_run_directory(run_directory: pathlib.Path) -> None:
         output_path
     )
 
-    fittest = last_generation_output.fittest
-
-    assert all(isinstance(fer, gf.SuccessfulEvaluationResult) for fer in fittest)
+    fittest = [
+        fer
+        for fer in last_generation_output.fittest
+        if isinstance(fer, gf.SuccessfulEvaluationResult)
+    ]
+    assert len(fittest) >= 1
 
     best = max(fittest, key=lambda fer: fer.fitness.to_dict()["validation_accuracy"])
     genotype = best.genotype
@@ -47,16 +54,16 @@ def process_run_directory(run_directory: pathlib.Path) -> None:
 
 
 def main() -> None:
-    cifar10_dirs = list(CIFAR10_RESULTS.iterdir())
-    assert len(cifar10_dirs) == NUMBER_OF_RUNS_PER_DATASET
-
-    cifar100_dirs = list(CIFAR100_RESULTS.iterdir())
-    assert len(cifar100_dirs) == NUMBER_OF_RUNS_PER_DATASET
-
-    for run_directory in cifar10_dirs:
+    for run_directory in CIFAR10_RESULTS.iterdir():
         process_run_directory(run_directory)
 
-    for run_directory in cifar100_dirs:
+    for run_directory in LAST_DITCH_CIFAR10_RESULTS.iterdir():
+        process_run_directory(run_directory)
+
+    for run_directory in CIFAR100_RESULTS.iterdir():
+        process_run_directory(run_directory)
+
+    for run_directory in LAST_DITCH_CIFAR100_RESULTS.iterdir():
         process_run_directory(run_directory)
 
 
