@@ -50,7 +50,7 @@ RUN source /venv/bin/activate && pip install -r /tmp/requirements/dev.txt --no-c
 ENV TF_CPP_MIN_LOG_LEVEL=1
 
 # enable xla
-ENV TF_XLA_FLAGS="--tf_xla_auto_jit=2"
+ENV TF_XLA_FLAGS="--tf_xla_auto_jit=2 --tf_xla_cpu_global_jit"
 
 # be nice with friends and share gpu ram
 ENV TF_FORCE_GPU_ALLOW_GROWTH="true"
