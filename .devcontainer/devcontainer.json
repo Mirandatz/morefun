@@ -26,7 +26,7 @@
 		8000 // for debugger
 	],
 	"runArgs": [
-		"--shm-size=2G",
+		"--shm-size=16G",
 		"--runtime=nvidia",
 		"--cap-add=SYS_NICE"
 	],
