@@ -2,6 +2,7 @@ import functools
 import os
 import pathlib
 
+import cv2
 import pandas as pd
 import tensorflow as tf
 
@@ -86,9 +87,17 @@ def load_mask(path: str) -> tf.Tensor:
     return tf.io.decode_raw(raw, out_type=tf.uint8)
 
 
-def reshape_mask(img: tf.Tensor, mask: tf.Tensor) -> tuple[tf.Tensor, tf.Tensor]:
-    # shape = height, width, num_of_channels
-    mask_shape = tf.shape(img)[:2]
+def unflatten_mask(img: tf.Tensor, mask: tf.Tensor) -> tuple[tf.Tensor, tf.Tensor]:
+    """
+    Masks are stored flattened.
+    This function "unflatten" them to match the image shape.
+    """
+
+    # ensure we are not operating on batches
+    img_shape = tf.shape(img)
+    assert len(img_shape) == 3  # height, width, depth
+
+    mask_shape = img_shape[:2]
     reshaped_mask = tf.reshape(mask, mask_shape)
     return img, reshaped_mask
 
@@ -101,6 +110,21 @@ def load_classes_ids() -> dict[str, int]:
     )
     assert isinstance(classes_ids, dict)
     return classes_ids
+
+
+def pad_image_and_mask(
+    img: tf.Tensor,
+    mask: tf.Tensor,
+    size: int = 256,
+) -> tuple[tf.Tensor, tf.Tensor]:
+    """
+    Ensures that img and mask have shapes with `height` and `width` divisible by two.
+    We do this because otherwise upsampling becomes painful.
+    """
+
+    new_img = tf.image.resize_with_pad(img, size, size)
+    new_mask = tf.image.resize_with_pad(mask, size, size)
+    return new_img, new_mask
 
 
 def load_dataset(class_count: int) -> tf.data.Dataset:
@@ -125,11 +149,15 @@ def load_dataset(class_count: int) -> tf.data.Dataset:
     validation_dataset: tf.data.Dataset = (
         tf.data.Dataset.zip((image_ds, masks_ds))
         .map(
-            reshape_mask,
+            unflatten_mask,
             num_parallel_calls=tf.data.AUTOTUNE,
         )
         .map(
             lambda img, mask: (img, tf.one_hot(mask, class_count, dtype=tf.uint8)),
+            num_parallel_calls=tf.data.AUTOTUNE,
+        )
+        .map(
+            pad_image_and_mask,
             num_parallel_calls=tf.data.AUTOTUNE,
         )
     )
@@ -138,7 +166,7 @@ def load_dataset(class_count: int) -> tf.data.Dataset:
 
 
 def create_model(class_count: int = 81) -> tf.keras.Model:
-    inputs = tf.keras.Input(shape=(None, None, IMAGE_CHANNELS), batch_size=1)
+    inputs = tf.keras.Input(shape=(None, None, IMAGE_CHANNELS))
 
     rescaled = tf.keras.layers.Rescaling(1.0 / 255)(inputs)
 
@@ -373,17 +401,20 @@ def main() -> None:
     dataset = (
         # dataset.cache()
         dataset.shuffle(buffer_size=SHUFFLING_BUFFER_SIZE)
-        .batch(1)
+        # .batch(1)
         .prefetch(tf.data.AUTOTUNE)
     )
 
-    # model = vgg16(class_count)
-    model = create_model(class_count)
-    # model.fit(dataset)
     for img, mask in dataset:
-        #     print(img.shape)
-        assert mask.shape == model.predict(img).shape
-        print(".", end="")
+        img_np = img.numpy()
+        img_cv = cv2.cvtColor(img_np, cv2.COLOR_BGR2RGB)
+        print(img_cv.shape)
+        cv2.imwrite("/workspaces/gge/gge/playground/gitignored/afferson2.png", img_cv)
+        break
+
+    # # model = vgg16(class_count)
+    # model = create_model(class_count)
+    # model.fit(dataset)
 
 
 if __name__ == "__main__":
