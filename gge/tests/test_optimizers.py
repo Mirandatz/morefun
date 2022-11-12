@@ -66,3 +66,15 @@ def test_ranger_to_tensorflow(ranger: optim.Ranger) -> None:
     assert tf_ranger.learning_rate == ranger.learning_rate
     assert tf_ranger.sync_period == ranger.sync_period
     assert tf_ranger.slow_step_size == ranger.slow_step_size
+
+
+@given(test_data=gos.rangers().map(gos.ranger_grammar))
+def test_rangers_middle_grammar(test_data: ds.ParsingTestData[optim.Adam]) -> None:
+    """Can process a middle_grammar to generate an Adam optimizer."""
+
+    grammar = gr.Grammar(test_data.tokenstream)
+    genotype = sge.create_genotype(grammar, rng=rand.create_rng())
+    tokenstream = sge.map_to_tokenstream(genotype, grammar)
+    phenotype = optim.parse(tokenstream, start="optimizer")
+
+    assert test_data.parsed == phenotype
