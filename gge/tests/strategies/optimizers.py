@@ -76,3 +76,24 @@ def adam_grammar(adam: optim.Adam) -> ds.ParsingTestData[optim.Adam]:
     )
 
     return ds.ParsingTestData(grammar, adam)
+
+
+@hs.composite
+def rangers(draw: hs.DrawFn) -> optim.Ranger:
+    return optim.Ranger(
+        learning_rate=draw(hs.floats(min_value=0, max_value=9, exclude_min=True)),
+        beta1=draw(
+            hs.floats(min_value=0, max_value=1, exclude_min=True, exclude_max=True)
+        ),
+        beta2=draw(
+            hs.floats(min_value=0, max_value=1, exclude_min=True, exclude_max=True)
+        ),
+        epsilon=draw(
+            hs.floats(min_value=0, max_value=1, exclude_min=True, exclude_max=True)
+        ),
+        amsgrad=draw(hs.booleans()),
+        sync_period=draw(hs.integers(min_value=1, max_value=3)),
+        slow_step_size=draw(
+            hs.floats(min_value=0, max_value=1, exclude_min=True, exclude_max=True)
+        ),
+    )

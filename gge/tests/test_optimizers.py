@@ -56,3 +56,13 @@ def test_adam_to_tensorflow(adam: optim.Adam) -> None:
     assert tf_adam.beta_2 == adam.beta2
     assert tf_adam.epsilon == adam.epsilon
     assert tf_adam.amsgrad == adam.amsgrad
+
+
+@given(ranger=gos.rangers())
+def test_ranger_to_tensorflow(ranger: optim.Ranger) -> None:
+    """Can convert a Adam optimizer to its Tensorflow equivalent."""
+    tf_ranger = ranger.to_tensorflow()
+
+    assert tf_ranger.learning_rate == ranger.learning_rate
+    assert tf_ranger.sync_period == ranger.sync_period
+    assert tf_ranger.slow_step_size == ranger.slow_step_size
