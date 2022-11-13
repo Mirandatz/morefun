@@ -107,7 +107,7 @@ class OptimizerSynthetizer(lgp.LowerGrammarTransformer):
 
     # This set contains terminals that when visited/processed are just converted into `None`.
     # It is used in `OptimizerSynthetizer.__default_token__` to remove boilerplate code.
-    _expected_terminals = {
+    _expected_tokens = {
         '"adam"',
         '"sgd"',
         '"learning_rate"',
@@ -119,10 +119,32 @@ class OptimizerSynthetizer(lgp.LowerGrammarTransformer):
         '"amsgrad"',
     }
 
+    _passthrough_rules = {
+        "learning_rate",
+        "momentum",
+        "nesterov",
+        "beta1",
+        "beta2",
+        "epsilon",
+        "amsgrad",
+    }
+
+    def __default__(
+        self,
+        data: typing.Any,
+        children: typing.Any,
+        meta: typing.Any,
+    ) -> typing.Any:
+        if data.value in self._passthrough_rules:
+            marker, value = children
+            return value
+
+        return super().__default__(data, children, meta)
+
     def __default_token__(self, token: lark.Token) -> typing.Any:
         self._raise_if_not_running()
 
-        if token.value in OptimizerSynthetizer._expected_terminals:
+        if token.value in self._expected_tokens:
             return None
 
         return super().__default_token__(token)
@@ -196,41 +218,6 @@ class OptimizerSynthetizer(lgp.LowerGrammarTransformer):
             sync_period=sync_period,
             slow_step_size=slow_step_size,
         )
-
-    def learning_rate(self, marker: None, value: float) -> float:
-        self._raise_if_not_running()
-        assert isinstance(value, float)
-        return value
-
-    def momentum(self, marker: None, value: float) -> float:
-        self._raise_if_not_running()
-        assert isinstance(value, float)
-        return value
-
-    def nesterov(self, marker: None, value: bool) -> bool:
-        self._raise_if_not_running()
-        assert isinstance(value, bool)
-        return value
-
-    def beta1(self, marker: None, value: float) -> float:
-        self._raise_if_not_running()
-        assert isinstance(value, float)
-        return value
-
-    def beta2(self, marker: None, value: float) -> float:
-        self._raise_if_not_running()
-        assert isinstance(value, float)
-        return value
-
-    def epsilon(self, arker: None, value: float) -> float:
-        self._raise_if_not_running()
-        assert isinstance(value, float)
-        return value
-
-    def amsgrad(self, marker: None, value: bool) -> bool:
-        self._raise_if_not_running()
-        assert isinstance(value, bool)
-        return value
 
 
 def parse(
