@@ -155,6 +155,7 @@ class OptimizerSynthetizer(lgp.LowerGrammarTransformer):
         assert isinstance(optimizer, Optimizer)
         return optimizer
 
+    @typeguard.typechecked
     def sgd(
         self,
         marker: None,
@@ -163,13 +164,9 @@ class OptimizerSynthetizer(lgp.LowerGrammarTransformer):
         nesterov: bool,
     ) -> SGD:
         self._raise_if_not_running()
-
-        assert isinstance(learning_rate, float)
-        assert isinstance(momentum, float)
-        assert isinstance(nesterov, bool)
-
         return SGD(learning_rate=learning_rate, momentum=momentum, nesterov=nesterov)
 
+    @typeguard.typechecked
     def adam(
         self,
         marker: None,
@@ -180,13 +177,6 @@ class OptimizerSynthetizer(lgp.LowerGrammarTransformer):
         amsgrad: bool,
     ) -> Adam:
         self._raise_if_not_running()
-
-        assert isinstance(learning_rate, float)
-        assert isinstance(beta1, float)
-        assert isinstance(beta2, float)
-        assert isinstance(epsilon, float)
-        assert isinstance(amsgrad, bool)
-
         return Adam(
             learning_rate=learning_rate,
             beta1=beta1,
