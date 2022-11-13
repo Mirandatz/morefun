@@ -104,13 +104,13 @@ def ranger_grammar(ranger: optim.Ranger) -> ds.ParsingTestData[optim.Ranger]:
 
     grammar = (
         'start : "ranger"'
-        f'"learning_rate" "{ranger.learning_rate}"'
-        f'"beta1" "{ranger.beta1}"'
-        f'"beta2" "{ranger.beta2}"'
-        f'"epsilon" "{ranger.epsilon}"'
-        f'"amsgrad" "{amsgrad}"'
-        f'"sync_period "{ranger.sync_period}"'
-        f'"slow_step_size "{ranger.slow_step_size}"'
+        f' "learning_rate" "{ranger.learning_rate}"'
+        f' "beta1" "{ranger.beta1}"'
+        f' "beta2" "{ranger.beta2}"'
+        f' "epsilon" "{ranger.epsilon}"'
+        f' "amsgrad" "{amsgrad}"'
+        f' "sync_period" "{ranger.sync_period}"'
+        f' "slow_step_size" "{ranger.slow_step_size}"'
     )
 
     return ds.ParsingTestData(grammar, ranger)
