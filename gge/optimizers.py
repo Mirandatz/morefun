@@ -104,6 +104,29 @@ class Ranger(Optimizer):
 
 @lark.v_args(inline=True)
 class OptimizerSynthetizer(lgp.LowerGrammarTransformer):
+
+    # This set contains terminals that when visited/processed are just converted into `None`.
+    # It is used in `OptimizerSynthetizer.__default_token__` to remove boilerplate code.
+    _expected_terminals = {
+        '"adam"',
+        '"sgd"',
+        '"learning_rate"',
+        '"momentum"',
+        '"nesterov"',
+        '"beta1"',
+        '"beta2"',
+        '"epsilon"',
+        '"amsgrad"',
+    }
+
+    def __default_token__(self, token: lark.Token) -> typing.Any:
+        self._raise_if_not_running()
+
+        if token.value in OptimizerSynthetizer._expected_terminals:
+            return None
+
+        return super().__default_token__(token)
+
     def optimizer(self, optimizer: Optimizer) -> Optimizer:
         self._raise_if_not_running()
 
@@ -150,6 +173,30 @@ class OptimizerSynthetizer(lgp.LowerGrammarTransformer):
             amsgrad=amsgrad,
         )
 
+    @typeguard.typechecked
+    def ranger(
+        self,
+        marker: None,
+        learning_rate: float,
+        beta1: float,
+        beta2: float,
+        epsilon: float,
+        amsgrad: bool,
+        sync_period: int,
+        slow_step_size: float,
+    ) -> Ranger:
+        self._raise_if_not_running()
+
+        return Ranger(
+            learning_rate=learning_rate,
+            beta1=beta1,
+            beta2=beta2,
+            epsilon=epsilon,
+            amsgrad=amsgrad,
+            sync_period=sync_period,
+            slow_step_size=slow_step_size,
+        )
+
     def learning_rate(self, marker: None, value: float) -> float:
         self._raise_if_not_running()
         assert isinstance(value, float)
@@ -184,42 +231,6 @@ class OptimizerSynthetizer(lgp.LowerGrammarTransformer):
         self._raise_if_not_running()
         assert isinstance(value, bool)
         return value
-
-    def SGD(self, token: lark.Token) -> None:
-        self._raise_if_not_running()
-        return None
-
-    def LEARNING_RATE(self, token: lark.Token) -> None:
-        self._raise_if_not_running()
-        return None
-
-    def MOMENTUM(self, token: lark.Token) -> None:
-        self._raise_if_not_running()
-        return None
-
-    def NESTEROV(self, token: lark.Token) -> None:
-        self._raise_if_not_running()
-        return None
-
-    def ADAM(self, token: lark.Token) -> None:
-        self._raise_if_not_running()
-        return None
-
-    def BETA1(self, token: lark.Token) -> None:
-        self._raise_if_not_running()
-        return None
-
-    def BETA2(self, token: lark.Token) -> None:
-        self._raise_if_not_running()
-        return None
-
-    def EPSILON(self, token: lark.Token) -> None:
-        self._raise_if_not_running()
-        return None
-
-    def AMSGRAD(self, token: lark.Token) -> None:
-        self._raise_if_not_running()
-        return None
 
 
 def parse(
