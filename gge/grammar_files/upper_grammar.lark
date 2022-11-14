@@ -45,7 +45,7 @@ pool_sizes        : POOL_SIZE _int_args
 activation_layer : RELU | GELU | SWISH | PRELU
 
 optimizer_and_maybe_emptylines : optimizer _NL*
-optimizer : sgd | adam
+optimizer : sgd | adam | ranger
 
 sgd           : SGD learning_rate momentum nesterov
 learning_rate : LEARNING_RATE _float_args
@@ -57,6 +57,10 @@ beta1: BETA1 _float_args
 beta2: BETA2 _float_args
 epsilon: EPSILON _float_args
 amsgrad: AMSGRAD _bool_args
+
+ranger         : RANGER learning_rate beta1 beta2 epsilon amsgrad sync_period slow_step_size
+sync_period    : SYNC_PERIOD _int_args
+slow_step_size : SLOW_STEP_SIZE _float_args
 
 _int_args : INT_ARG
           | "(" INT_ARG ("|" INT_ARG)* ")"
@@ -85,6 +89,7 @@ _flip_args  : FLIP_MODE
 %import .terminals (BATCHNORM)
 %import .terminals (SGD, LEARNING_RATE, MOMENTUM, NESTEROV)
 %import .terminals (ADAM, BETA1, BETA2, EPSILON, AMSGRAD)
+%import .terminals (RANGER, SYNC_PERIOD, SLOW_STEP_SIZE)
 %import .terminals (BOOL, QUOTED_INT, QUOTED_FLOAT)
 
 %import common.NEWLINE -> _NL

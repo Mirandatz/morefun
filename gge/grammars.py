@@ -386,6 +386,10 @@ class ExpectedTerminal(enum.Enum):
     EPSILON = Terminal('"epsilon"')
     AMSGRAD = Terminal('"amsgrad"')
 
+    RANGER = Terminal('"ranger"')
+    SYNC_PERIOD = Terminal('"sync_period"')
+    SLOW_STEP_SIZE = Terminal('"slow_step_size"')
+
 
 MarkerValuePair = tuple[Terminal, Terminal]
 
@@ -456,7 +460,7 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
     # For more information, see:
     # - `make_list_of_marker_value_pairs`.
     # - `GrammarTransformer.__default__`
-    _RULES_OF_MARKERS_VALUE_PAIRS = {
+    _rules_of_marker_value_pairs = {
         # resizing
         "height",
         "width",
@@ -475,11 +479,14 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
         "beta2",
         "epsilon",
         "amsgrad",
+        # ranger
+        "sync_period",
+        "slow_step_size",
     }
 
     # This set is also used to remove boilplate code.
     # For more information, see: `GrammarTransformer.__default_token__`
-    _KNOWN_TERMINALS = {terminal.value.text for terminal in ExpectedTerminal}
+    _known_terminals = {terminal.value.text for terminal in ExpectedTerminal}
 
     def __init__(self) -> None:
         super().__init__()
@@ -496,7 +503,7 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
     ) -> typing.Any:
         self._raise_if_not_running()
 
-        if data.value in GrammarTransformer._RULES_OF_MARKERS_VALUE_PAIRS:
+        if data.value in self._rules_of_marker_value_pairs:
             return make_list_of_marker_value_pairs(children)
 
         return super().__default__(data, children, meta)
@@ -504,7 +511,7 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
     def __default_token__(self, token: lark.Token) -> typing.Any:
         self._raise_if_not_running()
 
-        if token.value in GrammarTransformer._KNOWN_TERMINALS:
+        if token.value in self._known_terminals:
             return self._register_terminal(token.value)
 
         if token.value in ['"fork"', '"merge"']:
@@ -735,6 +742,10 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
         return make_list_of_options(parts)
 
     def adam(self, parts: typing.Any) -> list[RuleOption]:
+        self._raise_if_not_running()
+        return make_list_of_options(parts)
+
+    def ranger(self, parts: typing.Any) -> list[RuleOption]:
         self._raise_if_not_running()
         return make_list_of_options(parts)
 

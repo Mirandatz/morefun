@@ -110,6 +110,7 @@ class OptimizerSynthetizer(lgp.LowerGrammarTransformer):
     _expected_tokens = {
         '"adam"',
         '"sgd"',
+        '"ranger"',
         '"learning_rate"',
         '"momentum"',
         '"nesterov"',
@@ -117,9 +118,13 @@ class OptimizerSynthetizer(lgp.LowerGrammarTransformer):
         '"beta2"',
         '"epsilon"',
         '"amsgrad"',
+        '"sync_period"',
+        '"slow_step_size"',
     }
 
-    _passthrough_rules = {
+    # This set contains the names of rules that when visited just return the value
+    # of a "key value pair".
+    _key_value_pair_rules = {
         "learning_rate",
         "momentum",
         "nesterov",
@@ -127,6 +132,8 @@ class OptimizerSynthetizer(lgp.LowerGrammarTransformer):
         "beta2",
         "epsilon",
         "amsgrad",
+        "sync_period",
+        "slow_step_size",
     }
 
     def __default__(
@@ -135,7 +142,7 @@ class OptimizerSynthetizer(lgp.LowerGrammarTransformer):
         children: typing.Any,
         meta: typing.Any,
     ) -> typing.Any:
-        if data.value in self._passthrough_rules:
+        if data.value in self._key_value_pair_rules:
             marker, value = children
             return value
 

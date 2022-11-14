@@ -1,3 +1,6 @@
+import datetime as dt
+
+import hypothesis
 from hypothesis import given
 
 import gge.grammars as gr
@@ -69,6 +72,7 @@ def test_ranger_to_tensorflow(ranger: optim.Ranger) -> None:
 
 
 @given(test_data=gos.rangers().map(gos.ranger_grammar))
+@hypothesis.settings(deadline=dt.timedelta(seconds=2))
 def test_rangers_middle_grammar(test_data: ds.ParsingTestData[optim.Adam]) -> None:
     """Can process a middle_grammar to generate an Adam optimizer."""
 

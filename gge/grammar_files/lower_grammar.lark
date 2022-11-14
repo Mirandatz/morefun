@@ -32,7 +32,7 @@ batchnorm : BATCHNORM
 
 activation : RELU | GELU | PRELU | SWISH
 
-optimizer: sgd | adam
+optimizer: sgd | adam | ranger
 
 sgd           : SGD learning_rate momentum nesterov
 learning_rate : LEARNING_RATE QUOTED_FLOAT
@@ -45,6 +45,10 @@ beta2   : BETA2 QUOTED_FLOAT
 epsilon : EPSILON QUOTED_FLOAT
 amsgrad : AMSGRAD BOOL
 
+ranger         : RANGER learning_rate beta1 beta2 epsilon amsgrad sync_period slow_step_size
+sync_period    : SYNC_PERIOD QUOTED_INT
+slow_step_size : SLOW_STEP_SIZE QUOTED_FLOAT
+
 // using multiple imports just for aesthetic reasons
 %import .terminals (RANDOM_FLIP, FLIP_MODE, RANDOM_ROTATION, RANDOM_CROP)
 %import .terminals (RESIZING, HEIGHT, WIDTH)
@@ -55,6 +59,7 @@ amsgrad : AMSGRAD BOOL
 %import .terminals (BATCHNORM)
 %import .terminals (SGD, LEARNING_RATE, MOMENTUM, NESTEROV)
 %import .terminals (ADAM, BETA1, BETA2, EPSILON, AMSGRAD)
+%import .terminals (RANGER, SYNC_PERIOD, SLOW_STEP_SIZE)
 %import .terminals (BOOL, QUOTED_INT, QUOTED_FLOAT)
 
 %import common.WS
