@@ -2,20 +2,24 @@ import pathlib
 
 from loguru import logger
 
-import gge.fitnesses as gf
+import gge.composite_genotypes as cg
+import gge.evolutionary.fitnesses as gf
+import gge.grammars as gr
 import gge.mutations as gm
 import gge.novelty as novel
 import gge.persistence
+import gge.phenotypes as phenos
 import gge.randomness as rand
 
 
 def run_single_generation(
-    population: list[gf.FitnessEvaluationResult],
+    population: dict[cg.CompositeGenotype, gf.Fitness],
+    grammar: gr.Grammar,
     mut_params: gm.PopulationMutationParameters,
-    fit_params: gf.FitnessEvaluationParameters,
+    metrics: tuple[gf.Metric, ...],
     rng: rand.RNG,
     novelty_tracker: novel.NoveltyTracker,
-) -> list[gf.FitnessEvaluationResult] | None:
+) -> dict[cg.CompositeGenotype, gf.Fitness] | None:
     """
     Runs a single generation of the evolutionary loop and
     returns the fittest individuals genereated.
@@ -28,20 +32,24 @@ def run_single_generation(
 
     assert len(population) > 0
 
-    initial_genotypes = [res.genotype for res in population]
+    initial_genotypes = list(population.keys())
 
-    mutants = gm.try_mutate_population(
+    mutant_genotypes = gm.try_mutate_population(
         initial_genotypes,
         mut_params,
         rng,
         novelty_tracker,
     )
 
-    if mutants is None:
+    if mutant_genotypes is None:
         return None
 
-    evaluated_mutants = [gf.evaluate(m, fit_params) for m in mutants]
-    next_gen_candidates = population + evaluated_mutants
+    evaluated_mutants = {
+        genotype: gf.evaluate(phenos.translate(genotype, grammar), metrics)
+        for genotype in mutant_genotypes
+    }
+
+    next_gen_candidates = population | evaluated_mutants
     fittest = gf.select_fittest_nsga2(next_gen_candidates, len(population))
 
     return fittest
@@ -50,9 +58,10 @@ def run_single_generation(
 def run_evolutionary_loop(
     starting_generation_number: int,
     number_of_generations_to_run: int,
-    initial_population: list[gf.FitnessEvaluationResult],
+    initial_population: dict[cg.CompositeGenotype, gf.Fitness],
+    grammar: gr.Grammar,
     mutation_params: gm.PopulationMutationParameters,
-    fitness_params: gf.FitnessEvaluationParameters,
+    metrics: tuple[gf.Metric, ...],
     novelty_tracker: novel.NoveltyTracker,
     rng: rand.RNG,
     output_dir: pathlib.Path,
@@ -62,7 +71,7 @@ def run_evolutionary_loop(
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    population = list(initial_population)
+    population = initial_population.copy()
 
     for gen_nr in range(
         starting_generation_number,
@@ -72,8 +81,9 @@ def run_evolutionary_loop(
 
         maybe_population = run_single_generation(
             population=population,
+            grammar=grammar,
             mut_params=mutation_params,
-            fit_params=fitness_params,
+            metrics=metrics,
             rng=rng,
             novelty_tracker=novelty_tracker,
         )
