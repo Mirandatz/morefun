@@ -87,7 +87,7 @@ def evolutionary_loop(
         settings.output.directory
     )
 
-    current_generation_number = latest_gen_output.generation_number + 1
+    current_generation_number = latest_gen_output.get_generation_number + 1
 
     mutation_params = gset.make_mutation_params(
         mutation=settings.evolution.mutation_settings,

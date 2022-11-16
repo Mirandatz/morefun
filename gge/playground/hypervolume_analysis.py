@@ -54,7 +54,7 @@ def generation_artifact_path_to_df(path: pathlib.Path) -> pd.DataFrame:
         rows.append(r)
 
     df = pd.DataFrame(rows)
-    df["generation_number"] = generation_artifacts.generation_number
+    df["generation_number"] = generation_artifacts.get_generation_number
     return df
 
 

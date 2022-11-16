@@ -4,7 +4,6 @@ import shutil
 import tempfile
 import typing
 
-import attrs
 import tensorflow as tf
 from loguru import logger
 
@@ -13,19 +12,39 @@ import gge.evolutionary.fitnesses as gf
 import gge.novelty
 import gge.randomness as rand
 
-GENERATION_OUTPUT_EXTENSION = ".gen_out"
+GENERATION_OUTPUT_EXTENSION = ".gen_out2"
 TRAINING_HISTORY_EXTENSION = ".train_hist"
 GENOTYPE_EXTENSION = ".genotype"
 MODEL_EXTENSION = ".zipped_tf_model"
 MODEL_EVALUATIONS_EXTENSION = ".csv"
 
 
-@attrs.define
 class GenerationOutput:
-    generation_number: int
-    fittest: list[gf.FitnessEvaluationResult]
-    novelty_tracker: gge.novelty.NoveltyTracker
-    rng: rand.RNG
+    def __init__(
+        self,
+        generation_number: int,
+        fittest: dict[cg.CompositeGenotype, gf.Fitness],
+        novelty_tracker: gge.novelty.NoveltyTracker,
+        rng: rand.RNG,
+    ) -> None:
+        self._generation_number = generation_number
+        self._fittest = dict(fittest)
+        self._novelty_tracker = novelty_tracker.copy()
+        self._serialized_rng = pickle.dumps(rng, protocol=pickle.HIGHEST_PROTOCOL)
+
+    def get_generation_number(self) -> int:
+        return self._generation_number
+
+    def get_fittest(self) -> dict[cg.CompositeGenotype, gf.Fitness]:
+        return dict(self._fittest)
+
+    def get_novelty_tracker(self) -> gge.novelty.NoveltyTracker:
+        return self._novelty_tracker.copy()
+
+    def get_rng(self) -> rand.RNG:
+        rng = pickle.loads(self._serialized_rng)
+        assert isinstance(rng, rand.RNG)
+        return rng
 
 
 def get_generational_artifacts_path(
@@ -61,7 +80,7 @@ def get_models_evaluations_path(
 
 def save_generational_artifacts(
     generation_number: int,
-    fittest: list[gf.FitnessEvaluationResult],
+    fittest: dict[cg.CompositeGenotype, gf.Fitness],
     rng: rand.RNG,
     novelty_tracker: gge.novelty.NoveltyTracker,
     output_dir: pathlib.Path,
@@ -80,11 +99,11 @@ def save_generational_artifacts(
         rng=rng,
     )
 
-    blob = pickle.dumps(gen_out, protocol=pickle.HIGHEST_PROTOCOL)
+    serialized_gen_out = pickle.dumps(gen_out, protocol=pickle.HIGHEST_PROTOCOL)
 
     output_dir.mkdir(parents=True, exist_ok=True)
     path = get_generational_artifacts_path(generation_number, output_dir)
-    path.write_bytes(blob)
+    path.write_bytes(serialized_gen_out)
 
     logger.info(
         f"finished saving generation output, generation_number=<{generation_number}>"
@@ -163,8 +182,3 @@ def load_genotype(path: pathlib.Path) -> cg.CompositeGenotype:
     genotype = pickle.loads(serialized)
     assert isinstance(genotype, cg.CompositeGenotype)
     return genotype
-
-
-def save_training_history(hist: gf.TrainingHistory, path: pathlib.Path) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_bytes(pickle.dumps(hist, protocol=pickle.HIGHEST_PROTOCOL))
