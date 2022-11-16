@@ -1,6 +1,5 @@
 attrs
 diskcache
-frozendict
 lark
 loguru
 networkx
