@@ -47,7 +47,7 @@ def create_and_evaluate_initial_population(
     genotypes = [ind.genotype for ind in individuals]
     phenotypes = [ind.phenotype for ind in individuals]
 
-    fitness_evaluation_params = gset.make_fitness_evaluation_params(
+    fitness_evaluation_params = gset.make_metrics(
         dataset=settings.dataset,
         fitness=settings.evolution.fitness_settings,
         grammar=settings.grammar,
@@ -94,7 +94,7 @@ def evolutionary_loop(
         grammar=settings.grammar,
     )
 
-    fitness_params = gset.make_fitness_evaluation_params(
+    fitness_params = gset.make_metrics(
         dataset=settings.dataset,
         fitness=settings.evolution.fitness_settings,
         grammar=settings.grammar,

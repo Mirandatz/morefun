@@ -9,8 +9,8 @@ import typeguard
 import yaml
 from loguru import logger
 
+import gge.evolutionary.fitnesses as gf
 import gge.experiments.create_initial_population_genotypes as gge_init
-import gge.fitnesses as gf
 import gge.grammars as gr
 import gge.layers as gl
 import gge.mutations as gm
@@ -314,16 +314,15 @@ def make_mutation_params(
     )
 
 
-def make_fitness_metric(
+def make_metric(
     name: str,
     fitness: FitnessSettings,
     dataset: DatasetSettings,
-) -> gf.FitnessMetric:
+) -> gf.Metric:
     match name:
-        case "validation_accuracy":
-            return gf.ValidationAccuracy(
+        case "train_loss":
+            return gf.TrainLoss(
                 train_directory=dataset.get_and_check_train_dir(),
-                validation_directory=dataset.get_and_check_validation_dir(),
                 input_shape=dataset.input_shape,
                 batch_size=fitness.batch_size,
                 max_epochs=fitness.max_epochs,
@@ -338,13 +337,11 @@ def make_fitness_metric(
             raise ValueError(f"unknown metric name=<{name}>")
 
 
-def make_fitness_evaluation_params(
+def make_metrics(
     dataset: DatasetSettings,
     fitness: FitnessSettings,
-    grammar: gr.Grammar,
-) -> gf.FitnessEvaluationParameters:
-    metrics = [make_fitness_metric(name, fitness, dataset) for name in fitness.metrics]
-    return gf.FitnessEvaluationParameters(tuple(metrics), grammar)
+) -> tuple[gf.Metric, ...]:
+    return tuple(make_metric(name, fitness, dataset) for name in fitness.metrics)
 
 
 def load_gge_settings(path: pathlib.Path) -> GgeSettings:

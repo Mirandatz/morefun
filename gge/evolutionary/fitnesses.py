@@ -225,6 +225,9 @@ class NumberOfParameters:
                 stacktrace=traceback.format_exc(),
             )
 
+    def __call__(self, phenotype: pheno.Phenotype) -> MetricEvaluation:
+        return self.evaluate(phenotype)
+
 
 @typeguard.typechecked
 @attrs.frozen
@@ -295,6 +298,9 @@ class TrainLoss:
                 description=msg,
                 stacktrace=traceback.format_exc(),
             )
+
+    def __call__(self, phenotype: pheno.Phenotype) -> MetricEvaluation:
+        return self.evaluate(phenotype)
 
 
 @typeguard.typechecked
