@@ -1,5 +1,4 @@
 import functools
-import os
 import pathlib
 import sys
 import typing

@@ -9,7 +9,7 @@ import tensorflow as tf
 from loguru import logger
 
 import gge.composite_genotypes as cg
-import gge.fitnesses as gf
+import gge.evolutionary.fitnesses as gf
 import gge.novelty
 import gge.randomness as rand
 

@@ -1,47 +1,24 @@
-import datetime as dt
-
 import numpy as np
 import numpy.typing as npt
 import pytest
 
-import gge.composite_genotypes as gc
-import gge.fitnesses as gf
-import gge.grammars as gr
-import gge.randomness as rand
-import gge.structured_grammatical_evolution as sge
+import gge.evolutionary.fitnesses as gf
 
 
 def test_fitness_evaluations_to_ndarray() -> None:
-    grammar = gr.Grammar(
-        """
-        start     : convblock optim
-        convblock : conv~2
-        conv      : "conv" "filter_count" "1" "kernel_size" "2" "stride" "3"
-        optim     : "sgd" "learning_rate" "0.001" "momentum" "0.1" "nesterov" "false"
-    """
-    )
-    rng = rand.create_rng(seed=0)
-    backbone_genotype = sge.create_genotype(grammar, rng)
-    composite_genotype = gc.make_composite_genotype(
-        backbone_genotype,
-        grammar,
-        rng,
-    )
+    me1 = gf.SuccessfulMetricEvaluation("a", 1, -1)
+    me2 = gf.SuccessfulMetricEvaluation("b", 2, -2)
+    fit1 = gf.Fitness((me1, me2))
 
-    objective_value = 123
-
-    fitness = gf.Fitness(
-        names=tuple(["dummy_metric"]),
-        values=tuple([objective_value]),
+    fitnesses = [fit1, fit1, fit1]
+    actual = gf.fitnesses_to_ndarray(fitnesses)
+    expected = np.asarray(
+        [
+            [me1.effective, me2.effective],
+            [me1.effective, me2.effective],
+            [me1.effective, me2.effective],
+        ]
     )
-
-    fer = gf.SuccessfulEvaluationResult(
-        composite_genotype, fitness, dt.datetime.now(), dt.datetime.now()
-    )
-
-    fitnesses = [fer, fer, fer]
-    actual = gf.fitness_evaluations_to_ndarray(fitnesses)
-    expected = np.asarray([[objective_value], [objective_value], [objective_value]])
     assert np.array_equal(expected, actual)
 
 
