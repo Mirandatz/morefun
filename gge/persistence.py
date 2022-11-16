@@ -122,56 +122,6 @@ def load_latest_generational_artifacts(output_dir: pathlib.Path) -> GenerationOu
     return load_generational_artifacts(latest)
 
 
-def save_and_zip_tf_model(model: tf.keras.Model, path: pathlib.Path) -> None:
-    """
-    Saves a Tensorflow model to a single file.
-
-    Obs: The difference between this function and the one provided by Tensorflow
-    is that Tensorflow's `save` function creates a directory with multiple files.
-    """
-
-    path.parent.mkdir(parents=True, exist_ok=True)
-
-    with tempfile.TemporaryDirectory(dir="/dev/shm") as _dir:
-        tmp_dir = pathlib.Path(_dir)
-
-        model_dir = tmp_dir / "tf_model"
-
-        tf.keras.models.save_model(
-            model=model,
-            filepath=model_dir,
-            include_optimizer=True,
-            save_format="tf",
-            save_traces=True,
-        )
-
-        zipped = shutil.make_archive(
-            base_name=str(tmp_dir / "tf_model_zipped"),
-            format="zip",
-            root_dir=model_dir,
-            base_dir=".",
-        )
-
-        shutil.move(src=zipped, dst=path)
-
-
-def load_zipped_tf_model(path: pathlib.Path) -> tf.keras.Model:
-    with tempfile.TemporaryDirectory(dir="/dev/shm") as _dir:
-        tmp_dir = pathlib.Path(_dir)
-
-        shutil.unpack_archive(filename=path, extract_dir=tmp_dir, format="zip")
-
-        return tf.keras.models.load_model(tmp_dir)
-
-
-def load_models(dir: pathlib.Path) -> typing.Iterable[tuple[str, tf.keras.Model]]:
-    model_paths = list(dir.glob(f"*{MODEL_EXTENSION}"))
-    assert len(model_paths) > 0
-
-    for path in model_paths:
-        yield path.stem, load_zipped_tf_model(path)
-
-
 def save_genotype(genotype: cg.CompositeGenotype, path: pathlib.Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(pickle.dumps(genotype, protocol=pickle.HIGHEST_PROTOCOL))
