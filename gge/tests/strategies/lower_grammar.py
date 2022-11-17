@@ -35,6 +35,27 @@ def random_rotations(
 
 
 @hs.composite
+def random_translations(
+    draw: hs.DrawFn, *, name_gen: NameGenerator | None = None
+) -> LowerGrammarParsingTestData:
+    name_gen = name_gen or NameGenerator()
+    name = name_gen.gen_name(gl.RandomTranslation)
+    height_factor = draw(hs.floats(min_value=0, max_value=1))
+    width_factor = draw(hs.floats(min_value=0, max_value=1))
+    layer = gl.RandomTranslation(
+        name,
+        height_factor=height_factor,
+        width_factor=width_factor,
+    )
+    tokenstream = (
+        f'"random_translation"'
+        f' "height_factor" "{height_factor}"'
+        f' "width_factor" "{width_factor}"'
+    )
+    return LowerGrammarParsingTestData(tokenstream, (layer,))
+
+
+@hs.composite
 def resizings(
     draw: hs.DrawFn, *, name_gen: NameGenerator | None = None
 ) -> LowerGrammarParsingTestData:

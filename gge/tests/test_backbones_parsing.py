@@ -91,10 +91,18 @@ def test_parse_swish(test_data: lgs.LowerGrammarParsingTestData = lgs.swishs()) 
     assert expected == actual
 
 
-def test_parse_prelus(
+def test_parse_prelu(
     test_data: lgs.LowerGrammarParsingTestData = lgs.prelus(),
 ) -> None:
     """Can parse lower-grammar: prelu."""
+    actual = bb.parse(test_data.tokenstream, start="backbone")
+    expected = bb.Backbone(test_data.parsed)
+    assert expected == actual
+
+
+@given(test_data=lgs.random_translations())
+def test_random_translations(test_data: lgs.LowerGrammarParsingTestData) -> None:
+    """Can parse lower-grammar: random translations."""
     actual = bb.parse(test_data.tokenstream, start="backbone")
     expected = bb.Backbone(test_data.parsed)
     assert expected == actual

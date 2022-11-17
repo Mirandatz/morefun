@@ -8,6 +8,7 @@ import typing
 import attrs
 import keras.layers as kl
 import tensorflow as tf
+import typeguard
 
 import gge.randomness as rand
 
@@ -313,6 +314,44 @@ class ConnectedRandomRotation(SingleInputLayer):
 
     def __repr__(self) -> str:
         return f"{self.params.name}, params={self.params}, input={self.input_layer}, out_shape=[{self.output_shape}]"
+
+
+@typeguard.typechecked
+@attrs.frozen(cache_hash=True)
+class RandomTranslation(ConvertibleToConnectableLayer):
+    name: str
+    height_factor: float
+    width_factor: float
+    seed: int = rand.get_fixed_seed()
+
+    def to_connectable(self, input: "ConnectableLayer") -> "ConnectedRandomTranslation":
+        return ConnectedRandomTranslation(input, self)
+
+
+@typeguard.typechecked
+@attrs.frozen(cache_hash=True)
+class ConnectedRandomTranslation(SingleInputLayer):
+    input_layer: ConnectableLayer
+    params: RandomTranslation
+
+    @property
+    def output_shape(self) -> Shape:
+        return self.input_layer.output_shape
+
+    def to_tensor(
+        self, known_tensors: dict["ConnectableLayer", tf.Tensor]
+    ) -> tf.Tensor:
+        if self not in known_tensors:
+            source = self.input_layer.to_tensor(known_tensors)
+            layer = kl.RandomTranslation(
+                height_factor=self.params.height_factor,
+                width_factor=self.params.width_factor,
+                name=self.params.name,
+            )
+            tensor = layer(source)
+            known_tensors[self] = tensor
+
+        return known_tensors[self]
 
 
 @attrs.frozen(cache_hash=True)

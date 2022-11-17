@@ -4,6 +4,7 @@ import typing
 
 import attrs
 import lark
+import typeguard
 from loguru import logger
 
 import gge.layers as gl
@@ -49,13 +50,14 @@ class Backbone:
 
 @lark.v_args(inline=True)
 class BackboneSynthetizer(lgp.LowerGrammarTransformer):
-    # This set contains terminals that, when visited/processed,
-    # are just converted into `None`.
-    # It is used in `BackboneSynthetizer.__default_token__` to remove
-    # boilerplate code.
-    _USELESS_MARKERS = {
+    # This set contains terminals that when visited/processed are just converted into `None`.
+    # It is used in `BackboneSynthetizer.__default_token__` to remove boilerplate code.
+    _expected_tokens = {
         '"random_flip"',
         '"random_rotation"',
+        '"random_translation"',
+        '"height_factor"',
+        '"width_factor"',
         '"resizing"',
         '"random_crop"',
         '"height"',
@@ -76,13 +78,15 @@ class BackboneSynthetizer(lgp.LowerGrammarTransformer):
 
     # This set is also used to remove boilplate code.
     # For more information, see: `BackboneSynthetizer.__default_token__`
-    _RULES_OF_MARKERS_VALUE_PAIRS = {
+    _key_value_pair_rules = {
         "height",
         "width",
         "filter_count",
         "kernel_size",
         "stride",
         "pool_size",
+        "height_factor",
+        "width_factor",
     }
 
     def __init__(self) -> None:
@@ -97,7 +101,7 @@ class BackboneSynthetizer(lgp.LowerGrammarTransformer):
     ) -> typing.Any:
         self._raise_if_not_running()
 
-        if data.value in BackboneSynthetizer._RULES_OF_MARKERS_VALUE_PAIRS:
+        if data.value in self._key_value_pair_rules:
             marker, value = children
             return value
 
@@ -106,7 +110,7 @@ class BackboneSynthetizer(lgp.LowerGrammarTransformer):
     def __default_token__(self, token: lark.Token) -> typing.Any:
         self._raise_if_not_running()
 
-        if token.value in BackboneSynthetizer._USELESS_MARKERS:
+        if token.value in self._expected_tokens:
             return None
 
         return super().__default_token__(token)
@@ -171,6 +175,18 @@ class BackboneSynthetizer(lgp.LowerGrammarTransformer):
         return gl.RandomRotation(
             name=self._create_layer_name(gl.RandomRotation),
             factor=factor,
+            seed=rand.get_fixed_seed(),
+        )
+
+    @typeguard.typechecked
+    def random_translation(
+        self, marker: None, height_factor: float, width_factor: float
+    ) -> gl.RandomTranslation:
+        self._raise_if_not_running()
+        return gl.RandomTranslation(
+            name=self._create_layer_name(gl.RandomTranslation),
+            height_factor=height_factor,
+            width_factor=width_factor,
             seed=rand.get_fixed_seed(),
         )
 
