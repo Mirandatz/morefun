@@ -56,8 +56,6 @@ class BackboneSynthetizer(lgp.LowerGrammarTransformer):
         '"random_flip"',
         '"random_rotation"',
         '"random_translation"',
-        '"height_factor"',
-        '"width_factor"',
         '"resizing"',
         '"random_crop"',
         '"height"',
@@ -85,8 +83,6 @@ class BackboneSynthetizer(lgp.LowerGrammarTransformer):
         "kernel_size",
         "stride",
         "pool_size",
-        "height_factor",
-        "width_factor",
     }
 
     def __init__(self) -> None:
@@ -179,14 +175,11 @@ class BackboneSynthetizer(lgp.LowerGrammarTransformer):
         )
 
     @typeguard.typechecked
-    def random_translation(
-        self, marker: None, height_factor: float, width_factor: float
-    ) -> gl.RandomTranslation:
+    def random_translation(self, marker: None, factor: float) -> gl.RandomTranslation:
         self._raise_if_not_running()
         return gl.RandomTranslation(
             name=self._create_layer_name(gl.RandomTranslation),
-            height_factor=height_factor,
-            width_factor=width_factor,
+            factor=factor,
             seed=rand.get_fixed_seed(),
         )
 

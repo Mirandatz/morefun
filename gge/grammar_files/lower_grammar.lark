@@ -15,7 +15,7 @@ layer    : random_flip
 
 random_flip        : RANDOM_FLIP FLIP_MODE
 random_rotation    : RANDOM_ROTATION QUOTED_FLOAT
-random_translation : RANDOM_TRANSLATION height_factor width_factor
+random_translation : RANDOM_TRANSLATION QUOTED_FLOAT
 resizing           : RESIZING height width
 height             : HEIGHT QUOTED_INT
 width              : WIDTH QUOTED_INT

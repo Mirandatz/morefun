@@ -26,9 +26,7 @@ random_flip : RANDOM_FLIP _flip_args
 
 random_rotation : RANDOM_ROTATION _float_args
 
-random_translation : RANDOM_TRANSLATION height_factor width_factor
-height_factor      : HEIGHT_FACTOR _float_args
-width_factor       : WIDTH_FACTOR _float_args
+random_translation : RANDOM_TRANSLATION _float_args
 
 resizing : RESIZING height width
 height  : HEIGHT _int_args

@@ -360,8 +360,6 @@ class ExpectedTerminal(enum.Enum):
     RANDOM_CROP = Terminal('"random_crop"')
 
     RANDOM_TRANSLATION = Terminal('"random_translation"')
-    HEIGHT_FACTOR = Terminal('"height_factor"')
-    WIDTH_FACTOR = Terminal('"width_factor"')
 
     CONV = Terminal('"conv"')
     FILTER_COUNT = Terminal('"filter_count"')
@@ -468,9 +466,6 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
         # resizing
         "height",
         "width",
-        # random translation
-        "height_factor",
-        "width_factor",
         # conv
         "filter_count",
         "kernel_size",
@@ -690,7 +685,13 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
 
     def random_translation(self, parts: typing.Any) -> list[RuleOption]:
         self._raise_if_not_running()
-        return make_list_of_options(parts)
+        marker, *factors = parts
+        assert isinstance(marker, Terminal)
+        assert isinstance(factors, list)
+        assert all(isinstance(f, Terminal) for f in factors)
+        assert len(factors) >= 1
+
+        return [RuleOption((marker, f)) for f in factors]
 
     # this rule exists only to make the upper_grammar.lark cleaner
     @lark.v_args(inline=True)
