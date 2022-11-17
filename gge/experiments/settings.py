@@ -111,7 +111,7 @@ class MutationSettings:
 class FitnessSettings:
     batch_size: int
     max_epochs: int
-    metrics: tuple[typing.Literal["validation_accuracy", "number_of_parameters"], ...]
+    metrics: tuple[typing.Literal["train_loss", "number_of_parameters"], ...]
     early_stop_patience: int
 
     def __attrs_post_init__(self) -> None:
@@ -149,7 +149,7 @@ class DatasetSettings:
         assert self.image_depth >= 1
         assert self.class_count >= 2
         assert self.train_instances >= 2
-        assert self.validation_instances >= 2
+        assert self.validation_instances >= 0
         assert self.test_instances >= 2
 
     @staticmethod
