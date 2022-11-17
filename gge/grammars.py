@@ -359,6 +359,10 @@ class ExpectedTerminal(enum.Enum):
 
     RANDOM_CROP = Terminal('"random_crop"')
 
+    RANDOM_TRANSLATION = Terminal('"random_translation"')
+    HEIGHT_FACTOR = Terminal('"height_factor"')
+    WIDTH_FACTOR = Terminal('"width_factor"')
+
     CONV = Terminal('"conv"')
     FILTER_COUNT = Terminal('"filter_count"')
     KERNEL_SIZE = Terminal('"kernel_size"')
@@ -464,6 +468,9 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
         # resizing
         "height",
         "width",
+        # random translation
+        "height_factor",
+        "width_factor",
         # conv
         "filter_count",
         "kernel_size",
@@ -678,6 +685,10 @@ class GrammarTransformer(gge_transformers.SinglePassTransformer):
         return make_list_of_options(parts)
 
     def random_crop(self, parts: typing.Any) -> list[RuleOption]:
+        self._raise_if_not_running()
+        return make_list_of_options(parts)
+
+    def random_translation(self, parts: typing.Any) -> list[RuleOption]:
         self._raise_if_not_running()
         return make_list_of_options(parts)
 

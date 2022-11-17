@@ -583,6 +583,35 @@ def test_random_crop(height: ugs.GrammarArgs, width: ugs.GrammarArgs) -> None:
         assert expected_expansion == actual_expansion
 
 
+@given(
+    height=ugs.float_args(min_value=-1, max_value=1),
+    width=ugs.float_args(min_value=-1, max_value=1),
+)
+def test_random_translation(height: ugs.GrammarArgs, width: ugs.GrammarArgs) -> None:
+    """Can parse middle grammar layer definition: random_translation."""
+
+    raw_grammar = f'start : "random_translation" "height_factor" {height.tokenstream} "width_factor" {width.tokenstream}'
+    grammar = gr.Grammar(raw_grammar)
+
+    expansions = grammar.expansions(gr.NonTerminal("start"))
+    test_values = itertools.product(height.parsed, width.parsed)
+    for actual_expansion, terminals in zip(
+        expansions,
+        test_values,
+        strict=True,
+    ):
+        height_term, width_term = terminals
+        expected_symbols = (
+            gr.ExpectedTerminal.RANDOM_TRANSLATION.value,
+            gr.ExpectedTerminal.HEIGHT_FACTOR.value,
+            height_term,
+            gr.ExpectedTerminal.WIDTH_FACTOR.value,
+            width_term,
+        )
+        expected_expansion = gr.RuleOption(expected_symbols)
+        assert expected_expansion == actual_expansion
+
+
 def test_prelu() -> None:
     """Can parse middle grammar layer definition: prelu."""
     grammar = gr.Grammar('start : "prelu"')

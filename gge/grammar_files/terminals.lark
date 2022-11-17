@@ -49,5 +49,5 @@ QUOTED_INT : QUOTE INT QUOTE
 QUOTED_FLOAT : QUOTE FLOAT QUOTE
 QUOTE : "\""
 
-%import common.INT
-%import common.NUMBER -> FLOAT
+%import common.SIGNED_INT -> INT
+%import common.SIGNED_NUMBER -> FLOAT
