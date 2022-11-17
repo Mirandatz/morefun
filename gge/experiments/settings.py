@@ -10,10 +10,10 @@ import yaml
 from loguru import logger
 
 import gge.evolutionary.fitnesses as gf
+import gge.evolutionary.mutations as gm
 import gge.experiments.create_initial_population_genotypes as gge_init
 import gge.grammars as gr
 import gge.layers as gl
-import gge.mutations as gm
 import gge.randomness as rand
 import gge.redirection
 

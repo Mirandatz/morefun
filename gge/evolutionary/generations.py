@@ -4,8 +4,8 @@ from loguru import logger
 
 import gge.composite_genotypes as cg
 import gge.evolutionary.fitnesses as gf
+import gge.evolutionary.mutations as gm
 import gge.grammars as gr
-import gge.mutations as gm
 import gge.novelty as novel
 import gge.persistence
 import gge.phenotypes as phenos
@@ -57,7 +57,7 @@ def run_single_generation(
     return {g: next_gen_candidates[g] for g in fittest_genotypes}
 
 
-def run_evolutionary_loop(
+def run_multiple_generations(
     starting_generation_number: int,
     number_of_generations_to_run: int,
     initial_population: dict[cg.CompositeGenotype, gf.Fitness],

@@ -2,8 +2,8 @@ import pathlib
 
 import typer
 
-import gge.evolution
 import gge.evolutionary.fitnesses as gf
+import gge.evolutionary.generations
 import gge.experiments.create_initial_population_genotypes as gge_init
 import gge.experiments.settings as gset
 import gge.novelty
@@ -94,7 +94,7 @@ def evolutionary_loop(
         fitness=settings.evolution.fitness_settings,
     )
 
-    gge.evolution.run_evolutionary_loop(
+    gge.evolutionary.generations.run_multiple_generations(
         starting_generation_number=current_generation_number,
         number_of_generations_to_run=generations,
         initial_population=latest_gen_output.get_fittest(),

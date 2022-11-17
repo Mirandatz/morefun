@@ -6,9 +6,9 @@ from loguru import logger
 
 import gge.composite_genotypes as cg
 import gge.connections as conn
+import gge.evolutionary.mutations as mutations
 import gge.fallible as fallible
 import gge.grammars as gr
-import gge.mutations as mutations
 import gge.novelty as novel
 import gge.phenotypes as gph
 import gge.randomness as rand
