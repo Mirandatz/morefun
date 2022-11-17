@@ -50,9 +50,11 @@ def run_single_generation(
     }
 
     next_gen_candidates = population | evaluated_mutants
-    fittest = gf.select_fittest_nsga2(next_gen_candidates, len(population))
+    fittest_genotypes: list[cg.CompositeGenotype] = gf.select_fittest_nsga2(
+        next_gen_candidates, len(population)
+    )
 
-    return fittest
+    return {g: next_gen_candidates[g] for g in fittest_genotypes}
 
 
 def run_evolutionary_loop(

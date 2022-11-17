@@ -2,22 +2,19 @@
 This module assumes that fitnesses must be MINIMIZED.
 """
 
-import abc  # noqa
 import pathlib
-import traceback  # noqa
-import typing  # noqa
+import traceback
+import typing
 
 import attrs
-import numpy as np  # noqa
-import numpy.typing as npt  # noqa
+import numpy as np
+import numpy.typing as npt
 import tensorflow as tf
 import typeguard
-from loguru import logger  # noqa
-from pymoo.algorithms.moo.nsga2 import calc_crowding_distance  # noqa
-from pymoo.util.nds.fast_non_dominated_sort import fast_non_dominated_sort  # noqa
+from loguru import logger
+from pymoo.algorithms.moo.nsga2 import calc_crowding_distance
+from pymoo.util.nds.fast_non_dominated_sort import fast_non_dominated_sort
 
-import gge.composite_genotypes as cg  # noqa
-import gge.grammars as gr  # noqa
 import gge.layers as gl
 import gge.phenotypes as pheno
 import gge.randomness as rand
@@ -372,7 +369,7 @@ def argsort_nsga2(
     Returns a list of indices that would select the `fittest_count` elements
     of `fitnesses` using NSGA-II's fittest criteria.
 
-    This function assumes that fitnesses must be maximized.
+    This function assumes that fitnesses must be minimized.
     """
 
     num_points, _ = fitnesses.shape
@@ -414,15 +411,20 @@ def argsort_nsga2(
     return fittest
 
 
-def select_fittest_nsga2(
-    fitnesses: typing.Iterable[Fitness],
-    fittest_count: int,
-) -> list[Fitness]:
-    as_list = list(fitnesses)
+T = typing.TypeVar("T")
 
-    if fittest_count > len(as_list):
+
+def select_fittest_nsga2(
+    evaluated_solutions: dict[T, Fitness],
+    fittest_count: int,
+) -> list[T]:
+    if fittest_count > len(evaluated_solutions):
         raise ValueError("fittest_count must be <= len(fitnesses)")
 
-    as_array = fitnesses_to_ndarray(as_list)
-    fittest_indices = argsort_nsga2(as_array, fittest_count)
-    return [as_list[index] for index in fittest_indices]
+    indexed = list(evaluated_solutions.items())
+    solutions, fitnesses = zip(*indexed)
+
+    fitnesses_array = fitnesses_to_ndarray(fitnesses)
+    fittest_indices = argsort_nsga2(fitnesses_array, fittest_count)
+
+    return [solutions[index] for index in fittest_indices]
