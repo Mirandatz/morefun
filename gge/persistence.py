@@ -1,10 +1,6 @@
 import pathlib
 import pickle
-import shutil
-import tempfile
-import typing
 
-import tensorflow as tf
 from loguru import logger
 
 import gge.composite_genotypes as cg
