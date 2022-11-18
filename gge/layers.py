@@ -8,7 +8,6 @@ import typing
 import attrs
 import keras.layers as kl
 import tensorflow as tf
-import typeguard
 
 import gge.randomness as rand
 
@@ -268,6 +267,11 @@ class ConnectedRandomFlip(SingleInputLayer):
 
 @attrs.frozen(cache_hash=True)
 class RandomRotation(ConvertibleToConnectableLayer):
+    """
+    Represents a layer that randomly rotates its inputs (image-like tensors)
+    up to `factor` degrees.
+    """
+
     name: str
     factor: float
     seed: int = rand.get_fixed_seed()
@@ -276,8 +280,6 @@ class RandomRotation(ConvertibleToConnectableLayer):
         assert isinstance(self.name, str)
         assert isinstance(self.factor, float)
         assert isinstance(self.seed, int)
-
-        assert 0 <= self.factor <= 1
 
     def to_connectable(self, input: "ConnectableLayer") -> "ConnectedRandomRotation":
         return ConnectedRandomRotation(input, self)
@@ -302,8 +304,11 @@ class ConnectedRandomRotation(SingleInputLayer):
     ) -> tf.Tensor:
         if self not in known_tensors:
             source = self.input_layer.to_tensor(known_tensors)
+
+            keras_factor = self.params.factor / 360
+
             layer = kl.RandomRotation(
-                factor=self.params.factor,
+                factor=keras_factor,
                 seed=self.params.seed,
                 name=self.params.name,
             )
@@ -316,7 +321,6 @@ class ConnectedRandomRotation(SingleInputLayer):
         return f"{self.params.name}, params={self.params}, input={self.input_layer}, out_shape=[{self.output_shape}]"
 
 
-@typeguard.typechecked
 @attrs.frozen(cache_hash=True)
 class RandomTranslation(ConvertibleToConnectableLayer):
     name: str
@@ -330,7 +334,6 @@ class RandomTranslation(ConvertibleToConnectableLayer):
         return ConnectedRandomTranslation(input, self)
 
 
-@typeguard.typechecked
 @attrs.frozen(cache_hash=True)
 class ConnectedRandomTranslation(SingleInputLayer):
     input_layer: ConnectableLayer

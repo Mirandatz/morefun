@@ -166,7 +166,6 @@ class BackboneSynthetizer(lgp.LowerGrammarTransformer):
     def random_rotation(self, marker: None, factor: float) -> gl.RandomRotation:
         self._raise_if_not_running()
         assert isinstance(factor, float)
-        assert 0 <= factor <= 1
 
         return gl.RandomRotation(
             name=self._create_layer_name(gl.RandomRotation),
