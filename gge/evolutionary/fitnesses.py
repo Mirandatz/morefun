@@ -300,26 +300,14 @@ class TrainLoss:
         return self.evaluate(phenotype)
 
 
-@typeguard.typechecked
 @attrs.frozen
 class Fitness:
-    """
-    Represents a collection of `MetricEvaluation`s sorted in asceding order by `metric_name`.
-    """
-
     metric_evaluations: tuple[MetricEvaluation, ...]
 
-    def __attrs_post_init__(self) -> None:
-        assert len(self.metric_evaluations) >= 1
-
-        names = [m.metric_name for m in self.metric_evaluations]
-        assert sorted(names) == names
-
-    @staticmethod
-    def from_unsorted_metric_evaluations(
-        metric_evaluations: typing.Iterable[MetricEvaluation],
-    ) -> "Fitness":
-        return Fitness(tuple(sorted(metric_evaluations, key=lambda m: m.metric_name)))
+    @typeguard.typechecked
+    def __init__(self, metric_evaluations: tuple[MetricEvaluation, ...]) -> None:
+        assert len(metric_evaluations) >= 1
+        object.__setattr__(self, "metric_evaluations", metric_evaluations)
 
     def metric_names(self) -> tuple[str, ...]:
         return tuple(m.metric_name for m in self.metric_evaluations)
@@ -350,10 +338,16 @@ def evaluate(
 def fitnesses_to_ndarray(
     fitnesses: typing.Iterable[Fitness],
 ) -> npt.NDArray[np.float64]:
-    as_list = list(fitnesses)
-    assert len(as_list) >= 1
+    """
+    Returns a vstacked ndarray of the effective values of `fitnesses`.
+    Requires that all fitnesses have the same metrics.
+    """
 
-    metric_names = [f.metric_names() for f in as_list]
+    as_list = list(fitnesses)
+    if len(as_list) == 0:
+        raise ValueError("fitnesses must can not be empty")
+
+    metric_names = (f.metric_names() for f in as_list)
     if len(set(metric_names)) != 1:
         raise ValueError("fitnesses must have the same metrics")
 
