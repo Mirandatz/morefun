@@ -3,14 +3,14 @@ import datetime as dt
 import hypothesis
 from hypothesis import given
 
-import gge.grammars as gr
+import gge.grammars.upper_grammars as ugr
 import gge.optimizers as optim
 import gge.randomness as rand
 import gge.structured_grammatical_evolution as sge
 import gge.tests.strategies.data_structures as ds
 import gge.tests.strategies.optimizers as gos
 
-# auto-import fixtures
+# autouse fixtures
 from gge.tests.fixtures import hide_gpu_from_tensorflow, remove_logger_sinks  # noqa
 
 
@@ -18,7 +18,7 @@ from gge.tests.fixtures import hide_gpu_from_tensorflow, remove_logger_sinks  # 
 def test_sgds_middle_grammar(test_data: ds.ParsingTestData[optim.SGD]) -> None:
     """Can process a middle_grammar to generate a SGD optimizer."""
 
-    grammar = gr.Grammar(test_data.tokenstream)
+    grammar = ugr.Grammar(test_data.tokenstream)
     genotype = sge.create_genotype(grammar, rng=rand.create_rng())
     tokenstream = sge.map_to_tokenstream(genotype, grammar)
     phenotype = optim.parse(tokenstream, start="optimizer")
@@ -41,7 +41,7 @@ def test_sgd_to_tensorflow(sgd: optim.SGD) -> None:
 def test_adams_middle_grammar(test_data: ds.ParsingTestData[optim.Adam]) -> None:
     """Can process a middle_grammar to generate an Adam optimizer."""
 
-    grammar = gr.Grammar(test_data.tokenstream)
+    grammar = ugr.Grammar(test_data.tokenstream)
     genotype = sge.create_genotype(grammar, rng=rand.create_rng())
     tokenstream = sge.map_to_tokenstream(genotype, grammar)
     phenotype = optim.parse(tokenstream, start="optimizer")
@@ -76,7 +76,7 @@ def test_ranger_to_tensorflow(ranger: optim.Ranger) -> None:
 def test_rangers_middle_grammar(test_data: ds.ParsingTestData[optim.Adam]) -> None:
     """Can process a middle_grammar to generate an Adam optimizer."""
 
-    grammar = gr.Grammar(test_data.tokenstream)
+    grammar = ugr.Grammar(test_data.tokenstream)
     genotype = sge.create_genotype(grammar, rng=rand.create_rng())
     tokenstream = sge.map_to_tokenstream(genotype, grammar)
     phenotype = optim.parse(tokenstream, start="optimizer")

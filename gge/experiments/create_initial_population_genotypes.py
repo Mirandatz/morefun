@@ -6,7 +6,7 @@ import tensorflow as tf
 from loguru import logger
 
 import gge.composite_genotypes as cg
-import gge.grammars as gr
+import gge.grammars.upper_grammars as ugr
 import gge.layers as gl
 import gge.novelty as novel
 import gge.phenotypes as pheno
@@ -140,7 +140,7 @@ def should_add_to_population(
 
 def create_individuals(
     queue: "mp.Queue[Individual]",
-    grammar: gr.Grammar,
+    grammar: ugr.Grammar,
     filter: IndividualFilter,
     rng_seed: int,
 ) -> typing.NoReturn:
@@ -161,7 +161,7 @@ def create_individuals(
 
 def create_producers(
     queue: "mp.Queue[Individual]",
-    grammar: gr.Grammar,
+    grammar: ugr.Grammar,
     filter: IndividualFilter,
     worker_count: int,
     rng_seed: int,
@@ -216,7 +216,7 @@ def collect_results(
 
 def create_initial_population_multiprocessing(
     pop_size: int,
-    grammar: gr.Grammar,
+    grammar: ugr.Grammar,
     filter: IndividualFilter,
     rng_seed: int,
     worker_count: int = DEFAULT_WORKER_COUNT,
@@ -242,7 +242,7 @@ def create_initial_population_multiprocessing(
 
 def create_initial_population(
     pop_size: int,
-    grammar: gr.Grammar,
+    grammar: ugr.Grammar,
     filter: IndividualFilter,
     rng_seed: int,
 ) -> list[Individual]:

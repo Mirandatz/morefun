@@ -5,7 +5,7 @@ from loguru import logger
 import gge.composite_genotypes as cg
 import gge.evolutionary.fitnesses as gf
 import gge.evolutionary.mutations as gm
-import gge.grammars as gr
+import gge.grammars.upper_grammars as ugr
 import gge.novelty as novel
 import gge.persistence
 import gge.phenotypes as phenos
@@ -14,7 +14,7 @@ import gge.randomness as rand
 
 def run_single_generation(
     population: dict[cg.CompositeGenotype, gf.Fitness],
-    grammar: gr.Grammar,
+    grammar: ugr.Grammar,
     mut_params: gm.PopulationMutationParameters,
     metrics: tuple[gf.Metric, ...],
     rng: rand.RNG,
@@ -61,7 +61,7 @@ def run_multiple_generations(
     starting_generation_number: int,
     number_of_generations_to_run: int,
     initial_population: dict[cg.CompositeGenotype, gf.Fitness],
-    grammar: gr.Grammar,
+    grammar: ugr.Grammar,
     mutation_params: gm.PopulationMutationParameters,
     metrics: tuple[gf.Metric, ...],
     novelty_tracker: novel.NoveltyTracker,

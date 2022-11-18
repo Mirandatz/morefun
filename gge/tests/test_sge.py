@@ -1,12 +1,12 @@
-import gge.grammars as gr
+import gge.grammars.upper_grammars as ugr
 import gge.structured_grammatical_evolution as sge
 
-# auto-import fixture
+# autouse fixture
 from gge.tests.fixtures import remove_logger_sinks  # noqa
 
 
 def test_can_expand_nonrecursive_grammar() -> None:
-    grammar = gr.Grammar(
+    grammar = ugr.Grammar(
         """
         start : a
         a : b c
@@ -15,9 +15,9 @@ def test_can_expand_nonrecursive_grammar() -> None:
         """
     )
 
-    a = gr.NonTerminal("a")
-    b = gr.NonTerminal("b")
-    c = gr.NonTerminal("c")
+    a = ugr.NonTerminal("a")
+    b = ugr.NonTerminal("b")
+    c = ugr.NonTerminal("c")
 
     assert not sge.can_expand(a, a, grammar)
     assert sge.can_expand(a, b, grammar)
@@ -33,7 +33,7 @@ def test_can_expand_nonrecursive_grammar() -> None:
 
 
 def test_can_expand_recursive_grammar() -> None:
-    grammar = gr.Grammar(
+    grammar = ugr.Grammar(
         """
         start : a
         a : b c | a
@@ -42,9 +42,9 @@ def test_can_expand_recursive_grammar() -> None:
         """
     )
 
-    a = gr.NonTerminal("a")
-    b = gr.NonTerminal("b")
-    c = gr.NonTerminal("c")
+    a = ugr.NonTerminal("a")
+    b = ugr.NonTerminal("b")
+    c = ugr.NonTerminal("c")
 
     assert sge.can_expand(a, a, grammar)
     assert sge.can_expand(a, b, grammar)
@@ -60,7 +60,7 @@ def test_can_expand_recursive_grammar() -> None:
 
 
 def test_can_expand_complex_recursive_grammar() -> None:
-    grammar = gr.Grammar(
+    grammar = ugr.Grammar(
         """
         start : a
         a : b c d
@@ -70,10 +70,10 @@ def test_can_expand_complex_recursive_grammar() -> None:
         """
     )
 
-    a = gr.NonTerminal("a")
-    b = gr.NonTerminal("b")
-    c = gr.NonTerminal("c")
-    d = gr.NonTerminal("d")
+    a = ugr.NonTerminal("a")
+    b = ugr.NonTerminal("b")
+    c = ugr.NonTerminal("c")
+    d = ugr.NonTerminal("d")
 
     assert sge.can_expand(a, a, grammar)
     assert sge.can_expand(a, b, grammar)
@@ -97,7 +97,7 @@ def test_can_expand_complex_recursive_grammar() -> None:
 
 
 def test_can_expand_nasty_recursive_grammar() -> None:
-    grammar = gr.Grammar(
+    grammar = ugr.Grammar(
         """
         start : a
         a : b | c a | k
@@ -106,9 +106,9 @@ def test_can_expand_nasty_recursive_grammar() -> None:
         k : "conv" "filter_count" ("2") "kernel_size" ("1") "stride" ("2")
         """
     )
-    a = gr.NonTerminal("a")
-    b = gr.NonTerminal("b")
-    c = gr.NonTerminal("c")
+    a = ugr.NonTerminal("a")
+    b = ugr.NonTerminal("b")
+    c = ugr.NonTerminal("c")
 
     assert sge.can_expand(a, a, grammar)
     assert sge.can_expand(a, b, grammar)
@@ -124,7 +124,7 @@ def test_can_expand_nasty_recursive_grammar() -> None:
 
 
 def test_max_nr_of_times_nonterminal_can_be_expanded_simple_grammar() -> None:
-    grammar = gr.Grammar(
+    grammar = ugr.Grammar(
         """
         start : a
         a : b c
@@ -134,7 +134,7 @@ def test_max_nr_of_times_nonterminal_can_be_expanded_simple_grammar() -> None:
     )
 
     a, b, c = [
-        gr.NonTerminal(text)
+        ugr.NonTerminal(text)
         for text in [
             "a",
             "b",
@@ -148,7 +148,7 @@ def test_max_nr_of_times_nonterminal_can_be_expanded_simple_grammar() -> None:
 
 
 def test_max_nr_of_times_nonterminal_can_be_expanded_simple_repetition() -> None:
-    grammar = gr.Grammar(
+    grammar = ugr.Grammar(
         """
         start : a
         a : b c~5 b
@@ -158,7 +158,7 @@ def test_max_nr_of_times_nonterminal_can_be_expanded_simple_repetition() -> None
     )
 
     a, b, c = [
-        gr.NonTerminal(text)
+        ugr.NonTerminal(text)
         for text in [
             "a",
             "b",
@@ -172,7 +172,7 @@ def test_max_nr_of_times_nonterminal_can_be_expanded_simple_repetition() -> None
 
 
 def test_max_nr_of_times_nonterminal_can_be_expanded_ranged_repetion() -> None:
-    grammar = gr.Grammar(
+    grammar = ugr.Grammar(
         """
         start : a
         a : b~5..7
@@ -180,7 +180,7 @@ def test_max_nr_of_times_nonterminal_can_be_expanded_ranged_repetion() -> None:
         """
     )
 
-    start, a, b = [gr.NonTerminal(text) for text in ["start", "a", "b"]]
+    start, a, b = [ugr.NonTerminal(text) for text in ["start", "a", "b"]]
 
     assert 1 == sge.max_nr_of_times_nonterminal_can_be_expanded(start, grammar)
     assert 1 == sge.max_nr_of_times_nonterminal_can_be_expanded(a, grammar)
@@ -188,7 +188,7 @@ def test_max_nr_of_times_nonterminal_can_be_expanded_ranged_repetion() -> None:
 
 
 def test_check_recursion_nonrecursive_grammar() -> None:
-    grammar = gr.Grammar(
+    grammar = ugr.Grammar(
         """
         start : a
         a : b c
@@ -201,7 +201,7 @@ def test_check_recursion_nonrecursive_grammar() -> None:
 
 
 def test_check_recursion_simple_recursive_grammar() -> None:
-    grammar = gr.Grammar(
+    grammar = ugr.Grammar(
         """
         start : a
         a : b c | a
@@ -214,7 +214,7 @@ def test_check_recursion_simple_recursive_grammar() -> None:
 
 
 def test_check_recursion_complex_recursive_grammar() -> None:
-    grammar = gr.Grammar(
+    grammar = ugr.Grammar(
         """
         start : a
         a : b c d
@@ -228,7 +228,7 @@ def test_check_recursion_complex_recursive_grammar() -> None:
 
 
 def test_check_recursion_nasty_recursive_grammar() -> None:
-    grammar = gr.Grammar(
+    grammar = ugr.Grammar(
         """
         start : a
         a : b | c d | k

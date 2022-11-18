@@ -4,7 +4,7 @@ import functools
 import attrs
 from loguru import logger
 
-import gge.grammars as gg
+import gge.grammars.upper_grammars as ugr
 import gge.randomness as rand
 
 # order=True because we want to store genes in a consistent order
@@ -12,11 +12,11 @@ import gge.randomness as rand
 
 @attrs.frozen(cache_hash=True, order=True)
 class Gene:
-    nonterminal: gg.NonTerminal
+    nonterminal: ugr.NonTerminal
     expansions_indices: tuple[int, ...]
 
     def __attrs_post_init__(self) -> None:
-        assert isinstance(self.nonterminal, gg.NonTerminal)
+        assert isinstance(self.nonterminal, ugr.NonTerminal)
 
         assert isinstance(self.expansions_indices, tuple)
         for ei in self.expansions_indices:
@@ -40,18 +40,18 @@ class Genotype:
             raise ValueError("can not have two genes associated with same nonterminal")
 
     @functools.cached_property
-    def _nonterminals_map(self) -> dict[gg.NonTerminal, Gene]:
+    def _nonterminals_map(self) -> dict[ugr.NonTerminal, Gene]:
         return {g.nonterminal: g for g in self.genes}
 
-    def get_associated_gene(self, non_terminal: gg.NonTerminal) -> Gene:
+    def get_associated_gene(self, non_terminal: ugr.NonTerminal) -> Gene:
         return self._nonterminals_map[non_terminal]
 
 
 class GenotypeSkeleton:
     def __init__(
         self,
-        sizes_of_gene_lists: dict[gg.NonTerminal, int],
-        max_values_in_gene_lists: dict[gg.NonTerminal, int],
+        sizes_of_gene_lists: dict[ugr.NonTerminal, int],
+        max_values_in_gene_lists: dict[ugr.NonTerminal, int],
     ) -> None:
         assert sizes_of_gene_lists.keys() == max_values_in_gene_lists.keys()
         assert len(sizes_of_gene_lists) > 0
@@ -63,16 +63,16 @@ class GenotypeSkeleton:
         self._sizes = sizes_of_gene_lists.copy()
         self._max_values = max_values_in_gene_lists.copy()
 
-    def get_gene_list_size(self, nt: gg.NonTerminal) -> int:
+    def get_gene_list_size(self, nt: ugr.NonTerminal) -> int:
         return self._sizes[nt]
 
-    def get_gene_list_max_value(self, nt: gg.NonTerminal) -> int:
+    def get_gene_list_max_value(self, nt: ugr.NonTerminal) -> int:
         return self._max_values[nt]
 
 
 @attrs.frozen(cache_hash=True)
 class SGEParameters:
-    grammar: gg.Grammar
+    grammar: ugr.Grammar
 
     @functools.cached_property
     def genotype_skeleton(self) -> GenotypeSkeleton:
@@ -80,7 +80,7 @@ class SGEParameters:
 
 
 @functools.cache
-def make_genotype_skeleton(grammar: gg.Grammar) -> GenotypeSkeleton:
+def make_genotype_skeleton(grammar: ugr.Grammar) -> GenotypeSkeleton:
     assert not grammar_is_recursive(grammar)
 
     sizes_of_genes_lists = {
@@ -99,7 +99,7 @@ def make_genotype_skeleton(grammar: gg.Grammar) -> GenotypeSkeleton:
 
 
 def create_gene(
-    nt: gg.NonTerminal,
+    nt: ugr.NonTerminal,
     skeleton: GenotypeSkeleton,
     rng: rand.RNG,
 ) -> Gene:
@@ -115,7 +115,7 @@ def create_gene(
     return gene
 
 
-def create_genotype(grammar: gg.Grammar, rng: rand.RNG) -> Genotype:
+def create_genotype(grammar: ugr.Grammar, rng: rand.RNG) -> Genotype:
     skeleton = make_genotype_skeleton(grammar)
     genes = (create_gene(nt, skeleton, rng) for nt in grammar.nonterminals)
     sorted_genes = sorted(genes)
@@ -125,13 +125,13 @@ def create_genotype(grammar: gg.Grammar, rng: rand.RNG) -> Genotype:
     return genotype
 
 
-def map_to_tokenstream(genotype: Genotype, grammar: gg.Grammar) -> str:
+def map_to_tokenstream(genotype: Genotype, grammar: ugr.Grammar) -> str:
     logger.trace("map_to_tokenstream")
     tokenstream = []
 
     gene_consumption_tracker = {g: 0 for g in genotype.genes}
 
-    to_process: collections.deque[gg.Terminal | gg.NonTerminal] = collections.deque()
+    to_process: collections.deque[ugr.Terminal | ugr.NonTerminal] = collections.deque()
     to_process.append(grammar.start_symbol)
 
     while to_process:
@@ -139,9 +139,9 @@ def map_to_tokenstream(genotype: Genotype, grammar: gg.Grammar) -> str:
         logger.debug(f"Processing symbol=<{symbol}>")
 
         # sanity check
-        assert isinstance(symbol, gg.Terminal | gg.NonTerminal)
+        assert isinstance(symbol, ugr.Terminal | ugr.NonTerminal)
 
-        if isinstance(symbol, gg.Terminal):
+        if isinstance(symbol, ugr.Terminal):
             tokenstream.append(symbol.text)
             logger.debug(f"Terminal={symbol.text} added to tokenstream")
             continue
@@ -164,15 +164,15 @@ def map_to_tokenstream(genotype: Genotype, grammar: gg.Grammar) -> str:
 
 
 def max_nr_of_times_nonterminal_can_be_expanded(
-    target: gg.NonTerminal,
-    grammar: gg.Grammar,
+    target: ugr.NonTerminal,
+    grammar: ugr.Grammar,
 ) -> int:
     assert not grammar_is_recursive(grammar)
 
     if target == grammar.start_symbol:
         return 1
 
-    max_expansions: collections.Counter[gg.NonTerminal] = collections.Counter()
+    max_expansions: collections.Counter[ugr.NonTerminal] = collections.Counter()
 
     for rule in grammar.rules:
         if target not in rule.rhs.symbols:
@@ -196,7 +196,7 @@ def max_nr_of_times_nonterminal_can_be_expanded(
 
 
 @functools.cache
-def grammar_is_recursive(grammar: gg.Grammar) -> bool:
+def grammar_is_recursive(grammar: ugr.Grammar) -> bool:
     return any(
         can_expand(
             source=nt,
@@ -208,11 +208,11 @@ def grammar_is_recursive(grammar: gg.Grammar) -> bool:
 
 
 def can_expand(
-    source: gg.NonTerminal,
-    target: gg.NonTerminal,
-    grammar: gg.Grammar,
+    source: ugr.NonTerminal,
+    target: ugr.NonTerminal,
+    grammar: ugr.Grammar,
 ) -> bool:
-    explored: set[gg.NonTerminal] = set()
+    explored: set[ugr.NonTerminal] = set()
     targets_to_explore = [target]
 
     while targets_to_explore:

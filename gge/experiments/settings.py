@@ -12,7 +12,7 @@ from loguru import logger
 import gge.evolutionary.fitnesses as gf
 import gge.evolutionary.mutations as gm
 import gge.experiments.create_initial_population_genotypes as gge_init
-import gge.grammars as gr
+import gge.grammars.upper_grammars as ugr
 import gge.layers as gl
 import gge.randomness as rand
 import gge.redirection
@@ -273,7 +273,7 @@ class GgeSettings:
     initialization: InitializationSettings
     evolution: EvolutionSettings
     final_train: FinalTrainSettings
-    grammar: gr.Grammar
+    grammar: ugr.Grammar
     tensorflow: TensorflowSettings
 
     @staticmethod
@@ -299,13 +299,13 @@ class GgeSettings:
             evolution=EvolutionSettings.from_yaml(values["evolution"]),
             final_train=FinalTrainSettings.from_yaml(values["final_train"]),
             tensorflow=TensorflowSettings.from_yaml(values["tensorflow"]),
-            grammar=gr.Grammar(values["grammar"]),
+            grammar=ugr.Grammar(values["grammar"]),
         )
 
 
 def make_mutation_params(
     mutation: MutationSettings,
-    grammar: gr.Grammar,
+    grammar: ugr.Grammar,
 ) -> gm.PopulationMutationParameters:
     return gm.PopulationMutationParameters(
         mutants_to_generate=mutation.mutants_per_generation,

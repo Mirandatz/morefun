@@ -8,7 +8,7 @@ import gge.composite_genotypes as cg
 import gge.connections as conn
 import gge.evolutionary.mutations as mutations
 import gge.fallible as fallible
-import gge.grammars as gr
+import gge.grammars.upper_grammars as ugr
 import gge.novelty as novel
 import gge.phenotypes as gph
 import gge.randomness as rand
@@ -46,7 +46,7 @@ def _mutate_tuple(
 
 def mutate(
     genotype: cg.CompositeGenotype,
-    grammar: gr.Grammar,
+    grammar: ugr.Grammar,
     rng: rand.RNG,
 ) -> cg.CompositeGenotype:
     BACKBONE = "backbone"
@@ -184,7 +184,7 @@ def mutate_merge_strategy(strat: conn.MergeStrategy) -> conn.MergeStrategy:
 class PopulationMutationParameters:
     mutants_to_generate: int
     max_failures: int
-    grammar: gr.Grammar
+    grammar: ugr.Grammar
 
     def __attrs_post_init__(self) -> None:
         assert self.mutants_to_generate >= 1
@@ -193,7 +193,7 @@ class PopulationMutationParameters:
 
 def try_generate_mutant(
     population: list[cg.CompositeGenotype],
-    grammar: gr.Grammar,
+    grammar: ugr.Grammar,
     rng: rand.RNG,
     novelty_tracker: novel.NoveltyTracker,
 ) -> cg.CompositeGenotype | None:
