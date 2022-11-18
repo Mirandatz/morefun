@@ -7,11 +7,14 @@ from loguru import logger
 import gge.grammars.upper_grammars as ugr
 import gge.randomness as rand
 
-# order=True because we want to store genes in a consistent order
-
 
 @attrs.frozen(cache_hash=True, order=True)
 class Gene:
+    """
+    Genes are created with order=True because we want to store then
+    in a consistent (i.e. sorted) fashion inside `Genotype`s.
+    """
+
     nonterminal: ugr.NonTerminal
     expansions_indices: tuple[int, ...]
 

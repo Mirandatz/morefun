@@ -1,5 +1,5 @@
+import gge.grammars.structured_grammatical_evolution as sge
 import gge.grammars.upper_grammars as ugr
-import gge.structured_grammatical_evolution as sge
 
 # autouse fixture
 from gge.tests.fixtures import remove_logger_sinks  # noqa

@@ -6,10 +6,10 @@ import tensorflow as tf
 import gge.backbones as bb
 import gge.composite_genotypes as cg
 import gge.connections as conn
+import gge.grammars.structured_grammatical_evolution as sge
 import gge.grammars.upper_grammars as ugr
 import gge.layers as gl
 import gge.optimizers as optim
-import gge.structured_grammatical_evolution as sge
 
 
 @attrs.frozen(cache_hash=True)

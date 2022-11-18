@@ -3,10 +3,10 @@ import datetime as dt
 import hypothesis
 from hypothesis import given
 
+import gge.grammars.structured_grammatical_evolution as sge
 import gge.grammars.upper_grammars as ugr
 import gge.optimizers as optim
 import gge.randomness as rand
-import gge.structured_grammatical_evolution as sge
 import gge.tests.strategies.data_structures as ds
 import gge.tests.strategies.optimizers as gos
 

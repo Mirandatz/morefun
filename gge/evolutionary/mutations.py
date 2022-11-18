@@ -8,11 +8,11 @@ import gge.composite_genotypes as cg
 import gge.connections as conn
 import gge.evolutionary.mutations as mutations
 import gge.fallible as fallible
+import gge.grammars.structured_grammatical_evolution as sge
 import gge.grammars.upper_grammars as ugr
 import gge.novelty as novel
 import gge.phenotypes as gph
 import gge.randomness as rand
-import gge.structured_grammatical_evolution as sge
 
 T = typing.TypeVar("T")
 
