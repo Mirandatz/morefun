@@ -13,7 +13,7 @@ import gge.evolutionary.fitnesses as gf
 import gge.evolutionary.mutations as gm
 import gge.experiments.create_initial_population_genotypes as gge_init
 import gge.grammars.upper_grammars as ugr
-import gge.layers as gl
+import gge.neural_networks.layers as gl
 import gge.randomness as rand
 import gge.redirection
 

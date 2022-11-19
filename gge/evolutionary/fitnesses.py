@@ -15,7 +15,7 @@ from loguru import logger
 from pymoo.algorithms.moo.nsga2 import calc_crowding_distance
 from pymoo.util.nds.fast_non_dominated_sort import fast_non_dominated_sort
 
-import gge.layers as gl
+import gge.neural_networks.layers as gl
 import gge.phenotypes as pheno
 import gge.randomness as rand
 import gge.redirection as redirection

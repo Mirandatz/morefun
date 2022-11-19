@@ -4,8 +4,8 @@ from hypothesis import given
 
 import gge.connections as conn
 import gge.grammars.backbones as bb
-import gge.layers as gl
 import gge.name_generator as ng
+import gge.neural_networks.layers as gl
 import gge.tests.strategies.layers as ls
 
 

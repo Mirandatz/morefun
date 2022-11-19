@@ -5,7 +5,7 @@ import keras.api._v2.keras as keras
 import typer
 
 import gge.grammars.upper_grammars as ugr
-import gge.layers as gl
+import gge.neural_networks.layers as gl
 import gge.phenotypes as phenos
 
 

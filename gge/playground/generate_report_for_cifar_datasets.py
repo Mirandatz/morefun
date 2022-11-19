@@ -7,7 +7,7 @@ import tensorflow_addons as tfa
 
 # import gge.experiments.settings as gset
 import gge.fitnesses as gf
-import gge.layers as gl
+import gge.neural_networks.layers as gl
 import gge.persistence
 import gge.phenotypes
 import gge.randomness
