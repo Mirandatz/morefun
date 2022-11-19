@@ -19,4 +19,4 @@ def get_project_root_dir() -> pathlib.Path:
 
 
 def get_grammars_dir() -> pathlib.Path:
-    return get_project_root_dir() / "gge" / "grammar_files"
+    return get_project_root_dir() / "gge" / "grammars" / "files"
