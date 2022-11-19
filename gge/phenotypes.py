@@ -4,10 +4,10 @@ import attrs
 import tensorflow as tf
 
 import gge.composite_genotypes as cg
-import gge.connections as conn
 import gge.grammars.backbones as bb
 import gge.grammars.structured_grammatical_evolution as sge
 import gge.grammars.upper_grammars as ugr
+import gge.neural_networks.connections as conn
 import gge.neural_networks.layers as gl
 import gge.neural_networks.optimizers as optimizers
 from gge.grammars.backbones import parse as parse_backbone

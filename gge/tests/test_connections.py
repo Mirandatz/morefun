@@ -2,9 +2,9 @@ import attrs
 import pytest
 from hypothesis import given
 
-import gge.connections as conn
 import gge.grammars.backbones as bb
 import gge.name_generator as ng
+import gge.neural_networks.connections as conn
 import gge.neural_networks.layers as gl
 import gge.tests.strategies.layers as ls
 
