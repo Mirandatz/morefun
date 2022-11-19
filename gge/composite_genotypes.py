@@ -2,8 +2,8 @@ import uuid
 
 import attrs
 
-import gge.backbones as bb
 import gge.connections as conn
+import gge.grammars.backbones as bb
 import gge.grammars.structured_grammatical_evolution as sge
 import gge.grammars.upper_grammars as ugr
 import gge.randomness as rand

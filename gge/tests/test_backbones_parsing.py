@@ -1,6 +1,6 @@
 from hypothesis import given
 
-import gge.backbones as bb
+import gge.grammars.backbones as bb
 import gge.tests.strategies.lower_grammar as lgs
 
 # autouse fixture
