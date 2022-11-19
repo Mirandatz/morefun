@@ -6,9 +6,9 @@ import tensorflow as tf
 from loguru import logger
 
 import gge.composite_genotypes as cg
+import gge.evolutionary.novelty as novel
 import gge.grammars.upper_grammars as ugr
 import gge.neural_networks.layers as gl
-import gge.novelty as novel
 import gge.phenotypes as pheno
 import gge.randomness as rand
 

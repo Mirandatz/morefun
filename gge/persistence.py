@@ -5,7 +5,7 @@ from loguru import logger
 
 import gge.composite_genotypes as cg
 import gge.evolutionary.fitnesses as gf
-import gge.novelty
+import gge.evolutionary.novelty
 import gge.randomness as rand
 
 GENERATION_OUTPUT_EXTENSION = ".gen_out2"
@@ -20,7 +20,7 @@ class GenerationOutput:
         self,
         generation_number: int,
         fittest: dict[cg.CompositeGenotype, gf.Fitness],
-        novelty_tracker: gge.novelty.NoveltyTracker,
+        novelty_tracker: gge.evolutionary.novelty.NoveltyTracker,
         rng: rand.RNG,
     ) -> None:
         self._generation_number = generation_number
@@ -34,7 +34,7 @@ class GenerationOutput:
     def get_fittest(self) -> dict[cg.CompositeGenotype, gf.Fitness]:
         return dict(self._fittest)
 
-    def get_novelty_tracker(self) -> gge.novelty.NoveltyTracker:
+    def get_novelty_tracker(self) -> gge.evolutionary.novelty.NoveltyTracker:
         return self._novelty_tracker.copy()
 
     def get_rng(self) -> rand.RNG:
@@ -78,7 +78,7 @@ def save_generational_artifacts(
     generation_number: int,
     fittest: dict[cg.CompositeGenotype, gf.Fitness],
     rng: rand.RNG,
-    novelty_tracker: gge.novelty.NoveltyTracker,
+    novelty_tracker: gge.evolutionary.novelty.NoveltyTracker,
     output_dir: pathlib.Path,
 ) -> None:
     logger.info(
