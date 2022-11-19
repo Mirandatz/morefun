@@ -7,8 +7,8 @@ import lark
 import typeguard
 from loguru import logger
 
+import gge.grammars.lower_grammar_parsing as lgp
 import gge.layers as gl
-import gge.lower_grammar_parsing as lgp
 import gge.name_generator
 import gge.randomness as rand
 

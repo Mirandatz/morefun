@@ -8,7 +8,7 @@ import tensorflow_addons as tfa
 import typeguard
 from loguru import logger
 
-import gge.lower_grammar_parsing as lgp
+import gge.grammars.lower_grammar_parsing as lgp
 
 
 class Optimizer(abc.ABC):
