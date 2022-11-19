@@ -5,7 +5,7 @@ import typeguard
 from loguru import logger
 
 import gge.grammars.lower_grammar_parsing as lgp
-import gge.optimizers as go
+import gge.neural_networks.optimizers as go
 
 
 @lark.v_args(inline=True)

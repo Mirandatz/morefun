@@ -9,7 +9,7 @@ import gge.grammars.backbones as bb
 import gge.grammars.structured_grammatical_evolution as sge
 import gge.grammars.upper_grammars as ugr
 import gge.layers as gl
-import gge.optimizers as optim
+import gge.neural_networks.optimizers as optim
 
 
 @attrs.frozen(cache_hash=True)

@@ -6,7 +6,7 @@ from hypothesis import given
 import gge.grammars.optimizers as optimizer_parsing
 import gge.grammars.structured_grammatical_evolution as sge
 import gge.grammars.upper_grammars as ugr
-import gge.optimizers as optimizer
+import gge.neural_networks.optimizers as optimizer
 import gge.randomness as rand
 import gge.tests.strategies.data_structures as ds
 import gge.tests.strategies.optimizers as gos
