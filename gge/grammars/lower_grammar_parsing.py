@@ -3,8 +3,8 @@ import typing
 import lark
 from loguru import logger
 
+import gge.grammars.transformers
 import gge.paths
-import gge.transformers
 
 
 def get_parser(start: str) -> lark.Lark:
@@ -43,7 +43,7 @@ def parse_tokenstream(
 
 
 @lark.v_args(inline=True)
-class LowerGrammarTransformer(gge.transformers.SinglePassTransformer):
+class LowerGrammarTransformer(gge.grammars.transformers.SinglePassTransformer):
     def QUOTED_INT(self, token: lark.Token) -> int:
         self._raise_if_not_running()
 

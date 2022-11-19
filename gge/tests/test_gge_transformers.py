@@ -5,7 +5,7 @@ from lark.lark import Lark as LarkParser
 from lark.lexer import Token as LarkToken
 from lark.tree import Tree as LarkTree
 
-import gge.transformers as tr
+import gge.grammars.transformers as tr
 
 
 class BasicSinglePassDisposableTransformer(tr.SinglePassTransformer):

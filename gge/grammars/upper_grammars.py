@@ -7,8 +7,8 @@ import attrs
 import lark
 from loguru import logger
 
+import gge.grammars.transformers as gge_transformers
 import gge.paths
-import gge.transformers as gge_transformers
 
 
 def get_upper_grammar_parser() -> lark.Lark:
