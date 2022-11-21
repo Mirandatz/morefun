@@ -2,6 +2,7 @@ import yaml
 
 import gge.evolutionary.fitnesses as gf
 import gge.evolutionary.generations
+import gge.evolutionary.novelty
 import gge.experiments.create_initial_population_genotypes as gge_init
 import gge.experiments.settings as gset
 import gge.persistence
@@ -131,7 +132,7 @@ def initialize() -> None:
 
     known_genotypes = set(genotypes)
     known_phenotypes = set(phenotypes)
-    novelty_tracker = gge.novelty.NoveltyTracker(
+    novelty_tracker = gge.evolutionary.novelty.NoveltyTracker(
         known_genotypes=known_genotypes,
         known_phenotypes=known_phenotypes,
     )
