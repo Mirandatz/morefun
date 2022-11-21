@@ -1,6 +1,8 @@
 import functools
 import pathlib
 
+GENERATION_OUTPUT_EXTENSION = ".gen_out2"
+
 
 @functools.cache
 def get_project_root_dir() -> pathlib.Path:
@@ -20,3 +22,12 @@ def get_project_root_dir() -> pathlib.Path:
 
 def get_grammars_dir() -> pathlib.Path:
     return get_project_root_dir() / "gge" / "grammars" / "files"
+
+
+def get_generation_output_path(
+    output_dir: pathlib.Path,
+    generation_nr: int,
+) -> pathlib.Path:
+    assert generation_nr >= 0
+
+    return (output_dir / str(generation_nr)).with_suffix(GENERATION_OUTPUT_EXTENSION)
