@@ -92,15 +92,3 @@ def load_latest_generational_artifacts(output_dir: pathlib.Path) -> GenerationOu
     paths = output_dir.glob(f"*{GENERATION_OUTPUT_EXTENSION}")
     latest = max(paths, key=lambda path: int(path.stem))
     return load_generational_artifacts(latest)
-
-
-def save_genotype(genotype: cg.CompositeGenotype, path: pathlib.Path) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_bytes(pickle.dumps(genotype, protocol=pickle.HIGHEST_PROTOCOL))
-
-
-def load_genotype(path: pathlib.Path) -> cg.CompositeGenotype:
-    serialized = path.read_bytes()
-    genotype = pickle.loads(serialized)
-    assert isinstance(genotype, cg.CompositeGenotype)
-    return genotype
