@@ -76,7 +76,6 @@ def load_generational_artifacts(path: pathlib.Path) -> GenerationOutput:
     return deserialized
 
 
-def load_latest_generational_artifacts(output_dir: pathlib.Path) -> GenerationOutput:
-    paths = output_dir.glob(f"*{gge.paths.GENERATION_OUTPUT_EXTENSION}")
-    latest = max(paths, key=lambda path: int(path.stem))
-    return load_generational_artifacts(latest)
+def load_latest_generational_artifacts(search_dir: pathlib.Path) -> GenerationOutput:
+    path = gge.paths.get_latest_generation_output_path(search_dir)
+    return load_generational_artifacts(path)

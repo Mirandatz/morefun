@@ -31,3 +31,14 @@ def get_generation_output_path(
     assert generation_nr >= 0
 
     return (output_dir / str(generation_nr)).with_suffix(GENERATION_OUTPUT_EXTENSION)
+
+
+def get_latest_generation_output_path(search_dir: pathlib.Path) -> pathlib.Path:
+    if not search_dir.is_dir():
+        raise ValueError("search_dir is not a directory")
+
+    candidates = list(search_dir.glob(f"*{GENERATION_OUTPUT_EXTENSION}"))
+    if not candidates:
+        raise ValueError("search_dir does not contain generation-output files")
+
+    return max(candidates, key=lambda path: int(path.stem))
