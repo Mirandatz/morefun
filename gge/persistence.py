@@ -9,10 +9,6 @@ import gge.evolutionary.novelty
 import gge.randomness as rand
 
 GENERATION_OUTPUT_EXTENSION = ".gen_out2"
-TRAINING_HISTORY_EXTENSION = ".train_hist"
-GENOTYPE_EXTENSION = ".genotype"
-MODEL_EXTENSION = ".zipped_tf_model"
-MODEL_EVALUATIONS_EXTENSION = ".csv"
 
 
 class GenerationOutput:
