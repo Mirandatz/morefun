@@ -50,30 +50,6 @@ def get_generational_artifacts_path(
     return (directory / str(generation_number)).with_suffix(GENERATION_OUTPUT_EXTENSION)
 
 
-def get_genotype_path(
-    genotype: cg.CompositeGenotype,
-    dir: pathlib.Path,
-) -> pathlib.Path:
-    return (dir / genotype.unique_id.hex).with_suffix(GENOTYPE_EXTENSION)
-
-
-def get_model_path(genotype_uuid_hex: str, dir: pathlib.Path) -> pathlib.Path:
-    return (dir / genotype_uuid_hex).with_suffix(MODEL_EXTENSION)
-
-
-def get_training_history_path(
-    genotype_uuid_hex: str,
-    dir: pathlib.Path,
-) -> pathlib.Path:
-    return (dir / genotype_uuid_hex).with_suffix(TRAINING_HISTORY_EXTENSION)
-
-
-def get_models_evaluations_path(
-    dir: pathlib.Path,
-) -> pathlib.Path:
-    return (dir / "models_evaluations").with_suffix(MODEL_EVALUATIONS_EXTENSION)
-
-
 def save_generational_artifacts(
     generation_number: int,
     fittest: dict[cg.CompositeGenotype, gf.Fitness],
