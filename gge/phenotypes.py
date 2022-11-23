@@ -1,3 +1,5 @@
+import pathlib
+import pickle
 import uuid
 
 import attrs
@@ -25,6 +27,17 @@ class Phenotype:
     optimizer: optimizers.Optimizer = attrs.field(repr=False)
 
     genotype_uuid: uuid.UUID = attrs.field(eq=False, order=False, repr=True)
+
+    def save(this, path: pathlib.Path) -> None:
+        serialized = pickle.dumps(this, protocol=pickle.HIGHEST_PROTOCOL)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(serialized)
+
+    @staticmethod
+    def load(path: pathlib.Path) -> "Phenotype":
+        deserialized = pickle.loads(path.read_bytes())
+        assert isinstance(deserialized, Phenotype)
+        return deserialized
 
 
 def translate(

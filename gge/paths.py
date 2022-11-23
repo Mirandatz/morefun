@@ -1,7 +1,9 @@
 import functools
 import pathlib
+import uuid
 
-GENERATION_OUTPUT_EXTENSION = ".gen_out2"
+GENERATION_CHECKPOINT_EXTENSION = ".generation_checkpoint"
+PHENOTYPE_EXTENSION = ".phenotype"
 
 
 @functools.cache
@@ -29,7 +31,7 @@ def get_generation_checkpoint_path(
 ) -> pathlib.Path:
     assert generation_number >= 0
     return (output_dir / str(generation_number)).with_suffix(
-        GENERATION_OUTPUT_EXTENSION
+        GENERATION_CHECKPOINT_EXTENSION
     )
 
 
@@ -37,8 +39,12 @@ def get_latest_generation_checkpoint_path(search_dir: pathlib.Path) -> pathlib.P
     if not search_dir.is_dir():
         raise ValueError("search_dir is not a directory")
 
-    candidates = list(search_dir.glob(f"*{GENERATION_OUTPUT_EXTENSION}"))
+    candidates = list(search_dir.glob(f"*{GENERATION_CHECKPOINT_EXTENSION}"))
     if not candidates:
         raise ValueError("search_dir does not contain generation-output files")
 
     return max(candidates, key=lambda path: int(path.stem))
+
+
+def get_phenotype_path(output_dir: pathlib.Path, uuid: uuid.UUID) -> pathlib.Path:
+    return (output_dir / uuid.hex).with_suffix(PHENOTYPE_EXTENSION)

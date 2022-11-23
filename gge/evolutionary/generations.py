@@ -107,6 +107,18 @@ def run_single_generation(
     return {g: next_gen_candidates[g] for g in fittest_genotypes}
 
 
+def save_phenotypes(
+    output_dir: pathlib.Path,
+    fitnesses: dict[cg.CompositeGenotype, gf.Fitness],
+) -> None:
+    for genotype, fitness in fitnesses.items():
+        if not fitness.successfully_evaluated():
+            continue
+
+        path = gge.paths.get_phenotype_path(output_dir, genotype.unique_id)
+        path.write_bytes
+
+
 def run_multiple_generations(
     starting_generation_number: int,
     number_of_generations_to_run: int,
