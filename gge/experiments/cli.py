@@ -7,7 +7,7 @@ import gge.evolutionary.generations
 import gge.evolutionary.novelty
 import gge.experiments.create_initial_population_genotypes as gge_init
 import gge.experiments.settings as gset
-import gge.persistence
+import gge.paths
 import gge.phenotypes
 import gge.randomness
 
@@ -60,12 +60,16 @@ def create_and_evaluate_initial_population(
     )
 
     # generations are 0-indexed, so first gen == 0
-    gge.persistence.save_generational_artifacts(
-        generation_number=0,
+    generation_number = 0
+    gge.evolutionary.generations.GenerationCheckpoint(
+        generation_number=generation_number,
         fittest=fitnesses,
-        novelty_tracker=novelty_tracker,
         rng=gge.randomness.create_rng(rng_seed),
-        output_dir=settings.output.directory,
+        novelty_tracker=novelty_tracker,
+    ).save(
+        gge.paths.get_generation_checkpoint_path(
+            settings.output.directory, generation_number
+        )
     )
 
 
@@ -78,11 +82,11 @@ def evolutionary_loop(
     gset.configure_logger(settings.output)
     gset.configure_tensorflow(settings.tensorflow)
 
-    latest_gen_output = gge.persistence.load_latest_generational_artifacts(
-        settings.output.directory
+    latest_checkpoint = gge.evolutionary.generations.GenerationCheckpoint.load(
+        gge.paths.get_latest_generation_checkpoint_path(settings.output.directory)
     )
 
-    current_generation_number = latest_gen_output.get_generation_number() + 1
+    current_generation_number = latest_checkpoint.get_generation_number() + 1
 
     mutation_params = gset.make_mutation_params(
         mutation=settings.evolution.mutation_settings,
@@ -97,12 +101,12 @@ def evolutionary_loop(
     gge.evolutionary.generations.run_multiple_generations(
         starting_generation_number=current_generation_number,
         number_of_generations_to_run=generations,
-        initial_population=latest_gen_output.get_fittest(),
+        initial_population=latest_checkpoint.get_fittest(),
         grammar=settings.grammar,
         mutation_params=mutation_params,
         metrics=metrics,
-        novelty_tracker=latest_gen_output.get_novelty_tracker(),
-        rng=latest_gen_output.get_rng(),
+        novelty_tracker=latest_checkpoint.get_novelty_tracker(),
+        rng=latest_checkpoint.get_rng(),
         output_dir=settings.output.directory,
     )
 

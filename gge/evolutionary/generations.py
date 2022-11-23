@@ -1,4 +1,5 @@
 import pathlib
+import pickle
 
 from loguru import logger
 
@@ -7,9 +8,58 @@ import gge.evolutionary.fitnesses as gf
 import gge.evolutionary.mutations as gm
 import gge.evolutionary.novelty as novel
 import gge.grammars.upper_grammars as ugr
-import gge.persistence
+import gge.paths
 import gge.phenotypes as phenos
 import gge.randomness as rand
+
+
+class GenerationCheckpoint:
+    """
+    This class is used to allow us to stop running the evolutionary loop
+    (e.g. by killing the Python interpreter itself) and resume its execution later.
+    It should not be used to store results because it is sensitive to class/modules/packages
+    refactors.
+    """
+
+    def __init__(
+        self,
+        generation_number: int,
+        fittest: dict[cg.CompositeGenotype, gf.Fitness],
+        novelty_tracker: novel.NoveltyTracker,
+        rng: rand.RNG,
+    ) -> None:
+        self._generation_number = generation_number
+        self._fittest = dict(fittest)
+        self._novelty_tracker = novelty_tracker.copy()
+        self._serialized_rng = pickle.dumps(rng, protocol=pickle.HIGHEST_PROTOCOL)
+
+    def get_generation_number(self) -> int:
+        return self._generation_number
+
+    def get_fittest(self) -> dict[cg.CompositeGenotype, gf.Fitness]:
+        return dict(self._fittest)
+
+    def get_novelty_tracker(self) -> gge.evolutionary.novelty.NoveltyTracker:
+        return self._novelty_tracker.copy()
+
+    def get_rng(self) -> rand.RNG:
+        rng = pickle.loads(self._serialized_rng)
+        assert isinstance(rng, rand.RNG)
+        return rng
+
+    def save(self, path: pathlib.Path) -> None:
+        """
+        Serializes this instance and writes it to `path`.
+        """
+        serialized = pickle.dumps(self, protocol=pickle.HIGHEST_PROTOCOL)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(serialized)
+
+    @staticmethod
+    def load(path: pathlib.Path) -> "GenerationCheckpoint":
+        deserialized = pickle.loads(path.read_bytes())
+        assert isinstance(deserialized, GenerationCheckpoint)
+        return deserialized
 
 
 def run_single_generation(
@@ -98,12 +148,11 @@ def run_multiple_generations(
         else:
             population = maybe_population
 
-        gge.persistence.save_generational_artifacts(
+        GenerationCheckpoint(
             generation_number=gen_nr,
             fittest=population,
             rng=rng,
             novelty_tracker=novelty_tracker,
-            output_dir=output_dir,
-        )
+        ).save(gge.paths.get_generation_checkpoint_path(output_dir, gen_nr))
 
         logger.info(f"finished running generation {gen_nr}")

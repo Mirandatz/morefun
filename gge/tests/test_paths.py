@@ -15,10 +15,10 @@ def test_grammars_dir() -> None:
 
 
 @given(generation_nr=hs.integers(min_value=0, max_value=99))
-def test_get_generation_output_path(generation_nr: int) -> None:
+def test_get_generation_checkpoint_path(generation_nr: int) -> None:
     base_output_dir = pathlib.Path("/dev/shm")
     expected = (base_output_dir / str(generation_nr)).with_suffix(".gen_out2")
-    actual = gge.paths.get_generation_output_path(base_output_dir, generation_nr)
+    actual = gge.paths.get_generation_checkpoint_path(base_output_dir, generation_nr)
     assert expected == actual
 
 
@@ -37,10 +37,10 @@ def test_get_latest_generation_output_path(generation_numbers: list[int]) -> Non
         temp_dir = pathlib.Path(_temp_dir)
 
         for gen_nr in generation_numbers:
-            gge.paths.get_generation_output_path(temp_dir, gen_nr).write_text("")
+            gge.paths.get_generation_checkpoint_path(temp_dir, gen_nr).write_text("")
 
-        expected = gge.paths.get_generation_output_path(
+        expected = gge.paths.get_generation_checkpoint_path(
             temp_dir, max(generation_numbers)
         )
-        actual = gge.paths.get_latest_generation_output_path(temp_dir)
+        actual = gge.paths.get_latest_generation_checkpoint_path(temp_dir)
         assert expected == actual

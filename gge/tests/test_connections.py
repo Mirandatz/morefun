@@ -1,5 +1,4 @@
 import attrs
-import pytest
 from hypothesis import given
 
 import gge.grammars.backbones as bb

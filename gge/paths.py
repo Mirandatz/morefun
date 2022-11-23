@@ -24,16 +24,16 @@ def get_grammars_dir() -> pathlib.Path:
     return get_project_root_dir() / "gge" / "grammars" / "files"
 
 
-def get_generation_output_path(
-    output_dir: pathlib.Path,
-    generation_nr: int,
+def get_generation_checkpoint_path(
+    output_dir: pathlib.Path, generation_number: int
 ) -> pathlib.Path:
-    assert generation_nr >= 0
+    assert generation_number >= 0
+    return (output_dir / str(generation_number)).with_suffix(
+        GENERATION_OUTPUT_EXTENSION
+    )
 
-    return (output_dir / str(generation_nr)).with_suffix(GENERATION_OUTPUT_EXTENSION)
 
-
-def get_latest_generation_output_path(search_dir: pathlib.Path) -> pathlib.Path:
+def get_latest_generation_checkpoint_path(search_dir: pathlib.Path) -> pathlib.Path:
     if not search_dir.is_dir():
         raise ValueError("search_dir is not a directory")
 
