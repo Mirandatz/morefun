@@ -24,20 +24,20 @@ class GenerationCheckpoint:
     def __init__(
         self,
         generation_number: int,
-        fittest: dict[cg.CompositeGenotype, gf.Fitness],
+        fitnesses: dict[cg.CompositeGenotype, gf.Fitness],
         novelty_tracker: novel.NoveltyTracker,
         rng: rand.RNG,
     ) -> None:
         self._generation_number = generation_number
-        self._fittest = dict(fittest)
+        self._fitnesses = fitnesses.copy()
         self._novelty_tracker = novelty_tracker.copy()
         self._serialized_rng = pickle.dumps(rng, protocol=pickle.HIGHEST_PROTOCOL)
 
     def get_generation_number(self) -> int:
         return self._generation_number
 
-    def get_fittest(self) -> dict[cg.CompositeGenotype, gf.Fitness]:
-        return dict(self._fittest)
+    def get_fitnesses(self) -> dict[cg.CompositeGenotype, gf.Fitness]:
+        return self._fitnesses.copy()
 
     def get_novelty_tracker(self) -> gge.evolutionary.novelty.NoveltyTracker:
         return self._novelty_tracker.copy()
@@ -150,7 +150,7 @@ def run_multiple_generations(
 
         GenerationCheckpoint(
             generation_number=gen_nr,
-            fittest=population,
+            fitnesses=population,
             rng=rng,
             novelty_tracker=novelty_tracker,
         ).save(gge.paths.get_generation_checkpoint_path(output_dir, gen_nr))

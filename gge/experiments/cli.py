@@ -63,7 +63,7 @@ def create_and_evaluate_initial_population(
     generation_number = 0
     gge.evolutionary.generations.GenerationCheckpoint(
         generation_number=generation_number,
-        fittest=fitnesses,
+        fitnesses=fitnesses,
         rng=gge.randomness.create_rng(rng_seed),
         novelty_tracker=novelty_tracker,
     ).save(
@@ -101,7 +101,7 @@ def evolutionary_loop(
     gge.evolutionary.generations.run_multiple_generations(
         starting_generation_number=current_generation_number,
         number_of_generations_to_run=generations,
-        initial_population=latest_checkpoint.get_fittest(),
+        initial_population=latest_checkpoint.get_fitnesses(),
         grammar=settings.grammar,
         mutation_params=mutation_params,
         metrics=metrics,
