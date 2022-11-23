@@ -312,6 +312,14 @@ class Fitness:
     def metric_names(self) -> tuple[str, ...]:
         return tuple(m.metric_name for m in self.metric_evaluations)
 
+    def to_effective_fitnesses_dict(self) -> dict[str, float]:
+        return dict(
+            zip(
+                self.metric_names(),
+                self.effective_values(),
+            )
+        )
+
     def effective_values(self) -> tuple[float, ...]:
         return tuple(m.effective for m in self.metric_evaluations)
 
