@@ -326,6 +326,14 @@ class Fitness:
     def effective_values_as_ndarray(self) -> npt.NDArray[np.float64]:
         return np.asarray(self.effective_values())
 
+    def successfully_evaluated(self) -> bool:
+        """
+        Returns true if all metrics were successfully evaluated, false otherwise.
+        """
+        return all(
+            isinstance(me, SuccessfulMetricEvaluation) for me in self.metric_evaluations
+        )
+
 
 def evaluate(
     phenotype: pheno.Phenotype,
