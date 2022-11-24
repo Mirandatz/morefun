@@ -101,7 +101,7 @@ def evolutionary_loop(
     gge.evolutionary.generations.run_multiple_generations(
         starting_generation_number=current_generation_number,
         number_of_generations_to_run=generations,
-        initial_population=latest_checkpoint.get_fitnesses(),
+        initial_population=latest_checkpoint.get_population(),
         grammar=settings.grammar,
         mutation_params=mutation_params,
         metrics=metrics,

@@ -1,6 +1,7 @@
 import pathlib
 import pickle
 
+import attrs
 from loguru import logger
 
 import gge.composite_genotypes as cg
@@ -11,6 +12,13 @@ import gge.grammars.upper_grammars as ugr
 import gge.paths
 import gge.phenotypes as phenos
 import gge.randomness as rand
+
+
+@attrs.frozen
+class EvaluatedGenotype:
+    genotype: cg.CompositeGenotype
+    phenotype: phenos.Phenotype
+    fitness: gf.Fitness
 
 
 class GenerationCheckpoint:
@@ -24,20 +32,23 @@ class GenerationCheckpoint:
     def __init__(
         self,
         generation_number: int,
-        fitnesses: dict[cg.CompositeGenotype, gf.Fitness],
+        population: tuple[EvaluatedGenotype, ...],
         novelty_tracker: novel.NoveltyTracker,
         rng: rand.RNG,
     ) -> None:
+        assert generation_number >= 0
+        assert len(population) >= 1
+
         self._generation_number = generation_number
-        self._fitnesses = fitnesses.copy()
+        self._population = population
         self._novelty_tracker = novelty_tracker.copy()
         self._serialized_rng = pickle.dumps(rng, protocol=pickle.HIGHEST_PROTOCOL)
 
     def get_generation_number(self) -> int:
         return self._generation_number
 
-    def get_fitnesses(self) -> dict[cg.CompositeGenotype, gf.Fitness]:
-        return self._fitnesses.copy()
+    def get_population(self) -> tuple[EvaluatedGenotype, ...]:
+        return self._population
 
     def get_novelty_tracker(self) -> gge.evolutionary.novelty.NoveltyTracker:
         return self._novelty_tracker.copy()
@@ -63,30 +74,31 @@ class GenerationCheckpoint:
 
 
 def run_single_generation(
-    population: dict[cg.CompositeGenotype, gf.Fitness],
+    generation_number: int,
+    population: tuple[EvaluatedGenotype, ...],
     grammar: ugr.Grammar,
-    mut_params: gm.PopulationMutationParameters,
-    metrics: tuple[gf.Metric, ...],
-    rng: rand.RNG,
+    mutation_params: gm.PopulationMutationParameters,
+    fitness_metrics: tuple[gf.Metric, ...],
     novelty_tracker: novel.NoveltyTracker,
-) -> dict[cg.CompositeGenotype, gf.Fitness] | None:
+    rng: rand.RNG,
+) -> GenerationCheckpoint | None:
     """
-    Runs a single generation of the evolutionary loop and
-    returns the fittest individuals genereated.
+    Runs a single generation of the evolutionary loop.
 
-    If it is not possible to complete the generation process,
-    (e.g., because the mutation procedure was unable to
-    generate novelty individuals), this function returns
-    `None` instead.
+    If it is not possible to complete the generation process
+    (e.g., because the mutation procedure was unable to  generate novelty individuals)
+    this function returns `None`.
     """
+    assert generation_number >= 0
+    assert len(population) >= 1
 
-    assert len(population) > 0
+    logger.info(f"started running generation={generation_number}")
 
-    initial_genotypes = list(population.keys())
+    initial_genotypes = [x.genotype for x in population]
 
     mutant_genotypes = gm.try_mutate_population(
         initial_genotypes,
-        mut_params,
+        mutation_params,
         rng,
         novelty_tracker,
     )
@@ -94,35 +106,42 @@ def run_single_generation(
     if mutant_genotypes is None:
         return None
 
-    evaluated_mutants = {
-        genotype: gf.evaluate(phenos.translate(genotype, grammar), metrics)
-        for genotype in mutant_genotypes
+    mutant_phenotypes = [phenos.translate(g, grammar) for g in mutant_genotypes]
+    mutant_fitnesses = [gf.evaluate(p, fitness_metrics) for p in mutant_phenotypes]
+    evaluated_mutants = [
+        EvaluatedGenotype(g, p, f)
+        for g, p, f in zip(
+            mutant_genotypes,
+            mutant_phenotypes,
+            mutant_fitnesses,
+        )
+    ]
+
+    next_gen_candidates = {e: e.fitness for e in evaluated_mutants} | {
+        e: e.fitness for e in population
     }
 
-    next_gen_candidates = population | evaluated_mutants
-    fittest_genotypes: list[cg.CompositeGenotype] = gf.select_fittest_nsga2(
-        next_gen_candidates, len(population)
+    fittest_genotypes = gf.select_fittest_nsga2(
+        evaluated_solutions=next_gen_candidates,
+        fittest_count=len(population),
     )
 
-    return {g: next_gen_candidates[g] for g in fittest_genotypes}
+    checkpoint = GenerationCheckpoint(
+        generation_number=generation_number,
+        population=tuple(fittest_genotypes),
+        novelty_tracker=novelty_tracker,
+        rng=rng,
+    )
 
+    logger.info(f"finished running generation=<{generation_number}>")
 
-def save_phenotypes(
-    output_dir: pathlib.Path,
-    fitnesses: dict[cg.CompositeGenotype, gf.Fitness],
-) -> None:
-    for genotype, fitness in fitnesses.items():
-        if not fitness.successfully_evaluated():
-            continue
-
-        path = gge.paths.get_phenotype_path(output_dir, genotype.unique_id)
-        path.write_bytes
+    return checkpoint
 
 
 def run_multiple_generations(
     starting_generation_number: int,
     number_of_generations_to_run: int,
-    initial_population: dict[cg.CompositeGenotype, gf.Fitness],
+    initial_population: tuple[EvaluatedGenotype, ...],
     grammar: ugr.Grammar,
     mutation_params: gm.PopulationMutationParameters,
     metrics: tuple[gf.Metric, ...],
@@ -130,41 +149,34 @@ def run_multiple_generations(
     rng: rand.RNG,
     output_dir: pathlib.Path,
 ) -> None:
-    assert len(initial_population) > 0
-    assert number_of_generations_to_run > 0
+    raise NotImplementedError()
 
-    output_dir.mkdir(parents=True, exist_ok=True)
+    assert len(initial_population) >= 1
+    assert number_of_generations_to_run >= 1
 
-    population = initial_population.copy()
+    checkpoint = GenerationCheckpoint(
+        generation_number=starting_generation_number,
+        population=initial_population,
+        novelty_tracker=novelty_tracker,
+        rng=rng,
+    )
 
-    for gen_nr in range(
-        starting_generation_number,
-        starting_generation_number + number_of_generations_to_run,
-    ):
-        logger.info(f"started running generation {gen_nr}")
-
-        maybe_population = run_single_generation(
-            population=population,
+    for _ in range(number_of_generations_to_run):
+        maybe_checkpoint = run_single_generation(
+            generation_number=checkpoint.get_generation_number() + 1,
+            population=checkpoint.get_population(),
             grammar=grammar,
-            mut_params=mutation_params,
-            metrics=metrics,
-            rng=rng,
-            novelty_tracker=novelty_tracker,
+            mutation_params=mutation_params,
+            fitness_metrics=metrics,
+            rng=checkpoint.get_rng(),
+            novelty_tracker=checkpoint.get_novelty_tracker(),
         )
 
-        if maybe_population is None:
+        if maybe_checkpoint is None:
             logger.info(
                 "stopping evolutionary loop: reason=<unable to generate enough novel mutants>"
             )
             break
+
         else:
-            population = maybe_population
-
-        GenerationCheckpoint(
-            generation_number=gen_nr,
-            fitnesses=population,
-            rng=rng,
-            novelty_tracker=novelty_tracker,
-        ).save(gge.paths.get_generation_checkpoint_path(output_dir, gen_nr))
-
-        logger.info(f"finished running generation {gen_nr}")
+            checkpoint = maybe_checkpoint
