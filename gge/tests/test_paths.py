@@ -17,7 +17,9 @@ def test_grammars_dir() -> None:
 @given(generation_nr=hs.integers(min_value=0, max_value=99))
 def test_get_generation_checkpoint_path(generation_nr: int) -> None:
     base_output_dir = pathlib.Path("/dev/shm")
-    expected = (base_output_dir / str(generation_nr)).with_suffix(".gen_out2")
+    expected = (base_output_dir / str(generation_nr)).with_suffix(
+        ".generation_checkpoint"
+    )
     actual = gge.paths.get_generation_checkpoint_path(base_output_dir, generation_nr)
     assert expected == actual
 
