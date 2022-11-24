@@ -48,9 +48,7 @@ def create_and_evaluate_initial_population(
 
     genotypes = [ind.genotype for ind in individuals]
     phenotypes = [ind.phenotype for ind in individuals]
-    fitnesses = {
-        ind.genotype: gf.evaluate(ind.phenotype, metrics) for ind in individuals
-    }
+    fitnesses = [gf.evaluate(ind.phenotype, metrics) for ind in individuals]
 
     known_genotypes = set(genotypes)
     known_phenotypes = set(phenotypes)
@@ -59,18 +57,30 @@ def create_and_evaluate_initial_population(
         known_phenotypes=known_phenotypes,
     )
 
+    initial_population = [
+        gge.evolutionary.generations.EvaluatedGenotype(g, p, f)
+        for g, p, f in zip(
+            genotypes,
+            phenotypes,
+            fitnesses,
+        )
+    ]
+
     # generations are 0-indexed, so first gen == 0
     generation_number = 0
-    gge.evolutionary.generations.GenerationCheckpoint(
+
+    checkpoint = gge.evolutionary.generations.GenerationCheckpoint(
         generation_number=generation_number,
-        fitnesses=fitnesses,
+        population=tuple(initial_population),
         rng=gge.randomness.create_rng(rng_seed),
         novelty_tracker=novelty_tracker,
-    ).save(
-        gge.paths.get_generation_checkpoint_path(
-            settings.output.directory, generation_number
-        )
     )
+
+    save_path = gge.paths.get_generation_checkpoint_path(
+        settings.output.directory, generation_number
+    )
+
+    checkpoint.save(save_path)
 
 
 @app.command(name="evolve")

@@ -149,8 +149,6 @@ def run_multiple_generations(
     rng: rand.RNG,
     output_dir: pathlib.Path,
 ) -> None:
-    raise NotImplementedError()
-
     assert len(initial_population) >= 1
     assert number_of_generations_to_run >= 1
 
@@ -180,3 +178,10 @@ def run_multiple_generations(
 
         else:
             checkpoint = maybe_checkpoint
+
+        save_path = gge.paths.get_generation_checkpoint_path(
+            output_dir,
+            checkpoint.get_generation_number(),
+        )
+
+        checkpoint.save(save_path)
