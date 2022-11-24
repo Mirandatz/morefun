@@ -2,6 +2,7 @@
 This module assumes that fitnesses must be MINIMIZED.
 """
 
+import abc
 import pathlib
 import traceback
 import typing
@@ -182,19 +183,29 @@ class FailedMetricEvaluation:
 
 
 MetricEvaluation = SuccessfulMetricEvaluation | FailedMetricEvaluation
-Metric = typing.Callable[[pheno.Phenotype], MetricEvaluation]
+
+
+class Metric(abc.ABC):
+    @abc.abstractmethod
+    def name(self) -> str:
+        raise NotImplementedError("this is an abstract method")
+
+    @abc.abstractmethod
+    def evaluate(self, phenotype: pheno.Phenotype) -> MetricEvaluation:
+        raise NotImplementedError("this is an abstract method")
 
 
 @typeguard.typechecked
 @attrs.frozen
-class NumberOfParameters:
-    _NAME = "NumberOfParameters"
-
+class NumberOfParameters(Metric):
     input_shape: gl.Shape
     class_count: int
 
     def __attrs_post_init__(self) -> None:
         assert self.class_count >= 2
+
+    def name(self) -> str:
+        return "NumberOfParameters"
 
     def _evaluate(self, phenotype: pheno.Phenotype) -> float:
         model = make_classification_model(phenotype, self.input_shape, self.class_count)
@@ -207,16 +218,16 @@ class NumberOfParameters:
         try:
             param_count = self._evaluate(phenotype)
             return SuccessfulMetricEvaluation(
-                metric_name=self._NAME,
+                metric_name=self.name(),
                 raw=param_count,
                 effective=param_count,
             )
 
         except tf.errors.ResourceExhaustedError:
-            msg = f"unable to evalute metric=<{self._NAME}> of genotype=<{phenotype.genotype_uuid.hex}> due to resource exhaustion"
+            msg = f"unable to evalute metric=<{self.name()}> of genotype=<{phenotype.genotype_uuid.hex}> due to resource exhaustion"
             logger.warning(msg)
             return FailedMetricEvaluation(
-                metric_name=self._NAME,
+                metric_name=self.name(),
                 effective=float("+inf"),
                 description=msg,
                 stacktrace=traceback.format_exc(),
@@ -228,9 +239,7 @@ class NumberOfParameters:
 
 @typeguard.typechecked
 @attrs.frozen
-class TrainLoss:
-    _NAME = "TrainLoss"
-
+class TrainLoss(Metric):
     train_directory: pathlib.Path
     input_shape: gl.Shape
     class_count: int
@@ -244,6 +253,9 @@ class TrainLoss:
         assert self.class_count >= 2
         assert self.early_stop_patience >= 1
         assert self.train_directory.is_dir()
+
+    def name(self) -> str:
+        return "TrainLoss"
 
     def _evaluate(self, phenotype: pheno.Phenotype) -> float:
         train = load_train_partition(
@@ -281,16 +293,16 @@ class TrainLoss:
         try:
             train_loss = self._evaluate(phenotype)
             return SuccessfulMetricEvaluation(
-                metric_name=self._NAME,
+                metric_name=self.name(),
                 raw=train_loss,
                 effective=train_loss,
             )
 
         except tf.errors.ResourceExhaustedError:
-            msg = f"unable to evalute metric=<{self._NAME}> of genotype=<{phenotype.genotype_uuid.hex}> due to resource exhaustion"
+            msg = f"unable to evalute metric=<{self.name()}> of genotype=<{phenotype.genotype_uuid.hex}> due to resource exhaustion"
             logger.warning(msg)
             return FailedMetricEvaluation(
-                metric_name=self._NAME,
+                metric_name=self.name(),
                 effective=float("+inf"),
                 description=msg,
                 stacktrace=traceback.format_exc(),
@@ -341,7 +353,7 @@ def evaluate(
 ) -> Fitness:
     logger.info(f"starting fitness evaluation of genotype=<{phenotype}>")
 
-    metric_evals = (metric(phenotype) for metric in metrics)
+    metric_evals = (metric.evaluate(phenotype) for metric in metrics)
     fitness = Fitness(tuple(metric_evals))
 
     logger.info(
