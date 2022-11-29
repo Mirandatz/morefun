@@ -1,6 +1,7 @@
 import pathlib
 
 import typer
+from loguru import logger
 
 import gge.evolutionary.fitnesses as gf
 import gge.evolutionary.generations
@@ -119,6 +120,46 @@ def evolutionary_loop(
         rng=latest_checkpoint.get_rng(),
         output_dir=settings.output.directory,
     )
+
+
+def export_architectures(settings: gset.GgeSettings) -> None:
+    gset.configure_logger(settings.output)
+    gset.configure_tensorflow(settings.tensorflow)
+
+    logger.info(f"export architectures from directory=<{settings.output.directory}>")
+
+    last_checkpoint_path = gge.paths.get_latest_generation_checkpoint_path(
+        settings.output.directory
+    )
+
+    checkpoint = gge.evolutionary.generations.GenerationCheckpoint.load(
+        last_checkpoint_path
+    )
+
+    for ev in checkpoint.get_population():
+        logger.info(f"extractin architectures from genotype=<{ev.genotype.unique_id}>")
+        model = gf.make_classification_model(
+            ev.phenotype,
+            input_shape=settings.dataset.input_shape,
+            class_count=settings.dataset.class_count,
+        )
+
+        architecture = model.to_json()
+
+        path = gge.paths.get_architecture_path(
+            settings.output.directory,
+            ev.genotype.unique_id,
+        )
+
+        path.write_text(architecture)
+
+
+@app.command(name="export-architectures")
+def export_architectures_command(settings_path: pathlib.Path = SETTINGS_OPTION) -> int:
+    settings = gset.load_gge_settings(settings_path)
+    export_architectures(settings)
+
+    return 0
 
 
 if __name__ == "__main__":

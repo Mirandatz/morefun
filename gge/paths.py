@@ -4,6 +4,7 @@ import uuid
 
 GENERATION_CHECKPOINT_EXTENSION = ".generation_checkpoint"
 PHENOTYPE_EXTENSION = ".phenotype"
+ARCHITECTURE_EXTENSION = ".json"
 
 
 @functools.cache
@@ -48,3 +49,7 @@ def get_latest_generation_checkpoint_path(search_dir: pathlib.Path) -> pathlib.P
 
 def get_phenotype_path(output_dir: pathlib.Path, uuid: uuid.UUID) -> pathlib.Path:
     return (output_dir / uuid.hex).with_suffix(PHENOTYPE_EXTENSION)
+
+
+def get_architecture_path(output_dir: pathlib.Path, uuid: uuid.UUID) -> pathlib.Path:
+    return (output_dir / uuid.hex).with_suffix(ARCHITECTURE_EXTENSION)
