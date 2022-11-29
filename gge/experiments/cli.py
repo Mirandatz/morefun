@@ -122,7 +122,7 @@ def evolutionary_loop(
     )
 
 
-def export_architectures(settings: gset.GgeSettings) -> None:
+def export_models(settings: gset.GgeSettings) -> None:
     gset.configure_logger(settings.output)
     gset.configure_tensorflow(settings.tensorflow)
 
@@ -137,27 +137,26 @@ def export_architectures(settings: gset.GgeSettings) -> None:
     )
 
     for ev in checkpoint.get_population():
-        logger.info(f"extractin architectures from genotype=<{ev.genotype.unique_id}>")
+        logger.info(f"exporting model for genotype=<{ev.genotype.unique_id}>")
+
         model = gf.make_classification_model(
             ev.phenotype,
             input_shape=settings.dataset.input_shape,
             class_count=settings.dataset.class_count,
         )
 
-        architecture = model.to_json()
-
-        path = gge.paths.get_architecture_path(
+        path = gge.paths.get_keras_model_path(
             settings.output.directory,
             ev.genotype.unique_id,
         )
 
-        path.write_text(architecture)
+        model.save(path)
 
 
-@app.command(name="export-architectures")
-def export_architectures_command(settings_path: pathlib.Path = SETTINGS_OPTION) -> int:
+@app.command(name="export-models")
+def export_models_command(settings_path: pathlib.Path = SETTINGS_OPTION) -> int:
     settings = gset.load_gge_settings(settings_path)
-    export_architectures(settings)
+    export_models(settings)
 
     return 0
 
