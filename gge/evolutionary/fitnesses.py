@@ -6,17 +6,20 @@ import abc
 import pathlib
 import traceback
 import typing
+import uuid
 
 import attrs
 import numpy as np
 import numpy.typing as npt
 import tensorflow as tf
 import typeguard
+from keras import Model as KerasModel
 from loguru import logger
 from pymoo.algorithms.moo.nsga2 import calc_crowding_distance
 from pymoo.util.nds.fast_non_dominated_sort import fast_non_dominated_sort
 
 import gge.neural_networks.layers as gl
+import gge.paths
 import gge.phenotypes as pheno
 import gge.randomness as rand
 import gge.redirection as redirection
@@ -39,7 +42,7 @@ def make_classification_model(
     phenotype: pheno.Phenotype,
     input_shape: gl.Shape,
     class_count: int,
-) -> tf.keras.Model:
+) -> KerasModel:
     tf.keras.backend.clear_session()
     input_tensor, output_tensor = pheno.make_input_output_tensors(
         phenotype, gl.Input(input_shape)
@@ -241,6 +244,7 @@ class NumberOfParameters(Metric):
 @attrs.frozen
 class TrainLoss(Metric):
     train_directory: pathlib.Path
+    weights_directory: pathlib.Path | None
     input_shape: gl.Shape
     class_count: int
     batch_size: int
@@ -253,12 +257,38 @@ class TrainLoss(Metric):
         assert self.class_count >= 2
         assert self.early_stop_patience >= 1
         assert self.train_directory.is_dir()
+        assert self.weights_directory is None or self.weights_directory.is_dir()
 
     def name(self) -> str:
         return "TrainLoss"
 
+    def _try_restore_weights(self, model: KerasModel, genotype_uuid: uuid.UUID) -> None:
+        if self.weights_directory is None:
+            return
+
+        weights_path = gge.paths.get_model_weights_path(
+            self.weights_directory,
+            genotype_uuid,
+        )
+
+        if not weights_path.is_file():
+            return
+
+        model.load_weights(weights_path)
+
+    def _try_save_weights(self, model: KerasModel, genotype_uuid: uuid.UUID) -> None:
+        if self.weights_directory is None:
+            return
+
+        weights_path = gge.paths.get_model_weights_path(
+            self.weights_directory,
+            genotype_uuid,
+        )
+
+        model.save_weights(weights_path)
+
     def _evaluate(self, phenotype: pheno.Phenotype) -> float:
-        train = load_train_partition(
+        train_dataset = load_train_partition(
             input_shape=self.input_shape,
             batch_size=self.batch_size,
             directory=self.train_directory,
@@ -272,17 +302,21 @@ class TrainLoss(Metric):
 
         early_stop = tf.keras.callbacks.EarlyStopping(
             patience=self.early_stop_patience,
-            restore_best_weights=False,
+            restore_best_weights=True,
             monitor="loss",
         )
 
+        self._try_restore_weights(model, phenotype.genotype_uuid)
+
         with redirection.discard_stderr_and_stdout():
             train_history = model.fit(
-                train,
+                train_dataset,
                 epochs=self.max_epochs,
                 verbose=0,
                 callbacks=[early_stop],
             )
+
+        self._try_save_weights(model, phenotype.genotype_uuid)
 
         train_loss = min(train_history.history["loss"])
         assert isinstance(train_loss, float)
