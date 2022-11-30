@@ -4,6 +4,7 @@ import uuid
 
 GENERATION_CHECKPOINT_EXTENSION = ".generation_checkpoint"
 PHENOTYPE_EXTENSION = ".phenotype"
+WEIGHTS_EXTENSION = ".h5"
 
 
 @functools.cache
@@ -52,3 +53,7 @@ def get_phenotype_path(output_dir: pathlib.Path, uuid: uuid.UUID) -> pathlib.Pat
 
 def get_keras_model_path(output_dir: pathlib.Path, uuid: uuid.UUID) -> pathlib.Path:
     return output_dir / f"{uuid.hex} _keras_model"
+
+
+def get_model_weights_path(output_dir: pathlib.Path, uuid: uuid.UUID) -> pathlib.Path:
+    return (output_dir / uuid.hex).with_suffix(WEIGHTS_EXTENSION)
