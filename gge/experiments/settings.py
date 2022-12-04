@@ -318,11 +318,13 @@ def make_metric(
     name: str,
     fitness: FitnessSettings,
     dataset: DatasetSettings,
+    output: OutputSettings,
 ) -> gf.Metric:
     match name:
         case "train_loss":
             return gf.TrainLoss(
                 train_directory=dataset.get_and_check_train_dir(),
+                weights_directory=output.directory,
                 input_shape=dataset.input_shape,
                 batch_size=fitness.batch_size,
                 max_epochs=fitness.max_epochs,
@@ -340,8 +342,11 @@ def make_metric(
 def make_metrics(
     dataset: DatasetSettings,
     fitness: FitnessSettings,
+    output: OutputSettings,
 ) -> tuple[gf.Metric, ...]:
-    return tuple(make_metric(name, fitness, dataset) for name in fitness.metrics)
+    return tuple(
+        make_metric(name, fitness, dataset, output) for name in fitness.metrics
+    )
 
 
 def load_gge_settings(path: pathlib.Path) -> GgeSettings:

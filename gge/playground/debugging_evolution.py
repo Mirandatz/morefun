@@ -122,6 +122,7 @@ def initialize() -> None:
     metrics = gset.make_metrics(
         dataset=settings.dataset,
         fitness=settings.evolution.fitness_settings,
+        output=settings.output,
     )
 
     genotypes = [ind.genotype for ind in individuals]
@@ -181,6 +182,7 @@ def evolve(generations: int) -> None:
     metrics = gset.make_metrics(
         dataset=settings.dataset,
         fitness=settings.evolution.fitness_settings,
+        output=settings.output,
     )
 
     gge.evolutionary.generations.run_multiple_generations(
