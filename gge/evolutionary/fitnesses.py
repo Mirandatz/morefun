@@ -244,7 +244,7 @@ class NumberOfParameters(Metric):
 @attrs.frozen
 class TrainLoss(Metric):
     train_directory: pathlib.Path
-    weights_directory: pathlib.Path | None
+    weights_directory: pathlib.Path
     input_shape: gl.Shape
     class_count: int
     batch_size: int
@@ -257,14 +257,15 @@ class TrainLoss(Metric):
         assert self.class_count >= 2
         assert self.early_stop_patience >= 1
         assert self.train_directory.is_dir()
-        assert self.weights_directory is None or self.weights_directory.is_dir()
+        assert self.weights_directory.is_dir()
 
     def name(self) -> str:
         return "TrainLoss"
 
     def _try_restore_weights(self, model: KerasModel, genotype_uuid: uuid.UUID) -> None:
-        if self.weights_directory is None:
-            return
+        logger.info(
+            f"trying to restore weights for genotype with uuid=<{genotype_uuid}>"
+        )
 
         weights_path = gge.paths.get_model_weights_path(
             self.weights_directory,
@@ -272,20 +273,26 @@ class TrainLoss(Metric):
         )
 
         if not weights_path.is_file():
+            logger.info(
+                f"unable to restore weights for genotype with uuid=<{genotype_uuid}>, file not found path=<{weights_path}>"
+            )
             return
 
         model.load_weights(weights_path)
+        logger.info(
+            f"successfully restored weights for genotype with uuid=<{genotype_uuid}>"
+        )
 
-    def _try_save_weights(self, model: KerasModel, genotype_uuid: uuid.UUID) -> None:
-        if self.weights_directory is None:
-            return
-
+    def _save_weights(self, model: KerasModel, genotype_uuid: uuid.UUID) -> None:
         weights_path = gge.paths.get_model_weights_path(
             self.weights_directory,
             genotype_uuid,
         )
 
         model.save_weights(weights_path)
+        logger.info(
+            f"saved model weiights for genotype with uuid=<{genotype_uuid}>, path=<{weights_path}>"
+        )
 
     def _evaluate(self, phenotype: pheno.Phenotype) -> float:
         train_dataset = load_train_partition(
@@ -316,7 +323,7 @@ class TrainLoss(Metric):
                 callbacks=[early_stop],
             )
 
-        self._try_save_weights(model, phenotype.genotype_uuid)
+        self._save_weights(model, phenotype.genotype_uuid)
 
         train_loss = min(train_history.history["loss"])
         assert isinstance(train_loss, float)
