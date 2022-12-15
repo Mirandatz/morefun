@@ -1,7 +1,9 @@
 import pathlib
 
+import pandas as pd
 import tensorflow as tf
 from keras import Model as KerasModel
+from loguru import logger
 
 import gge.evolutionary.fitnesses as gf
 import gge.evolutionary.generations
@@ -72,8 +74,40 @@ def get_trained_model(
     return model
 
 
+def individual_to_dataframe_row(
+    individual: gge.evolutionary.generations.EvaluatedGenotype,
+    output_dir: pathlib.Path,
+    settings: gset.GgeSettings,
+) -> dict[str, float | int | str]:
+    logger.info(f"processing genotype=<{individual.genotype.unique_id.hex}>")
+
+    trained_model = get_trained_model(individual, output_dir, settings)
+
+    train = gf.load_non_train_partition(
+        input_shape=settings.dataset.input_shape,
+        batch_size=settings.final_train.batch_size,
+        directory=settings.dataset.get_and_check_train_dir(),
+    )
+
+    test = gf.load_non_train_partition(
+        input_shape=settings.dataset.input_shape,
+        batch_size=settings.final_train.batch_size,
+        directory=settings.dataset.get_and_check_test_dir(),
+    )
+
+    _, train_accuracy = trained_model.evaluate(train, verbose=0)
+    _, test_accuracy = trained_model.evaluate(test, verbose=0)
+
+    return {
+        "uuid": individual.genotype.unique_id.hex,
+        "train_accuracy": train_accuracy,
+        "test_accuracy": test_accuracy,
+        "num_params": trained_model.count_params(),
+    }
+
+
 def main() -> None:
-    run_dir = get_gitignored_dir() / "results" / "cifar10" / "seed_0"
+    run_dir = get_gitignored_dir() / "results" / "cifar10" / "seed_5"
     output_dir = run_dir / "output"
     settings_path = run_dir / "settings.yaml"
 
@@ -85,15 +119,13 @@ def main() -> None:
         gge.paths.get_latest_generation_checkpoint_path(search_dir=output_dir)
     )
 
-    for individual in last_checkpoint.get_population():
-        trained_model = get_trained_model(individual, output_dir, settings)
-        test = gf.load_non_train_partition(
-            input_shape=settings.dataset.input_shape,
-            batch_size=settings.final_train.batch_size,
-            directory=settings.dataset.get_and_check_test_dir(),
-        )
-        loss, acc = trained_model.evaluate(test, verbose=0)
-        print(f"{individual.genotype.unique_id.hex}, {loss=}, {acc=}")
+    rows = [
+        individual_to_dataframe_row(individual, output_dir, settings)
+        for individual in last_checkpoint.get_population()
+    ]
+
+    df = pd.DataFrame(rows)
+    df.to_csv(output_dir / "report.csv")
 
 
 if __name__ == "__main__":
