@@ -5,6 +5,7 @@ import uuid
 GENERATION_CHECKPOINT_EXTENSION = ".generation_checkpoint"
 PHENOTYPE_EXTENSION = ".phenotype"
 WEIGHTS_EXTENSION = ".h5"
+ARCHITECTURE_PLOT_EXTENSION = ".png"
 
 
 @functools.cache
@@ -57,3 +58,9 @@ def get_keras_model_path(output_dir: pathlib.Path, uuid: uuid.UUID) -> pathlib.P
 
 def get_model_weights_path(output_dir: pathlib.Path, uuid: uuid.UUID) -> pathlib.Path:
     return (output_dir / uuid.hex).with_suffix(WEIGHTS_EXTENSION)
+
+
+def get_architecture_plot_path(
+    output_dir: pathlib.Path, uuid: uuid.UUID
+) -> pathlib.Path:
+    return (output_dir / uuid.hex).with_suffix(ARCHITECTURE_PLOT_EXTENSION)
