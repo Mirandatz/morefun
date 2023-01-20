@@ -107,25 +107,29 @@ def individual_to_dataframe_row(
 
 
 def main() -> None:
-    run_dir = get_gitignored_dir() / "results" / "cifar10" / "seed_5"
-    output_dir = run_dir / "output"
-    settings_path = run_dir / "settings.yaml"
+    for run_id in ["fm_0", "fm_1", "fm_2", "fm_3", "fm_4"]:
+        run_dir = get_gitignored_dir() / "cifar10" / run_id
+        output_dir = run_dir / "output"
+        settings_path = run_dir / "settings.yaml"
 
-    settings = gset.load_gge_settings(settings_path)
-    gset.configure_logger(settings.output)
-    gset.configure_tensorflow(settings.tensorflow)
+        settings = gset.load_gge_settings(settings_path)
+        gset.configure_logger(settings.output)
+        gset.configure_tensorflow(settings.tensorflow)
 
-    last_checkpoint = gge.evolutionary.generations.GenerationCheckpoint.load(
-        gge.paths.get_latest_generation_checkpoint_path(search_dir=output_dir)
-    )
+        last_checkpoint = gge.evolutionary.generations.GenerationCheckpoint.load(
+            gge.paths.get_generation_checkpoint_path(
+                output_dir=output_dir,
+                generation_number=51,
+            )
+        )
 
-    rows = [
-        individual_to_dataframe_row(individual, output_dir, settings)
-        for individual in last_checkpoint.get_population()
-    ]
+        rows = [
+            individual_to_dataframe_row(individual, output_dir, settings)
+            for individual in last_checkpoint.get_population()
+        ]
 
-    df = pd.DataFrame(rows)
-    df.to_csv(output_dir / "report.csv")
+        df = pd.DataFrame(rows)
+        df.to_csv(output_dir / f"report_{run_id}.csv")
 
 
 if __name__ == "__main__":
