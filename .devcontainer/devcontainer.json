@@ -31,7 +31,8 @@
 	],
 	"mounts": [
 		"source=${localEnv:GGE_DATASETS_DIR},target=/gge/datasets/,type=bind,readonly",
-		"source=${localWorkspaceFolder}/gge/playground/gitignored,target=/gge/output,type=bind"
+		"source=${localWorkspaceFolder}/gge/playground/gitignored,target=/gge/output,type=bind",
+		"source=/disk2/thiago/datasets,target=/datasets,type=bind,readonly"
 	],
 	"postStartCommand": [
 		"git",
