@@ -34,7 +34,7 @@ RUN curl https://pyenv.run | bash
 
 # compile python
 RUN pyenv update && PYTHON_CFLAGS="-march=native" CONFIGURE_OPTS="--enable-optimizations --with-lto" pyenv install 3.10.8
-RUN pyenv global 3.10.8
+RUN pyenv global 3.10.10
 
 # create project dir and change its owner
 USER root
