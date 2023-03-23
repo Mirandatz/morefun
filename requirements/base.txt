@@ -5,55 +5,57 @@
 #
 #    pip-compile-multi
 #
-about-time==3.1.1
+about-time==4.2.1
     # via alive-progress
-absl-py==1.3.0
+absl-py==1.4.0
     # via
     #   tensorboard
     #   tensorflow
     #   tensorflow-datasets
     #   tensorflow-metadata
-alive-progress==2.4.1
+alive-progress==3.0.1
     # via pymoo
 astunparse==1.6.3
     # via tensorflow
-attrs==22.1.0
+attrs==22.2.0
     # via -r requirements/base.in
 autograd==1.5
     # via pymoo
-cachetools==5.2.0
+cachetools==5.3.0
     # via google-auth
-certifi==2022.9.24
+certifi==2022.12.7
     # via requests
-charset-normalizer==2.1.1
+charset-normalizer==3.1.0
     # via requests
 click==8.1.3
-    # via typer
+    # via
+    #   tensorflow-datasets
+    #   typer
 cma==3.2.2
     # via pymoo
-contourpy==1.0.5
+contourpy==1.0.7
     # via matplotlib
 cycler==0.11.0
     # via matplotlib
 deprecated==1.2.13
     # via pymoo
 dill==0.3.6
-    # via
-    #   pymoo
-    #   tensorflow-datasets
+    # via pymoo
 diskcache==5.4.0
     # via -r requirements/base.in
-etils[epath]==0.8.0
+dm-tree==0.1.8
     # via tensorflow-datasets
-flatbuffers==22.9.24
+etils[enp,epath]==1.1.1
+    # via tensorflow-datasets
+flatbuffers==23.3.3
     # via tensorflow
-fonttools==4.38.0
+fonttools==4.39.2
     # via matplotlib
-future==0.18.2
+future==0.18.3
     # via autograd
 gast==0.5.3
     # via tensorflow
-google-auth==2.13.0
+google-auth==2.16.2
     # via
     #   google-auth-oauthlib
     #   tensorboard
@@ -61,19 +63,19 @@ google-auth-oauthlib==0.4.6
     # via tensorboard
 google-pasta==0.2.0
     # via tensorflow
-googleapis-common-protos==1.56.4
+googleapis-common-protos==1.59.0
     # via tensorflow-metadata
 grapheme==0.6.0
     # via alive-progress
-grpcio==1.50.0
+grpcio==1.51.3
     # via
     #   tensorboard
     #   tensorflow
-h5py==3.7.0
+h5py==3.8.0
     # via tensorflow
 idna==3.4
     # via requests
-importlib-resources==5.10.0
+importlib-resources==5.12.0
     # via etils
 keras==2.8.0
     # via tensorflow
@@ -81,26 +83,27 @@ keras-preprocessing==1.1.2
     # via tensorflow
 kiwisolver==1.4.4
     # via matplotlib
-lark==1.1.3
+lark==1.1.5
     # via -r requirements/base.in
-libclang==14.0.6
+libclang==15.0.6.1
     # via tensorflow
 loguru==0.6.0
     # via -r requirements/base.in
-markdown==3.4.1
+markdown==3.4.2
     # via tensorboard
-markupsafe==2.1.1
+markupsafe==2.1.2
     # via werkzeug
-matplotlib==3.6.1
+matplotlib==3.7.1
     # via pymoo
-networkx==2.8.7
+networkx==3.0
     # via -r requirements/base.in
-numpy==1.23.4
+numpy==1.24.2
     # via
     #   -r requirements/base.in
     #   autograd
     #   cma
     #   contourpy
+    #   etils
     #   h5py
     #   keras-preprocessing
     #   matplotlib
@@ -115,17 +118,17 @@ numpy==1.23.4
     #   tensorflow-datasets
 oauthlib==3.2.2
     # via requests-oauthlib
-opencv-python==4.6.0.66
+opencv-python==4.7.0.72
     # via -r requirements/base.in
 opt-einsum==3.3.0
     # via tensorflow
-packaging==21.3
+packaging==23.0
     # via
     #   matplotlib
     #   tensorflow-addons
-pandas==1.5.1
+pandas==1.5.3
     # via -r requirements/base.in
-pillow==9.2.0
+pillow==9.4.0
     # via
     #   -r requirements/base.in
     #   matplotlib
@@ -138,7 +141,9 @@ protobuf==3.19.6
     #   tensorflow
     #   tensorflow-datasets
     #   tensorflow-metadata
-pyarrow==9.0.0
+psutil==5.9.4
+    # via tensorflow-datasets
+pyarrow==11.0.0
     # via -r requirements/base.in
 pyasn1==0.4.8
     # via
@@ -148,22 +153,21 @@ pyasn1-modules==0.2.8
     # via google-auth
 pydot==1.4.2
     # via -r requirements/base.in
-pymoo==0.6.0
+pymoo==0.6.0.1
     # via -r requirements/base.in
 pyparsing==3.0.9
     # via
     #   matplotlib
-    #   packaging
     #   pydot
 python-dateutil==2.8.2
     # via
     #   matplotlib
     #   pandas
-pytz==2022.5
+pytz==2022.7.1
     # via pandas
 pyyaml==6.0
     # via -r requirements/base.in
-requests==2.28.1
+requests==2.28.2
     # via
     #   requests-oauthlib
     #   tensorboard
@@ -172,7 +176,7 @@ requests-oauthlib==1.3.1
     # via google-auth-oauthlib
 rsa==4.9
     # via google-auth
-scipy==1.9.3
+scipy==1.10.1
     # via
     #   -r requirements/base.in
     #   pymoo
@@ -181,31 +185,29 @@ six==1.16.0
     #   astunparse
     #   google-auth
     #   google-pasta
-    #   grpcio
     #   keras-preprocessing
     #   promise
     #   python-dateutil
     #   tensorflow
-    #   tensorflow-datasets
 tensorboard==2.8.0
     # via tensorflow
 tensorboard-data-server==0.6.1
     # via tensorboard
 tensorboard-plugin-wit==1.8.1
     # via tensorboard
-tensorflow==2.8.3
+tensorflow==2.8.4
     # via -r requirements/base.in
-tensorflow-addons==0.18.0
+tensorflow-addons==0.19.0
     # via -r requirements/base.in
-tensorflow-datasets==4.7.0
+tensorflow-datasets==4.8.3
     # via -r requirements/base.in
 tensorflow-estimator==2.8.0
     # via tensorflow
-tensorflow-io-gcs-filesystem==0.27.0
+tensorflow-io-gcs-filesystem==0.31.0
     # via tensorflow
-tensorflow-metadata==1.10.0
+tensorflow-metadata==1.12.0
     # via tensorflow-datasets
-termcolor==2.0.1
+termcolor==2.2.0
     # via
     #   tensorflow
     #   tensorflow-datasets
@@ -213,31 +215,33 @@ toml==0.10.2
     # via tensorflow-datasets
 tomli==2.0.1
     # via -r requirements/base.in
-tqdm==4.64.1
+tqdm==4.65.0
     # via tensorflow-datasets
-typeguard==2.13.3
+typeguard==3.0.2
     # via
     #   -r requirements/base.in
     #   tensorflow-addons
-typer==0.6.1
+typer==0.7.0
     # via -r requirements/base.in
-typing-extensions==4.4.0
+typing-extensions==4.5.0
     # via
     #   etils
     #   tensorflow
-urllib3==1.26.12
+    #   typeguard
+urllib3==1.26.15
     # via requests
-werkzeug==2.2.2
+werkzeug==2.2.3
     # via tensorboard
-wheel==0.37.1
+wheel==0.40.0
     # via
     #   astunparse
     #   tensorboard
-wrapt==1.14.1
+wrapt==1.15.0
     # via
     #   deprecated
     #   tensorflow
-zipp==3.10.0
+    #   tensorflow-datasets
+zipp==3.15.0
     # via etils
 
 # The following packages are considered to be unsafe in a requirements file:
