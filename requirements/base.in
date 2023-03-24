@@ -13,7 +13,7 @@ pymoo
 pyyaml
 scipy
 tensorflow==2.8.*
-tensorflow-addons
+tensorflow-addons==0.18.*
 tensorflow-datasets
 tomli
 typeguard
