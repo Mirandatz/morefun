@@ -47,7 +47,7 @@ run_tests_sequential: dev_env
 		--workdir /app/$(PROJECT_NAME) \
 		$(DEV_ENG_TAG) \
 		bash -c "source /app/.venv/bin/activate \
-				 && pytest ./gge/tests --pspec"
+				 && pytest ./gge/tests"
 
 
 .PHONY: playground
