@@ -1,4 +1,4 @@
-FROM nvidia/cuda:11.7.1-cudnn8-devel-ubuntu22.04 AS base
+FROM nvidia/cuda:12.0.1-cudnn8-devel-ubuntu22.04\ AS base
 
 ENV TZ=America/Sao_Paulo
 ENV DEBIAN_FRONTEND=noninteractive
@@ -70,3 +70,6 @@ ENV TF_FORCE_GPU_ALLOW_GROWTH="true"
 
 # remove silly nvidia-banner
 ENTRYPOINT []
+
+# enable cuda lazy loading
+ENV CUDA_MODULE_LOADING=LAZY
