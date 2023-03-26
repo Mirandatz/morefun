@@ -1,4 +1,4 @@
-FROM nvidia/cuda:12.0.1-cudnn8-devel-ubuntu22.04\ AS base
+FROM nvidia/cuda:12.0.1-cudnn8-devel-ubuntu22.04 AS base
 
 ENV TZ=America/Sao_Paulo
 ENV DEBIAN_FRONTEND=noninteractive
