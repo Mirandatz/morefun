@@ -1,4 +1,6 @@
-FROM nvidia/cuda:12.0.1-cudnn8-devel-ubuntu22.04 AS base
+# FROM nvidia/cuda:12.0.1-cudnn8-devel-ubuntu22.04 AS base
+FROM nvidia/cuda:11.8.0-cudnn8-devel-ubuntu22.04 AS base
+# tensorflow 2.8 expects cuda 11
 
 ENV TZ=America/Sao_Paulo
 ENV DEBIAN_FRONTEND=noninteractive
