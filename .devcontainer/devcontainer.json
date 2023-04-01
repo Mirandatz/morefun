@@ -5,7 +5,7 @@
 	"customizations": {
 		"vscode": {
 			"settings": {
-				"python.defaultInterpreterPath": "/venv/bin/python",
+				"python.defaultInterpreterPath": "/app/.venv/bin/python",
 				"terminal.integrated.env.linux": {
 					"PYTHONPATH": "${workspaceFolder}/gge:${env:PYTHONPATH}"
 				},
@@ -35,9 +35,9 @@
 		"--cap-add=SYS_NICE"
 	],
 	"mounts": [
-		"source=${localEnv:GGE_DATASETS_DIR},target=/gge/datasets/,type=bind,readonly",
-		"source=${localWorkspaceFolder}/gge/playground/gitignored,target=/gge/output,type=bind",
-		"source=/disk2/thiago/datasets,target=/datasets,type=bind,readonly"
+		"source=${localEnv:GGE_DATASETS_DIR},target=/app/datasets/,type=bind,readonly",
+		"source=/disk2/thiago/datasets,target=/datasets,type=bind,readonly",
+		"source=${localWorkspaceFolder}/gge/playground,target=/app/playground,type=bind"
 	],
 	"postStartCommand": [
 		"git",
