@@ -2,8 +2,10 @@ import hypothesis
 import hypothesis.strategies as hs
 from hypothesis import assume, example, given
 
-import gge.layers as gl
+import gge.neural_networks.layers as gl
 import gge.tests.strategies.layers as ls
+
+# autouse fixtures
 from gge.tests.fixtures import hide_gpu_from_tensorflow, remove_logger_sinks  # noqa
 
 

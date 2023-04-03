@@ -3,17 +3,17 @@ import itertools
 import pytest
 from hypothesis import given
 
-import gge.grammars as gr
+import gge.grammars.upper_grammars as ugr
 import gge.tests.strategies.upper_grammar as ugs
 
 # autouse fixture
 from gge.tests.fixtures import remove_logger_sinks  # noqa
 
-START = gr.NonTerminal("start")
+START = ugr.NonTerminal("start")
 
 
 def test_start_symbol() -> None:
-    grammar = gr.Grammar(
+    grammar = ugr.Grammar(
         """
         start     : convblock
         convblock : conv~2
@@ -24,7 +24,7 @@ def test_start_symbol() -> None:
 
 
 def test_terminals() -> None:
-    grammar = gr.Grammar(
+    grammar = ugr.Grammar(
         """
         start : a act1 b act2
         a : "conv" "filter_count" "1" "kernel_size" ("2") "stride" ("3" | "4")
@@ -36,21 +36,21 @@ def test_terminals() -> None:
     actual = set(grammar.terminals)
 
     names = {
-        gr.ExpectedTerminal.CONV.value,
-        gr.ExpectedTerminal.FILTER_COUNT.value,
-        gr.ExpectedTerminal.KERNEL_SIZE.value,
-        gr.ExpectedTerminal.STRIDE.value,
-        gr.ExpectedTerminal.RELU.value,
-        gr.ExpectedTerminal.SWISH.value,
+        ugr.ExpectedTerminal.CONV.value,
+        ugr.ExpectedTerminal.FILTER_COUNT.value,
+        ugr.ExpectedTerminal.KERNEL_SIZE.value,
+        ugr.ExpectedTerminal.STRIDE.value,
+        ugr.ExpectedTerminal.RELU.value,
+        ugr.ExpectedTerminal.SWISH.value,
     }
-    numbers = {gr.Terminal(f'"{i}"') for i in range(1, 8)}
+    numbers = {ugr.Terminal(f'"{i}"') for i in range(1, 8)}
     expected = set.union(names, numbers)
 
     assert expected == actual
 
 
 def test_non_terminals() -> None:
-    grammar = gr.Grammar(
+    grammar = ugr.Grammar(
         """
         start : a b
         a : "conv" "filter_count" "1" "kernel_size" ("2") "stride" ("3" | "4")
@@ -58,24 +58,24 @@ def test_non_terminals() -> None:
     """
     )
     actual = set(grammar.nonterminals)
-    expected = {START, gr.NonTerminal("a"), gr.NonTerminal("b")}
+    expected = {START, ugr.NonTerminal("a"), ugr.NonTerminal("b")}
     assert expected == actual
 
 
 def test_start_trivial_expansion() -> None:
-    grammar = gr.Grammar(
+    grammar = ugr.Grammar(
         """
         start : a
         a     : "conv" "filter_count" "1" "kernel_size" "2" "stride" "3"
         """
     )
     (actual,) = grammar.expansions(START)
-    expected = gr.RuleOption((gr.NonTerminal("a"),))
+    expected = ugr.RuleOption((ugr.NonTerminal("a"),))
     assert expected == actual
 
 
 def test_start_simple_expansion() -> None:
-    grammar = gr.Grammar(
+    grammar = ugr.Grammar(
         """
         start : a b
         a     : "conv" "filter_count" "1" "kernel_size" "2" "stride" "3"
@@ -84,10 +84,10 @@ def test_start_simple_expansion() -> None:
     )
     (actual,) = grammar.expansions(START)
 
-    expected = gr.RuleOption(
+    expected = ugr.RuleOption(
         (
-            gr.NonTerminal("a"),
-            gr.NonTerminal("b"),
+            ugr.NonTerminal("a"),
+            ugr.NonTerminal("b"),
         )
     )
 
@@ -95,7 +95,7 @@ def test_start_simple_expansion() -> None:
 
 
 def test_start_complex_expansion() -> None:
-    grammar = gr.Grammar(
+    grammar = ugr.Grammar(
         """
         start : a b | c | c a
         a     : "conv" "filter_count" "1" "kernel_size" "2" "stride" "3"
@@ -105,21 +105,21 @@ def test_start_complex_expansion() -> None:
     )
     actual = grammar.expansions(START)
 
-    a = gr.NonTerminal("a")
-    b = gr.NonTerminal("b")
-    c = gr.NonTerminal("c")
+    a = ugr.NonTerminal("a")
+    b = ugr.NonTerminal("b")
+    c = ugr.NonTerminal("c")
 
     expected = (
-        gr.RuleOption((a, b)),
-        gr.RuleOption((c,)),
-        gr.RuleOption((c, a)),
+        ugr.RuleOption((a, b)),
+        ugr.RuleOption((c,)),
+        ugr.RuleOption((c, a)),
     )
 
     assert expected == actual
 
 
 def test_complex_symbol_expansion() -> None:
-    grammar = gr.Grammar(
+    grammar = ugr.Grammar(
         """
         start  : sblock cblock conv1
         sblock : conv1 conv2
@@ -132,90 +132,90 @@ def test_complex_symbol_expansion() -> None:
         conv3 : "conv" "filter_count" "7" "kernel_size" "8" "stride" "9"
         """
     )
-    actual = grammar.expansions(gr.NonTerminal("cblock"))
+    actual = grammar.expansions(ugr.NonTerminal("cblock"))
 
-    sb = gr.NonTerminal("sblock")
-    c1 = gr.NonTerminal("conv1")
-    c2 = gr.NonTerminal("conv2")
-    c3 = gr.NonTerminal("conv3")
+    sb = ugr.NonTerminal("sblock")
+    c1 = ugr.NonTerminal("conv1")
+    c2 = ugr.NonTerminal("conv2")
+    c3 = ugr.NonTerminal("conv3")
 
     expected = (
-        gr.RuleOption((c1, sb, c2)),
-        gr.RuleOption((c1, sb, c2, c2)),
-        gr.RuleOption((c1, sb, c2, c2, c2)),
-        gr.RuleOption((c1, c1, sb, c2)),
-        gr.RuleOption((c1, c1, sb, c2, c2)),
-        gr.RuleOption((c1, c1, sb, c2, c2, c2)),
-        gr.RuleOption((sb, sb, c1)),
-        gr.RuleOption((c3,)),
+        ugr.RuleOption((c1, sb, c2)),
+        ugr.RuleOption((c1, sb, c2, c2)),
+        ugr.RuleOption((c1, sb, c2, c2, c2)),
+        ugr.RuleOption((c1, c1, sb, c2)),
+        ugr.RuleOption((c1, c1, sb, c2, c2)),
+        ugr.RuleOption((c1, c1, sb, c2, c2, c2)),
+        ugr.RuleOption((sb, sb, c1)),
+        ugr.RuleOption((c3,)),
     )
 
     assert expected == actual
 
 
 def test_non_terminal_with_single_expansion() -> None:
-    grammar = gr.Grammar(
+    grammar = ugr.Grammar(
         """ start : block
         block : layer
         layer : "conv" "filter_count" "1" "kernel_size" "2" "stride" "3"
     """
     )
-    (actual,) = grammar.expansions(gr.NonTerminal("block"))
-    expected = gr.RuleOption((gr.NonTerminal("layer"),))
+    (actual,) = grammar.expansions(ugr.NonTerminal("block"))
+    expected = ugr.RuleOption((ugr.NonTerminal("layer"),))
     assert actual == expected
 
 
 def test_int_arg_parenthesis() -> None:
-    grammar = gr.Grammar(
+    grammar = ugr.Grammar(
         """
         start   : with without
         with    : "conv" "filter_count" ("1") "kernel_size" ("2") "stride" ("3")
         without : "conv" "filter_count" "1" "kernel_size" "2" "stride" "3"
         """
     )
-    with_par = grammar.expansions(gr.NonTerminal("with"))
-    without_par = grammar.expansions(gr.NonTerminal("without"))
+    with_par = grammar.expansions(ugr.NonTerminal("with"))
+    without_par = grammar.expansions(ugr.NonTerminal("without"))
     assert with_par == without_par
 
 
 def test_multiple_int_arg() -> None:
-    grammar = gr.Grammar(
+    grammar = ugr.Grammar(
         """
         start : layer
         layer : "conv" "filter_count" ("1" | "2") "kernel_size" "2" "stride" "3"
         """
     )
-    actual_first, actual_second = grammar.expansions(gr.NonTerminal("layer"))
+    actual_first, actual_second = grammar.expansions(ugr.NonTerminal("layer"))
 
-    expected_first = gr.RuleOption(
+    expected_first = ugr.RuleOption(
         (
-            gr.ExpectedTerminal.CONV.value,
-            gr.ExpectedTerminal.FILTER_COUNT.value,
-            gr.Terminal('"1"'),
-            gr.ExpectedTerminal.KERNEL_SIZE.value,
-            gr.Terminal('"2"'),
-            gr.ExpectedTerminal.STRIDE.value,
-            gr.Terminal('"3"'),
+            ugr.ExpectedTerminal.CONV.value,
+            ugr.ExpectedTerminal.FILTER_COUNT.value,
+            ugr.Terminal('"1"'),
+            ugr.ExpectedTerminal.KERNEL_SIZE.value,
+            ugr.Terminal('"2"'),
+            ugr.ExpectedTerminal.STRIDE.value,
+            ugr.Terminal('"3"'),
         )
     )
     assert expected_first == actual_first
 
-    expected_second = gr.RuleOption(
+    expected_second = ugr.RuleOption(
         (
-            gr.ExpectedTerminal.CONV.value,
-            gr.ExpectedTerminal.FILTER_COUNT.value,
-            gr.Terminal('"2"'),
-            gr.ExpectedTerminal.KERNEL_SIZE.value,
-            gr.Terminal('"2"'),
-            gr.ExpectedTerminal.STRIDE.value,
-            gr.Terminal('"3"'),
+            ugr.ExpectedTerminal.CONV.value,
+            ugr.ExpectedTerminal.FILTER_COUNT.value,
+            ugr.Terminal('"2"'),
+            ugr.ExpectedTerminal.KERNEL_SIZE.value,
+            ugr.Terminal('"2"'),
+            ugr.ExpectedTerminal.STRIDE.value,
+            ugr.Terminal('"3"'),
         )
     )
     assert expected_second == actual_second
 
 
 def test_blockless_grammar() -> None:
-    grammar = gr.Grammar(
+    grammar = ugr.Grammar(
         """
         start : conv
         conv  : "conv" "filter_count" "1" "kernel_size" "2" "stride" "3"
@@ -224,25 +224,25 @@ def test_blockless_grammar() -> None:
     start_rule, conv_def_rule = grammar.rules
 
     assert START == start_rule.lhs
-    assert gr.RuleOption((gr.NonTerminal("conv"),)) == start_rule.rhs
+    assert ugr.RuleOption((ugr.NonTerminal("conv"),)) == start_rule.rhs
 
-    assert gr.NonTerminal("conv") == conv_def_rule.lhs
-    expected_rhs = gr.RuleOption(
+    assert ugr.NonTerminal("conv") == conv_def_rule.lhs
+    expected_rhs = ugr.RuleOption(
         (
-            gr.ExpectedTerminal.CONV.value,
-            gr.ExpectedTerminal.FILTER_COUNT.value,
-            gr.Terminal('"1"'),
-            gr.ExpectedTerminal.KERNEL_SIZE.value,
-            gr.Terminal('"2"'),
-            gr.ExpectedTerminal.STRIDE.value,
-            gr.Terminal('"3"'),
+            ugr.ExpectedTerminal.CONV.value,
+            ugr.ExpectedTerminal.FILTER_COUNT.value,
+            ugr.Terminal('"1"'),
+            ugr.ExpectedTerminal.KERNEL_SIZE.value,
+            ugr.Terminal('"2"'),
+            ugr.ExpectedTerminal.STRIDE.value,
+            ugr.Terminal('"3"'),
         )
     )
     assert expected_rhs == conv_def_rule.rhs
 
 
 def test_batchnorm_in_block() -> None:
-    grammar = gr.Grammar(
+    grammar = ugr.Grammar(
         """
         start : block
         block : conv norm
@@ -251,17 +251,17 @@ def test_batchnorm_in_block() -> None:
         """
     )
 
-    nt = gr.NonTerminal("norm")
+    nt = ugr.NonTerminal("norm")
     assert nt in grammar.nonterminals
 
-    (block_exp,) = grammar.expansions(gr.NonTerminal("block"))
+    (block_exp,) = grammar.expansions(ugr.NonTerminal("block"))
     _, actual = block_exp.symbols
 
     assert nt == actual
 
 
 def test_batchnorm_def() -> None:
-    grammar = gr.Grammar(
+    grammar = ugr.Grammar(
         """
         start : block
         block : conv norm
@@ -270,16 +270,16 @@ def test_batchnorm_def() -> None:
         """
     )
 
-    nt = gr.NonTerminal("norm")
+    nt = ugr.NonTerminal("norm")
     (actual_expansion,) = grammar.expansions(nt)
 
-    expected_expansion = gr.RuleOption((gr.ExpectedTerminal.BATCHRNOM.value,))
+    expected_expansion = ugr.RuleOption((ugr.ExpectedTerminal.BATCHRNOM.value,))
 
     assert expected_expansion == actual_expansion
 
 
 def test_pooling_layer_in_block() -> None:
-    grammar = gr.Grammar(
+    grammar = ugr.Grammar(
         """
         start : block
         block : conv pool
@@ -288,10 +288,10 @@ def test_pooling_layer_in_block() -> None:
         """
     )
 
-    nt = gr.NonTerminal("pool")
+    nt = ugr.NonTerminal("pool")
     assert nt in grammar.nonterminals
 
-    (block_exp,) = grammar.expansions(gr.NonTerminal("block"))
+    (block_exp,) = grammar.expansions(ugr.NonTerminal("block"))
     _, actual = block_exp.symbols
 
     assert nt == actual
@@ -312,22 +312,22 @@ def test_maxpool_def(
         f' "pool_size" {pool_sizes.tokenstream}'
         f' "stride" {strides.tokenstream}'
     )
-    grammar = gr.Grammar(raw_grammar)
+    grammar = ugr.Grammar(raw_grammar)
 
     # function under test
-    expansions = grammar.expansions(gr.NonTerminal("start"))
+    expansions = grammar.expansions(ugr.NonTerminal("start"))
 
     # asserts
     test_values = itertools.product(pool_sizes.parsed, strides.parsed)
     for expansion, (pool_size_term, stride_term) in zip(
         expansions, test_values, strict=True
     ):
-        expected = gr.RuleOption(
+        expected = ugr.RuleOption(
             (
-                gr.ExpectedTerminal.MAXPOOL.value,
-                gr.ExpectedTerminal.POOL_SIZE.value,
+                ugr.ExpectedTerminal.MAXPOOL.value,
+                ugr.ExpectedTerminal.POOL_SIZE.value,
                 pool_size_term,
-                gr.ExpectedTerminal.STRIDE.value,
+                ugr.ExpectedTerminal.STRIDE.value,
                 stride_term,
             )
         )
@@ -349,21 +349,21 @@ def test_avgpool_def(
         f' "pool_size" {pool_sizes.tokenstream}'
         f' "stride" {strides.tokenstream}'
     )
-    grammar = gr.Grammar(raw_grammar)
+    grammar = ugr.Grammar(raw_grammar)
 
     # function under test
-    expansions = grammar.expansions(gr.NonTerminal("start"))
+    expansions = grammar.expansions(ugr.NonTerminal("start"))
 
     test_values = itertools.product(pool_sizes.parsed, strides.parsed)
     for expansion, (pool_size_term, stride_term) in zip(
         expansions, test_values, strict=True
     ):
-        expected = gr.RuleOption(
+        expected = ugr.RuleOption(
             (
-                gr.ExpectedTerminal.AVGPOOL.value,
-                gr.ExpectedTerminal.POOL_SIZE.value,
+                ugr.ExpectedTerminal.AVGPOOL.value,
+                ugr.ExpectedTerminal.POOL_SIZE.value,
                 pool_size_term,
-                gr.ExpectedTerminal.STRIDE.value,
+                ugr.ExpectedTerminal.STRIDE.value,
                 stride_term,
             )
         )
@@ -371,13 +371,13 @@ def test_avgpool_def(
 
 
 def test_relu_def() -> None:
-    grammar = gr.Grammar(
+    grammar = ugr.Grammar(
         """
         start : "relu"
         """
     )
-    (actual,) = grammar.expansions(gr.NonTerminal("start"))
-    expected = gr.RuleOption((gr.ExpectedTerminal.RELU.value,))
+    (actual,) = grammar.expansions(ugr.NonTerminal("start"))
+    expected = ugr.RuleOption((ugr.ExpectedTerminal.RELU.value,))
     assert expected == actual
 
 
@@ -399,10 +399,10 @@ def test_sgd_def(
         f' "momentum" {momentum.tokenstream}'
         f' "nesterov" {nesterov.tokenstream}'
     )
-    grammar = gr.Grammar(raw_grammar)
+    grammar = ugr.Grammar(raw_grammar)
 
     # function under test
-    expansions = grammar.expansions(gr.NonTerminal("start"))
+    expansions = grammar.expansions(ugr.NonTerminal("start"))
 
     test_values = itertools.product(
         learning_rate.parsed,
@@ -416,15 +416,15 @@ def test_sgd_def(
         strict=True,
     ):
         expected_symbols = (
-            gr.ExpectedTerminal.SGD.value,
-            gr.ExpectedTerminal.LEARNING_RATE.value,
+            ugr.ExpectedTerminal.SGD.value,
+            ugr.ExpectedTerminal.LEARNING_RATE.value,
             lr_term,
-            gr.ExpectedTerminal.MOMENTUM.value,
+            ugr.ExpectedTerminal.MOMENTUM.value,
             mom_term,
-            gr.ExpectedTerminal.NESTEROV.value,
+            ugr.ExpectedTerminal.NESTEROV.value,
             nest_term,
         )
-        expected_expansion = gr.RuleOption(expected_symbols)
+        expected_expansion = ugr.RuleOption(expected_symbols)
         assert expected_expansion == actual_expansion
 
 
@@ -452,10 +452,10 @@ def test_adam_def(
         f' "epsilon" {epsilon.tokenstream}'
         f' "amsgrad" {amsgrad.tokenstream}'
     )
-    grammar = gr.Grammar(raw_grammar)
+    grammar = ugr.Grammar(raw_grammar)
 
     # function under test
-    expansions = grammar.expansions(gr.NonTerminal("start"))
+    expansions = grammar.expansions(ugr.NonTerminal("start"))
 
     test_values = itertools.product(
         learning_rate.parsed,
@@ -479,19 +479,19 @@ def test_adam_def(
         ) = terminals
 
         expected_symbols = (
-            gr.ExpectedTerminal.ADAM.value,
-            gr.ExpectedTerminal.LEARNING_RATE.value,
+            ugr.ExpectedTerminal.ADAM.value,
+            ugr.ExpectedTerminal.LEARNING_RATE.value,
             lr_term,
-            gr.ExpectedTerminal.BETA1.value,
+            ugr.ExpectedTerminal.BETA1.value,
             beta1_term,
-            gr.ExpectedTerminal.BETA2.value,
+            ugr.ExpectedTerminal.BETA2.value,
             beta2_term,
-            gr.ExpectedTerminal.EPSILON.value,
+            ugr.ExpectedTerminal.EPSILON.value,
             epsilon_term,
-            gr.ExpectedTerminal.AMSGRAD.value,
+            ugr.ExpectedTerminal.AMSGRAD.value,
             amsgrad_term,
         )
-        expected_expansion = gr.RuleOption(expected_symbols)
+        expected_expansion = ugr.RuleOption(expected_symbols)
         assert expected_expansion == actual_expansion
 
 
@@ -500,12 +500,12 @@ def test_random_flip(mode: ugs.GrammarArgs) -> None:
     """Can parse middle grammar layer definition: random_flip."""
 
     raw_grammar = f'start : "random_flip" {mode.tokenstream}'
-    grammar = gr.Grammar(raw_grammar)
+    grammar = ugr.Grammar(raw_grammar)
 
-    expansions = grammar.expansions(gr.NonTerminal("start"))
+    expansions = grammar.expansions(ugr.NonTerminal("start"))
     for actual_expansion, terminal in zip(expansions, mode.parsed, strict=True):
-        expected_symbols = (gr.ExpectedTerminal.RANDOM_FLIP.value, terminal)
-        expected_expansion = gr.RuleOption(expected_symbols)
+        expected_symbols = (ugr.ExpectedTerminal.RANDOM_FLIP.value, terminal)
+        expected_expansion = ugr.RuleOption(expected_symbols)
         assert expected_expansion == actual_expansion
 
 
@@ -514,12 +514,12 @@ def test_random_rotation(rotation: ugs.GrammarArgs) -> None:
     """Can parse middle grammar layer definition: random_rotation."""
 
     raw_grammar = f'start : "random_rotation" {rotation.tokenstream}'
-    grammar = gr.Grammar(raw_grammar)
+    grammar = ugr.Grammar(raw_grammar)
 
-    expansions = grammar.expansions(gr.NonTerminal("start"))
+    expansions = grammar.expansions(ugr.NonTerminal("start"))
     for actual_expanion, terminal in zip(expansions, rotation.parsed):
-        expected_symbols = (gr.ExpectedTerminal.RANDOM_ROTATION.value, terminal)
-        expected_expansion = gr.RuleOption(expected_symbols)
+        expected_symbols = (ugr.ExpectedTerminal.RANDOM_ROTATION.value, terminal)
+        expected_expansion = ugr.RuleOption(expected_symbols)
         assert expected_expansion == actual_expanion
 
 
@@ -533,9 +533,9 @@ def test_resizing(height: ugs.GrammarArgs, width: ugs.GrammarArgs) -> None:
     raw_grammar = (
         f'start : "resizing" "height" {height.tokenstream} "width" {width.tokenstream}'
     )
-    grammar = gr.Grammar(raw_grammar)
+    grammar = ugr.Grammar(raw_grammar)
 
-    expansions = grammar.expansions(gr.NonTerminal("start"))
+    expansions = grammar.expansions(ugr.NonTerminal("start"))
     test_values = itertools.product(height.parsed, width.parsed)
     for actual_expansion, terminals in zip(
         expansions,
@@ -544,13 +544,13 @@ def test_resizing(height: ugs.GrammarArgs, width: ugs.GrammarArgs) -> None:
     ):
         height_term, width_term = terminals
         expected_symbols = (
-            gr.ExpectedTerminal.RESIZING.value,
-            gr.ExpectedTerminal.HEIGHT.value,
+            ugr.ExpectedTerminal.RESIZING.value,
+            ugr.ExpectedTerminal.HEIGHT.value,
             height_term,
-            gr.ExpectedTerminal.WIDTH.value,
+            ugr.ExpectedTerminal.WIDTH.value,
             width_term,
         )
-        expected_expansion = gr.RuleOption(expected_symbols)
+        expected_expansion = ugr.RuleOption(expected_symbols)
         assert expected_expansion == actual_expansion
 
 
@@ -562,9 +562,9 @@ def test_random_crop(height: ugs.GrammarArgs, width: ugs.GrammarArgs) -> None:
     """Can parse middle grammar layer definition: random_crop."""
 
     raw_grammar = f'start : "random_crop" "height" {height.tokenstream} "width" {width.tokenstream}'
-    grammar = gr.Grammar(raw_grammar)
+    grammar = ugr.Grammar(raw_grammar)
 
-    expansions = grammar.expansions(gr.NonTerminal("start"))
+    expansions = grammar.expansions(ugr.NonTerminal("start"))
     test_values = itertools.product(height.parsed, width.parsed)
     for actual_expansion, terminals in zip(
         expansions,
@@ -573,13 +573,13 @@ def test_random_crop(height: ugs.GrammarArgs, width: ugs.GrammarArgs) -> None:
     ):
         height_term, width_term = terminals
         expected_symbols = (
-            gr.ExpectedTerminal.RANDOM_CROP.value,
-            gr.ExpectedTerminal.HEIGHT.value,
+            ugr.ExpectedTerminal.RANDOM_CROP.value,
+            ugr.ExpectedTerminal.HEIGHT.value,
             height_term,
-            gr.ExpectedTerminal.WIDTH.value,
+            ugr.ExpectedTerminal.WIDTH.value,
             width_term,
         )
-        expected_expansion = gr.RuleOption(expected_symbols)
+        expected_expansion = ugr.RuleOption(expected_symbols)
         assert expected_expansion == actual_expansion
 
 
@@ -590,18 +590,18 @@ def test_random_translation(factor: ugs.GrammarArgs) -> None:
     """Can parse middle grammar layer definition: random_translation."""
 
     raw_grammar = f'start : "random_translation" {factor.tokenstream}'
-    grammar = gr.Grammar(raw_grammar)
+    grammar = ugr.Grammar(raw_grammar)
 
-    expansions = grammar.expansions(gr.NonTerminal("start"))
+    expansions = grammar.expansions(ugr.NonTerminal("start"))
     for actual_expanion, terminal in zip(expansions, factor.parsed):
-        expected_symbols = (gr.ExpectedTerminal.RANDOM_TRANSLATION.value, terminal)
-        expected_expansion = gr.RuleOption(expected_symbols)
+        expected_symbols = (ugr.ExpectedTerminal.RANDOM_TRANSLATION.value, terminal)
+        expected_expansion = ugr.RuleOption(expected_symbols)
         assert expected_expansion == actual_expanion
 
 
 def test_prelu() -> None:
     """Can parse middle grammar layer definition: prelu."""
-    grammar = gr.Grammar('start : "prelu"')
-    (actual_expansion,) = grammar.expansions(gr.NonTerminal("start"))
-    expected_expansion = gr.RuleOption((gr.ExpectedTerminal.PRELU.value,))
+    grammar = ugr.Grammar('start : "prelu"')
+    (actual_expansion,) = grammar.expansions(ugr.NonTerminal("start"))
+    expected_expansion = ugr.RuleOption((ugr.ExpectedTerminal.PRELU.value,))
     assert expected_expansion == actual_expansion

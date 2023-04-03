@@ -2,20 +2,24 @@
 This module assumes that fitnesses must be MINIMIZED.
 """
 
+import abc
 import pathlib
 import traceback
 import typing
+import uuid
 
 import attrs
 import numpy as np
 import numpy.typing as npt
 import tensorflow as tf
 import typeguard
+from keras import Model as KerasModel
 from loguru import logger
 from pymoo.algorithms.moo.nsga2 import calc_crowding_distance
 from pymoo.util.nds.fast_non_dominated_sort import fast_non_dominated_sort
 
-import gge.layers as gl
+import gge.neural_networks.layers as gl
+import gge.paths
 import gge.phenotypes as pheno
 import gge.randomness as rand
 import gge.redirection as redirection
@@ -38,7 +42,7 @@ def make_classification_model(
     phenotype: pheno.Phenotype,
     input_shape: gl.Shape,
     class_count: int,
-) -> tf.keras.Model:
+) -> KerasModel:
     tf.keras.backend.clear_session()
     input_tensor, output_tensor = pheno.make_input_output_tensors(
         phenotype, gl.Input(input_shape)
@@ -182,19 +186,29 @@ class FailedMetricEvaluation:
 
 
 MetricEvaluation = SuccessfulMetricEvaluation | FailedMetricEvaluation
-Metric = typing.Callable[[pheno.Phenotype], MetricEvaluation]
+
+
+class Metric(abc.ABC):
+    @abc.abstractmethod
+    def name(self) -> str:
+        raise NotImplementedError("this is an abstract method")
+
+    @abc.abstractmethod
+    def evaluate(self, phenotype: pheno.Phenotype) -> MetricEvaluation:
+        raise NotImplementedError("this is an abstract method")
 
 
 @typeguard.typechecked
 @attrs.frozen
-class NumberOfParameters:
-    _NAME = "NumberOfParameters"
-
+class NumberOfParameters(Metric):
     input_shape: gl.Shape
     class_count: int
 
     def __attrs_post_init__(self) -> None:
         assert self.class_count >= 2
+
+    def name(self) -> str:
+        return "NumberOfParameters"
 
     def _evaluate(self, phenotype: pheno.Phenotype) -> float:
         model = make_classification_model(phenotype, self.input_shape, self.class_count)
@@ -207,16 +221,16 @@ class NumberOfParameters:
         try:
             param_count = self._evaluate(phenotype)
             return SuccessfulMetricEvaluation(
-                metric_name=self._NAME,
+                metric_name=self.name(),
                 raw=param_count,
                 effective=param_count,
             )
 
         except tf.errors.ResourceExhaustedError:
-            msg = f"unable to evalute metric=<{self._NAME}> of genotype=<{phenotype.genotype_uuid.hex}> due to resource exhaustion"
+            msg = f"unable to evalute metric=<{self.name()}> of genotype=<{phenotype.genotype_uuid.hex}> due to resource exhaustion"
             logger.warning(msg)
             return FailedMetricEvaluation(
-                metric_name=self._NAME,
+                metric_name=self.name(),
                 effective=float("+inf"),
                 description=msg,
                 stacktrace=traceback.format_exc(),
@@ -228,10 +242,9 @@ class NumberOfParameters:
 
 @typeguard.typechecked
 @attrs.frozen
-class TrainLoss:
-    _NAME = "TrainLoss"
-
+class TrainLoss(Metric):
     train_directory: pathlib.Path
+    weights_directory: pathlib.Path
     input_shape: gl.Shape
     class_count: int
     batch_size: int
@@ -244,9 +257,45 @@ class TrainLoss:
         assert self.class_count >= 2
         assert self.early_stop_patience >= 1
         assert self.train_directory.is_dir()
+        assert self.weights_directory.is_dir()
+
+    def name(self) -> str:
+        return "TrainLoss"
+
+    def _try_restore_weights(self, model: KerasModel, genotype_uuid: uuid.UUID) -> None:
+        logger.info(
+            f"trying to restore weights for genotype with uuid=<{genotype_uuid}>"
+        )
+
+        weights_path = gge.paths.get_model_weights_path(
+            self.weights_directory,
+            genotype_uuid,
+        )
+
+        if not weights_path.is_file():
+            logger.info(
+                f"unable to restore weights for genotype with uuid=<{genotype_uuid}>, file not found path=<{weights_path}>"
+            )
+            return
+
+        model.load_weights(weights_path)
+        logger.info(
+            f"successfully restored weights for genotype with uuid=<{genotype_uuid}>"
+        )
+
+    def _save_weights(self, model: KerasModel, genotype_uuid: uuid.UUID) -> None:
+        weights_path = gge.paths.get_model_weights_path(
+            self.weights_directory,
+            genotype_uuid,
+        )
+
+        model.save_weights(weights_path)
+        logger.info(
+            f"saved model weiights for genotype with uuid=<{genotype_uuid}>, path=<{weights_path}>"
+        )
 
     def _evaluate(self, phenotype: pheno.Phenotype) -> float:
-        train = load_train_partition(
+        train_dataset = load_train_partition(
             input_shape=self.input_shape,
             batch_size=self.batch_size,
             directory=self.train_directory,
@@ -260,17 +309,21 @@ class TrainLoss:
 
         early_stop = tf.keras.callbacks.EarlyStopping(
             patience=self.early_stop_patience,
-            restore_best_weights=False,
+            restore_best_weights=True,
             monitor="loss",
         )
 
+        self._try_restore_weights(model, phenotype.genotype_uuid)
+
         with redirection.discard_stderr_and_stdout():
             train_history = model.fit(
-                train,
+                train_dataset,
                 epochs=self.max_epochs,
                 verbose=0,
                 callbacks=[early_stop],
             )
+
+        self._save_weights(model, phenotype.genotype_uuid)
 
         train_loss = min(train_history.history["loss"])
         assert isinstance(train_loss, float)
@@ -281,16 +334,16 @@ class TrainLoss:
         try:
             train_loss = self._evaluate(phenotype)
             return SuccessfulMetricEvaluation(
-                metric_name=self._NAME,
+                metric_name=self.name(),
                 raw=train_loss,
                 effective=train_loss,
             )
 
         except tf.errors.ResourceExhaustedError:
-            msg = f"unable to evalute metric=<{self._NAME}> of genotype=<{phenotype.genotype_uuid.hex}> due to resource exhaustion"
+            msg = f"unable to evalute metric=<{self.name()}> of genotype=<{phenotype.genotype_uuid.hex}> due to resource exhaustion"
             logger.warning(msg)
             return FailedMetricEvaluation(
-                metric_name=self._NAME,
+                metric_name=self.name(),
                 effective=float("+inf"),
                 description=msg,
                 stacktrace=traceback.format_exc(),
@@ -312,11 +365,27 @@ class Fitness:
     def metric_names(self) -> tuple[str, ...]:
         return tuple(m.metric_name for m in self.metric_evaluations)
 
+    def to_effective_fitnesses_dict(self) -> dict[str, float]:
+        return dict(
+            zip(
+                self.metric_names(),
+                self.effective_values(),
+            )
+        )
+
     def effective_values(self) -> tuple[float, ...]:
         return tuple(m.effective for m in self.metric_evaluations)
 
     def effective_values_as_ndarray(self) -> npt.NDArray[np.float64]:
         return np.asarray(self.effective_values())
+
+    def successfully_evaluated(self) -> bool:
+        """
+        Returns true if all metrics were successfully evaluated, false otherwise.
+        """
+        return all(
+            isinstance(me, SuccessfulMetricEvaluation) for me in self.metric_evaluations
+        )
 
 
 def evaluate(
@@ -325,7 +394,7 @@ def evaluate(
 ) -> Fitness:
     logger.info(f"starting fitness evaluation of genotype=<{phenotype}>")
 
-    metric_evals = (metric(phenotype) for metric in metrics)
+    metric_evals = (metric.evaluate(phenotype) for metric in metrics)
     fitness = Fitness(tuple(metric_evals))
 
     logger.info(

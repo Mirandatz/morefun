@@ -1,11 +1,13 @@
 import gge.composite_genotypes as cg
-import gge.grammars as gr
+import gge.grammars.upper_grammars as ugr
 import gge.randomness as rand
+
+# autouse fixture
 from gge.tests.fixtures import remove_logger_sinks  # noqa
 
 
-def get_grammar() -> gr.Grammar:
-    return gr.Grammar(
+def get_grammar() -> ugr.Grammar:
+    return ugr.Grammar(
         """
         start    : topology optimizer
 

@@ -6,10 +6,10 @@ import tensorflow as tf
 from loguru import logger
 
 import gge.composite_genotypes as cg
-import gge.grammars as gr
-import gge.layers as gl
-import gge.novelty as novel
-import gge.phenotypes as pheno
+import gge.evolutionary.novelty as novel
+import gge.grammars.upper_grammars as ugr
+import gge.neural_networks.layers as gl
+import gge.phenotypes as ph
 import gge.randomness as rand
 
 DEFAULT_WORKER_COUNT = 1 + (mp.cpu_count() // 3)
@@ -18,7 +18,7 @@ DEFAULT_WORKER_COUNT = 1 + (mp.cpu_count() // 3)
 @attrs.frozen
 class Individual:
     genotype: cg.CompositeGenotype
-    phenotype: pheno.Phenotype
+    phenotype: ph.Phenotype
 
 
 @attrs.frozen
@@ -82,7 +82,7 @@ def is_network_too_wide(
 
 def is_network_overparameterized(ind: Individual, max_params: int) -> bool:
     with tf.device("/device:CPU:0"):
-        input_tensor, output_tensor = pheno.make_input_output_tensors(
+        input_tensor, output_tensor = ph.make_input_output_tensors(
             ind.phenotype,
             input_layer=gl.make_input(width=1, height=1, depth=1),
         )
@@ -140,14 +140,14 @@ def should_add_to_population(
 
 def create_individuals(
     queue: "mp.Queue[Individual]",
-    grammar: gr.Grammar,
+    grammar: ugr.Grammar,
     filter: IndividualFilter,
     rng_seed: int,
 ) -> typing.NoReturn:
     rng = rand.create_rng(rng_seed)
     while True:
         genotype = cg.create_genotype(grammar, rng)
-        phenotype = pheno.translate(genotype, grammar)
+        phenotype = ph.translate(genotype, grammar)
         ind = Individual(genotype, phenotype)
 
         if should_consider_for_population(ind, filter):
@@ -161,7 +161,7 @@ def create_individuals(
 
 def create_producers(
     queue: "mp.Queue[Individual]",
-    grammar: gr.Grammar,
+    grammar: ugr.Grammar,
     filter: IndividualFilter,
     worker_count: int,
     rng_seed: int,
@@ -216,7 +216,7 @@ def collect_results(
 
 def create_initial_population_multiprocessing(
     pop_size: int,
-    grammar: gr.Grammar,
+    grammar: ugr.Grammar,
     filter: IndividualFilter,
     rng_seed: int,
     worker_count: int = DEFAULT_WORKER_COUNT,
@@ -242,7 +242,7 @@ def create_initial_population_multiprocessing(
 
 def create_initial_population(
     pop_size: int,
-    grammar: gr.Grammar,
+    grammar: ugr.Grammar,
     filter: IndividualFilter,
     rng_seed: int,
 ) -> list[Individual]:
@@ -260,7 +260,7 @@ def create_initial_population(
             continue
         novelty_tracker.register_genotype(genotype)
 
-        phenotype = pheno.translate(genotype, grammar)
+        phenotype = ph.translate(genotype, grammar)
         if not novelty_tracker.is_phenotype_novel(phenotype):
             logger.info("discarded genotype=<{genotype}>, reason=<known phenotype>")
             continue

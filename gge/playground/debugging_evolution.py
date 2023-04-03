@@ -2,9 +2,9 @@ import yaml
 
 import gge.evolutionary.fitnesses as gf
 import gge.evolutionary.generations
+import gge.evolutionary.novelty
 import gge.experiments.create_initial_population_genotypes as gge_init
 import gge.experiments.settings as gset
-import gge.persistence
 
 
 def get_settings() -> gset.GgeSettings:
@@ -106,6 +106,7 @@ grammar: |
 
 def initialize() -> None:
     settings = get_settings()
+
     gset.configure_logger(settings.output)
     gset.configure_tensorflow(settings.tensorflow)
 
@@ -121,41 +122,57 @@ def initialize() -> None:
     metrics = gset.make_metrics(
         dataset=settings.dataset,
         fitness=settings.evolution.fitness_settings,
+        output=settings.output,
     )
 
     genotypes = [ind.genotype for ind in individuals]
     phenotypes = [ind.phenotype for ind in individuals]
-    fitnesses = {
-        ind.genotype: gf.evaluate(ind.phenotype, metrics) for ind in individuals
-    }
+    fitnesses = [gf.evaluate(ind.phenotype, metrics) for ind in individuals]
 
     known_genotypes = set(genotypes)
     known_phenotypes = set(phenotypes)
-    novelty_tracker = gge.novelty.NoveltyTracker(
+    novelty_tracker = gge.evolutionary.novelty.NoveltyTracker(
         known_genotypes=known_genotypes,
         known_phenotypes=known_phenotypes,
     )
 
+    initial_population = [
+        gge.evolutionary.generations.EvaluatedGenotype(g, p, f)
+        for g, p, f in zip(
+            genotypes,
+            phenotypes,
+            fitnesses,
+        )
+    ]
+
     # generations are 0-indexed, so first gen == 0
-    gge.persistence.save_generational_artifacts(
-        generation_number=0,
-        fittest=fitnesses,
-        novelty_tracker=novelty_tracker,
+    generation_number = 0
+
+    checkpoint = gge.evolutionary.generations.GenerationCheckpoint(
+        generation_number=generation_number,
+        population=tuple(initial_population),
         rng=gge.randomness.create_rng(rng_seed),
-        output_dir=settings.output.directory,
+        novelty_tracker=novelty_tracker,
     )
+
+    save_path = gge.paths.get_generation_checkpoint_path(
+        settings.output.directory, generation_number
+    )
+
+    checkpoint.save(save_path)
 
 
 def evolve(generations: int) -> None:
     settings = get_settings()
+
     gset.configure_logger(settings.output)
     gset.configure_tensorflow(settings.tensorflow)
 
-    latest_gen_output = gge.persistence.load_latest_generational_artifacts(
-        settings.output.directory
+    latest_checkpoint = gge.evolutionary.generations.GenerationCheckpoint.load(
+        gge.paths.get_latest_generation_checkpoint_path(settings.output.directory)
     )
 
-    current_generation_number = latest_gen_output.get_generation_number() + 1
+    current_generation_number = latest_checkpoint.get_generation_number() + 1
 
     mutation_params = gset.make_mutation_params(
         mutation=settings.evolution.mutation_settings,
@@ -165,21 +182,22 @@ def evolve(generations: int) -> None:
     metrics = gset.make_metrics(
         dataset=settings.dataset,
         fitness=settings.evolution.fitness_settings,
+        output=settings.output,
     )
 
     gge.evolutionary.generations.run_multiple_generations(
         starting_generation_number=current_generation_number,
         number_of_generations_to_run=generations,
-        initial_population=latest_gen_output.get_fittest(),
+        initial_population=latest_checkpoint.get_population(),
         grammar=settings.grammar,
         mutation_params=mutation_params,
         metrics=metrics,
-        novelty_tracker=latest_gen_output.get_novelty_tracker(),
-        rng=latest_gen_output.get_rng(),
+        novelty_tracker=latest_checkpoint.get_novelty_tracker(),
+        rng=latest_checkpoint.get_rng(),
         output_dir=settings.output.directory,
     )
 
 
 if __name__ == "__main__":
     initialize()
-    evolve(generations=20)
+    evolve(generations=2)

@@ -1,24 +1,23 @@
 import enum
 import functools
 import itertools
-import pathlib
 import typing
 
 import attrs
 import lark
 from loguru import logger
 
-import gge.transformers as gge_transformers
-
-UPPER_GRAMMAR_PATH = (
-    pathlib.Path(__file__).parent / "grammar_files" / "upper_grammar.lark"
-)
+import gge.grammars.transformers as gge_transformers
+import gge.paths
 
 
 def get_upper_grammar_parser() -> lark.Lark:
     logger.debug("start parsing upper_grammar")
+
+    upper_grammar_path = gge.paths.get_grammars_dir() / "upper_grammar.lark"
+
     parser = lark.Lark.open(
-        str(UPPER_GRAMMAR_PATH),
+        str(upper_grammar_path),
         parser="lalr",
         maybe_placeholders=True,
     )

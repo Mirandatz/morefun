@@ -12,8 +12,8 @@ from loguru import logger
 import gge.evolutionary.fitnesses as gf
 import gge.evolutionary.mutations as gm
 import gge.experiments.create_initial_population_genotypes as gge_init
-import gge.grammars as gr
-import gge.layers as gl
+import gge.grammars.upper_grammars as ugr
+import gge.neural_networks.layers as gl
 import gge.randomness as rand
 import gge.redirection
 
@@ -273,7 +273,7 @@ class GgeSettings:
     initialization: InitializationSettings
     evolution: EvolutionSettings
     final_train: FinalTrainSettings
-    grammar: gr.Grammar
+    grammar: ugr.Grammar
     tensorflow: TensorflowSettings
 
     @staticmethod
@@ -299,13 +299,13 @@ class GgeSettings:
             evolution=EvolutionSettings.from_yaml(values["evolution"]),
             final_train=FinalTrainSettings.from_yaml(values["final_train"]),
             tensorflow=TensorflowSettings.from_yaml(values["tensorflow"]),
-            grammar=gr.Grammar(values["grammar"]),
+            grammar=ugr.Grammar(values["grammar"]),
         )
 
 
 def make_mutation_params(
     mutation: MutationSettings,
-    grammar: gr.Grammar,
+    grammar: ugr.Grammar,
 ) -> gm.PopulationMutationParameters:
     return gm.PopulationMutationParameters(
         mutants_to_generate=mutation.mutants_per_generation,
@@ -318,11 +318,13 @@ def make_metric(
     name: str,
     fitness: FitnessSettings,
     dataset: DatasetSettings,
+    output: OutputSettings,
 ) -> gf.Metric:
     match name:
         case "train_loss":
             return gf.TrainLoss(
                 train_directory=dataset.get_and_check_train_dir(),
+                weights_directory=output.directory,
                 input_shape=dataset.input_shape,
                 batch_size=fitness.batch_size,
                 max_epochs=fitness.max_epochs,
@@ -340,8 +342,11 @@ def make_metric(
 def make_metrics(
     dataset: DatasetSettings,
     fitness: FitnessSettings,
+    output: OutputSettings,
 ) -> tuple[gf.Metric, ...]:
-    return tuple(make_metric(name, fitness, dataset) for name in fitness.metrics)
+    return tuple(
+        make_metric(name, fitness, dataset, output) for name in fitness.metrics
+    )
 
 
 def load_gge_settings(path: pathlib.Path) -> GgeSettings:

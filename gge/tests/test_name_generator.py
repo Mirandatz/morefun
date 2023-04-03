@@ -1,5 +1,5 @@
-import gge.layers as gl
 import gge.name_generator as ng
+import gge.neural_networks.layers as gl
 
 
 def test_first_prefix() -> None:

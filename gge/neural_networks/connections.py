@@ -5,9 +5,9 @@ import typing
 import attrs
 from loguru import logger
 
-import gge.backbones as bb
-import gge.layers as gl
+import gge.grammars.backbones as bb
 import gge.name_generator as ng
+import gge.neural_networks.layers as gl
 import gge.randomness as rand
 
 

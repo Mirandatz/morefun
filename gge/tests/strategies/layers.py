@@ -1,7 +1,7 @@
 import attrs
 import hypothesis.strategies as hs
 
-import gge.layers as gl
+import gge.neural_networks.layers as gl
 from gge.name_generator import NameGenerator
 
 

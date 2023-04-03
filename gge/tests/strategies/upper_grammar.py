@@ -1,10 +1,10 @@
 import hypothesis.strategies as hs
 
-import gge.grammars as gr
+import gge.grammars.upper_grammars as ugr
 import gge.tests.strategies.data_structures
 
 GrammarArgs = gge.tests.strategies.data_structures.ParsingTestData[
-    tuple[gr.Terminal, ...]
+    tuple[ugr.Terminal, ...]
 ]
 
 
@@ -35,7 +35,7 @@ def bool_args(draw: hs.DrawFn) -> GrammarArgs:
     )
 
     tokens = ['"true"' if v else '"false"' for v in values]
-    terminals = tuple([gr.Terminal(v) for v in tokens])
+    terminals = tuple([ugr.Terminal(v) for v in tokens])
     text = draw(grammar_text(tokens))
 
     return GrammarArgs(text, terminals)
@@ -52,7 +52,7 @@ def flip_modes(draw: hs.DrawFn) -> GrammarArgs:
             max_size=3,
         )
     )
-    terminals = tuple([gr.Terminal(t) for t in tokens])
+    terminals = tuple([ugr.Terminal(t) for t in tokens])
     tokenstream = draw(grammar_text(tokens))
     return GrammarArgs(tokenstream, terminals)
 
@@ -71,7 +71,7 @@ def int_args(draw: hs.DrawFn, min_value: int, max_value: int) -> GrammarArgs:
     )
 
     tokens = [f'"{v}"' for v in values]
-    terminals = tuple([gr.Terminal(v) for v in tokens])
+    terminals = tuple([ugr.Terminal(v) for v in tokens])
     text = draw(grammar_text(tokens))
 
     return GrammarArgs(text, terminals)
@@ -101,7 +101,7 @@ def float_args(
     )
 
     tokens = [f'"{v}"' for v in values]
-    terminals = tuple([gr.Terminal(v) for v in tokens])
+    terminals = tuple([ugr.Terminal(v) for v in tokens])
     text = draw(grammar_text(tokens))
 
     return GrammarArgs(text, terminals)

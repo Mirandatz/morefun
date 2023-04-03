@@ -1,15 +1,19 @@
+import pathlib
+import pickle
 import uuid
 
 import attrs
 import tensorflow as tf
 
-import gge.backbones as bb
 import gge.composite_genotypes as cg
-import gge.connections as conn
-import gge.grammars as gr
-import gge.layers as gl
-import gge.optimizers as optim
-import gge.structured_grammatical_evolution as sge
+import gge.grammars.backbones as bb
+import gge.grammars.structured_grammatical_evolution as sge
+import gge.grammars.upper_grammars as ugr
+import gge.neural_networks.connections as conn
+import gge.neural_networks.layers as gl
+import gge.neural_networks.optimizers as optimizers
+from gge.grammars.backbones import parse as parse_backbone
+from gge.grammars.optimizers import parse as parse_optimizer
 
 
 @attrs.frozen(cache_hash=True)
@@ -20,18 +24,29 @@ class Phenotype:
 
     backbone: bb.Backbone = attrs.field(repr=False)
     connections: conn.ConnectionsSchema = attrs.field(repr=False)
-    optimizer: optim.Optimizer = attrs.field(repr=False)
+    optimizer: optimizers.Optimizer = attrs.field(repr=False)
 
     genotype_uuid: uuid.UUID = attrs.field(eq=False, order=False, repr=True)
+
+    def save(this, path: pathlib.Path) -> None:
+        serialized = pickle.dumps(this, protocol=pickle.HIGHEST_PROTOCOL)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(serialized)
+
+    @staticmethod
+    def load(path: pathlib.Path) -> "Phenotype":
+        deserialized = pickle.loads(path.read_bytes())
+        assert isinstance(deserialized, Phenotype)
+        return deserialized
 
 
 def translate(
     genotype: cg.CompositeGenotype,
-    grammar: gr.Grammar,
+    grammar: ugr.Grammar,
 ) -> Phenotype:
     tokenstream = sge.map_to_tokenstream(genotype.backbone_genotype, grammar)
-    backbone = bb.parse(tokenstream)
-    optimizer = optim.parse(tokenstream)
+    backbone = parse_backbone(tokenstream)
+    optimizer = parse_optimizer(tokenstream)
     return Phenotype(
         backbone,
         genotype.connections_genotype,

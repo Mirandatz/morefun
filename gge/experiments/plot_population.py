@@ -1,11 +1,11 @@
 import pathlib
 import pickle
 
-import keras.api._v2.keras as keras  # noqa
+import keras.api._v2.keras as keras
 import typer
 
-import gge.grammars as gr
-import gge.layers as gl
+import gge.grammars.upper_grammars as ugr
+import gge.neural_networks.layers as gl
 import gge.phenotypes as phenos
 
 
@@ -31,7 +31,7 @@ def main(
     assert genotypes_dir.is_dir()
     assert grammar_path.is_file()
 
-    grammar = gr.Grammar(grammar_path.read_text())
+    grammar = ugr.Grammar(grammar_path.read_text())
 
     for genotype_path in genotypes_dir.glob("*.genotype"):
         genotype = pickle.loads(genotype_path.read_bytes())

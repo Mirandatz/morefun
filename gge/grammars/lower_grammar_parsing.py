@@ -1,20 +1,19 @@
-import pathlib
 import typing
 
 import lark
 from loguru import logger
 
-import gge.transformers
-
-LOWER_GRAMMAR_PATH = (
-    pathlib.Path(__file__).parent / "grammar_files" / "lower_grammar.lark"
-)
+import gge.grammars.transformers
+import gge.paths
 
 
 def get_parser(start: str) -> lark.Lark:
     logger.trace("starting parsing lower grammar")
+
+    lower_grammar_path = gge.paths.get_grammars_dir() / "lower_grammar.lark"
+
     parser = lark.Lark.open(
-        grammar_filename=str(LOWER_GRAMMAR_PATH),
+        grammar_filename=str(lower_grammar_path),
         start=start,
         parser="lalr",
     )
@@ -44,7 +43,7 @@ def parse_tokenstream(
 
 
 @lark.v_args(inline=True)
-class LowerGrammarTransformer(gge.transformers.SinglePassTransformer):
+class LowerGrammarTransformer(gge.grammars.transformers.SinglePassTransformer):
     def QUOTED_INT(self, token: lark.Token) -> int:
         self._raise_if_not_running()
 

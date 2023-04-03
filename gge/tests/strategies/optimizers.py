@@ -1,6 +1,6 @@
 import hypothesis.strategies as hs
 
-import gge.optimizers as optim
+import gge.neural_networks.optimizers as optim
 import gge.tests.strategies.data_structures as ds
 
 
