@@ -22,6 +22,7 @@
 			"extensions": [
 				"ms-python.python",
 				"ms-python.isort",
+				"ms-vscode.makefile-tools",
 				"timonwong.shellcheck"
 			]
 		}
@@ -37,7 +38,7 @@
 	"mounts": [
 		"source=${localEnv:GGE_DATASETS_DIR},target=/app/datasets/,type=bind,readonly",
 		"source=/disk2/thiago/datasets,target=/datasets,type=bind,readonly",
-		"source=${localWorkspaceFolder}/gge/playground,target=/app/playground,type=bind"
+		"source=${localWorkspaceFolder}/morefun/playground,target=/app/playground,type=bind"
 	],
 	"postStartCommand": [
 		"git",
