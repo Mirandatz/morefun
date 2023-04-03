@@ -61,7 +61,7 @@ class OutputSettings:
         return OutputSettings(directory=directory, **copy_of_values)
 
 
-@typeguard.typechecked()
+# @typeguard.typechecked()
 @attrs.frozen
 class InitializationSettings:
     population_size: int
