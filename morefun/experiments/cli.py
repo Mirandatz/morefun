@@ -12,7 +12,7 @@ import morefun.phenotypes
 import morefun.randomness
 
 SETTINGS_OPTION = typer.Option(
-    ...,
+    pathlib.Path("/app/settings.yaml"),
     "--settings-path",
     file_okay=True,
     exists=True,

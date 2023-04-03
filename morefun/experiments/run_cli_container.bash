@@ -9,31 +9,57 @@
 
 set -o errexit
 set -o nounset
-set -o xtrace
 set -o pipefail
+set -o xtrace
 
-CODE_MOUNT_POINT=$(realpath "$MOREFUN_REPOSITORY_PATH")
-DATASETS_MOUNT_POINT="$(realpath "$MOREFUN_DATASETS_PATH")"
+function find_project_root_dir {
+    root_identifier="$1"
 
+    script_path=$(realpath "$0")
+    current_dir=$(dirname "$script_path")
+
+    while true
+    do
+        if [ -f "${current_dir}/${root_identifier}" ]; then
+            echo "$current_dir"
+            return 0
+        fi
+
+        if [ "$current_dir" == "/" ]; then
+            return 1
+        fi
+        
+        current_dir=$(realpath "${current_dir}/..")
+    done
+}
+
+if [ $# -eq 0 ]; then
+    echo "this script expects at least one argument, the path of the settings.yaml file"
+    exit 1
+fi
+
+code_mount_point=$(find_project_root_dir ".morefun_root")
 # ensuring directories exist so they are no created (as root) by docker
-if [ ! -d "$CODE_MOUNT_POINT" ]; then
-    echo "envvar CODE_MOUNT_POINT does not point to a directory: $CODE_MOUNT_POINT"
-    exit 1
-fi
-if [ ! -d "$DATASETS_MOUNT_POINT" ]; then
-    echo "envvar DATASETS_MOUNT_POINT does not point to a directory: $DATASETS_MOUNT_POINT"
+if [ ! -d "$code_mount_point" ]; then
+    echo "envvar 'code_mount_point' does not point to a directory: $code_mount_point"
     exit 1
 fi
 
-# validate settings path
-SETTINGS_MOUNT_POINT=$(realpath "$1")
-if [ ! -f "$SETTINGS_MOUNT_POINT" ]; then
-    echo "settings file (provided by first arugment) not found: $SETTINGS_MOUNT_POINT"
+datasets_mount_point="$(realpath "$MOREFUN_DATASETS_DIR")"
+if [ ! -d "$datasets_mount_point" ]; then
+    echo "envvar 'datasets_mount_point' does not point to a directory: $datasets_mount_point"
     exit 1
 fi
 
-OUTPUT_MOUNT_POINT=$(dirname "$SETTINGS_MOUNT_POINT")/output
-mkdir -p "$OUTPUT_MOUNT_POINT"
+settings_mount_point=$(realpath "$1")
+if [ ! -f "$settings_mount_point" ]; then
+    echo "settings file (provided by first argument) not found: $settings_mount_point"
+    exit 1
+fi
+
+# ensure output dir exists, so it is not created (as root) by docker
+output_mount_point=$(dirname "$settings_mount_point")/output
+mkdir -p "$output_mount_point"
 
 shift
 docker run \
@@ -42,9 +68,9 @@ docker run \
     --runtime=nvidia \
     --shm-size=8gb \
     --workdir=/app/code \
-    -v "$SETTINGS_MOUNT_POINT":/app/settings.yaml:ro \
-    -v "$DATASETS_MOUNT_POINT":/app/datasets:ro \
-    -v "$CODE_MOUNT_POINT":/app/code:ro \
-    -v "$OUTPUT_MOUNT_POINT":/app/output \
+    -v "$settings_mount_point":/app/settings.yaml:ro \
+    -v "$datasets_mount_point":/app/datasets:ro \
+    -v "$code_mount_point":/app/code:ro \
+    -v "$output_mount_point":/app/output \
     mirandatz/morefun:dev_env \
-    bash -c "source /venv/bin/activate && python -m morefun.experiments.cli $*"
+    bash -c "source /app/.venv/bin/activate && python -m morefun.experiments.cli $*"
