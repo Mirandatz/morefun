@@ -3,11 +3,11 @@ import yaml
 import morefun.evolutionary.fitnesses as gf
 import morefun.evolutionary.generations
 import morefun.evolutionary.novelty
-import morefun.experiments.create_initial_population_genotypes as gge_init
-import morefun.experiments.settings as gset
+import morefun.experiments.create_initial_population_genotypes as mf_init
+import morefun.experiments.settings as mf_cfg
 
 
-def get_settings() -> gset.GgeSettings:
+def get_settings() -> mf_cfg.MorefunSettings:
     raw = r"""
 experiment:
     rng_seed: 0
@@ -101,25 +101,25 @@ grammar: |
     adam      : "adam" "learning_rate" "0.001" "beta1" "0.9" "beta2" "0.999" "epsilon" "1e-07" "amsgrad" "false"
     ranger    : "ranger" "learning_rate" "0.001" "beta1" "0.9" "beta2" "0.999" "epsilon" "1e-07" "amsgrad" "false" "sync_period" "6" "slow_step_size" "0.5"
 """
-    return gset.GgeSettings.from_yaml(yaml.safe_load(raw))
+    return mf_cfg.MorefunSettings.from_yaml(yaml.safe_load(raw))
 
 
 def initialize() -> None:
     settings = get_settings()
 
-    gset.configure_logger(settings.output)
-    gset.configure_tensorflow(settings.tensorflow)
+    mf_cfg.configure_logger(settings.output)
+    mf_cfg.configure_tensorflow(settings.tensorflow)
 
     rng_seed = settings.experiment.rng_seed
 
-    individuals = gge_init.create_initial_population(
+    individuals = mf_init.create_initial_population(
         pop_size=settings.initialization.population_size,
         grammar=settings.grammar,
         filter=settings.initialization.individual_filter,
         rng_seed=rng_seed,
     )
 
-    metrics = gset.make_metrics(
+    metrics = mf_cfg.make_metrics(
         dataset=settings.dataset,
         fitness=settings.evolution.fitness_settings,
     )
@@ -164,8 +164,8 @@ def initialize() -> None:
 def evolve(generations: int) -> None:
     settings = get_settings()
 
-    gset.configure_logger(settings.output)
-    gset.configure_tensorflow(settings.tensorflow)
+    mf_cfg.configure_logger(settings.output)
+    mf_cfg.configure_tensorflow(settings.tensorflow)
 
     latest_checkpoint = morefun.evolutionary.generations.GenerationCheckpoint.load(
         morefun.paths.get_latest_generation_checkpoint_path(settings.output.directory)
@@ -173,12 +173,12 @@ def evolve(generations: int) -> None:
 
     current_generation_number = latest_checkpoint.get_generation_number() + 1
 
-    mutation_params = gset.make_mutation_params(
+    mutation_params = mf_cfg.make_mutation_params(
         mutation=settings.evolution.mutation_settings,
         grammar=settings.grammar,
     )
 
-    metrics = gset.make_metrics(
+    metrics = mf_cfg.make_metrics(
         dataset=settings.dataset,
         fitness=settings.evolution.fitness_settings,
     )

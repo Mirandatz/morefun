@@ -11,7 +11,7 @@ from loguru import logger
 
 import morefun.evolutionary.fitnesses as gf
 import morefun.evolutionary.mutations as gm
-import morefun.experiments.create_initial_population_genotypes as gge_init
+import morefun.experiments.create_initial_population_genotypes as mf_init
 import morefun.grammars.upper_grammars as ugr
 import morefun.neural_networks.layers as gl
 import morefun.randomness as rand
@@ -82,8 +82,8 @@ class InitializationSettings:
         return InitializationSettings(**values)
 
     @property
-    def individual_filter(self) -> gge_init.IndividualFilter:
-        return gge_init.IndividualFilter(
+    def individual_filter(self) -> mf_init.IndividualFilter:
+        return mf_init.IndividualFilter(
             max_network_depth=self.max_network_depth,
             max_wide_layers=self.max_wide_layers,
             wide_layer_threshold=self.wide_layer_threshold,
@@ -265,7 +265,7 @@ class TensorflowSettings:
 
 @typeguard.typechecked()
 @attrs.frozen
-class GgeSettings:
+class MorefunSettings:
     experiment: ExperimentSettings
     dataset: DatasetSettings
     output: OutputSettings
@@ -276,7 +276,7 @@ class GgeSettings:
     tensorflow: TensorflowSettings
 
     @staticmethod
-    def from_yaml(values: YamlDict) -> "GgeSettings":
+    def from_yaml(values: YamlDict) -> "MorefunSettings":
         assert values.keys() == {
             "experiment",
             "dataset",
@@ -288,7 +288,7 @@ class GgeSettings:
             "grammar",
         }
 
-        return GgeSettings(
+        return MorefunSettings(
             experiment=ExperimentSettings.from_yaml(values["experiment"]),
             dataset=DatasetSettings.from_yaml(values["dataset"]),
             output=OutputSettings.from_yaml(values["output"]),
@@ -343,9 +343,9 @@ def make_metrics(
     return tuple(make_metric(name, fitness, dataset) for name in fitness.metrics)
 
 
-def load_gge_settings(path: pathlib.Path) -> GgeSettings:
+def load_morefun_settings(path: pathlib.Path) -> MorefunSettings:
     yaml_dict = yaml.safe_load(path.read_text())
-    return GgeSettings.from_yaml(yaml_dict)
+    return MorefunSettings.from_yaml(yaml_dict)
 
 
 def configure_logger(settings: OutputSettings) -> None:
