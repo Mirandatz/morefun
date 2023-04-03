@@ -14,7 +14,7 @@ def get_project_root_dir() -> pathlib.Path:
     current_dir = this_file.parent
 
     while current_dir != filesystem_root:
-        if (current_dir / ".gge_root").exists():
+        if (current_dir / ".morefun_root").exists():
             return current_dir
 
         current_dir = current_dir.parent
@@ -23,7 +23,7 @@ def get_project_root_dir() -> pathlib.Path:
 
 
 def get_grammars_dir() -> pathlib.Path:
-    return get_project_root_dir() / "gge" / "grammars" / "files"
+    return get_project_root_dir() / "morefun" / "grammars" / "files"
 
 
 def get_generation_checkpoint_path(
