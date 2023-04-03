@@ -7,7 +7,7 @@ import attrs
 import lark
 from loguru import logger
 
-import morefun.grammars.transformers as gge_transformers
+import morefun.grammars.transformers as mf_transformers
 import morefun.paths
 
 
@@ -452,7 +452,7 @@ def make_list_of_options(parts: typing.Any) -> list[RuleOption]:
     return rule_options
 
 
-class GrammarTransformer(gge_transformers.SinglePassTransformer):
+class GrammarTransformer(mf_transformers.SinglePassTransformer):
     # This set contains names of grammar rules that always appear in the form
     # `rule_name: marker value` and which the node-visiting process consists in
     # calling `make_list_of_marker_value_pairs`.
