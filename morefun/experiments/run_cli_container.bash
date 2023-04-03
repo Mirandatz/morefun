@@ -5,7 +5,7 @@
 # MOREFUN_REPOSITORY_PATH path to the root of the MOREFUN git repository
 
 # usage:
-# ./cli.bash <path-to-settings.toml> <morefun-python-cli-commands>
+# ./cli.bash <path-to-settings.yaml> <morefun-python-cli-commands>
 
 set -o errexit
 set -o nounset
@@ -42,7 +42,7 @@ docker run \
     --runtime=nvidia \
     --shm-size=8gb \
     --workdir=/app/code \
-    -v "$SETTINGS_MOUNT_POINT":/app/settings.toml:ro \
+    -v "$SETTINGS_MOUNT_POINT":/app/settings.yaml:ro \
     -v "$DATASETS_MOUNT_POINT":/app/datasets:ro \
     -v "$CODE_MOUNT_POINT":/app/code:ro \
     -v "$OUTPUT_MOUNT_POINT":/app/output \
