@@ -15,7 +15,7 @@ experiment:
         new grammar, merge train + validation
 
 dataset:
-    partitions_dir: "/gge/datasets/cifar10_train_test"
+    partitions_dir: "/app/morefun/datasets/cifar10_train_test"
     image_height: 32
     image_width: 32
     image_depth: 3
@@ -25,7 +25,7 @@ dataset:
     test_instances: 10000
 
 output:
-    directory: "/gge/output"
+    directory: "/app/morefun/output"
     log_level: "INFO"
 
 population_initialization:
