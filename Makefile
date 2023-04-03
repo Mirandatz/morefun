@@ -6,11 +6,12 @@ UID := $(shell id -u)
 GID := $(shell id -g)
 UNAME := $(shell whoami)
 
-# container tags
-DEV_ENG_TAG := mirandatz/gge:dev_env
-
-PROJECT_NAME := gge
+# project settings
+PROJECT_NAME := morefun
 PYTHON_VERSION := 3.10.10
+
+# container tags
+DEV_ENG_TAG := mirandatz/$(PROJECT_NAME):dev_env
 
 # using buildkit improves build times and decreases image sizes
 export DOCKER_BUILDKIT=1
@@ -35,7 +36,7 @@ run_tests: dev_env
 		--workdir /app/$(PROJECT_NAME) \
 		$(DEV_ENG_TAG) \
 		bash -c "source /app/.venv/bin/activate \
-				 && pytest ./gge/tests --numprocesses=auto --hypothesis-profile=parallel"
+				 && pytest ./$(PROJECT_NAME)/tests --numprocesses=auto --hypothesis-profile=parallel"
 
 .PHONY: run_tests_sequential
 run_tests_sequential: dev_env
@@ -47,7 +48,7 @@ run_tests_sequential: dev_env
 		--workdir /app/$(PROJECT_NAME) \
 		$(DEV_ENG_TAG) \
 		bash -c "source /app/.venv/bin/activate \
-				 && pytest ./gge/tests"
+				 && pytest ./$(PROJECT_NAME)/tests"
 
 
 .PHONY: playground
