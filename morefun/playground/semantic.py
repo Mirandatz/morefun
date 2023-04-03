@@ -6,7 +6,7 @@ import cv2
 import pandas as pd
 import tensorflow as tf
 
-DATASET_DIR = pathlib.Path("/gge/datasets/coco")
+DATASET_DIR = pathlib.Path("/dev/null")
 
 IMAGE_DIR = DATASET_DIR / "validation_images"
 IMAGE_CHANNELS = 3
@@ -34,29 +34,8 @@ def configure_tensorflow(
 
 
 @functools.cache
-def get_project_root() -> pathlib.Path:
-    this_file = pathlib.Path(__file__)
-    filesystem_root = pathlib.Path(this_file.root)
-
-    current_dir = this_file.parent
-
-    while current_dir != filesystem_root:
-        if (current_dir / ".gge_root").exists():
-            return current_dir
-
-        current_dir = current_dir.parent
-
-    raise ValueError("unable to find `project root directory`")
-
-
-@functools.cache
 def get_gitignored_dir() -> pathlib.Path:
-    gitignored = get_project_root() / "gge" / "playground" / "gitignored"
-
-    if gitignored.exists():
-        return gitignored
-
-    raise ValueError("unable to find `gitignored directory`")
+    raise NotImplementedError()
 
 
 def get_output_dir() -> pathlib.Path:
@@ -409,8 +388,8 @@ def main() -> None:
         img_np = img.numpy()
         img_cv = cv2.cvtColor(img_np, cv2.COLOR_BGR2RGB)
         print(img_cv.shape)
-        cv2.imwrite("/workspaces/gge/gge/playground/gitignored/afferson2.png", img_cv)
-        break
+        # cv2.imwrite()
+        raise NotImplementedError()
 
     # # model = vgg16(class_count)
     # model = create_model(class_count)
