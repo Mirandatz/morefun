@@ -1,13 +1,13 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
 // https://github.com/microsoft/vscode-dev-containers/tree/v0.217.1/containers/docker-existing-dockerfile
 {
-	"image": "mirandatz/gge:dev_env",
+	"image": "mirandatz/morefun:dev_env",
 	"customizations": {
 		"vscode": {
 			"settings": {
 				"python.defaultInterpreterPath": "/app/.venv/bin/python",
 				"terminal.integrated.env.linux": {
-					"PYTHONPATH": "${workspaceFolder}/gge:${env:PYTHONPATH}"
+					"PYTHONPATH": "${workspaceFolder}/morefun:${env:PYTHONPATH}"
 				},
 				"python.formatting.provider": "black",
 				"python.linting.enabled": true,
@@ -15,7 +15,7 @@
 				"python.linting.flake8Enabled": true,
 				"python.testing.pytestEnabled": true,
 				"python.testing.pytestArgs": [
-					"gge"
+					"morefun"
 				],
 				"python.testing.unittestEnabled": false
 			},
@@ -36,7 +36,7 @@
 		"--cap-add=SYS_NICE"
 	],
 	"mounts": [
-		"source=${localEnv:GGE_DATASETS_DIR},target=/app/datasets/,type=bind,readonly",
+		// "source=${localEnv:MOREFUN_DATASETS_DIR},target=/app/datasets/,type=bind,readonly",
 		"source=/disk2/thiago/datasets,target=/datasets,type=bind,readonly",
 		"source=${localWorkspaceFolder}/morefun/playground,target=/app/playground,type=bind"
 	],
