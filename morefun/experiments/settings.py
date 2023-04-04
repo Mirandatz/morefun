@@ -20,7 +20,7 @@ import morefun.redirection
 YamlDict = dict[str, typing.Any]
 
 
-@typeguard.typechecked()
+# @typeguard.typechecked()
 @attrs.frozen
 class ExperimentSettings:
     description: str
@@ -35,7 +35,7 @@ class ExperimentSettings:
         return ExperimentSettings(**values)
 
 
-@typeguard.typechecked()
+# @typeguard.typechecked()
 @attrs.frozen
 class OutputSettings:
     log_level: str
@@ -91,7 +91,7 @@ class InitializationSettings:
         )
 
 
-@typeguard.typechecked()
+# @typeguard.typechecked()
 @attrs.frozen
 class MutationSettings:
     mutants_per_generation: int
@@ -106,7 +106,7 @@ class MutationSettings:
         return MutationSettings(**values)
 
 
-@typeguard.typechecked()
+# @typeguard.typechecked()
 @attrs.frozen
 class FitnessSettings:
     batch_size: int
@@ -130,7 +130,7 @@ class FitnessSettings:
         )
 
 
-@typeguard.typechecked()
+# @typeguard.typechecked()
 @attrs.frozen
 class DatasetSettings:
     partitions_dir: pathlib.Path
@@ -213,7 +213,7 @@ class DatasetSettings:
         return test_dir
 
 
-@typeguard.typechecked()
+# @typeguard.typechecked()
 @attrs.frozen
 class EvolutionSettings:
     mutation_settings: MutationSettings
@@ -249,7 +249,7 @@ class FinalTrainSettings:
         return FinalTrainSettings(**values)
 
 
-@typeguard.typechecked()
+# @typeguard.typechecked()
 @attrs.frozen
 class TensorflowSettings:
     xla: bool
@@ -263,7 +263,7 @@ class TensorflowSettings:
         )
 
 
-@typeguard.typechecked()
+# @typeguard.typechecked()
 @attrs.frozen
 class MorefunSettings:
     experiment: ExperimentSettings
