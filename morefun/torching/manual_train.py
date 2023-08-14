@@ -1,74 +1,23 @@
-from pathlib import Path
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-import torchvision
-import torchvision.transforms as transforms
 import tqdm
 from torch import Tensor
 from torch.utils.data import DataLoader
 
-
-def get_transforms() -> transforms.Compose:
-    return transforms.Compose(
-        [
-            transforms.ToTensor(),
-            transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5)),
-        ]
-    )
-
-
-def get_train(
-    batch_size: int,
-    num_workers: int,
-    dataset_dir: Path = Path("/dev/shm/datasets"),
-) -> DataLoader[Tensor]:
-    train_set = torchvision.datasets.CIFAR10(
-        root=dataset_dir,
-        train=True,
-        download=True,
-        transform=get_transforms(),
-    )
-
-    return torch.utils.data.DataLoader(
-        train_set,
-        batch_size=batch_size,
-        shuffle=True,
-        num_workers=num_workers,
-        pin_memory=True,
-        drop_last=False,
-        prefetch_factor=64,
-        persistent_workers=True,
-    )
-
-
-def get_test(
-    batch_size: int,
-    num_workers: int,
-    dataset_dir: Path = Path("/dev/shm/datasets"),
-) -> DataLoader[Tensor]:
-    test_set = torchvision.datasets.CIFAR10(
-        root=dataset_dir, train=False, download=True, transform=get_transforms()
-    )
-    return torch.utils.data.DataLoader(
-        test_set,
-        batch_size=batch_size,
-        shuffle=False,
-        num_workers=num_workers,
-    )
+from morefun.torching.data import load_cifar10_train
 
 
 class Modelberrg(nn.Module):
     def __init__(self) -> None:
         super().__init__()
-        self.conv1 = nn.Conv2d(3, 6, 5)
-        self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(6, 16, 5)
-        self.fc1 = nn.Linear(16 * 5 * 5, 120)
-        self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 10)
+        self.conv1 = nn.Conv2d(in_channels=3, out_channels=6, kernel_size=5)
+        self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.conv2 = nn.Conv2d(in_channels=6, out_channels=16, kernel_size=5)
+        self.fc1 = nn.Linear(in_features=16 * 5 * 5, out_features=120)
+        self.fc2 = nn.Linear(in_features=120, out_features=84)
+        self.fc3 = nn.Linear(in_features=84, out_features=10)
 
     def forward(self, x: Tensor) -> Tensor:
         x = self.pool(F.relu(self.conv1(x)))
@@ -78,17 +27,6 @@ class Modelberrg(nn.Module):
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
         return x
-
-    def training_step(self, batch: Tensor, batch_idx: Tensor) -> Tensor:
-        # training_step defines the train loop.
-        x, y = batch
-        logits = self(x)
-        loss = F.cross_entropy(logits, y)
-        return loss
-
-    def configure_optimizers(self) -> optim.Optimizer:
-        optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
-        return optimizer
 
 
 def train_model(
@@ -130,15 +68,13 @@ def main() -> None:
 
     train_model(
         model,
-        get_train(batch_size, num_workers=16),
-        epochs=10,
+        load_cifar10_train(batch_size, prefetch_factor=32, num_workers=4),
+        epochs=100,
         optimizer=optim.Adam(
             model.parameters(),
         ),
         device="cuda",
     )
-
-    print("Finished Training")
 
 
 if __name__ == "__main__":
