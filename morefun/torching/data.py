@@ -39,7 +39,7 @@ def load_cifar10_train(
     dataset_dir: Path = Path("/dev/shm/datasets"),
 ) -> MemoryCachedDataset:
     path = dataset_dir / "cifar10_train.pickle"
-    expected_md5 = "223f9648865daf4a336eea017bf8ce93"
+    expected_md5 = "87b0daa6d7621f11ca0c69ac2ba1dea2"
 
     if check_integrity(path, expected_md5):
         with path.open("rb") as f:
@@ -67,7 +67,7 @@ def load_cifar10_test(
     dataset_dir: Path = Path("/dev/shm/datasets"),
 ) -> MemoryCachedDataset:
     path = dataset_dir / "cifar10_test.pickle"
-    expected_md5 = "f4aafedf9f4cbe5de04e877f97e1e8a5"
+    expected_md5 = "89d89d04390916ae388e974f61bd20d2"
 
     if check_integrity(path, expected_md5):
         with path.open("rb") as f:
