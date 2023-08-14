@@ -1,12 +1,15 @@
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import tqdm
+from numpy.typing import NDArray
 from torch import Tensor
 from torch.utils.data import DataLoader
+from torchmetrics.classification import MulticlassAccuracy
 
-from morefun.torching.data import load_cifar10_train
+from morefun.torching.data import load_cifar10_test, load_cifar10_train
 
 
 class Modelberrg(nn.Module):
@@ -31,12 +34,12 @@ class Modelberrg(nn.Module):
 
 def train_model(
     model: Modelberrg,
-    data_loader: DataLoader[torch.Tensor],
+    data_loader: DataLoader[Tensor],
     epochs: int,
     optimizer: optim.Optimizer,
     device: str,
 ) -> None:
-    model = model.to(device)
+    model = model.train().to(device)
     criterion = nn.CrossEntropyLoss()
     for _ in range(epochs):
         running_loss = 0.0
@@ -61,20 +64,48 @@ def train_model(
             running_loss += loss.item()
 
 
+def check_accuracy(
+    model: nn.Module, loader: DataLoader[Tensor], device: str
+) -> NDArray[np.float32]:
+    metric = MulticlassAccuracy(num_classes=10).to(device)
+    model = model.eval().to(device)
+
+    with torch.no_grad():
+        for x, y in loader:
+            x = x.to(device)
+            y = y.to(device)
+
+            predicted = model(x)
+            metric.update(preds=predicted, target=y)
+
+    acc = metric.compute().cpu().numpy()
+    assert isinstance(acc, np.ndarray)
+    return acc
+
+
 def main() -> None:
     torch.set_float32_matmul_precision("medium")  # type: ignore
     batch_size = 512
+    epochs = 10
     model = Modelberrg()
+    device = "cuda"
 
     train_model(
         model,
         load_cifar10_train(batch_size, prefetch_factor=32, num_workers=4),
-        epochs=100,
+        epochs=epochs,
         optimizer=optim.Adam(
             model.parameters(),
         ),
-        device="cuda",
+        device=device,
     )
+
+    acc = check_accuracy(
+        model,
+        load_cifar10_test(batch_size, prefetch_factor=32, num_workers=1),
+        device,
+    )
+    print(acc)
 
 
 if __name__ == "__main__":

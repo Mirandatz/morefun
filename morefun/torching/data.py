@@ -58,3 +58,29 @@ def load_cifar10_train(
         prefetch_factor=prefetch_factor,
         persistent_workers=True,
     )
+
+
+def load_cifar10_test(
+    batch_size: int,
+    prefetch_factor: int,
+    num_workers: int,
+    dataset_dir: Path = Path("/dev/shm/datasets"),
+) -> DataLoader[Tensor]:
+    cached = CachedDataset(
+        torchvision.datasets.CIFAR10(
+            root=dataset_dir,
+            train=False,
+            download=True,
+            transform=get_transforms(),
+        )
+    )
+    return torch.utils.data.DataLoader(
+        cached,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=num_workers,
+        pin_memory=True,
+        drop_last=False,
+        prefetch_factor=prefetch_factor,
+        persistent_workers=True,
+    )
