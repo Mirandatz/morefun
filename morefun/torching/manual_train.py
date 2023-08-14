@@ -9,7 +9,7 @@ from torch import Tensor
 from torch.utils.data import DataLoader
 from torchmetrics.classification import MulticlassAccuracy
 
-from morefun.torching.data import load_cifar10_test, load_cifar10_train
+import morefun.torching.data as mtd
 
 
 class Modelberrg(nn.Module):
@@ -86,13 +86,23 @@ def check_accuracy(
 def main() -> None:
     torch.set_float32_matmul_precision("medium")  # type: ignore
     batch_size = 512
+    prefetch_factor = 32
+    num_workers = 4
     epochs = 10
     model = Modelberrg()
     device = "cuda"
 
+    train_dataset = mtd.load_cifar10_train()
+    train_loader = mtd.make_train_loader(
+        train_dataset,
+        batch_size=batch_size,
+        prefetch_factor=prefetch_factor,
+        num_workers=num_workers,
+    )
+
     train_model(
         model,
-        load_cifar10_train(batch_size, prefetch_factor=32, num_workers=4),
+        train_loader,
         epochs=epochs,
         optimizer=optim.Adam(
             model.parameters(),
@@ -100,11 +110,19 @@ def main() -> None:
         device=device,
     )
 
+    test_dataset = mtd.load_cifar10_test()
+    test_loader = mtd.make_test_loader(
+        test_dataset,
+        batch_size=batch_size,
+        prefetch_factor=prefetch_factor,
+        num_workers=num_workers,
+    )
     acc = check_accuracy(
         model,
-        load_cifar10_test(batch_size, prefetch_factor=32, num_workers=1),
+        test_loader,
         device,
     )
+
     print(acc)
 
 
