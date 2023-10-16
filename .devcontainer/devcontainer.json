@@ -36,8 +36,7 @@
 		"--cap-add=SYS_NICE"
 	],
 	"mounts": [
-		// "source=${localEnv:MOREFUN_DATASETS_DIR},target=/app/datasets/,type=bind,readonly",
-		"source=/disk2/thiago/datasets,target=/datasets,type=bind,readonly",
+		"source=${localEnv:MOREFUN_DATASETS_DIR},target=/app/datasets/,type=bind,readonly",
 		"source=${localWorkspaceFolder}/morefun/playground,target=/app/playground,type=bind"
 	],
 	"postStartCommand": [
