@@ -8,7 +8,7 @@ UNAME := $(shell whoami)
 
 # project settings
 PROJECT_NAME := morefun
-PYTHON_VERSION := 3.10.10
+PYTHON_VERSION := 3.11.6
 
 # container tags
 DEV_ENG_TAG := mirandatz/$(PROJECT_NAME):dev_env
