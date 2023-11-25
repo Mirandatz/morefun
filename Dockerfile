@@ -10,7 +10,13 @@ ENV LANG=C.UTF-8
 # install basic system deps
 FROM base AS with_system_deps
 RUN apt-get update && apt-get install --no-install-recommends --no-install-suggests -y \
-    curl git graphviz libgl1 unzip \
+    curl \
+    git \
+    git-core \
+    bash-completion \
+    graphviz \
+    libgl1 \
+    unzip \
     && apt-get autoremove -y \
     && apt-get clean -y \
     && rm -rf /var/lib/apt/lists/*
