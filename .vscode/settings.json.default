@@ -1,6 +1,6 @@
 {
     "terminal.integrated.env.linux": {
-        "PYTHONPATH": "${workspaceFolder}/gge:${env:PYTHONPATH}"
+        "PYTHONPATH": "${workspaceFolder}/morefun:${env:PYTHONPATH}"
     },
     "python.formatting.provider": "black",
     "python.linting.mypyEnabled": true,
@@ -9,7 +9,7 @@
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
     "python.testing.pytestArgs": [
-        "gge"
+        "morefun"
     ],
     "files.watcherExclude": {
         "**/target": true

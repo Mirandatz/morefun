@@ -1,26 +1,32 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
 // https://github.com/microsoft/vscode-dev-containers/tree/v0.217.1/containers/docker-existing-dockerfile
 {
-	"image": "mirandatz/gge:dev_env",
-	"settings": {
-		"python.defaultInterpreterPath": "/venv/bin/python",
-		"terminal.integrated.env.linux": {
-			"PYTHONPATH": "${workspaceFolder}/gge:${env:PYTHONPATH}"
-		},
-		"python.formatting.provider": "black",
-		"python.linting.enabled": true,
-		"python.linting.mypyEnabled": true,
-		"python.linting.flake8Enabled": true,
-		"python.testing.pytestEnabled": true,
-		"python.testing.pytestArgs": [
-			"gge"
-		],
-		"python.testing.unittestEnabled": false
+	"image": "mirandatz/morefun:dev_env",
+	"customizations": {
+		"vscode": {
+			"settings": {
+				"python.defaultInterpreterPath": "/app/.venv/bin/python",
+				"terminal.integrated.env.linux": {
+					"PYTHONPATH": "${workspaceFolder}/morefun:${env:PYTHONPATH}"
+				},
+				"python.formatting.provider": "black",
+				"python.linting.enabled": true,
+				"python.linting.mypyEnabled": true,
+				"python.linting.flake8Enabled": true,
+				"python.testing.pytestEnabled": true,
+				"python.testing.pytestArgs": [
+					"morefun"
+				],
+				"python.testing.unittestEnabled": false
+			},
+			"extensions": [
+				"ms-python.python",
+				"ms-python.isort",
+				"ms-vscode.makefile-tools",
+				"timonwong.shellcheck"
+			]
+		}
 	},
-	"extensions": [
-		"ms-python.python",
-		"timonwong.shellcheck"
-	],
 	"forwardPorts": [
 		8000 // for debugger
 	],
@@ -30,9 +36,8 @@
 		"--cap-add=SYS_NICE"
 	],
 	"mounts": [
-		"source=${localEnv:GGE_DATASETS_DIR},target=/gge/datasets/,type=bind,readonly",
-		"source=${localWorkspaceFolder}/gge/playground/gitignored,target=/gge/output,type=bind",
-		"source=/disk2/thiago/datasets,target=/datasets,type=bind,readonly"
+		"source=${localEnv:MOREFUN_DATASETS_DIR},target=/app/datasets/,type=bind,readonly",
+		"source=${localWorkspaceFolder}/morefun/playground,target=/app/playground,type=bind"
 	],
 	"postStartCommand": [
 		"git",

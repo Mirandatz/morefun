@@ -12,9 +12,8 @@ pydot
 pymoo
 pyyaml
 scipy
-tensorflow==2.8.*
-tensorflow-addons
+tensorflow==2.14.0
+tensorflow-addons==0.21.0
 tensorflow-datasets
-tomli
 typeguard
 typer

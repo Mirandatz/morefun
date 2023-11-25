@@ -6,20 +6,13 @@
 
 # caches
 __pycache__/
-.gge_build_cache/
 
 # venv
 .python-version
 .venv/
 
-# playground
-gge/playground/gitignored
-
-# experiment byproducts
-gge/experiments/**/*.genotype
-gge/experiments/**/*.png
-gge/experiments/**/log/
-gge/experiments/**/output/
-
 # test history
 .hypothesis/
+
+# playground output data
+/morefun/playground/

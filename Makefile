@@ -6,8 +6,12 @@ UID := $(shell id -u)
 GID := $(shell id -g)
 UNAME := $(shell whoami)
 
+# project settings
+PROJECT_NAME := morefun
+PYTHON_VERSION := 3.11.6
+
 # container tags
-DEV_ENG_TAG := mirandatz/gge:dev_env
+DEV_ENG_TAG := mirandatz/$(PROJECT_NAME):dev_env
 
 # using buildkit improves build times and decreases image sizes
 export DOCKER_BUILDKIT=1
@@ -18,6 +22,7 @@ dev_env:
 		--build-arg UNAME=$(UNAME) \
     	--build-arg UID=$(UID) \
     	--build-arg GID=$(GID) \
+		--build-arg PYTHON_VERSION=$(PYTHON_VERSION) \
 		-f Dockerfile \
 		-t $(DEV_ENG_TAG) .
 
@@ -25,30 +30,35 @@ dev_env:
 run_tests: dev_env
 	docker run \
 		--rm \
+		--runtime=nvidia \
 		--user $(UID):$(GID) \
-		-v $(ROOT_DIR):/gge/gge \
-		--workdir /gge/gge \
+		-v $(ROOT_DIR):/app/$(PROJECT_NAME) \
+		--workdir /app/$(PROJECT_NAME) \
 		$(DEV_ENG_TAG) \
-		bash -c "source /venv/bin/activate && pytest ./gge/tests --numprocesses=auto --hypothesis-profile=parallel"
+		bash -c "source /app/.venv/bin/activate \
+				 && pytest ./$(PROJECT_NAME)/tests --numprocesses=auto --hypothesis-profile=parallel"
 
 .PHONY: run_tests_sequential
 run_tests_sequential: dev_env
 	docker run \
 		--rm \
+		--runtime=nvidia \
 		--user $(UID):$(GID) \
-		-v $(ROOT_DIR):/gge/gge \
-		--workdir /gge/gge \
+		-v $(ROOT_DIR):/app/$(PROJECT_NAME) \
+		--workdir /app/$(PROJECT_NAME) \
 		$(DEV_ENG_TAG) \
-		bash -c "source /venv/bin/activate && pytest ./gge/tests --pspec"
+		bash -c "source /app/.venv/bin/activate \
+				 && pytest ./$(PROJECT_NAME)/tests"
 
 
 .PHONY: playground
 playground: dev_env
 	docker run \
 		--rm \
+		--runtime=nvidia \
 		--user $(UID):$(GID) \
 		-it \
-		-v $(ROOT_DIR):/gge \
+		-v $(ROOT_DIR):/app/$(PROJECT_NAME) \
 		$(DEV_ENG_TAG) \
 		/bin/bash
 
@@ -59,8 +69,9 @@ update_requirements:
 		--env HOST_UID=$(UID) \
 		--env HOST_GID=$(GID) \
 		-v $(ROOT_DIR)/requirements:/requirements \
-		python:3.10.6-slim-bullseye \
-			/bin/bash -c 'python3 -m pip install pip-compile-multi==2.4.5 \
+		python:${PYTHON_VERSION}-slim-bullseye \
+			/bin/bash -c 'python3 -m pip install --upgrade pip \
+			&& python3 -m pip install pip-compile-multi==2.4.5 \
 			&& pip-compile-multi \
 			&& chown -R "$${HOST_UID}":"$${HOST_GID}" /requirements'
 

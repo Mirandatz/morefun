@@ -1,24 +1,38 @@
-FROM nvidia/cuda:11.2.2-cudnn8-devel-ubuntu20.04
+# FROM nvidia/cuda:12.0.1-cudnn8-devel-ubuntu22.04 AS base
+FROM nvidia/cuda:11.8.0-cudnn8-devel-ubuntu22.04 AS base
+# tensorflow 2.8 expects cuda 11
 
 ENV TZ=America/Sao_Paulo
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
 
-# python build deps https://devguide.python.org/setup/#build-dependencies
-# + git
-# + curl, to download stuff
-# + graphviz, to plot models
-# + libgl1, for opencv2
+# install basic system deps
+FROM base AS with_system_deps
 RUN apt-get update && apt-get install --no-install-recommends --no-install-suggests -y \
-    build-essential gdb lcov pkg-config libbz2-dev libffi-dev libgdbm-dev libgdbm-compat-dev liblzma-dev \
-    libncurses5-dev libreadline6-dev libsqlite3-dev libssl-dev lzma lzma-dev tk-dev uuid-dev zlib1g-dev \
-    curl git graphviz libgl1 \
+    curl \
+    git \
+    git-core \
+    bash-completion \
+    graphviz \
+    libgl1 \
+    unzip \
     && apt-get autoremove -y \
     && apt-get clean -y \
     && rm -rf /var/lib/apt/lists/*
 
-# create user and configure pyenv
+# install python deps https://devguide.python.org/setup/#build-dependencies
+FROM with_system_deps AS with_python_deps
+ARG PYTHON_VERSION
+RUN apt-get update && apt-get install --no-install-recommends --no-install-suggests -y \
+    build-essential gdb lcov pkg-config libbz2-dev libffi-dev libgdbm-dev libgdbm-compat-dev liblzma-dev \
+    libncurses5-dev libreadline6-dev libsqlite3-dev libssl-dev lzma lzma-dev tk-dev uuid-dev zlib1g-dev \
+    && apt-get autoremove -y \
+    && apt-get clean -y \
+    && rm -rf /var/lib/apt/lists/*
+
+# create user
+FROM with_python_deps as with_user
 ARG UNAME
 ARG UID
 ARG GID
@@ -28,23 +42,30 @@ USER $UNAME
 ENV PYENV_ROOT /home/$UNAME/.pyenv
 ENV PATH $PYENV_ROOT/shims:$PYENV_ROOT/bin:$PATH
 
-# install pyenv
+# install pyenv and compile python
+FROM with_user AS with_python
+ARG PYTHON_VERSION
+ENV PYENV_ROOT /home/$UNAME/.pyenv
+ENV PATH $PYENV_ROOT/shims:$PYENV_ROOT/bin:$PATH
 SHELL ["/bin/bash", "-c"]
 RUN curl https://pyenv.run | bash
-
-# compile python
-RUN pyenv update && PYTHON_CFLAGS="-march=native" CONFIGURE_OPTS="--enable-optimizations --with-lto" pyenv install 3.10.8
-RUN pyenv global 3.10.10
+RUN pyenv update \
+    && PYTHON_CFLAGS="-march=native" \
+    CONFIGURE_OPTS="--enable-optimizations --with-lto" \
+    pyenv install $PYTHON_VERSION \
+    && pyenv global $PYTHON_VERSION
 
 # create project dir and change its owner
 USER root
-RUN mkdir /venv && chown -R $UID:$GID /venv
+RUN mkdir -p /app/.venv && chown -R $UID:$GID /app/.venv
 USER $UNAME
 
 # install requirements
-RUN python -m venv /venv
-COPY ./requirements /tmp/requirements
-RUN source /venv/bin/activate && pip install -r /tmp/requirements/dev.txt --no-cache-dir
+RUN python -m venv /app/.venv
+COPY ./requirements /app/requirements
+RUN source /app/.venv/bin/activate \
+    && pip install --upgrade pip \
+    && pip install -r /app/requirements/dev.txt --no-cache-dir
 
 # silence tensorflow
 ENV TF_CPP_MIN_LOG_LEVEL=1
@@ -54,3 +75,9 @@ ENV TF_XLA_FLAGS="--tf_xla_auto_jit=2 --tf_xla_cpu_global_jit"
 
 # be nice with friends and share gpu ram
 ENV TF_FORCE_GPU_ALLOW_GROWTH="true"
+
+# remove silly nvidia-banner
+ENTRYPOINT []
+
+# enable cuda lazy loading
+ENV CUDA_MODULE_LOADING=LAZY
