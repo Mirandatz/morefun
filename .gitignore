@@ -1,8 +1,5 @@
 # ide
-.idea/
-.vscode/**/*
-!.vscode/settings.json.default
-.metals/**
+/.vscode/
 
 # caches
 __pycache__/
@@ -14,5 +11,6 @@ __pycache__/
 # test history
 .hypothesis/
 
-# playground output data
-/morefun/playground/
+# playground IO data
+/morefun/playground/input/
+/morefun/playground/output/
