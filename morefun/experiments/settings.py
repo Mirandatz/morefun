@@ -352,8 +352,7 @@ def load_morefun_settings(path: pathlib.Path) -> MorefunSettings:
 def configure_logger(settings: OutputSettings) -> None:
     logger.remove()
     logger.add(sink=sys.stderr, level=settings.log_level)
-    logger.add(sink=settings.directory / "log.txt")
-
+    logger.add(sink=settings.directory / "log.txt", level=settings.log_level)
     logger.info("started logger")
 
 
