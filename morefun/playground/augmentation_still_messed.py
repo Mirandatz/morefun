@@ -120,7 +120,7 @@ def main() -> None:
     input_shape = (32, 32, 3)
     batch_size = 512
     rng_seed = 42
-    dataset_dir = pathlib.Path("/gge/datasets/cifar10")
+    dataset_dir = pathlib.Path("/app/datasets/cifar10")
 
     model = get_model(input_shape, batch_size)
 
