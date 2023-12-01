@@ -360,6 +360,50 @@ class ConnectedRandomTranslation(SingleInputLayer):
 
 
 @attrs.frozen(cache_hash=True)
+class Dense(ConvertibleToConnectableLayer):
+    name: str
+    num_neurons: int
+
+    def __attrs_post_init__(self) -> None:
+        assert isinstance(self.name, str)
+        assert isinstance(self.num_neurons, int)
+
+        assert self.num_neurons > 0
+
+    def to_connectable(self, input: ConnectableLayer) -> "ConnectedDense":
+        return ConnectedDense(input, self)
+
+
+@attrs.frozen(cache_hash=True)
+class ConnectedDense(SingleInputLayer):
+    input_layer: ConnectableLayer
+    params: Dense
+
+    def __attrs_post_init__(self) -> None:
+        assert isinstance(self.input_layer, ConnectableLayer)
+        assert isinstance(self.params, Dense)
+
+    @property
+    def output_shape(self) -> Shape:
+        return Shape(width=1, height=1, depth=self.params.num_neurons)
+
+    def to_tensor(
+        self,
+        known_tensors: dict["ConnectableLayer", tf.Tensor],
+    ) -> tf.Tensor:
+        if self not in known_tensors:
+            source = self.input_layer.to_tensor(known_tensors)
+            layer = kl.Dense(units=self.params.num_neurons, name=self.params.name)
+            tensor = layer(source)
+            known_tensors[self] = tensor
+
+        return known_tensors[self]
+
+    def __repr__(self) -> str:
+        return f"{self.params.name}, params={self.params}, input={self.input_layer}, out_shape=[{self.output_shape}]"
+
+
+@attrs.frozen(cache_hash=True)
 class Conv2D(ConvertibleToConnectableLayer):
     name: str
     filter_count: int
