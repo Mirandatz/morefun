@@ -16,6 +16,7 @@ layer : random_flip
       | random_translation
       | resizing
       | random_crop
+      | dense_layer
       | conv_layer 
       | max_pooling_layer 
       | avg_pooling_layer 
@@ -33,6 +34,8 @@ height  : HEIGHT _int_args
 width   : WIDTH _int_args
 
 random_crop : RANDOM_CROP height width
+
+dense_layer : DENSE _int_args
 
 conv_layer   : CONV filter_count kernel_size strides
 filter_count : FILTER_COUNT _int_args
@@ -81,6 +84,7 @@ _flip_args  : FLIP_MODE
             | "(" FLIP_MODE ("|" FLIP_MODE)* ")"
 
 // using multiple imports just for aesthetic reasons
+%import .terminals (DENSE)
 %import .terminals (RANDOM_FLIP, FLIP_MODE)
 %import .terminals (RANDOM_ROTATION)
 %import .terminals (RESIZING, HEIGHT, WIDTH)

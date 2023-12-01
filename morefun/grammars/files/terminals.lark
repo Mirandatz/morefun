@@ -12,6 +12,8 @@ RANDOM_CROP        : /"random_crop"/
 MERGE         : /"merge"/
 FORK          : /"fork"/
 
+DENSE : /"dense"/
+
 CONV         : /"conv"/
 FILTER_COUNT : /"filter_count"/
 KERNEL_SIZE  : /"kernel_size"/

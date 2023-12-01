@@ -23,6 +23,8 @@ random_crop        : RANDOM_CROP height width
 height_factor      : HEIGHT_FACTOR QUOTED_FLOAT
 width_factor       : WIDTH_FACTOR QUOTED_FLOAT
 
+dense : DENSE QUOTED_INT
+
 conv         : CONV filter_count kernel_size stride
 filter_count : FILTER_COUNT QUOTED_INT
 kernel_size  : KERNEL_SIZE QUOTED_INT
@@ -54,6 +56,7 @@ sync_period    : SYNC_PERIOD QUOTED_INT
 slow_step_size : SLOW_STEP_SIZE QUOTED_FLOAT
 
 // using multiple imports just for aesthetic reasons
+%import .terminals (DENSE)
 %import .terminals (RANDOM_FLIP, FLIP_MODE, RANDOM_ROTATION, RANDOM_CROP)
 %import .terminals (RESIZING, HEIGHT, WIDTH)
 %import .terminals (RANDOM_TRANSLATION, HEIGHT_FACTOR, WIDTH_FACTOR)
