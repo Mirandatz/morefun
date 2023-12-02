@@ -80,6 +80,18 @@ def random_crops(
 
 
 @hs.composite
+def denses(
+    draw: hs.DrawFn, *, name_gen: NameGenerator | None = None
+) -> LowerGrammarParsingTestData:
+    name_gen = name_gen or NameGenerator()
+    name = name_gen.gen_name(gl.Dense)
+    num_neurons = draw(hs.integers(min_value=1))
+    layer = gl.Dense(name, num_neurons)
+    tokenstream = f'"dense" "{num_neurons}"'
+    return LowerGrammarParsingTestData(tokenstream, (layer,))
+
+
+@hs.composite
 def convs(
     draw: hs.DrawFn, *, name_gen: NameGenerator | None = None
 ) -> LowerGrammarParsingTestData:

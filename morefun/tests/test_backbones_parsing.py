@@ -39,6 +39,14 @@ def test_parse_random_crop(test_data: lgs.LowerGrammarParsingTestData) -> None:
     assert expected == actual
 
 
+@given(test_data=lgs.denses())
+def test_parse_dense(test_data: lgs.LowerGrammarParsingTestData) -> None:
+    """Can parse dense."""
+    actual = bb.parse(test_data.tokenstream, start="backbone")
+    expected = bb.Backbone(test_data.parsed)
+    assert expected == actual
+
+
 @given(test_data=lgs.convs())
 def test_parse_conv(test_data: lgs.LowerGrammarParsingTestData) -> None:
     """Can parse conv."""

@@ -60,6 +60,7 @@ class BackboneSynthetizer(lgp.LowerGrammarTransformer):
         '"random_crop"',
         '"height"',
         '"width"',
+        '"dense"',
         '"conv"',
         '"filter_count"',
         '"kernel_size"',
@@ -199,6 +200,14 @@ class BackboneSynthetizer(lgp.LowerGrammarTransformer):
             name=self._create_layer_name(gl.RandomCrop),
             height=height,
             width=width,
+        )
+
+    def dense(self, marker: None, num_neurons: int) -> gl.Dense:
+        self._raise_if_not_running()
+
+        return gl.Dense(
+            name=self._create_layer_name(gl.Dense),
+            num_neurons=num_neurons,
         )
 
     def conv(
