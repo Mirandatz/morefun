@@ -15,7 +15,6 @@ class OptimizerSynthetizer(lgp.LowerGrammarTransformer):
     _expected_tokens = {
         '"adam"',
         '"sgd"',
-        '"ranger"',
         '"learning_rate"',
         '"momentum"',
         '"nesterov"',
@@ -23,8 +22,6 @@ class OptimizerSynthetizer(lgp.LowerGrammarTransformer):
         '"beta2"',
         '"epsilon"',
         '"amsgrad"',
-        '"sync_period"',
-        '"slow_step_size"',
     }
 
     # This set contains the names of rules that when visited just return the value
@@ -37,8 +34,6 @@ class OptimizerSynthetizer(lgp.LowerGrammarTransformer):
         "beta2",
         "epsilon",
         "amsgrad",
-        "sync_period",
-        "slow_step_size",
     }
 
     def __default__(
@@ -95,30 +90,6 @@ class OptimizerSynthetizer(lgp.LowerGrammarTransformer):
             beta2=beta2,
             epsilon=epsilon,
             amsgrad=amsgrad,
-        )
-
-    @typeguard.typechecked
-    def ranger(
-        self,
-        marker: None,
-        learning_rate: float,
-        beta1: float,
-        beta2: float,
-        epsilon: float,
-        amsgrad: bool,
-        sync_period: int,
-        slow_step_size: float,
-    ) -> go.Ranger:
-        self._raise_if_not_running()
-
-        return go.Ranger(
-            learning_rate=learning_rate,
-            beta1=beta1,
-            beta2=beta2,
-            epsilon=epsilon,
-            amsgrad=amsgrad,
-            sync_period=sync_period,
-            slow_step_size=slow_step_size,
         )
 
 
