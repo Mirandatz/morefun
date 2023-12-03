@@ -33,13 +33,13 @@ def load_yeast(
     # https://mulan.sourceforge.net/datasets-mlc.html
     match partition:
         case "all":
-            path = "morefun/playground/input/yeast.arff"
+            path = "/app/datasets/og-yeast/yeast.arff"
 
         case "train":
-            path = "morefun/playground/input/yeast-train.arff"
+            path = "/app/datasets/og-yeast/yeast-train.arff"
 
         case "test":
-            path = "morefun/playground/input/yeast-test.arff"
+            path = "/app/datasets/og-yeast/yeast-test.arff"
         case _:
             raise ValueError(f"unknown partition={partition}")
 

@@ -13,8 +13,7 @@ pymoo
 pyyaml
 scipy
 scikit-learn
-tensorflow-addons==0.21.0
 tensorflow-datasets
-tensorflow==2.14.0
+tensorflow==2.15.0
 typeguard
 typer
