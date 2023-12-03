@@ -41,10 +41,6 @@ BETA2   : /"beta2"/
 EPSILON : /"epsilon"/
 AMSGRAD : /"amsgrad"/
 
-RANGER         : /"ranger"/
-SYNC_PERIOD    : /"sync_period"/
-SLOW_STEP_SIZE : /"slow_step_size"/
-
 BOOL  : /"true"/ | /"false"/
 
 QUOTED_INT : QUOTE INT QUOTE

@@ -145,9 +145,8 @@ grammar: |
     relu  : "relu"
     prelu : "prelu"
 
-    optimizer : adam | ranger
+    optimizer : adam
     adam      : "adam" "learning_rate" "0.001" "beta1" "0.9" "beta2" "0.999" "epsilon" "1e-07" "amsgrad" "false"
-    ranger    : "ranger" "learning_rate" "0.001" "beta1" "0.9" "beta2" "0.999" "epsilon" "1e-07" "amsgrad" "false" "sync_period" "6" "slow_step_size" "0.5"
 """
     return mf_cfg.MorefunSettings.from_yaml(yaml.safe_load(raw))
 
