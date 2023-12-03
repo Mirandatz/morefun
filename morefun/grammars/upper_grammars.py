@@ -360,6 +360,8 @@ class ExpectedTerminal(enum.Enum):
 
     RANDOM_TRANSLATION = Terminal('"random_translation"')
 
+    DENSE = Terminal('"dense"')
+
     CONV = Terminal('"conv"')
     FILTER_COUNT = Terminal('"filter_count"')
     KERNEL_SIZE = Terminal('"kernel_size"')
@@ -707,6 +709,16 @@ class GrammarTransformer(mf_transformers.SinglePassTransformer):
             for list_of_options in list_of_lists_of_options
             for opt in list_of_options
         ]
+
+    def dense_layer(self, parts: typing.Any) -> list[RuleOption]:
+        self._raise_if_not_running()
+
+        marker, *num_neurons = parts
+        assert isinstance(marker, Terminal)
+        assert isinstance(num_neurons, list)
+        assert all(isinstance(nn, Terminal) for nn in num_neurons)
+        assert len(num_neurons) >= 1
+        return [RuleOption((marker, r)) for r in num_neurons]
 
     def conv_layer(self, parts: typing.Any) -> list[RuleOption]:
         self._raise_if_not_running()
