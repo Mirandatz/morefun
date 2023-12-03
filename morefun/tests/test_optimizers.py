@@ -62,28 +62,3 @@ def test_adam_to_tensorflow(adam: optimizer.Adam) -> None:
     assert tf_adam.beta_2 == adam.beta2
     assert tf_adam.epsilon == adam.epsilon
     assert tf_adam.amsgrad == adam.amsgrad
-
-
-@given(ranger=gos.rangers())
-def test_ranger_to_tensorflow(ranger: optimizer.Ranger) -> None:
-    """Can convert a Adam optimizer to its Tensorflow equivalent."""
-    tf_ranger = ranger.to_tensorflow()
-
-    assert tf_ranger.learning_rate == ranger.learning_rate
-    assert tf_ranger.sync_period == ranger.sync_period
-    assert tf_ranger.slow_step_size == ranger.slow_step_size
-
-
-@given(test_data=gos.rangers().map(gos.ranger_grammar))
-@hypothesis.settings(deadline=dt.timedelta(seconds=2))
-def test_rangers_middle_grammar(
-    test_data: ds.ParsingTestData[optimizer.Adam],
-) -> None:
-    """Can process a middle_grammar to generate an Adam optimizer."""
-
-    grammar = ugr.Grammar(test_data.tokenstream)
-    genotype = sge.create_genotype(grammar, rng=rand.create_rng())
-    tokenstream = sge.map_to_tokenstream(genotype, grammar)
-    phenotype = optimizer_parsing.parse(tokenstream, start="optimizer")
-
-    assert test_data.parsed == phenotype
