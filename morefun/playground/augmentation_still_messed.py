@@ -2,7 +2,6 @@ import os
 import pathlib
 
 import tensorflow as tf
-import tensorflow_addons as tfa
 
 
 def config_env(
@@ -102,11 +101,8 @@ def get_model(
 
     model = tf.keras.Model(inputs=inputs, outputs=outputs)
 
-    radam = tfa.optimizers.RectifiedAdam()
-    ranger = tfa.optimizers.Lookahead(radam, sync_period=6, slow_step_size=0.5)
-
     model.compile(
-        optimizer=ranger,
+        optimizer=tf.keras.optimizers.Adam(),
         loss="categorical_crossentropy",
         metrics="accuracy",
     )
