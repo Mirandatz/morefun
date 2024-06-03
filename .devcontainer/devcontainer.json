@@ -11,11 +11,10 @@
 				}
 			},
 			"extensions": [
-				"ms-python.black-formatter",
-				"ms-python.isort",
 				"ms-python.python",
 				"ms-vscode.makefile-tools",
-				"timonwong.shellcheck"
+				"timonwong.shellcheck",
+				"charliermarsh.ruff"
 			]
 		}
 	},
