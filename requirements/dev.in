@@ -1,7 +1,6 @@
 -r test.in
 
-black
-flake8
-isort
 mypy
+ruff
 types-pyyaml
+uv

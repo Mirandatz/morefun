@@ -7,7 +7,7 @@
 #
 about-time==4.2.1
     # via alive-progress
-absl-py==1.4.0
+absl-py==2.1.0
     # via
     #   array-record
     #   etils
@@ -17,17 +17,17 @@ absl-py==1.4.0
     #   tensorflow-metadata
 alive-progress==3.1.5
     # via pymoo
-array-record==0.5.0
+array-record==0.5.1
     # via tensorflow-datasets
 astunparse==1.6.3
     # via tensorflow
-attrs==23.1.0
+attrs==23.2.0
     # via -r requirements/base.in
 autograd==1.6.2
     # via pymoo
-cachetools==5.3.2
+cachetools==5.3.3
     # via google-auth
-certifi==2023.11.17
+certifi==2024.6.2
     # via requests
 charset-normalizer==3.3.2
     # via requests
@@ -37,78 +37,85 @@ click==8.1.7
     #   typer
 cma==3.2.2
     # via pymoo
-contourpy==1.2.0
+contourpy==1.2.1
     # via matplotlib
 cycler==0.12.1
     # via matplotlib
 deprecated==1.2.14
     # via pymoo
-dill==0.3.7
+dill==0.3.8
     # via pymoo
 diskcache==5.6.3
     # via -r requirements/base.in
 dm-tree==0.1.8
     # via tensorflow-datasets
-etils[array-types,enp,epath,epy,etqdm,etree]==1.5.2
+docstring-parser==0.16
+    # via simple-parsing
+etils[array-types,enp,epath,epy,etqdm,etree]==1.9.0
     # via
     #   array-record
-    #   etils
     #   tensorflow-datasets
-flatbuffers==23.5.26
+flatbuffers==24.3.25
     # via tensorflow
-fonttools==4.46.0
+fonttools==4.53.0
     # via matplotlib
-fsspec==2023.12.0
+fsspec==2024.5.0
     # via etils
-future==0.18.3
+future==1.0.0
     # via autograd
 gast==0.5.4
     # via tensorflow
-google-auth==2.24.0
+google-auth==2.29.0
     # via
     #   google-auth-oauthlib
     #   tensorboard
-google-auth-oauthlib==1.1.0
+google-auth-oauthlib==1.2.0
     # via tensorboard
 google-pasta==0.2.0
     # via tensorflow
-googleapis-common-protos==1.61.0
+googleapis-common-protos==1.63.1
     # via tensorflow-metadata
 grapheme==0.6.0
     # via alive-progress
-grpcio==1.59.3
+grpcio==1.64.1
     # via
     #   tensorboard
     #   tensorflow
-h5py==3.10.0
+h5py==3.11.0
     # via tensorflow
-idna==3.6
+idna==3.7
     # via requests
-importlib-resources==6.1.1
+immutabledict==4.2.0
+    # via tensorflow-datasets
+importlib-resources==6.4.0
     # via etils
-joblib==1.3.2
+joblib==1.4.2
     # via scikit-learn
 keras==2.15.0
     # via tensorflow
 kiwisolver==1.4.5
     # via matplotlib
-lark==1.1.8
+lark==1.1.9
     # via -r requirements/base.in
-libclang==16.0.6
+libclang==18.1.1
     # via tensorflow
 loguru==0.7.2
     # via -r requirements/base.in
-markdown==3.5.1
+markdown==3.6
     # via tensorboard
-markupsafe==2.1.3
+markdown-it-py==3.0.0
+    # via rich
+markupsafe==2.1.5
     # via werkzeug
-matplotlib==3.8.2
+matplotlib==3.9.0
     # via pymoo
+mdurl==0.1.2
+    # via markdown-it-py
 ml-dtypes==0.2.0
     # via tensorflow
-networkx==3.2.1
+networkx==3.3
     # via -r requirements/base.in
-numpy==1.26.2
+numpy==1.26.4
     # via
     #   -r requirements/base.in
     #   autograd
@@ -130,71 +137,81 @@ numpy==1.26.2
     #   tensorflow-datasets
 oauthlib==3.2.2
     # via requests-oauthlib
-opencv-python==4.8.1.78
+opencv-python==4.10.0.82
     # via -r requirements/base.in
 opt-einsum==3.3.0
     # via tensorflow
-packaging==23.2
+packaging==24.0
     # via
     #   matplotlib
     #   tensorflow
-pandas==2.1.3
+pandas==2.2.2
     # via -r requirements/base.in
-pillow==10.1.0
+pillow==10.3.0
     # via
     #   -r requirements/base.in
     #   matplotlib
 promise==2.3
     # via tensorflow-datasets
-protobuf==3.20.3
+protobuf==4.25.3
     # via
     #   googleapis-common-protos
     #   tensorboard
     #   tensorflow
     #   tensorflow-datasets
     #   tensorflow-metadata
-psutil==5.9.6
+psutil==5.9.8
     # via tensorflow-datasets
-pyarrow==14.0.1
-    # via -r requirements/base.in
-pyasn1==0.5.1
+pyarrow==16.1.0
+    # via
+    #   -r requirements/base.in
+    #   tensorflow-datasets
+pyasn1==0.6.0
     # via
     #   pyasn1-modules
     #   rsa
-pyasn1-modules==0.3.0
+pyasn1-modules==0.4.0
     # via google-auth
-pydot==1.4.2
+pydot==2.0.0
     # via -r requirements/base.in
+pygments==2.18.0
+    # via rich
 pymoo==0.6.1.1
     # via -r requirements/base.in
-pyparsing==3.1.1
+pyparsing==3.1.2
     # via
     #   matplotlib
     #   pydot
-python-dateutil==2.8.2
+python-dateutil==2.9.0.post0
     # via
     #   matplotlib
     #   pandas
-pytz==2023.3.post1
+pytz==2024.1
     # via pandas
 pyyaml==6.0.1
     # via -r requirements/base.in
-requests==2.31.0
+requests==2.32.3
     # via
     #   requests-oauthlib
     #   tensorboard
     #   tensorflow-datasets
-requests-oauthlib==1.3.1
+requests-oauthlib==2.0.0
     # via google-auth-oauthlib
+rich==13.7.1
+    # via typer
 rsa==4.9
     # via google-auth
-scikit-learn==1.3.2
+scikit-learn==1.5.0
     # via -r requirements/base.in
-scipy==1.11.4
+scipy==1.13.1
     # via
     #   -r requirements/base.in
     #   pymoo
     #   scikit-learn
+shellingham==1.5.4
+    # via typer
+simple-parsing==0.1.5
+    # via tensorflow-datasets
 six==1.16.0
     # via
     #   astunparse
@@ -203,56 +220,57 @@ six==1.16.0
     #   python-dateutil
     #   tensorboard
     #   tensorflow
-tensorboard==2.15.1
+tensorboard==2.15.2
     # via tensorflow
 tensorboard-data-server==0.7.2
     # via tensorboard
 tensorflow==2.15.0
     # via -r requirements/base.in
-tensorflow-datasets==4.9.3
+tensorflow-datasets==4.9.5
     # via -r requirements/base.in
 tensorflow-estimator==2.15.0
     # via tensorflow
-tensorflow-io-gcs-filesystem==0.34.0
+tensorflow-io-gcs-filesystem==0.37.0
     # via tensorflow
-tensorflow-metadata==1.14.0
+tensorflow-metadata==1.15.0
     # via tensorflow-datasets
 termcolor==2.4.0
     # via
     #   tensorflow
     #   tensorflow-datasets
-threadpoolctl==3.2.0
+threadpoolctl==3.5.0
     # via scikit-learn
 toml==0.10.2
     # via tensorflow-datasets
-tqdm==4.66.1
+tqdm==4.66.4
     # via
     #   etils
     #   tensorflow-datasets
-typeguard==4.1.5
+typeguard==4.3.0
     # via -r requirements/base.in
-typer==0.9.0
+typer==0.12.3
     # via -r requirements/base.in
-typing-extensions==4.8.0
+typing-extensions==4.12.1
     # via
     #   etils
+    #   simple-parsing
     #   tensorflow
     #   typeguard
     #   typer
-tzdata==2023.3
+tzdata==2024.1
     # via pandas
-urllib3==2.1.0
+urllib3==2.2.1
     # via requests
-werkzeug==3.0.1
+werkzeug==3.0.3
     # via tensorboard
-wheel==0.42.0
+wheel==0.43.0
     # via astunparse
 wrapt==1.14.1
     # via
     #   deprecated
     #   tensorflow
     #   tensorflow-datasets
-zipp==3.17.0
+zipp==3.19.1
     # via etils
 
 # The following packages are considered to be unsafe in a requirements file:

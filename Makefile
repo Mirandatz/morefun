@@ -70,9 +70,10 @@ update_requirements:
 		--env HOST_GID=$(GID) \
 		-v $(ROOT_DIR)/requirements:/requirements \
 		python:${PYTHON_VERSION}-slim-bullseye \
-			/bin/bash -c 'python3 -m pip install --upgrade pip \
-			&& python3 -m pip install pip-compile-multi==2.4.5 \
-			&& pip-compile-multi \
+			/bin/bash -c 'python3 -m pip install uv \
+			&& uv pip compile requirements/base.in \
+			&& uv pip compile requirements/dev.in \
+			&& uv pip compile requirements/test.in \
 			&& chown -R "$${HOST_UID}":"$${HOST_GID}" /requirements'
 
 .PHONY: clean
