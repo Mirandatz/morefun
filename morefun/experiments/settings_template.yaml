@@ -1,0 +1,91 @@
+experiment:
+    rng_seed: 0
+    description: >
+        insert multiline description of the experiment here
+
+dataset:
+    partitions_dir: "/app/datasets/cifar100_train_test"
+    image_height: 32
+    image_width: 32
+    image_depth: 3
+    class_count: 100
+    train_instances: 50000
+    validation_instances: 0
+    test_instances: 10000
+
+output:
+    directory: "/app/output"
+    log_level: "INFO"
+
+population_initialization:
+    population_size: 20
+    max_network_depth: 9999
+    wide_layer_threshold: 9999
+    max_wide_layers: 9999
+    max_network_params: 999999999
+
+evolution:
+    mutation:
+        mutants_per_generation: 5
+        max_failures_per_generation: 500
+
+    fitness_estimation:
+        batch_size: 256
+        max_epochs: 999
+        early_stop_patience: 6
+        metrics: ["train_loss", "number_of_parameters"]
+
+final_train:
+    train_k_fittest: 20
+    batch_size: 256
+    max_epochs: 2000
+    early_stop_patience: 10
+
+tensorflow:
+    xla: true
+    mixed_precision: true
+
+grammar: |
+    start : data_aug learning optimizer
+
+    data_aug  : flip rotate translate
+    flip      : "random_flip" "horizontal"
+    rotate    : "random_rotation" ("15" | "30" | "45")
+    translate : "random_translation" ("0.1" | "0.15" | "0.20")
+
+    learning : intro_a mid | intro_b mid
+
+    intro_a : conv_128_3 act norm conv_128_3 act norm "fork"
+    intro_b : conv_128_5 act norm conv_128_5 act norm "fork"
+
+    mid : pool block_1~1..2 pool block_2~1..2 pool block_3~1..2 pool block_3~1..2
+
+    block_1 : "merge" conv_128_3 act norm "fork"
+            | "merge" conv_128_5 act norm "fork"
+
+    block_2 : "merge" conv_256_3 act norm "fork"
+            | "merge" conv_256_5 act norm "fork"
+
+    block_3 : "merge" conv_512_3 act norm "fork"
+            | "merge" conv_512_5 act norm "fork"
+
+    conv_128_3 : "conv" "filter_count" "128" "kernel_size" "3" "stride" "1"
+    conv_128_5 : "conv" "filter_count" "128" "kernel_size" "5" "stride" "1"
+    conv_256_3 : "conv" "filter_count" "256" "kernel_size" "3" "stride" "1"
+    conv_256_5 : "conv" "filter_count" "256" "kernel_size" "5" "stride" "1"
+    conv_512_3 : "conv" "filter_count" "512" "kernel_size" "3" "stride" "1"
+    conv_512_5 : "conv" "filter_count" "512" "kernel_size" "5" "stride" "1"
+
+    pool    : maxpool | avgpool
+    maxpool : "maxpool" "pool_size" "2" "stride" "2"
+    avgpool : "avgpool" "pool_size" "2" "stride" "2"
+
+    norm : "batchnorm"
+
+    act   : relu | prelu
+    relu  : "relu"
+    prelu : "prelu"
+
+    optimizer : adam | ranger
+    adam      : "adam" "learning_rate" "0.001" "beta1" "0.9" "beta2" "0.999" "epsilon" "1e-07" "amsgrad" "false"
+    ranger    : "ranger" "learning_rate" "0.001" "beta1" "0.9" "beta2" "0.999" "epsilon" "1e-07" "amsgrad" "false" "sync_period" "6" "slow_step_size" "0.5"
