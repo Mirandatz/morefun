@@ -1,7 +1,6 @@
 import pathlib
 
 import typer
-from loguru import logger
 
 import morefun.evolutionary.fitnesses as gf
 import morefun.evolutionary.generations
