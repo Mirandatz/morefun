@@ -124,43 +124,43 @@ def evolutionary_loop(
     )
 
 
-def export_models(settings: gset.GgeSettings) -> None:
-    gset.configure_logger(settings.output)
-    gset.configure_tensorflow(settings.tensorflow)
+# def export_models(settings: gset.GgeSettings) -> None:
+#     gset.configure_logger(settings.output)
+#     gset.configure_tensorflow(settings.tensorflow)
 
-    logger.info(f"export architectures from directory=<{settings.output.directory}>")
+#     logger.info(f"export architectures from directory=<{settings.output.directory}>")
 
-    last_checkpoint_path = gge.paths.get_latest_generation_checkpoint_path(
-        settings.output.directory
-    )
+#     last_checkpoint_path = gge.paths.get_latest_generation_checkpoint_path(
+#         settings.output.directory
+#     )
 
-    checkpoint = gge.evolutionary.generations.GenerationCheckpoint.load(
-        last_checkpoint_path
-    )
+#     checkpoint = gge.evolutionary.generations.GenerationCheckpoint.load(
+#         last_checkpoint_path
+#     )
 
-    for ev in checkpoint.get_population():
-        logger.info(f"exporting model for genotype=<{ev.genotype.unique_id}>")
+#     for ev in checkpoint.get_population():
+#         logger.info(f"exporting model for genotype=<{ev.genotype.unique_id}>")
 
-        model = gf.make_classification_model(
-            ev.phenotype,
-            input_shape=settings.dataset.input_shape,
-            class_count=settings.dataset.class_count,
-        )
+#         model = gf.make_classification_model(
+#             ev.phenotype,
+#             input_shape=settings.dataset.input_shape,
+#             class_count=settings.dataset.class_count,
+#         )
 
-        path = gge.paths.get_keras_model_path(
-            settings.output.directory,
-            ev.genotype.unique_id,
-        )
+#         path = gge.paths.get_keras_model_path(
+#             settings.output.directory,
+#             ev.genotype.unique_id,
+#         )
 
-        model.save(path)
+#         model.save(path)
 
 
-@app.command(name="export-models")
-def export_models_command(settings_path: pathlib.Path = SETTINGS_OPTION) -> int:
-    settings = gset.load_gge_settings(settings_path)
-    export_models(settings)
+# @app.command(name="export-models")
+# def export_models_command(settings_path: pathlib.Path = SETTINGS_OPTION) -> int:
+#     settings = gset.load_gge_settings(settings_path)
+#     export_models(settings)
 
-    return 0
+#     return 0
 
 
 if __name__ == "__main__":
