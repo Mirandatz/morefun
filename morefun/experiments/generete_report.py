@@ -12,22 +12,17 @@ from loguru import logger
 
 import morefun.evolutionary.fitnesses as gf
 import morefun.evolutionary.generations
-import morefun.experiments.settings as gset
+import morefun.experiments.settings as mset
 import morefun.paths
 import morefun.phenotypes
 import morefun.randomness
 import morefun.redirection
 
 
-def get_gitignored_dir() -> pathlib.Path:
-    root = morefun.paths.get_project_root_dir()
-    return root / "gge" / "playground" / "gitignored"
-
-
 def get_trained_model(
     individual: morefun.evolutionary.generations.EvaluatedGenotype,
     output_dir: pathlib.Path,
-    settings: gset.MorefunSettings,
+    settings: mset.MorefunSettings,
 ) -> KerasModel:
     weights_path = morefun.paths.get_model_weights_path(
         output_dir=output_dir,
@@ -82,7 +77,7 @@ def get_trained_model(
 def individual_to_dataframe_row(
     individual: morefun.evolutionary.generations.EvaluatedGenotype,
     output_dir: pathlib.Path,
-    settings: gset.MorefunSettings,
+    settings: mset.MorefunSettings,
 ) -> dict[str, float | int | str]:
     logger.info(f"processing genotype=<{individual.genotype.unique_id.hex}>")
 
@@ -112,8 +107,8 @@ def individual_to_dataframe_row(
 
 
 def main(
-    run_dirs: Annotated[
-        list[Path],
+    run_dir: Annotated[
+        Path,
         typer.Option(
             "--run-dir",
             "-r",
@@ -124,33 +119,38 @@ def main(
             resolve_path=True,
         ),
     ],
+    output_path: Annotated[
+        Path,
+        typer.Option(
+            "-o",
+            "--output-path",
+            dir_okay=False,
+            file_okay=True,
+            resolve_path=True,
+        ),
+    ],
 ) -> None:
-    for d in run_dirs:
-        print(type(d), d)
+    output_dir = run_dir / "output"
+    settings_path = run_dir / "settings.yaml"
 
-    # for run_id in ["fm_0", "fm_1", "fm_2", "fm_3", "fm_4"]:
-    #     run_dir = get_gitignored_dir() / "cifar10" / run_id
-    #     output_dir = run_dir / "output"
-    #     settings_path = run_dir / "settings.yaml"
+    settings = mset.load_morefun_settings(settings_path)
+    mset.configure_logger(settings.output)
+    mset.configure_tensorflow(settings.tensorflow)
 
-    #     settings = gset.load_morefun_settings(settings_path)
-    #     gset.configure_logger(settings.output)
-    #     gset.configure_tensorflow(settings.tensorflow)
+    last_checkpoint = morefun.evolutionary.generations.GenerationCheckpoint.load(
+        morefun.paths.get_generation_checkpoint_path(
+            output_dir=output_dir,
+            generation_number=51,
+        )
+    )
 
-    #     last_checkpoint = morefun.evolutionary.generations.GenerationCheckpoint.load(
-    #         morefun.paths.get_generation_checkpoint_path(
-    #             output_dir=output_dir,
-    #             generation_number=51,
-    #         )
-    #     )
+    rows = [
+        individual_to_dataframe_row(individual, output_dir, settings)
+        for individual in last_checkpoint.get_population()
+    ]
 
-    #     rows = [
-    #         individual_to_dataframe_row(individual, output_dir, settings)
-    #         for individual in last_checkpoint.get_population()
-    #     ]
-
-    #     df = pd.DataFrame(rows)
-    #     df.to_csv(output_dir / f"report_{run_id}.csv")
+    df = pd.DataFrame(rows)
+    df.to_csv(output_path)
 
 
 if __name__ == "__main__":
