@@ -1,5 +1,6 @@
 import functools
 import typing
+from typing import Optional
 
 import attrs
 import hypothesis.strategies as hs
@@ -61,7 +62,7 @@ def test_collect_from_function_that_should_succeed_enough(
     data_iter = iter(seq.data)
     generator = functools.partial(next, data_iter)
 
-    results = gf.collect_results_from_fallible_function(
+    results: Optional[list[str | None]] = gf.collect_results_from_fallible_function(
         generator,
         num_results=seq.num_results,
         max_failures=seq.max_failures,
@@ -80,7 +81,7 @@ def test_collect_from_function_that_should_not_succeed_enough(
     data_iter = iter(seq.data)
     generator = functools.partial(next, data_iter)
 
-    results = gf.collect_results_from_fallible_function(
+    results: Optional[list[str | None]] = gf.collect_results_from_fallible_function(
         generator,
         num_results=seq.num_results,
         max_failures=seq.max_failures,
@@ -101,7 +102,7 @@ def test_collect_from_never_fail_function(
 
     unfallible = functools.partial(identity, "hehe")
 
-    results = gf.collect_results_from_fallible_function(
+    results: Optional[list[str | None]] = gf.collect_results_from_fallible_function(
         generator=unfallible,
         num_results=num_results,
         max_failures=max_failures,
@@ -124,7 +125,7 @@ def test_collect_from_always_fail_function(
 
     always_fail = functools.partial(identity, None)
 
-    results = gf.collect_results_from_fallible_function(
+    results: Optional[list[str | None]] = gf.collect_results_from_fallible_function(
         generator=always_fail,
         num_results=num_results,
         max_failures=max_failures,
