@@ -8,13 +8,13 @@ ENV LANG=C.UTF-8
 # install basic system deps
 FROM base AS with_system_deps
 RUN apt-get update && apt-get install --no-install-recommends --no-install-suggests -y \
-    curl \
-    git \
-    git-core \
-    bash-completion \
-    graphviz \
-    libgl1 \
-    unzip \
+        bash-completion \
+        curl \
+        git \
+        git-core \
+        graphviz \
+        libgl1 \
+        unzip \
     && apt-get autoremove -y \
     && apt-get clean -y \
     && rm -rf /var/lib/apt/lists/*
@@ -23,8 +23,24 @@ RUN apt-get update && apt-get install --no-install-recommends --no-install-sugge
 FROM with_system_deps AS with_python_deps
 ARG PYTHON_VERSION
 RUN apt-get update && apt-get install --no-install-recommends --no-install-suggests -y \
-    build-essential gdb lcov pkg-config libbz2-dev libffi-dev libgdbm-dev libgdbm-compat-dev liblzma-dev \
-    libncurses5-dev libreadline6-dev libsqlite3-dev libssl-dev lzma lzma-dev tk-dev uuid-dev zlib1g-dev \
+        build-essential \
+        gdb \
+        lcov \
+        libbz2-dev \
+        libffi-dev \
+        libgdbm-compat-dev \
+        libgdbm-dev \
+        liblzma-dev \
+        libncurses5-dev \
+        libreadline6-dev \
+        libsqlite3-dev \
+        libssl-dev \
+        lzma \
+        lzma-dev \
+        pkg-config \
+        tk-dev \
+        uuid-dev \
+        zlib1g-dev \
     && apt-get autoremove -y \
     && apt-get clean -y \
     && rm -rf /var/lib/apt/lists/*
@@ -36,6 +52,7 @@ ARG UID
 ARG GID
 RUN groupadd --gid $GID $UNAME
 RUN useradd --create-home --uid $UID --gid $GID --shell /bin/bash $UNAME
+RUN usermod -aG sudo $UNAME
 USER $UNAME
 ENV PYENV_ROOT /home/$UNAME/.pyenv
 ENV PATH $PYENV_ROOT/shims:$PYENV_ROOT/bin:$PATH
@@ -49,8 +66,8 @@ SHELL ["/bin/bash", "-c"]
 RUN curl https://pyenv.run | bash
 RUN pyenv update \
     && PYTHON_CFLAGS="-march=native" \
-    CONFIGURE_OPTS="--enable-optimizations --with-lto" \
-    pyenv install $PYTHON_VERSION \
+       CONFIGURE_OPTS="--enable-optimizations --with-lto" \
+       pyenv install $PYTHON_VERSION \
     && pyenv global $PYTHON_VERSION
 
 # create project dir and change its owner
