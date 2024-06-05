@@ -5,22 +5,9 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
 
-# install basic system deps
-FROM base AS with_system_deps
-RUN apt-get update && apt-get install --no-install-recommends --no-install-suggests -y \
-        bash-completion \
-        curl \
-        git \
-        git-core \
-        graphviz \
-        libgl1 \
-        unzip \
-    && apt-get autoremove -y \
-    && apt-get clean -y \
-    && rm -rf /var/lib/apt/lists/*
-
-# install python deps https://devguide.python.org/setup/#build-dependencies
-FROM with_system_deps AS with_python_deps
+# install system deps required to compile python, see https://devguide.python.org/setup/#build-dependencies
+# also install system deps quired to install pyenv (which then compiles python)
+FROM base AS with_python_deps
 ARG PYTHON_VERSION
 RUN apt-get update && apt-get install --no-install-recommends --no-install-suggests -y \
         build-essential \
@@ -41,6 +28,9 @@ RUN apt-get update && apt-get install --no-install-recommends --no-install-sugge
         tk-dev \
         uuid-dev \
         zlib1g-dev \
+        \
+        curl \
+        git \
     && apt-get autoremove -y \
     && apt-get clean -y \
     && rm -rf /var/lib/apt/lists/*
@@ -69,6 +59,21 @@ RUN pyenv update \
        CONFIGURE_OPTS="--enable-optimizations --with-lto" \
        pyenv install $PYTHON_VERSION \
     && pyenv global $PYTHON_VERSION
+
+# install system deps
+FROM with_python AS with_system_deps
+USER root
+RUN apt-get update && apt-get install --no-install-recommends --no-install-suggests -y \
+        bash-completion \
+        git-core \
+        graphviz \
+        libgl1 \
+        sudo \
+        unzip \
+    && apt-get autoremove -y \
+    && apt-get clean -y \
+    && rm -rf /var/lib/apt/lists/*
+USER $UNAME
 
 # create project dir and change its owner
 USER root
