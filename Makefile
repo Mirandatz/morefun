@@ -2,13 +2,13 @@
 ROOT_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
 # used to ensure files/directories are created with the correct user:group
-UID := $(shell id -u)
-GID := $(shell id -g)
-UNAME := $(shell whoami)
+username := $(shell whoami)
+user_id := $(shell id -u)
+group_id := $(shell id -g)
 
 # project settings
 PROJECT_NAME := morefun
-PYTHON_VERSION := 3.11.6
+python_version := 3.11.6
 
 # container tags
 DEV_ENG_TAG := mirandatz/$(PROJECT_NAME):dev_env
@@ -19,10 +19,10 @@ export DOCKER_BUILDKIT=1
 .PHONY: dev_env
 dev_env:
 	docker build \
-		--build-arg UNAME=$(UNAME) \
-    	--build-arg UID=$(UID) \
-    	--build-arg GID=$(GID) \
-		--build-arg PYTHON_VERSION=$(PYTHON_VERSION) \
+		--build-arg username=$(username) \
+		--build-arg user_id=$(user_id) \
+		--build-arg group_id=$(group_id) \
+		--build-arg python_version=$(python_version) \
 		-f Dockerfile \
 		-t $(DEV_ENG_TAG) .
 
@@ -31,7 +31,7 @@ run_tests: dev_env
 	docker run \
 		--rm \
 		--runtime=nvidia \
-		--user $(UID):$(GID) \
+		--user $(user_id):$(group_id) \
 		-v $(ROOT_DIR):/app/$(PROJECT_NAME) \
 		--workdir /app/$(PROJECT_NAME) \
 		$(DEV_ENG_TAG) \
@@ -43,7 +43,7 @@ run_tests_sequential: dev_env
 	docker run \
 		--rm \
 		--runtime=nvidia \
-		--user $(UID):$(GID) \
+		--user $(user_id):$(group_id) \
 		-v $(ROOT_DIR):/app/$(PROJECT_NAME) \
 		--workdir /app/$(PROJECT_NAME) \
 		$(DEV_ENG_TAG) \
@@ -56,7 +56,7 @@ playground: dev_env
 	docker run \
 		--rm \
 		--runtime=nvidia \
-		--user $(UID):$(GID) \
+		--user $(user_id):$(group_id) \
 		-it \
 		-v $(ROOT_DIR):/app/$(PROJECT_NAME) \
 		$(DEV_ENG_TAG) \
@@ -66,10 +66,10 @@ playground: dev_env
 update_requirements:
 	docker run \
 		--rm \
-		--env HOST_UID=$(UID) \
-		--env HOST_GID=$(GID) \
+		--env HOST_UID=$(user_id) \
+		--env HOST_GID=$(group_id) \
 		-v $(ROOT_DIR)/requirements:/requirements \
-		python:${PYTHON_VERSION}-slim-bullseye \
+		python:${python_version}-slim-bullseye \
 			/bin/bash -c 'python3 -m pip install uv \
 			&& uv pip compile requirements/base.in > requirements/base.txt \
 			&& uv pip compile requirements/dev.in > requirements/dev.txt \
