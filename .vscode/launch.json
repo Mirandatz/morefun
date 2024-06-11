@@ -8,7 +8,15 @@
             "name": "Python: Current File",
             "type": "debugpy",
             "request": "launch",
-            "args": "${command:pickArgs}",
+            "args": [
+                "-c",
+                "/home/thiago/source/morefun/morefun/experiments/settings_template.yaml",
+                "-d",
+                "/disk2/thiago/datasets/cifar100_train_test",
+                "-o",
+                "/disk2/thiago/experiments/containerized_output"
+            ],
+            // "args": "${command:pickArgs}",
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true
