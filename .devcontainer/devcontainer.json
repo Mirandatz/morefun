@@ -11,10 +11,7 @@
 				}
 			},
 			"extensions": [
-				"ms-python.python",
-				"timonwong.shellcheck",
-				"charliermarsh.ruff",
-				"mhutchie.git-graph"
+				"charliermarsh.ruff"
 			]
 		}
 	},
@@ -25,10 +22,6 @@
 		"--shm-size=16G",
 		"--runtime=nvidia",
 		"--cap-add=SYS_NICE"
-	],
-	"mounts": [
-		"source=${localEnv:MOREFUN_DATASETS_DIR},target=/app/datasets/,type=bind,readonly",
-		"source=${localWorkspaceFolder}/morefun/playground,target=/app/playground,type=bind"
 	],
 	"postStartCommand": [
 		"git",
