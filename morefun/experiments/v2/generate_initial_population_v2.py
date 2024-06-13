@@ -9,7 +9,7 @@ import morefun.evolutionary.fitnesses as gf
 import morefun.evolutionary.generations
 import morefun.evolutionary.novelty
 import morefun.experiments.create_initial_population_genotypes as mf_init
-import morefun.experiments.v2.configs as mf_cfg
+import morefun.experiments.v2.settings as mfs
 import morefun.paths
 import morefun.phenotypes
 import morefun.randomness
@@ -28,10 +28,10 @@ def main(
         ),
     ],
 ) -> None:
-    config_path = mf_cfg.load_morefun_settings(config_path)
+    config_path = mfs.load_morefun_settings(config_path)
 
-    mf_cfg.configure_logger(config_path.output)
-    mf_cfg.configure_tensorflow(config_path.tensorflow)
+    mfs.configure_logger(config_path.output)
+    mfs.configure_tensorflow(config_path.tensorflow)
 
     rng_seed = config_path.experiment.rng_seed
 
@@ -42,7 +42,7 @@ def main(
         rng_seed=rng_seed,
     )
 
-    metrics = mf_cfg.make_metrics(
+    metrics = mfs.make_metrics(
         dataset=config_path.dataset,
         fitness=config_path.evolution.fitness_settings,
         output=config_path.output,
