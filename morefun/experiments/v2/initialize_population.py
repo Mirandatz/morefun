@@ -16,11 +16,11 @@ import morefun.randomness
 
 
 def main(
-    config_path: Annotated[
+    settings_path: Annotated[
         Path,
         typer.Option(
-            "-c",
-            "--config-path",
+            "-s",
+            "--settings-path",
             file_okay=True,
             exists=True,
             readable=True,
@@ -28,24 +28,24 @@ def main(
         ),
     ],
 ) -> None:
-    config_path = mfs.load_morefun_settings(config_path)
+    settings = mfs.load_morefun_settings(settings_path)
 
-    mfs.configure_logger(config_path.output)
-    mfs.configure_tensorflow(config_path.tensorflow)
+    mfs.configure_logger(settings.output)
+    mfs.configure_tensorflow(settings.tensorflow)
 
-    rng_seed = config_path.experiment.rng_seed
+    rng_seed = settings.experiment.rng_seed
 
     individuals = mf_init.create_initial_population(
-        pop_size=config_path.initialization.population_size,
-        grammar=config_path.grammar,
-        filter=config_path.initialization.individual_filter,
+        pop_size=settings.initialization.population_size,
+        grammar=settings.grammar,
+        filter=settings.initialization.individual_filter,
         rng_seed=rng_seed,
     )
 
     metrics = mfs.make_metrics(
-        dataset=config_path.dataset,
-        fitness=config_path.evolution.fitness_settings,
-        output=config_path.output,
+        dataset=settings.dataset,
+        fitness=settings.evolution.fitness_settings,
+        output=settings.output,
     )
 
     genotypes = [ind.genotype for ind in individuals]
@@ -79,7 +79,7 @@ def main(
     )
 
     save_path = morefun.paths.get_generation_checkpoint_path(
-        config_path.output.directory, generation_number
+        settings.output.directory, generation_number
     )
 
     checkpoint.save(save_path)
