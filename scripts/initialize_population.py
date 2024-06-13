@@ -1,20 +1,22 @@
 #!/bin/env python
 
 import os
+import sys
 from pathlib import Path
 from subprocess import check_call
 from typing import Annotated
 
 import typer
+import yaml
 from paths import find_repository_root
 
 
 def main(
-    config_path: Annotated[
+    settings_path: Annotated[
         Path,
         typer.Option(
-            "-c",
-            "--config",
+            "-s",
+            "--settings-path",
             exists=True,
             file_okay=True,
             dir_okay=False,
@@ -47,7 +49,15 @@ def main(
         ),
     ],
 ) -> None:
-    repo_root = find_repository_root()
+    settings_yaml = yaml.safe_load(settings_path.read_text())
+
+    container_code_dir = Path("/app/code")
+    container_settings_path = Path("/app/settings.yaml")
+    container_dataset_dir = Path(settings_yaml["dataset"]["partitions_dir"])
+    container_output_dir = Path(settings_yaml["output"]["directory"])
+
+    # container_cmd = "ls"
+    container_cmd = f"python -m morefun.experiments.v2.initialize_population -s {container_settings_path}"
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -61,20 +71,20 @@ def main(
         "--runtime=nvidia",
         "--shm-size=8gb",
         f"--user={uid}:{gid}",
-        f"-v={repo_root}:/app/code:ro",
-        f"-v={dataset_dir}:/app/dataset:ro",
-        f"-v={config_path}:/app/settings.yaml:ro",
-        f"-v={output_dir}:/app/output",
-        "--workdir=/app/code",
+        f"-v={find_repository_root()}:{container_code_dir}:ro",
+        f"-v={dataset_dir}:{container_dataset_dir}:ro",
+        f"-v={settings_path}:{container_settings_path}:ro",
+        f"-v={output_dir}:{container_output_dir}",
+        f"--workdir={container_code_dir}",
         "mirandatz/morefun:dev_env",
         "bash",
         "-c",
-        "ls /app/dataset",
-        # "source /app/.venv/bin/activate && python -m morefun.experiments.cli $*",
+        container_cmd,
     )
 
-    print(args)
     check_call(args)
+
+    return 0
 
 
 if __name__ == "__main__":
