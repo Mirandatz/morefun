@@ -14,6 +14,12 @@ class MountPoint:
     container_path: str
     mode: str
 
+    def __str__(self) -> str:
+        if self.mode:
+            return ":".join([self.host_path, self.container_path, self.mode])
+        else:
+            return ":".join([self.host_path, self.container_path])
+
 
 @dataclass(frozen=True)
 class MorefunMountPoints:
@@ -30,12 +36,26 @@ def extract_mount_points_from_settings(
 ) -> MorefunMountPoints:
     settings_yaml = yaml.safe_load(settings_path.read_text())
     return MorefunMountPoints(
-        code=MountPoint(find_repository_root(), Path("/app/code"), "ro"),
-        dataset=MountPoint(
-            dataset_dir, Path(settings_yaml["dataset"]["partitions_dir"]), "ro"
+        code=MountPoint(
+            str(find_repository_root()),
+            "/app/code",
+            "ro",
         ),
-        settings=MountPoint(settings_path, Path("/app/settings.yaml"), "ro"),
-        output=MountPoint(output_path, Path(settings_yaml["output"]["directory"]), ""),
+        dataset=MountPoint(
+            str(dataset_dir),
+            settings_yaml["dataset"]["partitions_dir"],
+            "ro",
+        ),
+        settings=MountPoint(
+            str(settings_path),
+            "/app/settings.yaml",
+            "ro",
+        ),
+        output=MountPoint(
+            str(output_path),
+            settings_yaml["output"]["directory"],
+            "",
+        ),
     )
 
 
@@ -50,10 +70,10 @@ def make_docker_base_args(mount_points: MorefunMountPoints) -> list[str]:
         "--runtime=nvidia",
         "--shm-size=8gb",
         f"--user={uid}:{gid}",
-        f"-v={mount_points.code.host_path}:{mount_points.code.container_path}:{mount_points.code.mode}",
-        f"-v={mount_points.dataset.host_path}:{mount_points.dataset.container_path}:{mount_points.dataset.mode}",
-        f"-v={mount_points.settings.host_path}:{mount_points.settings.container_path}:{mount_points.settings.mode}",
-        f"-v={mount_points.output.host_path}:{mount_points.output.container_path}:{mount_points.output.mode}",
+        f"-v={mount_points.code}",
+        f"-v={mount_points.dataset}",
+        f"-v={mount_points.settings}",
+        f"-v={mount_points.output}",
         f"--workdir={mount_points.code.container_path}",
         IMAGE_NAME,
     ]
