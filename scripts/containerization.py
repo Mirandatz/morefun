@@ -39,11 +39,11 @@ def extract_mount_points_from_settings(
     )
 
 
-def make_docker_base_args(mount_points: MorefunMountPoints) -> tuple[str, ...]:
+def make_docker_base_args(mount_points: MorefunMountPoints) -> list[str]:
     uid = os.getuid()
     gid = os.getgid()
 
-    args = (
+    return [
         "docker",
         "run",
         "--rm",
@@ -56,9 +56,7 @@ def make_docker_base_args(mount_points: MorefunMountPoints) -> tuple[str, ...]:
         f"-v={mount_points.output.host_path}:{mount_points.output.container_path}:{mount_points.output.mode}",
         f"--workdir={mount_points.code.container_path}",
         IMAGE_NAME,
-    )
-
-    return args
+    ]
 
 
 def main() -> None:
