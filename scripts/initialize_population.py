@@ -1,7 +1,6 @@
 #!/bin/env python
 
 import os
-import sys
 from pathlib import Path
 from subprocess import check_call
 from typing import Annotated
