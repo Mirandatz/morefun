@@ -45,6 +45,7 @@ def main(
             resolve_path=True,
         ),
     ],
+    generations: Annotated[int, typer.Option("--generations", min=1)],
 ) -> None:
     mount_points = extract_mount_points_from_settings(
         dataset_dir=dataset_dir,
@@ -55,7 +56,7 @@ def main(
     subprocess_args = base_docker_args + [
         "bash",
         "-c",
-        f"python -m morefun.experiments.v2.evolve_population -s {mount_points.settings.container_path}",
+        f"python -m morefun.experiments.v2.evolve_population -s {mount_points.settings.container_path} --generations {generations}",
     ]
 
     output_dir.mkdir(parents=True, exist_ok=True)
