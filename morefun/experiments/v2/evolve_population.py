@@ -5,14 +5,18 @@ from typing import Annotated
 
 import typer
 
-import morefun.evolutionary.fitnesses as gf
-import morefun.evolutionary.generations
-import morefun.evolutionary.novelty
-import morefun.experiments.create_initial_population_genotypes as mf_init
-import morefun.experiments.v2.settings as mfs
-import morefun.paths
-import morefun.phenotypes
-import morefun.randomness
+from morefun.evolutionary.generations import (
+    GenerationCheckpoint,
+    run_multiple_generations,
+)
+from morefun.experiments.v2.settings import (
+    configure_logger,
+    configure_tensorflow,
+    load_morefun_settings,
+    make_metrics,
+    make_mutation_params,
+)
+from morefun.paths import get_latest_generation_checkpoint_path
 
 
 def main(
@@ -27,62 +31,40 @@ def main(
             dir_okay=False,
         ),
     ],
+    generations: Annotated[int, typer.Option("--generations", min=1)],
 ) -> None:
-    settings = mfs.load_morefun_settings(settings_path)
+    settings = load_morefun_settings(settings_path)
+    configure_logger(settings.output)
+    configure_tensorflow(settings.tensorflow)
 
-    mfs.configure_logger(settings.output)
-    mfs.configure_tensorflow(settings.tensorflow)
-
-    rng_seed = settings.experiment.rng_seed
-
-    individuals = mf_init.create_initial_population(
-        pop_size=settings.initialization.population_size,
-        grammar=settings.grammar,
-        filter=settings.initialization.individual_filter,
-        rng_seed=rng_seed,
+    latest_checkpoint = GenerationCheckpoint.load(
+        get_latest_generation_checkpoint_path(settings.output.directory)
     )
 
-    metrics = mfs.make_metrics(
+    current_generation_number = latest_checkpoint.get_generation_number() + 1
+
+    mutation_params = make_mutation_params(
+        mutation=settings.evolution.mutation_settings,
+        grammar=settings.grammar,
+    )
+
+    metrics = make_metrics(
         dataset=settings.dataset,
         fitness=settings.evolution.fitness_settings,
         output=settings.output,
     )
 
-    genotypes = [ind.genotype for ind in individuals]
-    phenotypes = [ind.phenotype for ind in individuals]
-    fitnesses = [gf.evaluate(ind.phenotype, metrics) for ind in individuals]
-
-    known_genotypes = set(genotypes)
-    known_phenotypes = set(phenotypes)
-    novelty_tracker = morefun.evolutionary.novelty.NoveltyTracker(
-        known_genotypes=known_genotypes,
-        known_phenotypes=known_phenotypes,
+    run_multiple_generations(
+        starting_generation_number=current_generation_number,
+        number_of_generations_to_run=generations,
+        initial_population=latest_checkpoint.get_population(),
+        grammar=settings.grammar,
+        mutation_params=mutation_params,
+        metrics=metrics,
+        novelty_tracker=latest_checkpoint.get_novelty_tracker(),
+        rng=latest_checkpoint.get_rng(),
+        output_dir=settings.output.directory,
     )
-
-    initial_population = [
-        morefun.evolutionary.generations.EvaluatedGenotype(g, p, f)
-        for g, p, f in zip(
-            genotypes,
-            phenotypes,
-            fitnesses,
-        )
-    ]
-
-    # generations are 0-indexed, so first gen == 0
-    generation_number = 0
-
-    checkpoint = morefun.evolutionary.generations.GenerationCheckpoint(
-        generation_number=generation_number,
-        population=tuple(initial_population),
-        rng=morefun.randomness.create_rng(rng_seed),
-        novelty_tracker=novelty_tracker,
-    )
-
-    save_path = morefun.paths.get_generation_checkpoint_path(
-        settings.output.directory, generation_number
-    )
-
-    checkpoint.save(save_path)
 
 
 if __name__ == "__main__":
