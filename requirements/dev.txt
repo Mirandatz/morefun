@@ -144,7 +144,7 @@ numpy==1.26.4
     #   tensorflow-datasets
 oauthlib==3.2.2
     # via requests-oauthlib
-opencv-python==4.10.0.84
+opencv-python==4.10.0.82
     # via -r requirements/base.in
 opt-einsum==3.3.0
     # via tensorflow
@@ -186,7 +186,7 @@ pydot==2.0.0
     # via -r requirements/base.in
 pygments==2.18.0
     # via rich
-pymoo==0.6.0
+pymoo==0.6.0.1
     # via -r requirements/base.in
 pyparsing==3.1.2
     # via
