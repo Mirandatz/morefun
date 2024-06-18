@@ -9,7 +9,7 @@ pandas
 pillow
 pyarrow
 pydot
-pymoo==0.6.0.1
+pymoo
 pyyaml
 scipy
 scikit-learn

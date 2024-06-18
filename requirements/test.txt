@@ -48,7 +48,7 @@ dm-tree==0.1.8
     # via tensorflow-datasets
 docstring-parser==0.16
     # via simple-parsing
-etils==1.9.2
+etils==1.9.0
     # via
     #   array-record
     #   tensorflow-datasets
@@ -64,7 +64,7 @@ future==1.0.0
     # via autograd
 gast==0.5.4
     # via tensorflow
-google-auth==2.30.0
+google-auth==2.29.0
     # via
     #   google-auth-oauthlib
     #   tensorboard
@@ -82,7 +82,7 @@ grpcio==1.64.1
     #   tensorflow
 h5py==3.11.0
     # via tensorflow
-hypothesis==6.103.2
+hypothesis==6.103.0
     # via -r requirements/test.in
 idna==3.7
     # via requests
@@ -144,7 +144,7 @@ opencv-python==4.10.0.82
     # via -r requirements/base.in
 opt-einsum==3.3.0
     # via tensorflow
-packaging==24.1
+packaging==24.0
     # via
     #   matplotlib
     #   pytest
@@ -182,13 +182,13 @@ pydot==2.0.0
     # via -r requirements/base.in
 pygments==2.18.0
     # via rich
-pymoo==0.6.0.1
+pymoo==0.6.1.1
     # via -r requirements/base.in
 pyparsing==3.1.2
     # via
     #   matplotlib
     #   pydot
-pytest==8.2.2
+pytest==8.2.1
     # via
     #   -r requirements/test.in
     #   pytest-xdist
@@ -244,7 +244,7 @@ tensorboard-data-server==0.7.2
     # via tensorboard
 tensorflow==2.15.0
     # via -r requirements/base.in
-tensorflow-datasets==4.9.6
+tensorflow-datasets==4.9.5
     # via -r requirements/base.in
 tensorflow-estimator==2.15.0
     # via tensorflow
@@ -268,7 +268,7 @@ typeguard==4.3.0
     # via -r requirements/base.in
 typer==0.12.3
     # via -r requirements/base.in
-typing-extensions==4.12.2
+typing-extensions==4.12.1
     # via
     #   etils
     #   simple-parsing
@@ -277,7 +277,7 @@ typing-extensions==4.12.2
     #   typer
 tzdata==2024.1
     # via pandas
-urllib3==2.2.2
+urllib3==2.2.1
     # via requests
 werkzeug==3.0.3
     # via tensorboard
@@ -288,5 +288,5 @@ wrapt==1.14.1
     #   deprecated
     #   tensorflow
     #   tensorflow-datasets
-zipp==3.19.2
+zipp==3.19.1
     # via etils

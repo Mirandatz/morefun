@@ -71,7 +71,6 @@ update_requirements:
 		-v $(ROOT_DIR)/requirements:/requirements \
 		python:${python_version}-slim-bullseye \
 			/bin/bash -c 'python3 -m pip install uv \
-			&& uv pip compile requirements/host.in > requirements/host.txt \
 			&& uv pip compile requirements/base.in > requirements/base.txt \
 			&& uv pip compile requirements/dev.in > requirements/dev.txt \
 			&& uv pip compile requirements/test.in > requirements/test.txt \
