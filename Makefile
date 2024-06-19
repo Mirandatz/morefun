@@ -35,8 +35,7 @@ run_tests: dev_env
 		-v $(ROOT_DIR):/app/$(PROJECT_NAME) \
 		--workdir /app/$(PROJECT_NAME) \
 		$(DEV_ENG_TAG) \
-		bash -c "source /app/.venv/bin/activate \
-				 && pytest ./$(PROJECT_NAME)/tests --numprocesses=auto --hypothesis-profile=parallel"
+		bash -c "pytest ./$(PROJECT_NAME)/tests --numprocesses=auto --hypothesis-profile=parallel"
 
 .PHONY: run_tests_sequential
 run_tests_sequential: dev_env
@@ -47,8 +46,7 @@ run_tests_sequential: dev_env
 		-v $(ROOT_DIR):/app/$(PROJECT_NAME) \
 		--workdir /app/$(PROJECT_NAME) \
 		$(DEV_ENG_TAG) \
-		bash -c "source /app/.venv/bin/activate \
-				 && pytest ./$(PROJECT_NAME)/tests"
+		bash -c "pytest ./$(PROJECT_NAME)/tests"
 
 
 .PHONY: playground
