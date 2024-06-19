@@ -13,7 +13,7 @@ import numpy.typing as npt
 import tensorflow as tf
 import typeguard
 from loguru import logger
-from pymoo.algorithms.moo.nsga2 import RankAndCrowding
+from pymoo.operators.survival.rank_and_crowding import RankAndCrowding
 from pymoo.util.nds.fast_non_dominated_sort import fast_non_dominated_sort
 
 import morefun.neural_networks.layers as gl
@@ -417,7 +417,7 @@ def argsort_nsga2(
         else:
             front_fitnesses = fitnesses[current_front]
             distances = RankAndCrowding().do(
-                front_fitnesses, filter_out_duplicates=False
+                pop=front_fitnesses, filter_out_duplicates=False
             )
             indices_of_least_crowded = np.argsort(distances)
             sorted_by_crowding = [
