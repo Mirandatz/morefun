@@ -31,7 +31,7 @@ charset-normalizer==3.3.2
 click==8.1.7
     # via
     #   tensorflow-datasets
-    #   typer
+    #   typer-slim
 cma==3.2.2
     # via pymoo
 contourpy==1.2.1
@@ -106,14 +106,10 @@ loguru==0.7.2
     # via -r requirements/base.in
 markdown==3.6
     # via tensorboard
-markdown-it-py==3.0.0
-    # via rich
 markupsafe==2.1.5
     # via werkzeug
 matplotlib==3.9.0
     # via pymoo
-mdurl==0.1.2
-    # via markdown-it-py
 ml-dtypes==0.2.0
     # via tensorflow
 mypy==1.10.0
@@ -184,8 +180,6 @@ pyasn1-modules==0.4.0
     # via google-auth
 pydot==2.0.0
     # via -r requirements/base.in
-pygments==2.18.0
-    # via rich
 pymoo==0.6.0
     # via -r requirements/base.in
 pyparsing==3.1.2
@@ -213,8 +207,6 @@ requests==2.32.3
     #   tensorflow-datasets
 requests-oauthlib==2.0.0
     # via google-auth-oauthlib
-rich==13.7.1
-    # via typer
 rsa==4.9
     # via google-auth
 ruff==0.4.7
@@ -230,8 +222,6 @@ setuptools==70.1.0
     # via
     #   tensorboard
     #   tensorflow
-shellingham==1.5.4
-    # via typer
 simple-parsing==0.1.5
     # via tensorflow-datasets
 six==1.16.0
@@ -272,7 +262,7 @@ tqdm==4.66.4
     #   tensorflow-datasets
 typeguard==4.3.0
     # via -r requirements/base.in
-typer==0.12.3
+typer-slim==0.12.3
     # via -r requirements/base.in
 types-pyyaml==6.0.12.20240311
     # via -r requirements/dev.in
@@ -283,7 +273,7 @@ typing-extensions==4.12.2
     #   simple-parsing
     #   tensorflow
     #   typeguard
-    #   typer
+    #   typer-slim
 tzdata==2024.1
     # via pandas
 urllib3==2.2.2
