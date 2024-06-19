@@ -417,7 +417,9 @@ def argsort_nsga2(
         else:
             front_fitnesses = fitnesses[current_front]
             distances = RankAndCrowding().do(
-                pop=front_fitnesses, filter_out_duplicates=False
+                problem=None,
+                pop=front_fitnesses,
+                filter_out_duplicates=False,
             )
             indices_of_least_crowded = np.argsort(distances)
             sorted_by_crowding = [
