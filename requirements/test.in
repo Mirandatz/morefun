@@ -1,5 +1,5 @@
 -r base.in
 
-hypothesis
-pytest
-pytest-xdist
+hypothesis==6.103.0
+pytest==8.2.1
+pytest-xdist==3.6.1
