@@ -19,7 +19,7 @@
             // "args": "${command:pickArgs}",
             "program": "${file}",
             "console": "integratedTerminal",
-            "justMyCode": true
+            "justMyCode": false
         }
     ]
 }
