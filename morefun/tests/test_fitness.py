@@ -45,6 +45,20 @@ def test_fitness_evaluations_to_ndarray() -> None:
             1,
             [3],
         ),
+        (
+            np.asarray(
+                [
+                    [1.0, 10],  # candidate 1
+                    [0.9, 11],  # neighbor  1.1
+                    #
+                    [10, 1.0],  # candidate 2
+                    [9.9, 1.5],  # neighbor 2.1
+                    [9.89, 1.6],  # neighbor 2.2
+                ]
+            ),
+            1,
+            [2],
+        ),
     ],
 )
 def test_nsga2(
