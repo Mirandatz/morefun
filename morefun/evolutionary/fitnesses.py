@@ -223,8 +223,11 @@ class NumberOfParameters(Metric):
                 effective=param_count,
             )
 
-        except tf.errors.ResourceExhaustedError:
-            msg = f"unable to evalute metric=<{self.name()}> of genotype=<{phenotype.genotype_uuid.hex}> due to resource exhaustion"
+        # This should be `tf.errors.ResourceExhaustedError`, but sometimes tensorflow's resource exchaustion
+        # throws `tensorflow.python.framework.errors_impl.UnknownError` and other classes.
+        # So to be safe we do this nasty thing
+        except Exception as ex:
+            msg = f"unable to evalute metric=<{self.name()}> of genotype=<{phenotype.genotype_uuid.hex}>, likely due to resource exhaustion. exception={ex}"
             logger.warning(msg)
             return FailedMetricEvaluation(
                 metric_name=self.name(),
@@ -298,8 +301,11 @@ class TrainLoss(Metric):
                 effective=train_loss,
             )
 
-        except tf.errors.ResourceExhaustedError:
-            msg = f"unable to evalute metric=<{self.name()}> of genotype=<{phenotype.genotype_uuid.hex}> due to resource exhaustion"
+        # This should be `tf.errors.ResourceExhaustedError`, but sometimes tensorflow's resource exchaustion
+        # throws `tensorflow.python.framework.errors_impl.UnknownError` and other classes.
+        # So to be safe we do this nasty thing
+        except Exception as ex:
+            msg = f"unable to evalute metric=<{self.name()}> of genotype=<{phenotype.genotype_uuid.hex}>, likely due to resource exhaustion. exception={ex}"
             logger.warning(msg)
             return FailedMetricEvaluation(
                 metric_name=self.name(),
