@@ -88,11 +88,9 @@ COPY ./requirements /app/requirements
 RUN pip install -r /app/requirements/dev.txt --no-cache-dir
 
 FROM python_libs AS final_state
+
 # silence tensorflow
 ENV TF_CPP_MIN_LOG_LEVEL=1
-
-# enable xla
-ENV TF_XLA_FLAGS="--tf_xla_auto_jit=2 --tf_xla_cpu_global_jit"
 
 # be nice with friends and share gpu ram
 ENV TF_FORCE_GPU_ALLOW_GROWTH="true"

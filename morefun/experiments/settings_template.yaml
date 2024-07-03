@@ -42,7 +42,7 @@ final_train:
     early_stop_patience: 10
 
 tensorflow:
-    xla: true
+    xla: false
     mixed_precision: true
 
 grammar: |
