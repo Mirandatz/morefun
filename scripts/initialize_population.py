@@ -83,8 +83,6 @@ def main(
 
     check_call(args)
 
-    return 0
-
 
 if __name__ == "__main__":
     typer.run(main)

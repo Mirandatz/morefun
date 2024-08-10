@@ -61,7 +61,6 @@ def main(
 
     output_dir.mkdir(parents=True, exist_ok=True)
     check_call(subprocess_args)
-    return 0
 
 
 if __name__ == "__main__":
