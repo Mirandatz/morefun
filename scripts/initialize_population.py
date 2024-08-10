@@ -56,7 +56,7 @@ def main(
     container_output_dir = Path(settings_yaml["output"]["directory"])
 
     # container_cmd = "ls"
-    container_cmd = f"python -m morefun.experiments.v2.initialize_population -s {container_settings_path}"
+    container_cmd = f"python -m morefun.experiments.initialize_population -s {container_settings_path}"
 
     output_dir.mkdir(parents=True, exist_ok=True)
 

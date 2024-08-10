@@ -9,7 +9,7 @@ from morefun.evolutionary.generations import (
     GenerationCheckpoint,
     run_multiple_generations,
 )
-from morefun.experiments.v2.settings import (
+from morefun.experiments.settings import (
     configure_logger,
     configure_tensorflow,
     load_morefun_settings,

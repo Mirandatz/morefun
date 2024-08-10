@@ -56,7 +56,7 @@ def main(
     subprocess_args = base_docker_args + [
         "bash",
         "-c",
-        f"python -m morefun.experiments.v2.evolve_population -s {mount_points.settings.container_path} --generations {generations}",
+        f"python -m morefun.experiments.evolve_population -s {mount_points.settings.container_path} --generations {generations}",
     ]
 
     output_dir.mkdir(parents=True, exist_ok=True)

@@ -56,7 +56,7 @@ def main(
     subprocess_args = base_docker_args + [
         "bash",
         "-c",
-        f"python -m morefun.experiments.v2.analyze_results -s {mount_points.settings.container_path}",
+        f"python -m morefun.experiments.analyze_results -s {mount_points.settings.container_path}",
     ]
 
     output_dir.mkdir(parents=True, exist_ok=True)

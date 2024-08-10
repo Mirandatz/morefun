@@ -9,7 +9,7 @@ import morefun.evolutionary.fitnesses as gf
 import morefun.evolutionary.generations
 import morefun.evolutionary.novelty
 import morefun.experiments.create_initial_population_genotypes as mf_init
-import morefun.experiments.v2.settings as mfs
+import morefun.experiments.settings as mfs
 import morefun.paths
 import morefun.phenotypes
 import morefun.randomness

@@ -18,7 +18,7 @@ import morefun.phenotypes
 import morefun.randomness
 import morefun.redirection
 from morefun.evolutionary.generations import EvaluatedGenotype
-from morefun.experiments.v2.settings import (
+from morefun.experiments.settings import (
     MorefunSettings,
     configure_logger,
     configure_tensorflow,
