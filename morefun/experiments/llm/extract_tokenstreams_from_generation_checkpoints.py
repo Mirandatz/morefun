@@ -1,3 +1,5 @@
+#!/bin/env python
+
 from pathlib import Path
 from typing import Annotated
 
