@@ -1,17 +1,25 @@
-import re
 from pathlib import Path
-from typing import Optional
 
 
 def main() -> None:
     persistent_dir = Path("/workspaces/morefun/persistent")
     output_dir = persistent_dir / "padded_tokenstreams"
 
-    tokenstream_paths = list(persistent_dir.glob("v2/run_*_tokenstreams/*"))
+    output_dir.mkdir(parents=True, exist_ok=True)
 
-    for tokenstream_path in tokenstream_paths:
-        run_nr = re.search(r"run_(\d+)_tokenstreams", str(tokenstream_path)).group(1)
-        print(run_nr)
+    tokenstreams_dir = persistent_dir / "tokenstreams"
+
+    tokenstreams = {p: p.read_text() for p in tokenstreams_dir.iterdir()}
+    biggest_tokenstream = max(tokenstreams.values(), key=len)
+    biggest_tokenstream_len = len(biggest_tokenstream)
+
+    # pad all tokenstreams
+    for path, tokenstream in tokenstreams.items():
+        padding_len = biggest_tokenstream_len - len(tokenstream)
+        padding = "¿" * padding_len
+        padded_tokenstream = padding + tokenstream
+        path = output_dir / path.name
+        path.write_text(padded_tokenstream)
 
 
 if __name__ == "__main__":
