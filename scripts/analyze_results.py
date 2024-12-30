@@ -6,6 +6,7 @@ from typing import Annotated
 
 import typer
 from containerization import extract_mount_points_from_settings, make_docker_base_args
+from loguru import logger
 
 
 def main(
@@ -61,6 +62,8 @@ def main(
 
     output_dir.mkdir(parents=True, exist_ok=True)
     check_call(subprocess_args)
+
+    logger.info("Results are saved in {output_dir}")
 
 
 if __name__ == "__main__":
