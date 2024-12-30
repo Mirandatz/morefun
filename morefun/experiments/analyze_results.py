@@ -96,6 +96,18 @@ def individual_to_dataframe_row(
         directory=settings.dataset.get_and_check_train_dir(),
     )
 
+    try:
+        validation = gf.load_non_train_partition(
+            input_shape=settings.dataset.input_shape,
+            batch_size=settings.final_train.batch_size,
+            directory=settings.dataset.get_and_check_validation_dir(),
+        )
+
+        _, validation_accuracy = trained_model.evaluate(validation, verbose=0)
+    except Exception as e:
+        logger.error(f"failed to evaluate validation set: {e}")
+        validation_accuracy = float("nan")
+
     test = gf.load_non_train_partition(
         input_shape=settings.dataset.input_shape,
         batch_size=settings.final_train.batch_size,
@@ -108,6 +120,7 @@ def individual_to_dataframe_row(
     return {
         "uuid": individual.genotype.unique_id.hex,
         "train_accuracy": train_accuracy,
+        "validation_accuracy": validation_accuracy,
         "test_accuracy": test_accuracy,
         "num_params": trained_model.count_params(),
     }
