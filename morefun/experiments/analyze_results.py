@@ -133,10 +133,16 @@ def main(
     ouptut_dir = settings.output.directory
     csv_path = ouptut_dir / "analysis.csv"
 
+    generation_numbers = morefun.paths.get_generation_numbers(ouptut_dir)
+
+    assert generation_numbers, "No generations found"
+
+    gen_to_use = min(max(generation_numbers), 51)
+
     last_checkpoint = morefun.evolutionary.generations.GenerationCheckpoint.load(
         morefun.paths.get_generation_checkpoint_path(
             output_dir=ouptut_dir,
-            generation_number=51,
+            generation_number=gen_to_use,
         )
     )
 

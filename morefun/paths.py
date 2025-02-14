@@ -28,6 +28,11 @@ def get_grammars_dir() -> pathlib.Path:
     return get_project_root_dir() / "morefun" / "grammars" / "files"
 
 
+def get_generation_numbers(output_dir: pathlib.Path) -> list[int]:
+    checkpoint_paths = list(output_dir.glob(f"*{GENERATION_CHECKPOINT_EXTENSION}"))
+    return [int(path.stem) for path in checkpoint_paths]
+
+
 def get_generation_checkpoint_path(
     output_dir: pathlib.Path, generation_number: int
 ) -> pathlib.Path:
