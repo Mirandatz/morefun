@@ -1,5 +1,6 @@
 #!/bin/env python
 
+import sys
 from pathlib import Path
 from subprocess import check_call
 from typing import Annotated
@@ -61,6 +62,8 @@ def main(
 
     output_dir.mkdir(parents=True, exist_ok=True)
     check_call(subprocess_args)
+
+    print(f"Results are saved in {output_dir}", file=sys.stderr)
 
 
 if __name__ == "__main__":
