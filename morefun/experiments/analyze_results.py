@@ -103,10 +103,13 @@ def individual_to_dataframe_row(
             directory=settings.dataset.get_and_check_validation_dir(),
         )
 
-        _, validation_accuracy = trained_model.evaluate(validation, verbose=0)
+        validation_loss, validation_accuracy = trained_model.evaluate(
+            validation, verbose=0
+        )
+
     except Exception as e:
         logger.error(f"failed to evaluate validation set: {e}")
-        validation_accuracy = float("nan")
+        validation_loss, validation_accuracy = float("nan"), float("nan")
 
     test = gf.load_non_train_partition(
         input_shape=settings.dataset.input_shape,
@@ -114,13 +117,16 @@ def individual_to_dataframe_row(
         directory=settings.dataset.get_and_check_test_dir(),
     )
 
-    _, train_accuracy = trained_model.evaluate(train, verbose=0)
-    _, test_accuracy = trained_model.evaluate(test, verbose=0)
+    train_loss, train_accuracy = trained_model.evaluate(train, verbose=0)
+    test_loss, test_accuracy = trained_model.evaluate(test, verbose=0)
 
     return {
         "uuid": individual.genotype.unique_id.hex,
+        "train_loss": train_loss,
         "train_accuracy": train_accuracy,
+        "validation_loss": validation_loss,
         "validation_accuracy": validation_accuracy,
+        "test_loss": test_loss,
         "test_accuracy": test_accuracy,
         "num_params": trained_model.count_params(),
     }
