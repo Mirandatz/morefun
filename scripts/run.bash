@@ -12,14 +12,14 @@ for i in {0..4}; do
     
     /home/thiago/source/morefun/scripts/initialize_population.py \
         -s "${exp_dir}/settings.yaml" \
-        -d /disk2/thiago/datasets/cifar10 \
+        -d /disk2/thiago/datasets/cifar10_train_test \
         -o ${exp_dir}/output
 
     /home/thiago/source/morefun/scripts/evolve_population.py \
         -s "${exp_dir}/settings.yaml" \
-        -d /disk2/thiago/datasets/cifar10 \
+        -d /disk2/thiago/datasets/cifar10_train_test \
         -o ${exp_dir}/output \
-        --generations 50
+        --generations 30
 done
 
 for i in {0..4}; do
@@ -27,6 +27,6 @@ for i in {0..4}; do
 
     /home/thiago/source/morefun/scripts/analyze_results.py \
         -s "${exp_dir}/settings.yaml" \
-        -d /disk2/thiago/datasets/cifar10 \
+        -d /disk2/thiago/datasets/cifar10_train_test \
         -o ${exp_dir}/output
 done
