@@ -167,17 +167,19 @@ def main() -> None:
         get_project_root_dir() / "persistent" / "experiments" / "cifar10_train_val_test"
     )
 
-    run_dirs = sorted(experiment_dir.iterdir())
+    run_dirs = sorted([d for d in experiment_dir.iterdir() if d.is_dir()])
     if not run_dirs:
         raise ValueError(
             f"no run directories found in experiment directory:{experiment_dir}"
         )
 
-    rows_for_all_runs = []
+    dfs = []
     for run_dir in run_dirs:
-        rows_for_all_runs.extend(make_csv_rows_for_run(run_dir))
+        df = pd.DataFrame(make_csv_rows_for_run(run_dir))
+        df["run"] = run_dir.stem
+        dfs.append(df)
 
-    df = pd.DataFrame(rows_for_all_runs)
+    df = pd.concat(dfs, ignore_index=True)
     df.to_csv(
         experiment_dir / "final_results.csv",
         index=False,
