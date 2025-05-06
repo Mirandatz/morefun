@@ -13,12 +13,23 @@ def main() -> None:
     )
     df = pd.read_csv(experiment_dir / "final_results.csv")
     df["run_nr"] = df["run"].str.split("_").str[-1].astype("category")
+
+    print(df.columns)
+
     px.scatter(
         df,
         x="num_params",
         y="validation_loss",
         color="run_nr",
         labels={"num_params": "Params", "validation_loss": "Loss (validation)"},
+    ).show()
+
+    px.scatter(
+        df,
+        x="num_params",
+        y="train_loss",
+        color="run_nr",
+        labels={"num_params": "Params", "train_loss": "Loss (train)"},
     ).show()
 
 
