@@ -4,8 +4,12 @@ This module assumes that fitnesses must be MINIMIZED.
 
 import abc
 import pathlib
+import pickle
+import tempfile
 import traceback
 import typing
+from pathlib import Path
+from subprocess import check_call
 
 import attrs
 import numpy as np
@@ -294,12 +298,39 @@ class TrainLoss(Metric):
 
     def evaluate(self, phenotype: pheno.Phenotype) -> MetricEvaluation:
         try:
-            train_loss = self._evaluate(phenotype)
-            return SuccessfulMetricEvaluation(
-                metric_name=self.name(),
-                raw=train_loss,
-                effective=train_loss,
-            )
+            with tempfile.TemporaryDirectory() as tmpdir:
+                tmpdir_path = Path(tmpdir)
+
+                train_loss_instance_path = tmpdir_path / "train_loss_instance.pkl"
+                train_loss_instance_path.write_bytes(pickle.dumps(self))
+
+                phenotype_path = tmpdir_path / "phenotype.pkl"
+                phenotype_path.write_bytes(pickle.dumps(phenotype))
+
+                evalt_result_path = tmpdir_path / "eval_result.pkl"
+
+                # Use subprocess to call the script
+                script_path = pathlib.Path(__file__).parent / "standalone_train_loss.py"
+                check_call(
+                    [
+                        "python3",
+                        str(script_path),
+                        "--train-loss-instance-path",
+                        str(train_loss_instance_path),
+                        "--phenotype-path",
+                        str(phenotype_path),
+                        "--eval-result-path",
+                        str(evalt_result_path),
+                    ]
+                )
+
+                with open(evalt_result_path, "rb") as f:
+                    train_loss = pickle.load(f)
+                    return SuccessfulMetricEvaluation(
+                        metric_name=self.name(),
+                        raw=train_loss,
+                        effective=train_loss,
+                    )
 
         # This should be `tf.errors.ResourceExhaustedError`, but sometimes tensorflow's resource exchaustion
         # throws `tensorflow.python.framework.errors_impl.UnknownError` and other classes.
